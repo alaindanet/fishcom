@@ -1,10 +1,10 @@
 ---
-title: "Vignette Title"
-author: "Vignette Author"
+title: "Introduction - Description of previous work"
+author: "Alain Danet"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Introduction}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -16,50 +16,43 @@ knitr::opts_chunk$set(
 )
 ```
 
-Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
+The goal of this document is to describe the work that has been done previously
+by Edeline et al. (2013) and Bonnafé, Le Gendre and Edeline (in prep.).
 
-- Never uses retina figures
-- Has a smaller default figure size
-- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
+## Data information
 
-## Vignette Info
+Those informations were extracted from the two studies previously cited  
 
-Note the various macros within the `vignette` section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
+- 4,145,234 individual body size measurements of fish
+- 50 species
+- 20,809 fisheries operation in 7,024 stations 
+- 8 french basins (North, Seine River, Channel Sea, Atlantic Ocean, Loire
+River, Garonne River, Rhone River, Mediterranean Sea)
+- Catching by electric fishing 
+  - 3 different strategies:
+    - Boat
+    - Walking
+    - Mixed
+  - 5 different methods:
+    - Complete: whole station surface fully sampled
+    - Ambiance: whole station surface partially sampled
+    - Points: Point Abundance Sampling method (Nelva et al., 1979)
+    - Bank: only river banks were sampled
+    - Other: other partial sampling strategies depending on river width and
+      depth
+- Measurements:
+  - Count
+  - Body length (only on a fraction of the fish if they were too numerous)
+- Exclusion: migratory species with a saltwater growth period
+- Environmental data:
+  - river slope
+  - depth
+  - channel width (at upper banks)
+  - altitude
+  - distance to the sea
+  - distance to the source
+  - anthropogenic usage of the watershed (Corine Land
+Cover data)
+  - air temperature that preceded each sampling operation as a proxy for
+    river water temperature.
 
-## Styles
-
-The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
-
-    output: 
-      rmarkdown::html_vignette:
-        css: mystyles.css
-
-## Figures
-
-The figure sizes have been customised so that you can easily put two images side-by-side. 
-
-```{r, fig.show='hold'}
-plot(1:10)
-plot(10:1)
-```
-
-You can enable figure captions by `fig_caption: yes` in YAML:
-
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
-
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
-
-## More Examples
-
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
-
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
-```
-
-Also a quote using `>`:
-
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))
