@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Alain Danet" />
+
+<meta name="date" content="2018-12-04" />
+
+<title>Introduction - Description of previous work</title>
+
+
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#header {
+text-align: center;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction - Description of previous work</h1>
+<h4 class="author"><em>Alain Danet</em></h4>
+<h4 class="date"><em>2018-12-04</em></h4>
+
+
+
+<div id="temporal-stability-and-diversity" class="section level2">
+<h2>Temporal stability and diversity </h2>
+<div id="the-big-questions" class="section level3">
+<h3>The big questions</h3>
+<ul>
+<li>What are the effects of global changes on community stability?
+<ul>
+<li>What are the underlying mechanisms of the response of community stability to global changes?</li>
+<li>Which facets of stability are affected by global changes?</li>
+</ul></li>
+<li>Are species role constant in time ? (e.g. keystone ?)</li>
+</ul>
+</div>
+<div id="reading-notes" class="section level3">
+<h3>Reading notes </h3>
+<ul>
+<li>A lot of studies assume that the community stability facing global changes is driven by richness and its effects on population asynchrony, but other suggest that there are <strong>independant effects of forcing</strong> and <strong>richness</strong> on community stability <span class="citation">(Olivier et al., n.d.)</span>.
+<ul>
+<li><span class="citation">Olivier et al. (n.d.)</span> suggest that effect of global changes on abundance can drive community stability (without effect on species richness)</li>
+<li>Asynchrony is due to difference in response to forcing variables and/or changement of competitive hierarchy?</li>
+</ul></li>
+<li>Most research on the subject (link forcing, stability and species richness) has been done in controlled experiment (plant, mesocosm?)
+<ul>
+<li>Few test in local natural population</li>
+<li>Cedar Creek’s experiments <span class="citation">(Tilman, Isbell, and Cowles 2014)</span></li>
+</ul></li>
+<li><p>Ecology of perturbation is missing: notably its effects on abundance ? <span class="citation">(Olivier et al., n.d.)</span></p></li>
+<li>The facets of stability <span class="citation">(Donohue et al. 2016)</span>:
+<ul>
+<li>Variability: temporal or spatial Variability
+<ul>
+<li>Measurement: CV</li>
+</ul></li>
+<li>Resistance: community structure change induced by a perturbation
+<ul>
+<li>Measurement: ratio of the variable value before and after perturbation</li>
+</ul></li>
+<li>Persistance: time length, the community stays in the same state
+<ul>
+<li>Measurement: time until a change appear after invasion of a species or a loss a species</li>
+</ul></li>
+<li>Tipping point: permanent change of system state
+<ul>
+<li>Measurement: bimodality for same environmental variable [<span class="citation">Berdugo et al. (2017)</span>;blonder_predictability_2017]</li>
+</ul></li>
+<li>Resilience: multi-dimensional notion. Capaticity of the system to keep the same relationship between population and state variables
+<ul>
+<li>Measurement:</li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+</div>
+<div id="fish-data-information" class="section level2">
+<h2>Fish Data information</h2>
+<p>The goal of this part is to describe the work that has been done previously by <span class="citation">Edeline et al. (2013)</span> and Bonnafé, Le Gendre and Edeline (in prep.).</p>
+<p>Those informations were extracted from the two studies previously cited</p>
+<ul>
+<li>4,145,234 individual body size measurements of fish</li>
+<li>50 species</li>
+<li>20,809 fisheries operation in 7,024 stations</li>
+<li>8 french basins (North, Seine River, Channel Sea, Atlantic Ocean, Loire River, Garonne River, Rhone River, Mediterranean Sea)</li>
+<li>Catching by electric fishing
+<ul>
+<li>3 different strategies:
+<ul>
+<li>Boat</li>
+<li>Walking</li>
+<li>Mixed</li>
+</ul></li>
+<li>5 different methods:
+<ul>
+<li>Complete: whole station surface fully sampled</li>
+<li>Ambiance: whole station surface partially sampled</li>
+<li>Points: Point Abundance Sampling method (Nelva et al., 1979)</li>
+<li>Bank: only river banks were sampled</li>
+<li>Other: other partial sampling strategies depending on river width and depth</li>
+</ul></li>
+</ul></li>
+<li>Measurements:
+<ul>
+<li>Count</li>
+<li>Body length (only on a fraction of the fish if they were too numerous)</li>
+</ul></li>
+<li>Exclusion: migratory species with a saltwater growth period</li>
+<li>Environmental data:
+<ul>
+<li>river slope</li>
+<li>depth</li>
+<li>channel width (at upper banks)</li>
+<li>altitude</li>
+<li>distance to the sea</li>
+<li>distance to the source</li>
+<li>anthropogenic usage of the watershed (Corine Land Cover data)</li>
+<li>air temperature that preceded each sampling operation as a proxy for river water temperature.</li>
+</ul></li>
+</ul>
+<div id="network-construction-bonnafe_trophic_nodate" class="section level3">
+<h3>Network construction <span class="citation">(Bonnafé, Legendre, and Edeline, n.d.)</span></h3>
+<p>From literature, <span class="citation">Bonnafé, Legendre, and Edeline (n.d.)</span> had rebuilding the global trophic network (also called the “metaweb”). From the local cooccurence data, they built the local trophic network.</p>
+<ul>
+<li>Node types:
+<ul>
+<li>Fish</li>
+<li>Resources</li>
+</ul></li>
+<li>Three types of interaction:
+<ul>
+<li>Fish-Fish<br />
+</li>
+<li>Fish-Resources<br />
+</li>
+<li>Resources-Resources</li>
+</ul></li>
+</ul>
+<div id="metaweb" class="section level4">
+<h4>Metaweb</h4>
+<p>The metaweb is a virtual web containing all the nodes of the dataset and links between them as if they would cooccur all together.</p>
+<ul>
+<li>Components:
+<ol style="list-style-type: decimal">
+<li>A set of Nodes (N): Fish (F) and Resources (R)</li>
+<li>An interaction matrix (L)</li>
+</ol></li>
+<li>Two different metawebs:
+<ol style="list-style-type: decimal">
+<li>Fish nodes defined as 9 size class by species (<span class="math inline">\(9\times50=450\)</span>)</li>
+<li>Fish nodes defined as 1 by species <span class="math inline">\(50\)</span>)</li>
+</ol></li>
+</ul>
+<p>Comparing the two metawebs permit to disentangle network answer in terms of population size structure (2) from species composition (1).</p>
+<div id="defining-nodes" class="section level5">
+<h5>Defining nodes</h5>
+<p><span class="citation">Bonnafé, Legendre, and Edeline (n.d.)</span> have looked for fish diet and ontogenic food diet in literature.</p>
+<ul>
+<li>Seven Resource nodes:
+<ul>
+<li>Detritus (R1)</li>
+<li>Biofilm (R2)</li>
+<li>Phytobenthos (R3)</li>
+<li>Macrophyte (R4)</li>
+<li>Phytoplankton (R5)</li>
+<li>Zooplankton (R6)</li>
+<li>Zoobenthos (R7)</li>
+</ul></li>
+<li>Fish nodes (metaweb 1), for each species (i = 1,2,3, …, 9):
+<ul>
+<li>9 size classes (j = 1,2,3, …, 9)</li>
+<li>Size classes attributed by size quantile distribution</li>
+<li>Total: <span class="math inline">\(F_{ij} = {F11,...}\)</span></li>
+</ul></li>
+<li>Fish nodes (metaweb 2), for each species (i = 1,2,3, …, 9):
+<ul>
+<li><span class="math inline">\(F_{ij} = {F11, F21, F31, ...}\)</span> (j is constant)</li>
+</ul></li>
+</ul>
+</div>
+<div id="defining-links" class="section level5">
+<h5>Defining links</h5>
+<p>Based on literature <span class="citation">(Bonnafé, Legendre, and Edeline, n.d.)</span>.</p>
+<ul>
+<li>Resource - Resource:
+<ul>
+<li>Biofilm and Detritus do not feed on other nodes</li>
+<li>phytoplankton, phytobenthos, and macrophytes -&gt; detritus</li>
+<li>zooplankton -&gt; phytoplankton and itself</li>
+<li>Zoobenthos -&gt; all Resource nodes (including itself)</li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1>References</h1>
+<div id="refs" class="references">
+<div id="ref-berdugo_plant_2017">
+<p>Berdugo, Miguel, Sonia Kéfi, Santiago Soliveres, and Fernando T. Maestre. 2017. “Plant Spatial Patterns Identify Alternative Ecosystem Multifunctionality States in Global Drylands.” <em>Nature Ecology &amp; Evolution</em> 1 (January): 0003. <a href="https://doi.org/10.1038/s41559-016-0003" class="uri">https://doi.org/10.1038/s41559-016-0003</a>.</p>
+</div>
+<div id="ref-bonnafe_trophic_nodate">
+<p>Bonnafé, Willem, Stéphane Legendre, and Érice Edeline. n.d. “Trophic Network Topology Along Thermal Gradient Highlights Antagonistic Individual- and Species-Level Response to Temperature.”</p>
+</div>
+<div id="ref-donohue_navigating_2016">
+<p>Donohue, Ian, Helmut Hillebrand, José M Montoya, Owen L Petchey, Stuart L Pimm, Mike S Fowler, Kevin Healy, et al. 2016. “Navigating the Complexity of Ecological Stability.” <em>Ecology Letters</em> 19 (9): 1172–85.</p>
+</div>
+<div id="ref-edeline_ecological_2013">
+<p>Edeline, Eric, Gérard Lacroix, Christine Delire, Nicolas Poulet, and Stéphane Legendre. 2013. “Ecological Emergence of Thermal Clines in Body Size.” <em>Global Change Biology</em> 19 (10): 3062–8. <a href="https://doi.org/10.1111/gcb.12299" class="uri">https://doi.org/10.1111/gcb.12299</a>.</p>
+</div>
+<div id="ref-olivier_independent_nodate">
+<p>Olivier, Théophile, Élisa Thébault, Marianne Elias, Benoit Fontaine, and Colin Fontaine. n.d. “Independent Effects of Habitat Degradation and Diversity Loss on Local Community Stability.”</p>
+</div>
+<div id="ref-tilman_biodiversity_2014">
+<p>Tilman, David, Forest Isbell, and Jane M. Cowles. 2014. “Biodiversity and Ecosystem Functioning.” <em>Annual Review of Ecology, Evolution, and Systematics</em> 45 (1): 471–93. <a href="https://doi.org/10.1146/annurev-ecolsys-120213-091917" class="uri">https://doi.org/10.1146/annurev-ecolsys-120213-091917</a>.</p>
+</div>
+</div>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
