@@ -3,6 +3,7 @@ title: "Introduction - Description of previous work"
 author: "Alain Danet"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
+bibliography: references.bib
 vignette: >
   %\VignetteIndexEntry{Introduction}
   %\VignetteEngine{knitr::rmarkdown}
@@ -16,10 +17,54 @@ knitr::opts_chunk$set(
 )
 ```
 
-The goal of this document is to describe the work that has been done previously
-by Edeline et al. (2013) and Bonnafé, Le Gendre and Edeline (in prep.).
+## Temporal stability and diversity 
 
-## Data information
+### The big questions
+
+- What are the effects of global changes on community stability? 
+  - What are the underlying mechanisms of the response of community stability to
+    global changes?
+  - Which facets of stability are affected by global changes?
+
+- Are species role constant in time ? (e.g. keystone ?)
+
+
+### Reading notes 
+
+- A lot of studies assume that the community stability facing global changes is
+  driven by richness and its effects on population asynchrony, but other suggest
+  that there are **independant effects of forcing** and **richness** on community
+  stability [@olivier_independent_nodate]. 
+    - @olivier_independent_nodate suggest that effect of global changes on
+      abundance can drive community stability (without effect on species
+      richness)
+    - Asynchrony is due to difference in response to forcing variables and/or
+      changement of competitive hierarchy?
+- Most research on the subject (link forcing, stability and species richness) has been done in controlled experiment (plant,
+  mesocosm?)
+    - Few test in local natural population
+    - Cedar Creek's experiments [@tilman_biodiversity_2014]
+- Ecology of perturbation is missing: notably its effects on abundance ?
+  [@olivier_independent_nodate]
+
+- The facets of stability [@donohue_navigating_2016]:
+  - Variability: temporal or spatial Variability
+    - Measurement: CV
+  - Resistance: community structure change induced by a perturbation
+    - Measurement: ratio of the variable value before and after perturbation
+  - Persistance: time length, the community stays in the same state
+    - Measurement: time until a change appear after invasion of a species or a
+      loss a species 
+  - Tipping point: permanent change of system state
+    - Measurement: bimodality for same environmental variable [@berdugo_plant_2017;blonder_predictability_2017]
+  - Resilience: multi-dimensional notion. Capaticity of the system to keep the
+    same relationship between population and state variables
+    - Measurement:
+
+## Fish Data information
+
+The goal of this part is to describe the work that has been done previously
+by @edeline_ecological_2013 and Bonnafé, Le Gendre and Edeline (in prep.).
 
 Those informations were extracted from the two studies previously cited  
 
@@ -56,3 +101,66 @@ Cover data)
   - air temperature that preceded each sampling operation as a proxy for
     river water temperature.
 
+### Network construction [@bonnafe_trophic_nodate]
+
+From literature, @bonnafe_trophic_nodate had rebuilding the global trophic
+network (also called the "metaweb"). From the local cooccurence data, they built
+the local trophic network.
+
+- Node types:
+  - Fish 
+  - Resources
+- Three types of interaction:
+  - Fish-Fish  
+  - Fish-Resources  
+  - Resources-Resources  
+
+#### Metaweb
+
+The metaweb is a virtual web containing all the nodes of the dataset and links
+between them as if they would cooccur all together.
+
+- Components:
+  1. A set of Nodes (N): Fish (F) and Resources (R)
+  2. An interaction matrix (L)
+
+- Two different metawebs:
+  1. Fish nodes defined as 9 size class by species ($9\times50=450$)
+  2. Fish nodes defined as 1 by species $50$)
+
+Comparing the two metawebs permit to disentangle network answer in terms of
+population size structure (2) from species composition (1).
+
+
+##### Defining nodes
+
+@bonnafe_trophic_nodate have looked for fish diet and ontogenic food diet in
+literature. 
+
+- Seven Resource nodes:
+  - Detritus (R1)
+  - Biofilm (R2)
+  - Phytobenthos (R3)
+  - Macrophyte (R4)
+  - Phytoplankton (R5)
+  - Zooplankton (R6)
+  - Zoobenthos (R7)
+
+- Fish nodes (metaweb 1), for each species (i = 1,2,3, ..., 9):
+  - 9 size classes (j = 1,2,3, ..., 9)
+  - Size classes attributed by size quantile distribution 
+  - Total: $F_{ij} = {F11,...}$
+- Fish nodes (metaweb 2), for each species (i = 1,2,3, ..., 9):
+  - $F_{ij} = {F11, F21, F31, ...}$ (j is constant)
+
+##### Defining links
+
+Based on literature [@bonnafe_trophic_nodate].
+
+- Resource - Resource:
+  - Biofilm and Detritus do not feed on other nodes
+  - phytoplankton, phytobenthos, and macrophytes -> detritus
+  - zooplankton -> phytoplankton and itself 
+  - Zoobenthos -> all Resource nodes (including itself)
+
+# References

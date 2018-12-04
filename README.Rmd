@@ -16,12 +16,13 @@ knitr::opts_chunk$set(
 
 # fishcom
 
-The goal of fishcom is to ...
+The goal of fishcom is to get all the informations concerning the ECOSTAB postdoc
+project in one place including reproducible code, notes, eventually data and
+manuscript.
 
-## Example
+## How to 
 
-This is a basic example which shows you how to solve a common problem:
+My notes are available in the introductory vignette
+[intro.html](https://github.com/alaindanet/fishcom/blob/master/vignettes/intro.html)
 
-```{r example}
-## basic example code
-```
+
