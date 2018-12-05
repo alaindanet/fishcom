@@ -17,6 +17,14 @@ knitr::opts_chunk$set(
 )
 ```
 
+## Post-doc objectives
+
+According to the postdoc advertisement:
+
+1. Characterize the temporal stability of the studied communities
+2. Disentangle the drivers of stability and to understand how trophic and
+   community structures influence stability
+
 ## Temporal stability and diversity 
 
 ### The big questions
@@ -47,24 +55,24 @@ knitr::opts_chunk$set(
 - Ecology of perturbation is missing: notably its effects on abundance ?
   [@olivier_independent_nodate]
 
-- The facets of stability [@donohue_navigating_2016]:
-  - Variability: temporal or spatial Variability
+- **Facets of stability** [@donohue_navigating_2016]:
+  - **Variability**: temporal or spatial Variability
     - Measurement: CV
-  - Resistance: community structure change induced by a perturbation
+  - **Resistance**: community structure change induced by a perturbation
     - Measurement: ratio of the variable value before and after perturbation
-  - Persistance: time length, the community stays in the same state
+  - **Persistance**: time length, the community stays in the same state
     - Measurement: time until a change appear after invasion of a species or a
       loss a species 
-  - Tipping point: permanent change of system state
-    - Measurement: bimodality for same environmental variable [@berdugo_plant_2017;blonder_predictability_2017]
-  - Resilience: multi-dimensional notion. Capaticity of the system to keep the
+  - **Tipping point**: permanent change of system state
+    - Measurement: bimodality for same environmental variable [@berdugo_plant_2017;@blonder_predictability_2017]
+  - **Resilience**: multi-dimensional notion. Capacity of the system to keep the
     same relationship between population and state variables
     - Measurement:
 
 ## Fish Data information
 
 The goal of this part is to describe the work that has been done previously
-by @edeline_ecological_2013 and Bonnafé, Le Gendre and Edeline (in prep.).
+by @edeline_ecological_2013 and @bonnafe_trophic_nodate.
 
 Those informations were extracted from the two studies previously cited  
 
@@ -162,5 +170,31 @@ Based on literature [@bonnafe_trophic_nodate].
   - phytoplankton, phytobenthos, and macrophytes -> detritus
   - zooplankton -> phytoplankton and itself 
   - Zoobenthos -> all Resource nodes (including itself)
+
+- Resource - Fish:
+  - Diet of each species and ontogenic shifts known by literature
+  - Size of diet shift known for 22/50 species
+    - Infered for the other species according stomach content records in literature
+
+- Fish - Fish, for each species:
+  1. occurrence of piscivory 
+  2. ontogenic shift to piscivory
+  3. derivation of a predation window
+
+- The predation window model:
+  - Predator and prey body size: $B_P$ and $B_N$
+  - $\alpha \leqslant \frac{B_N}{B_P} \leqslant \beta$
+  - $\alpha$ and $\beta$ define respectively the lower and upper range of the
+    predation window
+  1. The midpoint of the predator size class ($B_{P_{j,mid}}$) is projected on the predation
+     window. 
+     - It gives the $B_{N,min; P_{j,mid}}$ and $B_{N,max; P_{j,mid}}$ for the predator midclass 
+     - $B_{N,min; P_{j,mid}} = \alpha B_{P_{j,mid}}$  **Not sure** 
+     - $B_{N,max; P_{j,mid}} = \beta B_{P_{j,mid}}$  **Not sure**
+  2. A trophic link between the predator ($B_{P_{j}}$) and the prey size class
+     ($B_{N_{j}}$) is drawn if $B_{N,min; P_{j,mid}} \leqslant B_{N_{j,mid}}
+     \leqslant B_{N,max; P_{j,mid}}$. 
+     - IOW, if the mid of the prey size class fall in the predator window
+
 
 # References

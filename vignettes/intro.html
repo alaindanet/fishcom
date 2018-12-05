@@ -12,7 +12,7 @@
 
 <meta name="author" content="Alain Danet" />
 
-<meta name="date" content="2018-12-04" />
+<meta name="date" content="2018-12-05" />
 
 <title>Introduction - Description of previous work</title>
 
@@ -214,10 +214,16 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 <h1 class="title toc-ignore">Introduction - Description of previous work</h1>
 <h4 class="author"><em>Alain Danet</em></h4>
-<h4 class="date"><em>2018-12-04</em></h4>
+<h4 class="date"><em>2018-12-05</em></h4>
 
 
 
+<p>## Post-doc objectives</p>
+<p>According to the postdoc advertisement:</p>
+<ol style="list-style-type: decimal">
+<li>Characterize the temporal stability of the studied communities</li>
+<li>Disentangle the drivers of stability and to understand how trophic and community structures influence stability</li>
+</ol>
 <div id="temporal-stability-and-diversity" class="section level2">
 <h2>Temporal stability and diversity </h2>
 <div id="the-big-questions" class="section level3">
@@ -245,25 +251,25 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <li>Cedar Creek’s experiments <span class="citation">(Tilman, Isbell, and Cowles 2014)</span></li>
 </ul></li>
 <li><p>Ecology of perturbation is missing: notably its effects on abundance ? <span class="citation">(Olivier et al., n.d.)</span></p></li>
-<li>The facets of stability <span class="citation">(Donohue et al. 2016)</span>:
+<li><strong>Facets of stability</strong> <span class="citation">(Donohue et al. 2016)</span>:
 <ul>
-<li>Variability: temporal or spatial Variability
+<li><strong>Variability</strong>: temporal or spatial Variability
 <ul>
 <li>Measurement: CV</li>
 </ul></li>
-<li>Resistance: community structure change induced by a perturbation
+<li><strong>Resistance</strong>: community structure change induced by a perturbation
 <ul>
 <li>Measurement: ratio of the variable value before and after perturbation</li>
 </ul></li>
-<li>Persistance: time length, the community stays in the same state
+<li><strong>Persistance</strong>: time length, the community stays in the same state
 <ul>
 <li>Measurement: time until a change appear after invasion of a species or a loss a species</li>
 </ul></li>
-<li>Tipping point: permanent change of system state
+<li><strong>Tipping point</strong>: permanent change of system state
 <ul>
-<li>Measurement: bimodality for same environmental variable [<span class="citation">Berdugo et al. (2017)</span>;blonder_predictability_2017]</li>
+<li>Measurement: bimodality for same environmental variable <span class="citation">(Berdugo et al. 2017; Blonder et al. 2017)</span></li>
 </ul></li>
-<li>Resilience: multi-dimensional notion. Capaticity of the system to keep the same relationship between population and state variables
+<li><strong>Resilience</strong>: multi-dimensional notion. Capaticity of the system to keep the same relationship between population and state variables
 <ul>
 <li>Measurement:</li>
 </ul></li>
@@ -273,7 +279,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 </div>
 <div id="fish-data-information" class="section level2">
 <h2>Fish Data information</h2>
-<p>The goal of this part is to describe the work that has been done previously by <span class="citation">Edeline et al. (2013)</span> and Bonnafé, Le Gendre and Edeline (in prep.).</p>
+<p>The goal of this part is to describe the work that has been done previously by <span class="citation">Edeline et al. (2013)</span> and <span class="citation">Bonnafé, Legendre, and Edeline (n.d.)</span>.</p>
 <p>Those informations were extracted from the two studies previously cited</p>
 <ul>
 <li>4,145,234 individual body size measurements of fish</li>
@@ -386,6 +392,38 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <li>zooplankton -&gt; phytoplankton and itself</li>
 <li>Zoobenthos -&gt; all Resource nodes (including itself)</li>
 </ul></li>
+<li>Resource - Fish:
+<ul>
+<li>Diet of each species and ontogenic shifts known by literature</li>
+<li>Size of diet shift known for 22/50 species
+<ul>
+<li>Infered for the other species according stomach content records in literature</li>
+</ul></li>
+</ul></li>
+<li>Fish - Fish, for each species:
+<ol style="list-style-type: decimal">
+<li>occurrence of piscivory</li>
+<li>ontogenic shift to piscivory</li>
+<li>derivation of a predation window</li>
+</ol></li>
+<li>The predation window model:
+<ul>
+<li>Predator and prey body size: <span class="math inline">\(B_P\)</span> and <span class="math inline">\(B_N\)</span></li>
+<li><span class="math inline">\(\alpha \leqslant \frac{B_N}{B_P} \leqslant \beta\)</span></li>
+<li><span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\beta\)</span> define respectively the lower and upper range of the predation window</li>
+</ul>
+<ol style="list-style-type: decimal">
+<li>The midpoint of the predator size class (<span class="math inline">\(B_{P_{j,mid}}\)</span>) is projected on the predation window.
+<ul>
+<li>It gives the <span class="math inline">\(B_{N,min; P_{j,mid}}\)</span> and <span class="math inline">\(B_{N,max; P_{j,mid}}\)</span> for the predator midclass</li>
+<li><span class="math inline">\(B_{N,min; P_{j,mid}} = \alpha B_{P_{j,mid}}\)</span> <strong>Not sure</strong></li>
+<li><span class="math inline">\(B_{N,max; P_{j,mid}} = \beta B_{P_{j,mid}}\)</span> <strong>Not sure</strong></li>
+</ul></li>
+<li>A trophic link between the predator (<span class="math inline">\(B_{P_{j}}\)</span>) and the prey size class (<span class="math inline">\(B_{N_{j}}\)</span>) is drawn if <span class="math inline">\(B_{N,min; P_{j,mid}} \leqslant B_{N_{j,mid}} \leqslant B_{N,max; P_{j,mid}}\)</span>.
+<ul>
+<li>IOW, if the mid of the prey size class fall in the predator window</li>
+</ul></li>
+</ol></li>
 </ul>
 </div>
 </div>
@@ -396,6 +434,9 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <div id="refs" class="references">
 <div id="ref-berdugo_plant_2017">
 <p>Berdugo, Miguel, Sonia Kéfi, Santiago Soliveres, and Fernando T. Maestre. 2017. “Plant Spatial Patterns Identify Alternative Ecosystem Multifunctionality States in Global Drylands.” <em>Nature Ecology &amp; Evolution</em> 1 (January): 0003. <a href="https://doi.org/10.1038/s41559-016-0003" class="uri">https://doi.org/10.1038/s41559-016-0003</a>.</p>
+</div>
+<div id="ref-blonder_predictability_2017">
+<p>Blonder, Benjamin, Derek E. Moulton, Jessica Blois, Brian J. Enquist, Bente J. Graae, Marc Macias-Fauria, Brian McGill, et al. 2017. “Predictability in Community Dynamics.” Edited by David Storch. <em>Ecology Letters</em>, February. <a href="https://doi.org/10.1111/ele.12736" class="uri">https://doi.org/10.1111/ele.12736</a>.</p>
 </div>
 <div id="ref-bonnafe_trophic_nodate">
 <p>Bonnafé, Willem, Stéphane Legendre, and Érice Edeline. n.d. “Trophic Network Topology Along Thermal Gradient Highlights Antagonistic Individual- and Species-Level Response to Temperature.”</p>

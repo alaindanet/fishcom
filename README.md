@@ -2,6 +2,9 @@
 fishcom
 =======
 
+[![Build
+Status](https://travis-ci.org/alaindanet/fishcom.svg?branch=master)](https://travis-ci.org/alaindanet/fishcom)
+
 The goal of fishcom is to get all the informations concerning the
 ECOSTAB postdoc project in one place including reproducible code, notes,
 eventually data and manuscript.
