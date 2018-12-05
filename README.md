@@ -12,7 +12,7 @@ eventually data and manuscripts.
 How to
 ------
 
-\#\#\# Get the repository
+### Get the repository
 
 You can clone the repository with [git](https://git-scm.com/) by pasting
 in your terminal:
