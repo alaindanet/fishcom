@@ -27,7 +27,138 @@ cd ../bonnafe_work
 tree -d -L 2
 ```
 
-### Analysis
+
+## Data
+
+### data_raw: Fishing operation dataset
+
+Generation of the **cleaned** fishing operation data
+
+- Script: `cleanData.r` 
+- Data: `NEW_DATA.txt` 
+- Output: `../bonnafe_work/data/raw_data/data_clean.txt`
+  - **THE FILE**, really big
+  - Variables: 
+    - `OPCOD`
+    - `Station`
+    - `Species`
+    - `Length`
+    - `Linf`
+    - `Pisc`
+    - `Month`
+    - `Year`
+    - `Method`
+    - `Strategy`
+    - `Nbpass`
+    - `Width`
+    - `Surf`
+    - `moTempMF1`
+    - `TempMF2`
+    - `SumMF1`
+    - `SumMF2`
+    - `Bassin`
+    - `Alt`
+    - `Slope`
+    - `Distsource`
+    - `SurfBV`
+    - `Count`
+    - `Nb.species`
+    - `Weight`
+
+### bib_data: Build the metaweb 
+
+Build the interaction matrices for F-F, F-R and R-R, merged in `AccMat_*.csv` 
+
+- Script: `../bonnafe_work/data/bib_data/AccMat_v0.r`
+  - Could be easily factorize (I guess) 
+- data:
+  - Fish-Fish: parameters of the predation windows `../bonnafe_work/data/bib_data/F-F.csv`
+    - Visualisation: `../bonnafe_work/data/bib_data/F-F.pdf`
+    - Variables:
+      - `species code`
+      - `par_1_min`, max and mean: probably $\alpha= 0.03$
+      - `par_2_min`, max and mean: probably $\beta$
+  - Ontogenic Diet shift: 
+    - Fish: `../bonnafe_work/data/bib_data/ODSF.csv`
+    - Variables: 
+      - `stage`: ontogenic stage
+      - `size` min and max: size range for a given life stage 
+      - `light`
+      - All the resources: from R1 to R7  
+      - `fish`: piscivory
+    - Resources: `../bonnafe_work/data/bib_data/ODSR.csv`
+      - Variables: same as Fish diet data
+  - `../bonnafe_work/data/bib_data/size_quantiles.csv`
+- output: interaction matrices: `../bonnafe_work/data/bib_data/output/AccMat_*.csv`
+  - file pattern: `AccMat_<criteria for class separation>_<number of classes>_<predation window (intraspe var or cst)>`
+  - File used for the paper:  `AccMat_quant_9_PWvar_partOverlap.csv` **Not sure about the partOverlap but *I guess* it is necessary when you use midpoint of the size class**
+
+- Two types of methods:
+  1. With ontogenic stage: 1 class by ontogenic stage
+  2. With size class (quantile or percentile methods): 1 class by nth quantile (depends on
+     the number of class defined)
+     - 15 ways to do it:
+       - midpoint or range (with overlap or no overlap)?  
+         - Overlap: when the biggest prey that can eat a predator is bigger
+           than the smallest predator of the size class  
+         - No overlap: The prey size class range is determine by the smallest
+           predator: `minPredatorSize` L944-946 
+       -predation window: constant or not (= same $\beta$ because $\alpha$ is
+       always constant)
+       - different numbers of size classes
+- `piscivoryIndex` = {0,.5,1}; strength of the feeding interaction
+- Determine Fish - Resources interaction:
+  - If Ontogenic Feeding Stage min or max is in or around
+    ]minPredatorSize,maxPredatorSize] predator size 
+  - `fr_matrix`: L274
+
+### network_data: Build local network and compute indices on them 
+
+1. Extract local networks given:
+  - Cumulated Trophic Network: `../bonnafe_work/data/bib_data/output/AccMat_*.csv` (See above)
+  - Fishing data: `../bonnafe_work/data/raw_data/data_clean.txt`
+  - Script: `../bonnafe_work/data/network_data/networks_v2.r`
+    1. Assign each individual to a size class/species
+    2. Do it for each fishing operation
+    - Same as: `../bonnafe_work/data/network_data/networks_vBiomass.r`
+  - Output: `../bonnafe_work/data/network_data/densityTable_*.csv`
+
+2. Extract topology of local networks
+  - Script: `../bonnafe_work/data/network_data/extractTNT.r`
+    1. Compute degree, # of top and basal nodes: `n_w()`
+    2. Trophic Level (TL) for each species: `getTL()`
+  - Output: `../bonnafe_work/data/network_data/TNT_quant_*.txt`
+3. Link TL & Biomass:
+  - Script: `../bonnafe_work/data/network_data/getBTL.r`
+  - Data: `densityTable_*.csv` and `TNT_*.txt` (see above for details)
+  - Output: `../bonnafe_work/data/network_data/BTL_*.csv`
+
+4. Network program: written in cpp
+   - no idea about its role
+
+### meta_data: join biomass, network indices and station datas
+
+- What:
+  - Get in the same file:
+    - Biomass data: `../bonnafe_work/data/network_data/BTL_*.csv` 
+    - Network topology indices: `../bonnafe_work/data/network_data/export_*.txt` 
+    - Fishing operation data: `../bonnafe_work/data/raw_data/data_clean.txt`
+- Script: `../bonnafe_work/data/meta_data/compileData_biomass.r`
+- Output:
+  `../bonnafe_work/data/meta_data/BiomassMetaData_quant_*.csv`
+
+## Databases
+
+- It contains databases used to build nodes and interaction links:
+  - Aquaweb
+  - Fishbase
+  - Litterature 
+
+I am not sure of how those database has been used. Apparently, there is one
+folder for each species, containing a prey list. 
+
+
+## Analysis
 
 Contains analysis of the effect of temperature on the topology of the trophic
 network on `TL`, `S`, `L.S.2`, `TLmax`, `Omni` and `BT_cor`.
@@ -48,70 +179,15 @@ network on `TL`, `S`, `L.S.2`, `TLmax`, `Omni` and `BT_cor`.
 - Data: `../bonnafe_work/data/meta_data/`
   - data for different trophic networks
 
-## Data
+# Notes 
 
-### bib_data 
+## Predation window
 
-- Build cumulated trophic network ?
-  - Script: `../bonnafe_work/data/bib_data/AccMat_v0.r`
-    - Could be easily factorize (I guess) 
-  - data:
-    - Fish-Fish: parameters of the predation windows `../bonnafe_work/data/bib_data/F-F.csv`
-      - Visualisation: `../bonnafe_work/data/bib_data/F-F.pdf`
-      - Variables:
-	- `species code`
-	- `par_1_min`, max and mean: probably $\alpha= 0.03$
-	- `par_2_min`, max and mean: probably $\beta$
-    - Ontogenic Diet shift: 
-      - Fish: `../bonnafe_work/data/bib_data/ODSF.csv`
-      - Variables: 
-	- `stage`: ontogenic stage
-	- `size` min and max: size range for a given life stage 
-	- `light`
-	- All the resources: from R1 to R7  
-	- `fish`: piscivory
-      - Resources: `../bonnafe_work/data/bib_data/ODSR.csv`
-	- Variables: same as Fish diet data
-    - `../bonnafe_work/data/raw_data/data_clean.txt`
-      - **THE FILE**, really big
-      - Variables: 
-	- `OPCOD`
-	- `Station`
-	- `Species`
-	- `Length`
-	- `Linf`
-	- `Pisc`
-	- `Month`
-	- `Year`
-	- `Method`
-	- `Strategy`
-	- `Nbpass`
-	- `Width`
-	- `Surf`
-	- `moTempMF1`
-	- `TempMF2`
-	- `SumMF1`
-	- `SumMF2`
-	- `Bassin`
-	- `Alt`
-	- `Slope`
-	- `Distsource`
-	- `SurfBV`
-	- `Count`
-	- `Nb.species`
-	- `Weight`
-    - `../bonnafe_work/data/bib_data/size_quantiles.csv`
-  - What ? I think that the goal is to determine the predation window for each class of each species
-  - Two types of methods:
-    1. With ontogenic stage: 1 class by ontogenic stage
-    2. With size class (quantile methods): 1 class by nth quantile (depends on
-       the number of class defined)
-       - 15 ways to do it:
-	 - midpoint or range (with overlap or no overlap)?  
-	 -predation window: constant or not (= same $\beta$ because $\alpha$ is
-	 always constant)
-	 - different numbers of size classes
-	 - To be continued...
+The midpoint method retained by @bonnafe_trophic_nodate has one caveat is that
+you can have a predator eating a prey bigger than it. @bonnafe_trophic_nodate
+showed it in the code and tried to avoid those overlap with other methods than
+the midpoint.
 
+Why did they keep the midpoint instead of the others ?
 
 # References
