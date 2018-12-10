@@ -27,7 +27,6 @@ cd ../bonnafe_work
 tree -d -L 2
 ```
 
-
 ## Data
 
 ### data_raw: Fishing operation dataset

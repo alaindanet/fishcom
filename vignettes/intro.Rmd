@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Post-doc objectives
+# Post-doc objectives
 
 According to the postdoc advertisement:
 
@@ -25,9 +25,28 @@ According to the postdoc advertisement:
 2. Disentangle the drivers of stability and to understand how trophic and
    community structures influence stability
 
-## Temporal stability and diversity 
+## Priority
 
-### The big questions
+1. Obtain networks and indicators
+2. Pulses identification (ex. extreme summer of 2003) 
+3. Traits and phylogeny
+
+## Immediate objectives (end of December)
+
+- [ ] Re-run willem analysis
+  - [ ] Function structure:
+    - cleaning:
+    - network build:
+    - network methods:
+    - network indices:
+    - network indices:
+- [ ] Assess quality of the dataset:
+  - Which community are best followed in time ? Where are they ?
+- [ ] Assess availability of environmental data
+
+# Temporal stability and diversity 
+
+## The big questions
 
 - What are the effects of global changes on community stability? 
   - What are the underlying mechanisms of the response of community stability to
@@ -37,7 +56,7 @@ According to the postdoc advertisement:
 - Are species role constant in time ? (e.g. keystone ?)
 
 
-### Reading notes 
+## Reading notes 
 
 - A lot of studies assume that the community stability facing global changes is
   driven by richness and its effects on population asynchrony, but other suggest
