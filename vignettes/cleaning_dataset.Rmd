@@ -1,0 +1,53 @@
+---
+title: "Clean datasets"
+author: "Alain Danet"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Clean datasets}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r library, echo = FALSE}
+library(tidyverse)
+```
+
+
+```{r work_on a sample dataset, eval = FALSE}
+fish_op <- read_tsv("../bonnafe_work/data/raw_data/NEW_DATA.txt")
+head(fish_op)
+fish_test <- sample_n(fish_op, 1000); rm(fish_op) 
+write_csv(fishing_test, path = "../data-raw/fishing_operation_test.csv")
+
+```
+
+```{r load dataset}
+## Sample dataset
+fish_op <- read_csv("../data-raw/fishing_operation_test.csv")
+```
+
+
+## Get variable names more user friendly 
+
+```{r change_variable}
+colnames(fish_op) <- str_to_lower(colnames(fish_op))
+fish_op %>%
+  tibble::rowid_to_column() %>% # to escape duplicate rows problem: https://github.com/tidyverse/tidyr/issues/426
+  gather(var_to_convert, values, method, strategy, bassin) %>% 
+  mutate(values = str_replace_all(values, " ", "_")) %>%
+  spread(var_to_convert, values)
+```
+
+## Remove migratory species
+
+```{r}
+```
+
