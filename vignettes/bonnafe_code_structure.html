@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Alain Danet" />
+
+<meta name="date" content="2018-12-11" />
+
+<title>Review of Bonnafe code</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#header {
+text-align: center;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Review of Bonnafe code</h1>
+<h4 class="author"><em>Alain Danet</em></h4>
+<h4 class="date"><em>2018-12-11</em></h4>
+
+
+
+<p>The objective of this vignette is to understand the code written by <span class="citation">Bonnafé, Legendre, and Edeline (n.d.)</span>.</p>
+<div id="overall-structure" class="section level2">
+<h2>Overall structure</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="bu">cd</span> ../bonnafe_work</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="ex">tree</span> -d -L 2</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="co">#&gt; .</span></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4"><span class="co">#&gt; ├── analysis</span></a>
+<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="co">#&gt; │   └── Temp_TNT</span></a>
+<a class="sourceLine" id="cb1-6" data-line-number="6"><span class="co">#&gt; ├── data</span></a>
+<a class="sourceLine" id="cb1-7" data-line-number="7"><span class="co">#&gt; │   ├── bib_data</span></a>
+<a class="sourceLine" id="cb1-8" data-line-number="8"><span class="co">#&gt; │   ├── meta_data</span></a>
+<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="co">#&gt; │   ├── network_data</span></a>
+<a class="sourceLine" id="cb1-10" data-line-number="10"><span class="co">#&gt; │   └── raw_data</span></a>
+<a class="sourceLine" id="cb1-11" data-line-number="11"><span class="co">#&gt; ├── databases</span></a>
+<a class="sourceLine" id="cb1-12" data-line-number="12"><span class="co">#&gt; │   ├── aquaweb</span></a>
+<a class="sourceLine" id="cb1-13" data-line-number="13"><span class="co">#&gt; │   ├── fishbase</span></a>
+<a class="sourceLine" id="cb1-14" data-line-number="14"><span class="co">#&gt; │   └── litterature</span></a>
+<a class="sourceLine" id="cb1-15" data-line-number="15"><span class="co">#&gt; └── functions</span></a>
+<a class="sourceLine" id="cb1-16" data-line-number="16"><span class="co">#&gt;     ├── epidemio</span></a>
+<a class="sourceLine" id="cb1-17" data-line-number="17"><span class="co">#&gt;     ├── general</span></a>
+<a class="sourceLine" id="cb1-18" data-line-number="18"><span class="co">#&gt;     ├── graphics</span></a>
+<a class="sourceLine" id="cb1-19" data-line-number="19"><span class="co">#&gt;     ├── math</span></a>
+<a class="sourceLine" id="cb1-20" data-line-number="20"><span class="co">#&gt;     ├── statistics</span></a>
+<a class="sourceLine" id="cb1-21" data-line-number="21"><span class="co">#&gt;     └── winbugs</span></a>
+<a class="sourceLine" id="cb1-22" data-line-number="22"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb1-23" data-line-number="23"><span class="co">#&gt; 18 directories</span></a></code></pre></div>
+</div>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<div id="data_raw-fishing-operation-dataset" class="section level3">
+<h3>data_raw: Fishing operation dataset</h3>
+<p>Generation of the <strong>cleaned</strong> fishing operation data</p>
+<ul>
+<li>Script: <code>cleanData.r</code></li>
+<li>Data: <code>NEW_DATA.txt</code></li>
+<li>Output: <code>../bonnafe_work/data/raw_data/data_clean.txt</code>
+<ul>
+<li><strong>THE FILE</strong>, really big</li>
+<li>Variables:</li>
+</ul></li>
+</ul>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1">columns_meaning &lt;-<span class="st"> </span><span class="kw">read_delim</span>(<span class="st">&quot;../bonnafe_work/data/raw_data/Codes_colonne.txt&quot;</span>,</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">  <span class="dt">delim =</span> <span class="st">&quot;:&quot;</span>, <span class="dt">locale =</span> <span class="kw">locale</span>(<span class="st">&quot;fr&quot;</span>), <span class="dt">trim_ws =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"><span class="co">#&gt; Parsed with column specification:</span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4"><span class="co">#&gt; cols(</span></a>
+<a class="sourceLine" id="cb2-5" data-line-number="5"><span class="co">#&gt;   var_name = col_character(),</span></a>
+<a class="sourceLine" id="cb2-6" data-line-number="6"><span class="co">#&gt;   meaning = col_character()</span></a>
+<a class="sourceLine" id="cb2-7" data-line-number="7"><span class="co">#&gt; )</span></a>
+<a class="sourceLine" id="cb2-8" data-line-number="8"><span class="kw">kable</span>(columns_meaning)</a></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">var_name</th>
+<th align="left">meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">OPCOD</td>
+<td align="left">code de l’opération de pêche.</td>
+</tr>
+<tr class="even">
+<td align="left">Station</td>
+<td align="left">code du site de pêche.</td>
+</tr>
+<tr class="odd">
+<td align="left">Species</td>
+<td align="left">espèce de poisson.</td>
+</tr>
+<tr class="even">
+<td align="left">Length</td>
+<td align="left">longueur de l’individu.</td>
+</tr>
+<tr class="odd">
+<td align="left">Linf</td>
+<td align="left">longueur asymptotique de l’espèce dans fishbase.</td>
+</tr>
+<tr class="even">
+<td align="left">Pisc</td>
+<td align="left">indice de piscivorie à partir d’infis fishbase (0 = non piscivore, 0.5 = piscivore occasionnel, 1 = piscivore).</td>
+</tr>
+<tr class="odd">
+<td align="left">Month</td>
+<td align="left">Mois de l’OPCOD.</td>
+</tr>
+<tr class="even">
+<td align="left">Year</td>
+<td align="left">Année de l’OPCOD.</td>
+</tr>
+<tr class="odd">
+<td align="left">Nbpass</td>
+<td align="left">nombre de passages lors de l’opération de pêche.</td>
+</tr>
+<tr class="even">
+<td align="left">Width</td>
+<td align="left">largeur de la rivière sur le site.</td>
+</tr>
+<tr class="odd">
+<td align="left">Surf</td>
+<td align="left">surface échantillonnée,</td>
+</tr>
+<tr class="even">
+<td align="left">mo</td>
+<td align="left">nombre de mois entre Mai 1978 (première date) et le mois de l’OPCOD.</td>
+</tr>
+<tr class="odd">
+<td align="left">TempMF1</td>
+<td align="left">température météo France moyenne durant l’année précédant l’OPCOD, calculée à partir des moyennes mensuelles.</td>
+</tr>
+<tr class="even">
+<td align="left">TempMF2</td>
+<td align="left">température météo France moyenne durant les 2 années précédant l’OPCOD, calculée à partir des moyennes mensuelles.</td>
+</tr>
+<tr class="odd">
+<td align="left">SumMF1</td>
+<td align="left">Somme des températures mensuelles durant l’année précédant l’OPCOD.</td>
+</tr>
+<tr class="even">
+<td align="left">SumMF2</td>
+<td align="left">Somme des températures mensuelles durant les deux années précédant l’OPCOD.</td>
+</tr>
+<tr class="odd">
+<td align="left">Alt</td>
+<td align="left">altitude du site.</td>
+</tr>
+<tr class="even">
+<td align="left">Slope</td>
+<td align="left">pente de la rivière sur le site.</td>
+</tr>
+<tr class="odd">
+<td align="left">Distsource</td>
+<td align="left">distance à la source en km.</td>
+</tr>
+<tr class="even">
+<td align="left">SurfBV</td>
+<td align="left">furface du bassin versant.</td>
+</tr>
+<tr class="odd">
+<td align="left">Count</td>
+<td align="left">nb d’individus de cette espèce capturés pendant cet OPCOD.</td>
+</tr>
+<tr class="even">
+<td align="left">Nbspecies</td>
+<td align="left">nb d’individus de cette espèce capturés pendant cet OPCOD.</td>
+</tr>
+<tr class="odd">
+<td align="left">Bassin</td>
+<td align="left">bassin hydrographique.</td>
+</tr>
+<tr class="even">
+<td align="left">Method</td>
+<td align="left">méthode de pêche.</td>
+</tr>
+<tr class="odd">
+<td align="left">Strategy</td>
+<td align="left">stratégie d’échantillonnage.</td>
+</tr>
+</tbody>
+</table>
+<p>Here are also the fish species:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">code_sp &lt;-<span class="st"> </span><span class="kw">read_tsv</span>(<span class="st">&quot;../bonnafe_work/data/raw_data/Code_sp.txt&quot;</span>)</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="co">#&gt; Parsed with column specification:</span></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"><span class="co">#&gt; cols(</span></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4"><span class="co">#&gt;   Species = col_character(),</span></a>
+<a class="sourceLine" id="cb3-5" data-line-number="5"><span class="co">#&gt;   Latin = col_character(),</span></a>
+<a class="sourceLine" id="cb3-6" data-line-number="6"><span class="co">#&gt;   Family = col_character(),</span></a>
+<a class="sourceLine" id="cb3-7" data-line-number="7"><span class="co">#&gt;   Order = col_character(),</span></a>
+<a class="sourceLine" id="cb3-8" data-line-number="8"><span class="co">#&gt;   Higher = col_character()</span></a>
+<a class="sourceLine" id="cb3-9" data-line-number="9"><span class="co">#&gt; )</span></a>
+<a class="sourceLine" id="cb3-10" data-line-number="10"><span class="kw">kable</span>(code_sp)</a></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Species</th>
+<th align="left">Latin</th>
+<th align="left">Family</th>
+<th align="left">Order</th>
+<th align="left">Higher</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">ANG</td>
+<td align="left">Anguilla_anguilla</td>
+<td align="left">Anguillidae</td>
+<td align="left">Anguilliformes</td>
+<td align="left">Elopomorpha</td>
+</tr>
+<tr class="even">
+<td align="left">BLE</td>
+<td align="left">Salaria_fluviatilis</td>
+<td align="left">Bleniidae</td>
+<td align="left">Perciformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">LOR</td>
+<td align="left">Cobitis_taenia</td>
+<td align="left">Cobitidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">CHP</td>
+<td align="left">Cottus_petiti</td>
+<td align="left">Cottidae</td>
+<td align="left">Scorpaeniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">LOE</td>
+<td align="left">Misgurnus_fossilis</td>
+<td align="left">Cobitidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">LOF</td>
+<td align="left">Barbatula_barbatula</td>
+<td align="left">Cobitidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">CHA</td>
+<td align="left">Cottus_gobio</td>
+<td align="left">Cottidae</td>
+<td align="left">Scorpaeniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">BRE</td>
+<td align="left">Abramis_brama</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">SPI</td>
+<td align="left">Alburnoides_bipunctatus</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">ABL</td>
+<td align="left">Alburnus_alburnus</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">ASP</td>
+<td align="left">Aspius_aspius</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">BAF</td>
+<td align="left">Barbus_barbus</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">BAM</td>
+<td align="left">Barbus_meridionalis</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">BRB</td>
+<td align="left">Blicca_bjoerkna</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">CAS</td>
+<td align="left">Carassius_carassius</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">HOT</td>
+<td align="left">Chondrostoma_nasus</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">TOX</td>
+<td align="left">Chondrostoma_toxostoma</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">CCO</td>
+<td align="left">Cyprinus_carpio</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">GOU</td>
+<td align="left">Gobio_gobio</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">ABH</td>
+<td align="left">Leucaspius_delineatus</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">VAR</td>
+<td align="left">Leuciscus_burdigalensis</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">CHE</td>
+<td align="left">Leuciscus_cephalus</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">IDE</td>
+<td align="left">Leuciscus_idus</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">VAN</td>
+<td align="left">Leuciscus_leuciscus</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">PAP</td>
+<td align="left">Pachychilon_pictus</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">VAI</td>
+<td align="left">Phoxinus_phoxinus</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">PSR</td>
+<td align="left">Pseudorasbora_parva</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">BOU</td>
+<td align="left">Rhodeus_amarus</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">GAR</td>
+<td align="left">Rutilus_rutilus</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">ROT</td>
+<td align="left">Scardinius_erythrophtalmus</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">BLN</td>
+<td align="left">Telestes_souffia</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">TAN</td>
+<td align="left">Tinca_tinca</td>
+<td align="left">Cyprinidae</td>
+<td align="left">Cypriniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">BRO</td>
+<td align="left">Esox_lucius</td>
+<td align="left">Esocidae</td>
+<td align="left">Esociformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">EPI</td>
+<td align="left">Gasterosteus_aculeatus</td>
+<td align="left">Gasterosteidae</td>
+<td align="left">Gasterosteiformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">EPT</td>
+<td align="left">Pungitius_pungitius</td>
+<td align="left">Gasterosteidae</td>
+<td align="left">Gasterosteiformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">PCH</td>
+<td align="left">Ameiurus_melas</td>
+<td align="left">Ictaluridae</td>
+<td align="left">Siluriformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">LOT</td>
+<td align="left">Lota_lota</td>
+<td align="left">Lotidae</td>
+<td align="left">Gadiformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">GRE</td>
+<td align="left">Gymnocephalus_cernua</td>
+<td align="left">Percidae</td>
+<td align="left">Perciformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">PES</td>
+<td align="left">Lepomis_gibbosus</td>
+<td align="left">Percidae</td>
+<td align="left">Perciformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">BBG</td>
+<td align="left">Micropterus_salmoides</td>
+<td align="left">Percidae</td>
+<td align="left">Perciformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">PER</td>
+<td align="left">Perca_fluviatilis</td>
+<td align="left">Percidae</td>
+<td align="left">Perciformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">SAN</td>
+<td align="left">Stizostedion_lucioperca</td>
+<td align="left">Percidae</td>
+<td align="left">Perciformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">APR</td>
+<td align="left">Zingel_asper</td>
+<td align="left">Percidae</td>
+<td align="left">Perciformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">LPR</td>
+<td align="left">Lampetra_fluviatilis</td>
+<td align="left">Petromyzontidae</td>
+<td align="left">Petromyzontiformes</td>
+<td align="left">Agnatha</td>
+</tr>
+<tr class="odd">
+<td align="left">LPP</td>
+<td align="left">Lampetra_planeri</td>
+<td align="left">Petromyzontidae</td>
+<td align="left">Petromyzontiformes</td>
+<td align="left">Agnatha</td>
+</tr>
+<tr class="even">
+<td align="left">GAM</td>
+<td align="left">Gambusia_affinis</td>
+<td align="left">Poeciliidae</td>
+<td align="left">Cyprinodontiformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">TAC</td>
+<td align="left">Oncorhynchus_mykiss</td>
+<td align="left">Salmonidae</td>
+<td align="left">Salmoniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">SAT</td>
+<td align="left">Salmo_salar</td>
+<td align="left">Salmonidae</td>
+<td align="left">Salmoniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">OBL</td>
+<td align="left">Salvelinus_alpinus</td>
+<td align="left">Salmonidae</td>
+<td align="left">Salmoniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">SDF</td>
+<td align="left">Salvelinus_fontinalis</td>
+<td align="left">Salmonidae</td>
+<td align="left">Salmoniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">OBR</td>
+<td align="left">Thymallus_thymallus</td>
+<td align="left">Salmonidae</td>
+<td align="left">Salmoniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">TRF</td>
+<td align="left">Trutta_fario</td>
+<td align="left">Salmonidae</td>
+<td align="left">Salmoniformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="odd">
+<td align="left">SIL</td>
+<td align="left">Silurus_glanis</td>
+<td align="left">Siluridae</td>
+<td align="left">Siluriformes</td>
+<td align="left">Clupeocephala</td>
+</tr>
+<tr class="even">
+<td align="left">- **NO DAT</td>
+<td align="left">A on station localisation**</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">- The file</td>
+<td align="left">has been modified last time</td>
+<td align="left">in 2012</td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="bib_data-build-the-metaweb" class="section level3">
+<h3>bib_data: Build the metaweb</h3>
+<p>Build the interaction matrices for F-F, F-R and R-R, merged in <code>AccMat_*.csv</code></p>
+<ul>
+<li>Script: <code>../bonnafe_work/data/bib_data/AccMat_v0.r</code>
+<ul>
+<li>Could be easily factorize (I guess)</li>
+</ul></li>
+<li>data:
+<ul>
+<li>Fish-Fish: parameters of the predation windows <code>../bonnafe_work/data/bib_data/F-F.csv</code>
+<ul>
+<li>Visualisation: <code>../bonnafe_work/data/bib_data/F-F.pdf</code></li>
+<li>Variables:
+<ul>
+<li><code>species code</code></li>
+<li><code>par_1_min</code>, max and mean: probably <span class="math inline">\(\alpha= 0.03\)</span></li>
+<li><code>par_2_min</code>, max and mean: probably <span class="math inline">\(\beta\)</span></li>
+</ul></li>
+</ul></li>
+<li>Ontogenic Diet shift:
+<ul>
+<li>Fish: <code>../bonnafe_work/data/bib_data/ODSF.csv</code></li>
+<li>Variables:
+<ul>
+<li><code>stage</code>: ontogenic stage</li>
+<li><code>size</code> min and max: size range for a given life stage</li>
+<li><code>light</code></li>
+<li>All the resources: from R1 to R7<br />
+</li>
+<li><code>fish</code>: piscivory</li>
+</ul></li>
+<li>Resources: <code>../bonnafe_work/data/bib_data/ODSR.csv</code>
+<ul>
+<li>Variables: same as Fish diet data</li>
+</ul></li>
+</ul></li>
+<li><code>../bonnafe_work/data/bib_data/size_quantiles.csv</code></li>
+</ul></li>
+<li>output: interaction matrices: <code>../bonnafe_work/data/bib_data/output/AccMat_*.csv</code>
+<ul>
+<li>file pattern: <code>AccMat_&lt;criteria for class separation&gt;_&lt;number of classes&gt;_&lt;predation window (intraspe var or cst)&gt;</code></li>
+<li>File used for the paper: <code>AccMat_quant_9_PWvar_partOverlap.csv</code> <strong>Not sure about the partOverlap but <em>I guess</em> it is necessary when you use midpoint of the size class</strong></li>
+</ul></li>
+<li>Two types of methods:
+<ol style="list-style-type: decimal">
+<li>With ontogenic stage: 1 class by ontogenic stage</li>
+<li>With size class (quantile or percentile methods): 1 class by nth quantile (depends on the number of class defined)
+<ul>
+<li>15 ways to do it:
+<ul>
+<li>midpoint or range (with overlap or no overlap)?
+<ul>
+<li>Overlap: when the biggest prey that can eat a predator is bigger than the smallest predator of the size class<br />
+</li>
+<li>No overlap: The prey size class range is determine by the smallest predator: <code>minPredatorSize</code> L944-946 -predation window: constant or not (= same <span class="math inline">\(\beta\)</span> because <span class="math inline">\(\alpha\)</span> is always constant)</li>
+</ul></li>
+<li>different numbers of size classes</li>
+</ul></li>
+</ul></li>
+</ol></li>
+<li><code>piscivoryIndex</code> = {0,.5,1}; strength of the feeding interaction</li>
+<li>Determine Fish - Resources interaction:
+<ul>
+<li>If Ontogenic Feeding Stage min or max is in or around ]minPredatorSize,maxPredatorSize] predator size</li>
+<li><code>fr_matrix</code>: L274</li>
+</ul></li>
+</ul>
+</div>
+<div id="network_data-build-local-network-and-compute-indices-on-them" class="section level3">
+<h3>network_data: Build local network and compute indices on them</h3>
+<ol style="list-style-type: decimal">
+<li>Extract local networks given:</li>
+</ol>
+<ul>
+<li>Cumulated Trophic Network: <code>../bonnafe_work/data/bib_data/output/AccMat_*.csv</code> (See above)</li>
+<li>Fishing data: <code>../bonnafe_work/data/raw_data/data_clean.txt</code></li>
+<li>Script: <code>../bonnafe_work/data/network_data/networks_v2.r</code>
+<ol style="list-style-type: decimal">
+<li>Assign each individual to a size class/species</li>
+<li>Do it for each fishing operation</li>
+</ol>
+<ul>
+<li>Same as: <code>../bonnafe_work/data/network_data/networks_vBiomass.r</code></li>
+</ul></li>
+<li>Output: <code>../bonnafe_work/data/network_data/densityTable_*.csv</code></li>
+</ul>
+<ol start="2" style="list-style-type: decimal">
+<li>Extract topology of local networks</li>
+</ol>
+<ul>
+<li>Script: <code>../bonnafe_work/data/network_data/extractTNT.r</code>
+<ol style="list-style-type: decimal">
+<li>Compute degree, # of top and basal nodes: <code>n_w()</code></li>
+<li>Trophic Level (TL) for each species: <code>getTL()</code></li>
+</ol></li>
+<li>Output: <code>../bonnafe_work/data/network_data/TNT_quant_*.txt</code></li>
+</ul>
+<ol start="3" style="list-style-type: decimal">
+<li>Link TL &amp; Biomass:</li>
+</ol>
+<ul>
+<li>Script: <code>../bonnafe_work/data/network_data/getBTL.r</code></li>
+<li>Data: <code>densityTable_*.csv</code> and <code>TNT_*.txt</code> (see above for details)</li>
+<li>Output: <code>../bonnafe_work/data/network_data/BTL_*.csv</code></li>
+</ul>
+<ol start="4" style="list-style-type: decimal">
+<li>Network program: written in cpp
+<ul>
+<li>no idea about its role</li>
+</ul></li>
+</ol>
+</div>
+<div id="meta_data-join-biomass-network-indices-and-station-datas" class="section level3">
+<h3>meta_data: join biomass, network indices and station datas</h3>
+<ul>
+<li>What:
+<ul>
+<li>Get in the same file:
+<ul>
+<li>Biomass data: <code>../bonnafe_work/data/network_data/BTL_*.csv</code></li>
+<li>Network topology indices: <code>../bonnafe_work/data/network_data/export_*.txt</code></li>
+<li>Fishing operation data: <code>../bonnafe_work/data/raw_data/data_clean.txt</code></li>
+</ul></li>
+</ul></li>
+<li>Script: <code>../bonnafe_work/data/meta_data/compileData_biomass.r</code></li>
+<li>Output: <code>../bonnafe_work/data/meta_data/BiomassMetaData_quant_*.csv</code></li>
+</ul>
+</div>
+</div>
+<div id="databases" class="section level2">
+<h2>Databases</h2>
+<ul>
+<li>It contains databases used to build nodes and interaction links:
+<ul>
+<li>Aquaweb</li>
+<li>Fishbase</li>
+<li>Litterature</li>
+</ul></li>
+</ul>
+<p>I am not sure of how those database has been used. Apparently, there is one folder for each species, containing a prey list.</p>
+</div>
+<div id="analysis" class="section level2">
+<h2>Analysis</h2>
+<p>Contains analysis of the effect of temperature on the topology of the trophic network on <code>TL</code>, <code>S</code>, <code>L.S.2</code>, <code>TLmax</code>, <code>Omni</code> and <code>BT_cor</code>.</p>
+<ul>
+<li>What:
+<ul>
+<li>Descriptive analysis
+<ul>
+<li>Correlation between variables</li>
+</ul></li>
+<li>Statistical analysis
+<ul>
+<li>Mixed models</li>
+<li>Model diagnostics</li>
+<li>Plots</li>
+</ul></li>
+</ul></li>
+<li>Scripts:
+<ol style="list-style-type: decimal">
+<li><code>../bonnafe_work/analysis/Temp_TNT/temperature_initiate.r</code> master script</li>
+<li>To be continued…</li>
+</ol></li>
+<li>Data: <code>../bonnafe_work/data/meta_data/</code>
+<ul>
+<li>data for different trophic networks</li>
+</ul></li>
+</ul>
+<p># Notes</p>
+<p>## Predation window</p>
+<p>The midpoint method retained by <span class="citation">Bonnafé, Legendre, and Edeline (n.d.)</span> has one caveat is that you can have a predator eating a prey bigger than it. <span class="citation">Bonnafé, Legendre, and Edeline (n.d.)</span> showed it in the code and tried to avoid those overlap with other methods than the midpoint.</p>
+<p>Why did they keep the midpoint instead of the others ?</p>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1>References</h1>
+<div id="refs" class="references">
+<div id="ref-bonnafe_trophic_nodate">
+<p>Bonnafé, Willem, Stéphane Legendre, and Érice Edeline. n.d. “Trophic Network Topology Along Thermal Gradient Highlights Antagonistic Individual- and Species-Level Response to Temperature.”</p>
+</div>
+</div>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

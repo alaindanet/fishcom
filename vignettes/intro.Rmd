@@ -30,18 +30,27 @@ According to the postdoc advertisement:
 1. Obtain networks and indicators
 2. Pulses identification (ex. extreme summer of 2003) 
 3. Traits and phylogeny
+   - See `fish_trait` zotero collection 
+   - See those authors (from Maud):
+     - Christine Argillier (Irstea Aix/Provence)
+     - Thierry Oberdorff (Toulouse ?)
+     - Bernard Hugueny (IRD, Toulouse)
+   - Ask to (by Maud):
+     - Sébastien Brosse
+     - Sébastien Villégier
 
 ## Immediate objectives (end of December)
 
 - [ ] Re-run willem analysis
   - [ ] Function structure:
-    - cleaning:
+    - cleaning: `../data-raw/clean_fish_op_data.R`
     - network build:
     - network methods:
     - network indices:
     - network indices:
 - [ ] Assess quality of the dataset:
   - Which community are best followed in time ? Where are they ?
+    - **NO DATA on station localisation**
 - [ ] Assess availability of environmental data
 
 # Temporal stability and diversity 

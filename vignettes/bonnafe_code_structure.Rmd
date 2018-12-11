@@ -15,6 +15,8 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+library(tidyverse)
+library(knitr)
 ```
 
 The objective of this vignette is to understand the code written by
@@ -37,36 +39,24 @@ Generation of the **cleaned** fishing operation data
 - Data: `NEW_DATA.txt` 
 - Output: `../bonnafe_work/data/raw_data/data_clean.txt`
   - **THE FILE**, really big
-  - Variables: 
-    - `OPCOD`
-    - `Station`
-    - `Species`
-    - `Length`
-    - `Linf`
-    - `Pisc`
-    - `Month`
-    - `Year`
-    - `Method`
-    - `Strategy`
-    - `Nbpass`
-    - `Width`
-    - `Surf`
-    - `moTempMF1`
-    - `TempMF2`
-    - `SumMF1`
-    - `SumMF2`
-    - `Bassin`
-    - `Alt`
-    - `Slope`
-    - `Distsource`
-    - `SurfBV`
-    - `Count`
-    - `Nb.species`
-    - `Weight`
+  - Variables:
+```{r}
+columns_meaning <- read_delim("../bonnafe_work/data/raw_data/Codes_colonne.txt",
+  delim = ":", locale = locale("fr"), trim_ws = TRUE)
+kable(columns_meaning)
+```
 
-### bib_data: Build the metaweb 
+Here are also the fish species:
+```{r}
+code_sp <- read_tsv("../bonnafe_work/data/raw_data/Code_sp.txt")
+kable(code_sp)
+```
+- **NO DATA on station localisation**
+- The file has been modified last time in 2012
 
-Build the interaction matrices for F-F, F-R and R-R, merged in `AccMat_*.csv` 
+### bib_data: Build the metaweb
+
+Build the interaction matrices for F-F, F-R and R-R, merged in `AccMat_*.csv`
 
 - Script: `../bonnafe_work/data/bib_data/AccMat_v0.r`
   - Could be easily factorize (I guess) 
