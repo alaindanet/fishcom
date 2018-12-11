@@ -89,6 +89,8 @@ operation_data %<>%
 	"Non renseigne" = "unknown")
     )
 )
+# One data by species and fishing operation 
+operation_data %<>% distinct(opcod, species, .keep_all = TRUE)
 devtools::use_data(operation_data, overwrite = TRUE)
 rm(operation_data)
 

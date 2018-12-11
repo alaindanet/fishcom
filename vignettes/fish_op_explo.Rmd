@@ -1,0 +1,42 @@
+---
+title: "Exploration of fish operation data"
+author: "Alain Danet"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Exploration}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(tidyverse)
+library(magrittr)
+theme_set(theme_alain())
+```
+
+```{r}
+data(operation_data)
+op <- operation_data
+rm(operation_data)
+```
+
+There was `r nb_op <- length(unique(op$opcod))` fishing operations from
+`r min(op$year)` to `r max(op$year)`. The sampling was distributed over `r nb_st <- length(unique(op$station))` stations. It represents a average effort of `r round(nb_op/nb_st, 1)` (# visit/station).
+
+# Distribution of sampling effort
+
+```{r}
+op_hist <- op %>% group_by(station) %>%
+  summarise(count = n()) %>%
+  mutate(station = factor(station, levels = station[-order(count)]))
+# DO not work: https://www.reed.edu/data-at-reed/resources/R/reordering_geom_bar.html 
+
+qplot(op_hist, aes(x=station, y = count), geom = "bar") +
+  labs(x = "Station", y = "Frequency")
+```
+
