@@ -38,7 +38,7 @@ op_sampling <- op %>%
   group_by(opcod, station, year, month) %>%
   summarise(
     nb_ind = sum(count),
-    nb_sp = n()
+    nb_sp  = n()
     ) 
 
 op_hist <- op_sampling %>%

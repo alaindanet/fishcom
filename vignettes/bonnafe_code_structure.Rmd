@@ -51,8 +51,7 @@ Here are also the fish species:
 code_sp <- read_tsv("../bonnafe_work/data/raw_data/Code_sp.txt")
 kable(code_sp)
 ```
-- **NO DATA on station localisation**
-- The file has been modified last time in 2012
+- See the vignette `fish_op_explo.Rmd` for exploration of the data
 
 ### bib_data: Build the metaweb
 
@@ -60,25 +59,65 @@ Build the interaction matrices for F-F, F-R and R-R, merged in `AccMat_*.csv`
 
 - Script: `../bonnafe_work/data/bib_data/AccMat_v0.r`
   - Could be easily factorize (I guess) 
-- data:
-  - Fish-Fish: parameters of the predation windows `../bonnafe_work/data/bib_data/F-F.csv`
-    - Visualisation: `../bonnafe_work/data/bib_data/F-F.pdf`
-    - Variables:
-      - `species code`
-      - `par_1_min`, max and mean: probably $\alpha= 0.03$
-      - `par_2_min`, max and mean: probably $\beta$
-  - Ontogenic Diet shift: 
-    - Fish: `../bonnafe_work/data/bib_data/ODSF.csv`
-    - Variables: 
-      - `stage`: ontogenic stage
-      - `size` min and max: size range for a given life stage 
-      - `light`
-      - All the resources: from R1 to R7  
-      - `fish`: piscivory
-    - Resources: `../bonnafe_work/data/bib_data/ODSR.csv`
-      - Variables: same as Fish diet data
-  - `../bonnafe_work/data/bib_data/size_quantiles.csv`
-- output: interaction matrices: `../bonnafe_work/data/bib_data/output/AccMat_*.csv`
+
+#### Fish predation windows
+
+```{r}
+pred_win <- read_delim("../bonnafe_work/data/bib_data/F-F.csv", delim = ";",
+  col_types = cols()) 
+colnames(pred_win) <- str_replace_all(colnames(pred_win),
+  c("par_" = "", "1" = "alpha", "2" = "beta"))
+kable(pred_win)
+```
+
+Why $\beta$ and $\alpha$ are only partly filled ? Do some default parameters
+values exist somewhere ? 
+
+- Visualisation: `../bonnafe_work/data/bib_data/F-F.pdf`
+
+#### Ontogenic Diet shift
+
+- Fish:
+
+```{r}
+onto_diet_fish <- read_delim("../bonnafe_work/data/bib_data/ODSF.csv", delim = ";",
+  col_types = cols())
+kable(onto_diet_fish)
+```
+
+  - Variables: 
+    - `stage`: ontogenic stage
+    - `size` min and max: size range for a given life stage 
+    - `light`
+    - All the resources: from R1 to R7  
+    - `fish`: piscivory
+    -hypoth_ods`: different hypothesis to caracterise ODS:  
+    - larvae hypoth: considering 1 stage for size $<$ 20mm
+    - minimum size hypoth: considering stage 2 for size $\geq$ 20mm, i.e.
+      considering that you need to be taller than 20mm to eat zoobenthos,
+      same for stage 3 and eat fish
+    - maximum size hypoth: maximum size to eat small prey as zooplankton and zoobenthos
+    - genus hypoth: considering that ODS for this species is conserved at
+      the genus level ?
+    - age hypoth: to search ?
+  
+- Resources: `../bonnafe_work/data/bib_data/ODSR.csv`
+
+```{r}
+onto_diet_resources <- read_delim("../bonnafe_work/data/bib_data/ODSR.csv", delim = ";",
+  col_types = cols())
+kable(onto_diet_resources)
+```
+
+  - Variables: same as Fish diet data
+
+```{r}
+size_quantiles <- read_delim("../bonnafe_work/data/bib_data/size_quantiles.csv", delim = ";",
+  col_types = cols())
+kable(size_quantiles)
+```
+
+- Output: interaction matrices: `../bonnafe_work/data/bib_data/output/AccMat_*.csv`
   - file pattern: `AccMat_<criteria for class separation>_<number of classes>_<predation window (intraspe var or cst)>`
   - File used for the paper:  `AccMat_quant_9_PWvar_partOverlap.csv` **Not sure about the partOverlap but *I guess* it is necessary when you use midpoint of the size class**
 
@@ -125,7 +164,7 @@ Build the interaction matrices for F-F, F-R and R-R, merged in `AccMat_*.csv`
 4. Network program: written in cpp
    - no idea about its role
 
-### meta_data: join biomass, network indices and station datas
+### meta_data: join biomass, network indices and fishing operation datas
 
 - What:
   - Get in the same file:
