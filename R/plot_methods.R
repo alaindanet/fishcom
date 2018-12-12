@@ -1,3 +1,8 @@
+#' Personal plot theme
+#'
+#' @details This theme was design from the theme developped in the hrbrthemes
+#' package: https://github.com/hrbrmstr/hrbrthemes 
+#' @return a ggplot theme
 theme_alain <- function(){
 
   hrbrthemes::theme_ipsum_rc() +
@@ -18,5 +23,4 @@ theme_alain <- function(){
     strip.text = element_text(size = 8),
     plot.margin = unit(c(.5, .5, .5, .5), "cm")
     )
-
 }
