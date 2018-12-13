@@ -6,25 +6,12 @@ library('tidyverse')
 library('magrittr')
 devtools::load_all()
 
-###############
-#  Load data  #
-###############
-diet_shift <- read_delim("ontogenic_diet_shift_fish.csv",
-  delim = ";", locale = locale(decimal_mark = "."))
-pred_win <- read_delim("fish_fish_predation_window.csv",
-  delim = ";", locale = locale(decimal_mark = "."))
+
+#########################
+#  Cleaned data reload  #
+#########################
 data(fish_length)
 
-###########################
-#  Pre-data manipulation  #
-###########################
-colnames(pred_win) <- str_replace_all(colnames(pred_win),
-  c("par_" = "", "1" = "alpha", "2" = "beta", "_code" = ""))
-devtools::use_data(pred_win)
-
-colnames(diet_shift) <- str_replace_all(colnames(diet_shift),
-  c("species" = "species_name", "species_name_code" = "species"))
-devtools::use_data(diet_shift)
 
 #########################
 #  Quantile estimation  #
@@ -46,8 +33,15 @@ quant_willem %<>% arrange(species)
 quant_to_compare <- spread(quartile, quartile, size) %>%
   select(species, `0%`, `25%`, `50%`, `75%`, `100%`) %>%
   arrange(species)
+## Not the same number of species:
 all_equal(quant_willem, quant_to_compare)
+## Indeed, we removed the migratory species as in bonnafé script: cleanData.r
+all_equal(filter(quant_willem, !(species %in% c("SAT", "LPP", "LPR"))),
+  quant_to_compare)
+## Looks ok! 
 
-filter(quant_willem, row_number() %in% c(43, 33, 32))
-filter(quant_to_compare, row_number() %in% c(43, 33, 32))
-## Some fish have disappeared ? Because my ranges are always thiner
+##########
+#  Save  #
+##########
+fish_size_quantile <- quant_to_compare
+devtools::use_data(fish_size_quantile)

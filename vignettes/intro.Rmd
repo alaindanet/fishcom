@@ -43,8 +43,11 @@ According to the postdoc advertisement:
 
 - [ ] Re-run willem analysis
   - [ ] Function structure:
-    - cleaning: `../data-raw/clean_fish_op_data.R`
+    - [x] cleaning: `../data-raw/clean_fish_op_data.R`
+
     - network build: `../R/metaweb_build.R`
+      - [x]: quantile size distribution
+      - [ ]: metaweb:
     - network methods:
     - network indices:
     - network indices:

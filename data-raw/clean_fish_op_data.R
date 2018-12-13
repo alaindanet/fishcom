@@ -61,8 +61,9 @@ columns_meaning <- read_delim("../bonnafe_work/data/raw_data/Codes_colonne.txt",
 library('data.table')
 fish_op <- fread("../bonnafe_work/data/raw_data/NEW_DATA.txt")
 colnames(fish_op) <- str_to_lower(colnames(fish_op))
-write_csv(fish_op[species != c("SAT", "LPP", "LPR")],
+write_csv(fish_op[!(fish_op$species %in% c("SAT", "LPP", "LPR"))],
   "global_fish_op.csv")
+rm(fish_op)
 
 ## Contains only the minimum information: code of the capture, species, body
 ## length 
@@ -138,3 +139,24 @@ environmental_data %<>%
 
 devtools::use_data(environmental_data, overwrite = TRUE)
 rm(environmental_data)
+
+############################################################
+#  Check that data_clean of Guillem is the same than mine  #
+############################################################
+
+
+##Let's check how many fishing operation there is in data_clean of bonnafé and
+##compare them to what we have
+data(environmental_data)
+opcod_to_compare <- environmental_data %>%
+  distinct(opcod)
+library(data.table)
+opcod_willem <- fread("../bonnafe_work/data/raw_data/data_clean.txt",
+  select = c("OPCOD")) %>%
+  as.tibble() %>%
+  rename("opcod" = "OPCOD") %>%
+  distinct(opcod)
+##It's ok:
+all_equal(opcod_willem, opcod_to_compare)
+
+# Cleaning done! +1 for the reproducibility!
