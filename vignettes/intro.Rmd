@@ -47,6 +47,11 @@ According to the postdoc advertisement:
 
     - network build: `../R/metaweb_build.R`
       - [x]: quantile size distribution
+      - [ ]: Generate class for each species
+	- [ ] write proper tests
+	- [ ] generate size class for each species
+	- [ ] compare with willem 
+      - [ ]: ODS ?
       - [ ]: metaweb:
     - network methods:
     - network indices:
