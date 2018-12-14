@@ -1,0 +1,75 @@
+---
+title: "Edeline data exploration"
+author: "Alain Danet"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Edeline data exploration}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.dim = c(7, 7)
+)
+library(tidyverse)
+library(magrittr)
+library(sp)
+library(sf)
+library(rgdal)
+library(raster)
+library(mapview)
+```
+
+# Goal 
+
+Get the localisation of the station
+
+## Localisation of the stations
+
+```{r}
+station <- read_delim("../data-raw/fishing_station_localisation_wsg84.csv",
+  delim = ";", locale = locale("fr", decimal_mark = "."),
+  col_types = cols(ST_CODECSP = col_character()))
+# Modif ID in integer
+xy_station <- dplyr::select(station, XCOORD, YCOORD)
+station <- SpatialPointsDataFrame(coords = xy_station, data = station,
+                               proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
+
+station <- st_as_sf(station)
+```
+
+## Get France map
+
+```{r}
+region_fr <- raster::shapefile("../data-raw/france_region_shp/regions-20180101.shp")
+
+#Get only metropolitan areas:
+region_fr <- st_as_sf(region_fr) #easier to manipulate
+region_to_filter <- c("La Réunion", "Martinique", "Guadeloupe", "Mayotte",
+  "Guyane", "Corse")
+region_fr <- filter(region_fr, !(nom %in% region_to_filter))
+region_fr <- region_fr[, c("nom", "geometry")]
+
+```
+
+```{r}
+plot(st_geometry(region_fr), lwd = 1.5, col = "grey85")
+plot(station, pch = 20, col = "red", add = T)
+```
+
+```{r}
+mapview(station)@map
+```
+Il y a deux stations qui sont biens dans les choux!
+
+```{r}
+# Compute distance between points: https://stackoverflow.com/a/53559542
+```
+
+
+
+
