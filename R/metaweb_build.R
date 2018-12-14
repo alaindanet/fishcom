@@ -4,12 +4,14 @@
 
 #' Metaweb building
 #' 
-#'
+#' 
+#' @param data a dataframe containing species and size variable 
 #' @param pred_win data.frame containing species and the predation window
 #'  parameters (\alpha and \beta).
 #' @param diet_shift data.frame containing species and the predation window.
 #' @param pred_win_method character midpoint, overlap or no_overlap. Default to midpoint.
 #' @inheritParams compute_classes 
+#'
 #' @details class_method = "quantile" use the `quantile` function to create size
 #'  class in nb_class . When class_method = "percentile", the range of the size distribution
 #'  is divided by nb_class. The difference is that `quantile` start the first
@@ -25,11 +27,46 @@
 #'  existence of a trophic link is defined by the middle of the predator size
 #'  class.
 #'
-#' @return 
+#' @return matrix 
 #'
-build_metaweb <- function(size, pred_win, diet_shift, class_method = "percentile",
-  nb_class = 9, pred_win_method = "midpoint") {
+build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, resource_diet_shift, class_method = "percentile",
+  nb_class = 9, pred_win_method = "midpoint", na.rm = FALSE) {
 
+  #Capture var:
+  species <- enquo(species)
+  size <- enquo(size)
+
+  # Build the size class
+  size_class <- compute_classes(data, group_var = !!species, var = !!size, class_method = class_method, na.rm = na.rm)
+
+  # Build the Fish-Fish matrix
+  species_list <- unique(select(data, !!species)) %>% unlist
+  nb_species <- length(species_list)
+
+  fish_fish_int <- matrix(rep(0, (nb_species * nb_class) ^ 2),ncol = nb_species * nb_class)
+  ## Name it
+  fish_class_names <- rep(species_list, each = nb_class) %>%
+    paste(., seq(1, nb_class), sep = "_")
+  rownames(fish_fish_int) <- colnames(fish_fish_int)  <- fish_class_names
+  # Build the Fish-Resource matrix
+  resource_list <- dplyr::select(resource_diet_shift, !!species) %>% unlist
+  nb_resource <- length(resource_list)
+  fish_resource_int <- matrix(rep(0, nb_resource * nb_class), ncol = nb_class)
+
+  #Fill the Fish-Fish matrix
+  ## Compute the th_prey size min & max + mid-point
+  ### Get pred_window parameters
+  ### Compute with alpha_min & max & beta_min etc
+  ## Check for each species if there is a piscivory index 
+  ### Get ODS
+  ### If one piscivory stage, check regarding maxpredatorsize, can it eat the
+  ### prey ?
+  ## Fill the matrix 
+  ### Check if the prey is in the range of prey of the predator
+
+  # Fish-Resource matrix
+  # Resource-Resource matrix
+  # Merge the matrix
 
 }
 
@@ -40,14 +77,24 @@ build_metaweb <- function(size, pred_win, diet_shift, class_method = "percentile
 #'
 #' @return
 compute_classes <- function(size, group_var, var, class_method = "percentile",
-  nb_class = 9) {
+  nb_class = 9, na.rm = FALSE) {
 
   stopifnot(class_method %in% c("percentile", "quantile"))
   stopifnot(is.numeric(nb_class))
 
-  #Capture var:
+  #Capture variables:
   group_var <- enquo(group_var)
   var <- enquo(var)
+
+  if (na.rm) {
+    size %<>% na.omit
+    message("NAs has been removed with na.omit")
+  } else {
+    if(length(which(is.na(size))) > 0){
+      stop("There are NAs in your dataset. Please set na.rm = TRUE")
+    }
+  }
+
 
   nested_size <- size %>%
     dplyr::group_by(!!group_var) %>%
@@ -62,9 +109,6 @@ compute_classes <- function(size, group_var, var, class_method = "percentile",
 nested_size %>%
   tidyr::unnest(classes)
     
-      #classes = map(classes, ~ bind_rows(.))
-    #)%>%
-    #unnest()
 
 }
 
