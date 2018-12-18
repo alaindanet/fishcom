@@ -15,21 +15,21 @@ test_that("Metabuild returns a correct matrix",{
 
   metaweb <- build_metaweb(fish_length_toy, species, length, pred_win, fish_diet_shift, resource_diet_shift)
 
+  expect_is(metaweb, "matrix")
+
   matrix_to_rep <- read_csv2("../../bonnafe_work/data/bib_data/output/AccMat_quant_9_PWvar_partOverlap.csv") %>% as.matrix
 
   expect_identical(metaweb, matrix_to_rep)
 
 })
 
-
 #######################
 #  Size distribution  #
 #######################
-
+nb_class <- 9
+min_size <- 1
+max_size <- 10
 test_that("spliting size in classes works", {
-  nb_class <- 9
-  min_size <- 1
-  max_size <- 10
 
   # Percentile method
   split_test <- split_in_classes(seq(min_size, max_size), nb_class = nb_class)
@@ -54,13 +54,14 @@ test_that("spliting size in classes works", {
     )
   expect_identical(split_test, expected_df)
 
-  # Compute_classes
-  fake <- tibble(
-    species = rep(c("Pikachu", "Salameche"), each = 10),
-    size = c(seq(1,10), seq(101,110)))
+})
 
-  classes_species <- compute_classes(fake, species, size, nb_class = nb_class)
-
+fake <- tibble(
+  species = rep(c("Pikachu", "Salameche"), each = 10),
+  size = c(seq(1,10), seq(101,110)))
+# Compute_classes
+classes_species <- compute_classes(fake, species, size, nb_class = nb_class)
+test_that("Class dataframe is correct", {
   pika_class <- split_in_classes(unlist(filter(fake, species == "Pikachu")$size))
   sala_class <- split_in_classes(unlist(filter(fake, species == "Salameche")$size))
 
@@ -80,3 +81,28 @@ test_that("spliting size in classes works", {
   expect_error(compute_classes(fish_length_toy, species, length, nb_class = nb_class), message = "There are NAs in your dataset. Please set na.rm = TRUE")
   
 })
+
+#######################
+#  Compute prey size  #
+#######################
+fake_prey_win <- distinct(fake, species) %>%
+  select(species) %>%
+  mutate(
+    beta_min = .03,
+    beta_max = .45,
+    )
+test_that("We get a correct prey size dataframe", {
+  th_prey_size <- compute_prey_size(classes_species, fake_prey_win, species, beta_min, beta_max, pred_win_method = "midpoint")
+
+  expect_is(th_prey_size, "data.frame")
+
+  expected_prey_size <- classes_species %>%
+    mutate(
+    min = 0.03 * ( (lower + upper) / 2),
+    max = 0.45 * ( (lower + upper) / 2)
+    ) %>% select(-lower, -upper)
+
+  expect_identical(th_prey_size, expected_prey_size)
+
+})
+

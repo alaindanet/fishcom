@@ -6,10 +6,8 @@
 #' 
 #' 
 #' @param data a dataframe containing species and size variable 
-#' @param pred_win data.frame containing species and the predation window
-#'  parameters (\alpha and \beta).
 #' @param diet_shift data.frame containing species and the predation window.
-#' @param pred_win_method character midpoint, overlap or no_overlap. Default to midpoint.
+#' @inheritParams compute_prey_size 
 #' @inheritParams compute_classes 
 #'
 #' @details class_method = "quantile" use the `quantile` function to create size
@@ -42,7 +40,6 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, resour
   # Build the Fish-Fish matrix
   species_list <- unique(select(data, !!species)) %>% unlist
   nb_species <- length(species_list)
-
   fish_fish_int <- matrix(rep(0, (nb_species * nb_class) ^ 2),ncol = nb_species * nb_class)
   ## Name it
   fish_class_names <- rep(species_list, each = nb_class) %>%
@@ -55,19 +52,55 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, resour
 
   #Fill the Fish-Fish matrix
   ## Compute the th_prey size min & max + mid-point
-  ### Get pred_window parameters
-  ### Compute with alpha_min & max & beta_min etc
+  th_prey_size <- compute_prey_size(size_class, prey_win, !!species, !!beta_min, !!beta_max, pred_win_method = pred_win_method)
   ## Check for each species if there is a piscivory index 
   ### Get ODS
   ### If one piscivory stage, check regarding maxpredatorsize, can it eat the
   ### prey ?
-  ## Fill the matrix 
+  ## Fill the matrix
   ### Check if the prey is in the range of prey of the predator
 
   # Fish-Resource matrix
   # Resource-Resource matrix
   # Merge the matrix
 
+}
+
+#' Compute prey size
+#' 
+#' Compute prey size for class size species can eat. It is theoretical, indeep,
+#' the information about real diet of the fish is not taken in account here. 
+#' 
+#' @param pred_win data.frame containing species and the predation window
+#'  parameters (\alpha and \beta).
+#' @param pred_win_method character midpoint, overlap or no_overlap. Default to midpoint.
+#' @param species 
+#' @param beta_min column name containing beta_min parameters
+#' @param beta_max column name contains beta_max parameters
+#'
+#' @details For now, the function compute the mininum prey size as follow:
+#' beta_min * min_predator_size. But the general formula is in hte form:
+#' alpha_min + beta_min * min_predator_size. But here, we do not have data about
+#' alpha. We will add it if necessary.
+#' 
+#' @return matrix
+#'
+compute_prey_size <- function (class_size, pred_win, species, beta_min, beta_max, pred_win_method = "midpoint") {
+
+  #Get var:
+  species  <- quo(species)
+  beta_min <- quo(beta_min)
+  beta_max <- quo(beta_max)
+  
+  if (pred_win_method != "midpoint") {
+    message("Other methods are not yet implemented")
+  }
+  dplyr::left_join(class_size, pred_win) %>%
+    dplyr::mutate(
+      min = !!beta_min * ( (lower + upper) / 2),
+      max = !!beta_max * ( (lower + upper) / 2)
+      )%>%
+  dplyr::select(!!species, class_id, min, max)
 }
 
 #' Compute classes
