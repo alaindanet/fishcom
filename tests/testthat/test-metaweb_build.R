@@ -91,11 +91,10 @@ fake_prey_win <- distinct(fake, species) %>%
     beta_min = .03,
     beta_max = .45,
     )
+th_prey_size <- compute_prey_size(classes_species, fake_prey_win, species, beta_min, beta_max, pred_win_method = "midpoint")
 test_that("We get a correct prey size dataframe", {
-  th_prey_size <- compute_prey_size(classes_species, fake_prey_win, species, beta_min, beta_max, pred_win_method = "midpoint")
 
   expect_is(th_prey_size, "data.frame")
-
   expected_prey_size <- classes_species %>%
     mutate(
     min = 0.03 * ( (lower + upper) / 2),
@@ -105,4 +104,15 @@ test_that("We get a correct prey size dataframe", {
   expect_identical(th_prey_size, expected_prey_size)
 
 })
+
+#######################
+#  Compute piscivory  #
+#######################
+
+fake_onto_diet_shift <- tibble(
+    species = rep(c("Pikachu", "Salameche"), each = 2),
+    life_stage = rep(c(1, 2), each = 2),
+    min = c(0, 5, 0, 105),
+    max = c(5, Inf, 105, Inf)
+    )
 
