@@ -14,7 +14,7 @@ test_that("spliting size in classes works", {
 
   # Percentile method
   split_test <- split_in_classes(seq(min_size, max_size), nb_class = nb_class)
-  expected_split <- round(seq(0, max_size, by = max_size / nb_class))
+  expected_split <- round(seq(min_size, max_size, by = (max_size - min_size) / nb_class))
 
   expected_df <- tibble(
     class_id = seq(1, nb_class),
@@ -100,7 +100,7 @@ fake_onto_diet_shift <- tibble(
 test_that("piscivory is well computed", {
    piscivory_table <- compute_piscivory(classes_species, fake_onto_diet_shift, species = species, lower = min, upper = max, fish = pisc)
    expected_table <- th_prey_size %>%
-     mutate(pisc_index = c(rep(0, 3), rep(1, 6), rep(0, 8), 1)) %>%
+     mutate(pisc_index = c(rep(0, 2), rep(1, 7), 0, rep(1, 8))) %>%
      select(-min_prey, -max_prey)
     
    expect_identical(piscivory_table, expected_table)

@@ -103,6 +103,9 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
 #' @param lower variable containing lower limit of the stage 
 #' @param upper variable containing upper limit of the stage. Not used.
 #' @param fish name of logical piscivory variable. 0 = no piscivory; 1 = piscivory
+#'  
+#' @details If given species class is considered as piscivor if the upper bound
+#' of the class is greater than the mininum size to reach piscivory.
 #'
 #' @return a data.frame
 compute_piscivory <- function (size_class, fish_diet_shift, species, lower, upper, fish) {
@@ -180,7 +183,6 @@ compute_prey_size <- function (class_size, pred_win, species, beta_min, beta_max
 compute_classes <- function(size, group_var, var, class_method = "percentile",
   nb_class = 9, na.rm = FALSE) {
 
-  stopifnot(class_method %in% c("percentile", "quantile"))
   stopifnot(is.numeric(nb_class))
 
   #Capture variables:
@@ -215,15 +217,18 @@ nested_size %>%
 
 #' Split in classes
 #'
+#' @param to_class a numeric vector
 #' @param class_method character percentile or quantile. Default to percentile. 
 #' @param nb_class integer number of size class to create. Default to 9. 
   split_in_classes <- function (to_class, class_method = "percentile",
     nb_class = 9) {
 
+  stopifnot(class_method %in% c("percentile", "quantile"))
+
     if (class_method == "quantile") {
       classified <- quantile(to_class, probs = seq(0, 1, by = 1 / nb_class))
     } else {
-      classified <- seq(0, max(to_class), by = ( (max(to_class) - 0) / (nb_class)))
+      classified <- seq(min(to_class), max(to_class), by = (max(to_class) - min(to_class)) / nb_class)
     }
     classified %<>% round
 
