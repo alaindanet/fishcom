@@ -109,11 +109,14 @@ test_that("piscivory is well computed", {
 #############
 #  Metaweb  #
 #############
-fake_resource_shift <-  fake_onto_diet_shift %>%
-  mutate(
-    min = c(0, 3, 0, 102),
-    max = c(3, Inf, 102, Inf),
-    pisc = rep(c(0, 1), times = 2)
+fake_resource_shift <- tibble(
+    species = c("Chetiflor", "Paras"),
+    life_stage = c(0, 0),
+    min = c(0, 0),
+    max = c(0, 0),
+    light = c(1, 0),
+    det = c(0, 1),
+    pisc = c(0, 0)
     )
 test_that("Metabuild returns a correct matrix",{
 

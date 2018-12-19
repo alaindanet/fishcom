@@ -37,6 +37,8 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
   upper_bound <- rlang::enquo(upper_bound)
   fish <- rlang::enquo(fish)
 
+  # TODO: Check concordance of column names between datasets
+  ## eg. species, (life_stage), low_bound, upper_bound, fish
 
   # Build the size class
   size_class <- compute_classes(data, group_var = !!species, var = !!size, class_method = class_method, na.rm = na.rm)
@@ -66,23 +68,29 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
     tidyr::unite(sp_class, !!species, class_id)
     
   pred_classes <- colnames(fish_fish_int)
-  trophic_data <- trophic_data[order(match(trophic_data[, "sp_class"], rownames(fish_fish_int))), ]
+  trophic_data <- trophic_data[order(match(unlist(trophic_data[, "sp_class"]), rownames(fish_fish_int))), ]
+  prey_data <- select(trophic_data, sp_class, lower, upper)
 
-  for (j in seq_along(ncol(fish_fish_int))) {#Predators
-    pred_data <- dplyr::filter(trophic_data, sp_class == pred_classes[j]) %>% unlist
-    
 
+  for (j in 1:ncol(fish_fish_int)) {#Predators
+    pred_data <- dplyr::filter(trophic_data, sp_class == pred_classes[j]) %>%
+      unlist
+
+    cat(j, pred_classes[j], "\n", sep = ", ")
     if (pred_data["pisc_index"] != 0) {
 
+      min_prey   <- as.numeric(pred_data["min_prey"])
+      max_prey   <- as.numeric(pred_data["max_prey"])
+      pisc_index <- as.integer(pred_data["pisc_index"])
       ### Check if the prey is in the range of prey of the predator
-      troph_link <- dplyr::mutate(trophic_data,
+      troph_link <- dplyr::mutate(prey_data,
 	prey_mid = (lower + upper) / 2,
-	troph_link = (pred_data["min"] <= prey_mid & pred_data["max"] >= prey_mid) * pred_data["pisc_index"]) 
+	troph_link = (min_prey <= prey_mid & max_prey  >= prey_mid) * pisc_index)
       
       fish_int_values <- troph_link %>%
       dplyr::select(troph_link) %>% unlist
 
-    fish_fish_int[, j] <- fish_int_values 
+    fish_fish_int[, j] <- fish_int_values
 
     }
   }
