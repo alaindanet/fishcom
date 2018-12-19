@@ -3,25 +3,6 @@ context("metaweb_build")
 library('tidyverse')
 library('magrittr')
 
-data(fish_length_toy)
-data(fish_diet_shift)
-data(resource_diet_shift)
-data(pred_win)
-#############
-#  Metaweb  #
-#############
-test_that("Metabuild returns a correct matrix",{
-  fish_diet_shift %<>% filter(species %in% fish_length_toy$species)
-
-  metaweb <- build_metaweb(fish_length_toy, species, length, pred_win, fish_diet_shift, resource_diet_shift)
-
-  expect_is(metaweb, "matrix")
-
-  matrix_to_rep <- read_csv2("../../bonnafe_work/data/bib_data/output/AccMat_quant_9_PWvar_partOverlap.csv") %>% as.matrix
-
-  expect_identical(metaweb, matrix_to_rep)
-
-})
 
 #######################
 #  Size distribution  #
@@ -97,8 +78,8 @@ test_that("We get a correct prey size dataframe", {
   expect_is(th_prey_size, "data.frame")
   expected_prey_size <- classes_species %>%
     mutate(
-    min = 0.03 * ( (lower + upper) / 2),
-    max = 0.45 * ( (lower + upper) / 2)
+    min_prey = 0.03 * ( (lower + upper) / 2),
+    max_prey = 0.45 * ( (lower + upper) / 2)
     ) %>% select(-lower, -upper)
 
   expect_identical(th_prey_size, expected_prey_size)
@@ -108,11 +89,51 @@ test_that("We get a correct prey size dataframe", {
 #######################
 #  Compute piscivory  #
 #######################
-
 fake_onto_diet_shift <- tibble(
     species = rep(c("Pikachu", "Salameche"), each = 2),
     life_stage = rep(c(1, 2), each = 2),
-    min = c(0, 5, 0, 105),
-    max = c(5, Inf, 105, Inf)
+    min = c(0, 3, 0, 102),
+    max = c(3, Inf, 102, Inf),
+    pisc = rep(c(0, 1), times = 2)
     )
 
+test_that("piscivory is well computed", {
+   piscivory_table <- compute_piscivory(classes_species, fake_onto_diet_shift, species = species, lower = min, upper = max, fish = pisc)
+   expected_table <- th_prey_size %>%
+     mutate(pisc_index = c(rep(0, 3), rep(1, 6), rep(0, 8), 1)) %>%
+     select(-min_prey, -max_prey)
+    
+   expect_identical(piscivory_table, expected_table)
+    })
+
+#############
+#  Metaweb  #
+#############
+fake_resource_shift <-  fake_onto_diet_shift %>%
+  mutate(
+    min = c(0, 3, 0, 102),
+    max = c(3, Inf, 102, Inf),
+    pisc = rep(c(0, 1), times = 2)
+    )
+test_that("Metabuild returns a correct matrix",{
+
+  metaweb <- build_metaweb(fake, species, size = size, fake_prey_win, fake_onto_diet_shift, min, max, fish = pisc, fake_resource_shift)
+
+  expect_is(metaweb, "matrix")
+
+    })
+
+test_that("metaweb works on a true dataset", {
+  ## TRUE dataset
+  data(fish_length_toy)
+  data(fish_diet_shift)
+  data(resource_diet_shift)
+  data(pred_win)
+  fish_diet_shift %<>% filter(species_name %in% fish_length_toy$species)
+  matrix_to_rep <- read_csv2("../../bonnafe_work/data/bib_data/output/AccMat_quant_9_PWvar_partOverlap.csv") %>% as.matrix
+
+  metaweb <- build_metaweb(fish_length_toy, species, length, pred_win, fish_diet_shift, resource_diet_shift)
+
+  expect_identical(metaweb, matrix_to_rep)
+
+})

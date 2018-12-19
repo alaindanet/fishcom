@@ -44,14 +44,13 @@ According to the postdoc advertisement:
 - [ ] Re-run willem analysis
   - [ ] Function structure:
     - [x] cleaning: `../data-raw/clean_fish_op_data.R`
-
     - network build: `../R/metaweb_build.R`
-      - [x]: quantile size distribution
-      - [ ]: Generate class for each species
-	- [ ] write proper tests
-	- [ ] generate size class for each species
+      - [ ]: quantile size distribution
+	- [ ]: set min as the lower size value
+      - [x]: Generate class for each species
 	- [ ] compare with willem 
-      - [ ]: ODS ?
+      - [x]: compute piscivory 
+      - [x]: compute theoretical prey range
       - [ ]: metaweb:
     - network methods:
     - network indices:
