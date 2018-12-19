@@ -45,13 +45,18 @@ According to the postdoc advertisement:
   - [ ] Function structure:
     - [x] cleaning: `../data-raw/clean_fish_op_data.R`
     - network build: `../R/metaweb_build.R`
-      - [ ]: quantile size distribution
-	- [ ]: set min as the lower size value
+      - [x]: quantile size distribution
+	- [x]: set min as the lower size value
       - [x]: Generate class for each species
 	- [ ] compare with willem 
       - [x]: compute piscivory 
       - [x]: compute theoretical prey range
       - [ ]: metaweb:
+	- [ ] fish-fish:
+	  - [ ] to test
+	- [ ] fish-resources
+	- [ ] resources-resources
+	- [ ] merge matrices
     - network methods:
     - network indices:
     - network indices:
