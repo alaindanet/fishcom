@@ -35,6 +35,7 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
   size <- rlang::enquo(size)
   low_bound <- rlang::enquo(low_bound)
   upper_bound <- rlang::enquo(upper_bound)
+  life_stage <- rlang::enquo(life_stage)
   fish <- rlang::enquo(fish)
 
   # TODO: Check concordance of column names between datasets
@@ -55,12 +56,11 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
   resource_list <- dplyr::select(resource_diet_shift, !!species) %>% unlist
   nb_resource <- length(resource_list)
   fish_resource_int <- matrix(rep(0, nb_resource * nb_class), ncol = nb_class)
-
   #Fill the Fish-Fish matrix
   ## Compute the th_prey size min & max + mid-point
   th_prey_size <- compute_prey_size(size_class, pred_win, !!species, !!beta_min, !!beta_max, pred_win_method = pred_win_method)
   ## Get piscivory index for each size class  
-  piscivory_index <- compute_piscivory(size_class, fish_diet_shift, species = !!species, lower = !!low_bound, upper = !!upper_bound, fish = !!fish)
+  piscivory_index <- compute_piscivory(size_class, fish_diet_shift, species = !!species, low_bound = !!low_bound, upper_bound = !!upper_bound, fish = !!fish)
   ## Fill the matrix
   ### Get the data
   trophic_data <- dplyr::left_join(size_class, th_prey_size) %>%
@@ -70,7 +70,6 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
   pred_classes <- colnames(fish_fish_int)
   trophic_data <- trophic_data[order(match(unlist(trophic_data[, "sp_class"]), rownames(fish_fish_int))), ]
   prey_data <- select(trophic_data, sp_class, lower, upper)
-
 
   for (j in 1:ncol(fish_fish_int)) {#Predators
     pred_data <- dplyr::filter(trophic_data, sp_class == pred_classes[j]) %>%
@@ -82,21 +81,37 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
       min_prey   <- as.numeric(pred_data["min_prey"])
       max_prey   <- as.numeric(pred_data["max_prey"])
       pisc_index <- as.integer(pred_data["pisc_index"])
-      ### Check if the prey is in the range of prey of the predator
+      ### Check if the middle of the prey size class is in the range of prey of the predator
       troph_link <- dplyr::mutate(prey_data,
 	prey_mid = (lower + upper) / 2,
 	troph_link = (min_prey <= prey_mid & max_prey  >= prey_mid) * pisc_index)
-      
+
       fish_int_values <- troph_link %>%
-      dplyr::select(troph_link) %>% unlist
-
-    fish_fish_int[, j] <- fish_int_values
-
+	dplyr::select(troph_link) %>% unlist
+      fish_fish_int[, j] <- fish_int_values
     }
+
+    #Fish-Resource matrix
+    ## What the predator size class is eating: 
+    ### Get pred size:
+    min_pred <- as.numeric(pred_data["lower"])
+    max_pred <- as.numeric(pred_data["upper"])
+    ### Filter diet:
+    pred_diet <- dplyr::filter(fish_diet_shift, !!species == stringr::str_extract(pred_classes[j], "[a-zA-Z]+")) %>%
+      dplyr::select(- !!fish)
+    pred_diet_class_match <- pred_diet %>%
+      filter(
+	(min_pred < !!low_bound & !!low_bound < max_pred) |# min stage in size class
+	(min_pred < !!upper_bound & !!upper_bound < max_pred) |# max stage in size class
+	(min_pred < !!low_bound & !!upper_bound < max_pred) |#stage class strictly in size class
+	(min_pred > !!low_bound & !!upper_bound > max_pred)#size class strictly in stage class
+	)
+    fish_resource_int[, j] <-  
+
   }
   fish_fish_int
 
-  # Fish-Resource matrix
+
   # Resource-Resource matrix
   # Merge the matrix
 
@@ -108,21 +123,19 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
 #' @param fish_diet_shift a data.frame containing species, life stage, lower and
 #' upper bound size for each stage
 #' @param species variable name
-#' @param lower variable containing lower limit of the stage 
-#' @param upper variable containing upper limit of the stage. Not used.
+#' @param low_bound variable containing lower limit of the stage 
+#' @param upper_bound variable containing upper limit of the stage. Not used.
 #' @param fish name of logical piscivory variable. 0 = no piscivory; 1 = piscivory
 #'  
 #' @details If given species class is considered as piscivor if the upper bound
 #' of the class is greater than the mininum size to reach piscivory.
 #'
 #' @return a data.frame
-compute_piscivory <- function (size_class, fish_diet_shift, species, lower, upper, fish) {
+compute_piscivory <- function (size_class, fish_diet_shift, species, low_bound, upper_bound, fish) {
 
   species <- rlang::enquo(species)
-  lower_stage_bound <- rlang::enquo(lower)
-  rm(lower)
-  upper_stage_bound <- rlang::enquo(upper) #not use until now
-  rm(upper)
+  lower_stage_bound <- rlang::enquo(low_bound)
+  upper_stage_bound <- rlang::enquo(upper_bound) #not use until now
   fish <- rlang::enquo(fish)
 
   get_piscivory <- function(fish, lower) {

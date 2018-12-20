@@ -94,6 +94,10 @@ fake_onto_diet_shift <- tibble(
     life_stage = rep(c(1, 2), each = 2),
     min = c(0, 3, 0, 102),
     max = c(3, Inf, 102, Inf),
+    light = c(0, 0, 0, 0),
+    det = c(1, 0, 0, 0),
+    Chetiflor = c(0, 1, 1, 0),
+    Paras = c(0, 0, 1, 1),
     pisc = rep(c(0, 1), times = 2)
     )
 
@@ -115,7 +119,8 @@ fake_resource_shift <- tibble(
     min = c(0, 0),
     max = c(0, 0),
     light = c(1, 0),
-    det = c(0, 1),
+    Chetiflor = c(0,0),
+    Paras = c(1, 0),
     pisc = c(0, 0)
     )
 test_that("Metabuild returns a correct matrix",{
