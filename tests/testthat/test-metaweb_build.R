@@ -102,7 +102,7 @@ fake_onto_diet_shift <- tibble(
     )
 
 test_that("piscivory is well computed", {
-   piscivory_table <- compute_piscivory(classes_species, fake_onto_diet_shift, species = species, lower = min, upper = max, fish = pisc)
+   piscivory_table <- compute_piscivory(classes_species, fake_onto_diet_shift, species = species, low_bound = min, upper_bound = max, fish = pisc)
    expected_table <- th_prey_size %>%
      mutate(pisc_index = c(rep(0, 2), rep(1, 7), 0, rep(1, 8))) %>%
      select(-min_prey, -max_prey)
