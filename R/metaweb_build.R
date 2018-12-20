@@ -103,9 +103,9 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
     pred_diet_class_match <- pred_diet %>%
       filter(
 	# min stage in size class: ]min_pred;max_pred]
-	(min_pred < !!low_bound & !!low_bound <= max_pred) |
+	(min_pred < !!low_bound | !!low_bound <= max_pred) |
 	  # max stage in size class:]min_pred;max_pred]
-	(min_pred < !!upper_bound & !!upper_bound <= max_pred) |
+	(min_pred < !!upper_bound | !!upper_bound <= max_pred) |
 	(!!low_bound < min_pred & max_pred <= !!upper_bound) | #stage class strictly in size class:]min_pred;max_pred]
 	(!!low_bound > min_pred & max_pred >= !!upper_bound)#size class strictly in stage class:]low_bound;upper_bound]
 	)

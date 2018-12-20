@@ -91,7 +91,7 @@ test_that("We get a correct prey size dataframe", {
 #######################
 fake_onto_diet_shift <- tibble(
     species = rep(c("Pikachu", "Salameche"), each = 2),
-    life_stage = rep(c(1, 2), each = 2),
+    life_stage = rep(c(1, 2), times = 2),
     min = c(0, 3, 0, 102),
     max = c(3, Inf, 102, Inf),
     light = c(0, 0, 0, 0),
