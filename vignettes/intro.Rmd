@@ -54,8 +54,10 @@ According to the postdoc advertisement:
       - [ ]: metaweb:
 	- [ ] fish-fish:
 	  - [ ] to test
-	- [ ] fish-resources
-	- [ ] resources-resources
+	- [x] fish-resources
+	  - [ ] think about size class matching
+	  - [ ] fix size class match: some intermediate classes do not have match 
+	- [x] resources-resources
 	- [ ] merge matrices
     - network methods:
     - network indices:

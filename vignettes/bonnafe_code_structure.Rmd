@@ -59,6 +59,7 @@ Build the interaction matrices for F-F, F-R and R-R, merged in `AccMat_*.csv`
 
 - Script: `../bonnafe_work/data/bib_data/AccMat_v0.r`
   - Could be easily factorize (I guess) 
+  - **little error** in the code on `fr_matrix`:L2281;L1356;L1540
 
 #### Fish predation windows
 

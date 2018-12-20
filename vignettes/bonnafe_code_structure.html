@@ -12,7 +12,7 @@
 
 <meta name="author" content="Alain Danet" />
 
-<meta name="date" content="2018-12-12" />
+<meta name="date" content="2018-12-20" />
 
 <title>Review of Bonnafe code</title>
 
@@ -278,7 +278,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 <h1 class="title toc-ignore">Review of Bonnafe code</h1>
 <h4 class="author"><em>Alain Danet</em></h4>
-<h4 class="date"><em>2018-12-12</em></h4>
+<h4 class="date"><em>2018-12-20</em></h4>
 
 
 
@@ -851,6 +851,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <li>Script: <code>../bonnafe_work/data/bib_data/AccMat_v0.r</code>
 <ul>
 <li>Could be easily factorize (I guess)</li>
+<li>little error in the code on <code>fr_matrix</code>:L2281;L1356;L1540</li>
 </ul></li>
 </ul>
 <div id="fish-predation-windows" class="section level4">
@@ -4189,28 +4190,11 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <td align="left">NA</td>
 <td align="left">NA</td>
 </tr>
-<tr class="even">
-<td align="left">- Variables:</td>
-<td align="left">same as Fish die</td>
-<td align="right">t data</td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
 </tbody>
 </table>
+<ul>
+<li>Variables: same as Fish diet data</li>
+</ul>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1">size_quantiles &lt;-<span class="st"> </span><span class="kw">read_delim</span>(<span class="st">&quot;../bonnafe_work/data/bib_data/size_quantiles.csv&quot;</span>, <span class="dt">delim =</span> <span class="st">&quot;;&quot;</span>,</a>
 <a class="sourceLine" id="cb7-2" data-line-number="2">  <span class="dt">col_types =</span> <span class="kw">cols</span>())</a>
 <a class="sourceLine" id="cb7-3" data-line-number="3"><span class="co">#&gt; Warning: Missing column names filled in: 'X1' [1]</span></a>
@@ -4654,7 +4638,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 </tbody>
 </table>
 <ul>
-<li>output: interaction matrices: <code>../bonnafe_work/data/bib_data/output/AccMat_*.csv</code>
+<li>Output: interaction matrices: <code>../bonnafe_work/data/bib_data/output/AccMat_*.csv</code>
 <ul>
 <li>file pattern: <code>AccMat_&lt;criteria for class separation&gt;_&lt;number of classes&gt;_&lt;predation window (intraspe var or cst)&gt;</code></li>
 <li>File used for the paper: <code>AccMat_quant_9_PWvar_partOverlap.csv</code> <strong>Not sure about the partOverlap but <em>I guess</em> it is necessary when you use midpoint of the size class</strong></li>

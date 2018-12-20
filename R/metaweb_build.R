@@ -35,7 +35,6 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
   size <- rlang::enquo(size)
   low_bound <- rlang::enquo(low_bound)
   upper_bound <- rlang::enquo(upper_bound)
-  life_stage <- rlang::enquo(life_stage)
   fish <- rlang::enquo(fish)
 
   # TODO: Check concordance of column names between datasets
@@ -54,8 +53,11 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
   rownames(fish_fish_int) <- colnames(fish_fish_int)  <- fish_class_names
   # Build the Fish-Resource matrix
   resource_list <- dplyr::select(resource_diet_shift, !!species) %>% unlist
+  names(resource_list) <- NULL
   nb_resource <- length(resource_list)
-  fish_resource_int <- matrix(rep(0, nb_resource * nb_class), ncol = nb_class)
+  fish_resource_int <- matrix(rep(0, nb_resource * nb_class * nb_species), ncol = nb_class * nb_species)
+  rownames(fish_resource_int) <- resource_list
+  colnames(fish_resource_int) <- fish_class_names 
   #Fill the Fish-Fish matrix
   ## Compute the th_prey size min & max + mid-point
   th_prey_size <- compute_prey_size(size_class, pred_win, !!species, !!beta_min, !!beta_max, pred_win_method = pred_win_method)
@@ -75,7 +77,6 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
     pred_data <- dplyr::filter(trophic_data, sp_class == pred_classes[j]) %>%
       unlist
 
-    cat(j, pred_classes[j], "\n", sep = ", ")
     if (pred_data["pisc_index"] != 0) {
 
       min_prey   <- as.numeric(pred_data["min_prey"])
@@ -101,19 +102,41 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
       dplyr::select(- !!fish)
     pred_diet_class_match <- pred_diet %>%
       filter(
-	(min_pred < !!low_bound & !!low_bound < max_pred) |# min stage in size class
-	(min_pred < !!upper_bound & !!upper_bound < max_pred) |# max stage in size class
-	(min_pred < !!low_bound & !!upper_bound < max_pred) |#stage class strictly in size class
-	(min_pred > !!low_bound & !!upper_bound > max_pred)#size class strictly in stage class
+	# min stage in size class: ]min_pred;max_pred]
+	(min_pred < !!low_bound & !!low_bound <= max_pred) |
+	  # max stage in size class:]min_pred;max_pred]
+	(min_pred < !!upper_bound & !!upper_bound <= max_pred) |
+	(!!low_bound < min_pred & max_pred <= !!upper_bound) | #stage class strictly in size class:]min_pred;max_pred]
+	(!!low_bound > min_pred & max_pred >= !!upper_bound)#size class strictly in stage class:]low_bound;upper_bound]
 	)
-    fish_resource_int[, j] <-  
 
+    # Check if size classes has matched a life stage
+    if (nrow(pred_diet_class_match) != 0) {
+      resource_int_values <- pred_diet_class_match %>%
+	select(!! resource_list) %>%
+	gather(resource, troph_index) %>%
+	group_by(resource) %>%
+	summarise(troph_index = (sum(troph_index) >0) * 1) %>% 
+	spread(resource, troph_index) %>%
+	unlist
+
+      fish_resource_int[, j] <- resource_int_values
+    }
   }
-  fish_fish_int
-
 
   # Resource-Resource matrix
+  resource_resource_int <- t(resource_diet_shift[, resource_list])
+  # Resource-Fish matrix
+  resource_fish_int <- matrix(0, ncol = ncol(resource_resource_int),
+    nrow = nrow(fish_fish_int))
+  colnames(resource_resource_int) <- colnames(resource_fish_int) <- resource_list
+  # Resource-Fish matrix
   # Merge the matrix
+  metaweb <- rbind(
+    cbind(fish_fish_int, resource_fish_int),
+    cbind(fish_resource_int, resource_resource_int)
+    )
+  metaweb
 
 }
 

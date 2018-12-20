@@ -95,12 +95,10 @@ fake_onto_diet_shift <- tibble(
     min = c(0, 3, 0, 102),
     max = c(3, Inf, 102, Inf),
     light = c(0, 0, 0, 0),
-    det = c(1, 0, 0, 0),
     Chetiflor = c(0, 1, 1, 0),
     Paras = c(0, 0, 1, 1),
     pisc = rep(c(0, 1), times = 2)
     )
-
 test_that("piscivory is well computed", {
    piscivory_table <- compute_piscivory(classes_species, fake_onto_diet_shift, species = species, low_bound = min, upper_bound = max, fish = pisc)
    expected_table <- th_prey_size %>%
@@ -119,8 +117,8 @@ fake_resource_shift <- tibble(
     min = c(0, 0),
     max = c(0, 0),
     light = c(1, 0),
-    Chetiflor = c(0,0),
-    Paras = c(1, 0),
+    Chetiflor = c(0, 1),
+    Paras = c(0, 0),
     pisc = c(0, 0)
     )
 test_that("Metabuild returns a correct matrix",{
@@ -130,7 +128,6 @@ test_that("Metabuild returns a correct matrix",{
   expect_is(metaweb, "matrix")
 
     })
-
 test_that("metaweb works on a true dataset", {
   ## TRUE dataset
   data(fish_length_toy)
