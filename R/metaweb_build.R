@@ -44,9 +44,9 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
   size_class <- compute_classes(data, group_var = !!species, var = !!size, class_method = class_method, na.rm = na.rm)
 
   # Build the Fish-Fish matrix
-  species_list <- unique(select(data, !!species)) %>% unlist
+  species_list <- unique(select(size_class, !!species)) %>% unlist
   nb_species <- length(species_list)
-  fish_fish_int <- matrix(rep(0, (nb_species * nb_class) ^ 2),ncol = nb_species * nb_class)
+  fish_fish_int <- matrix(rep(0, (nb_species * nb_class) ^ 2), ncol = nb_species * nb_class)
   ## Name it
   fish_class_names <- rep(species_list, each = nb_class) %>%
     paste(., seq(1, nb_class), sep = "_")
@@ -57,7 +57,8 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
   nb_resource <- length(resource_list)
   fish_resource_int <- matrix(rep(0, nb_resource * nb_class * nb_species), ncol = nb_class * nb_species)
   rownames(fish_resource_int) <- resource_list
-  colnames(fish_resource_int) <- fish_class_names 
+  colnames(fish_resource_int) <- fish_class_names
+
   #Fill the Fish-Fish matrix
   ## Compute the th_prey size min & max + mid-point
   th_prey_size <- compute_prey_size(size_class, pred_win, !!species, !!beta_min, !!beta_max, pred_win_method = pred_win_method)
@@ -103,34 +104,34 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
     pred_diet_class_match <- pred_diet %>%
       filter(
 	# min stage in size class: ]min_pred;max_pred]
-	(min_pred < !!low_bound | !!low_bound <= max_pred) |
+	(min_pred < !!low_bound & !!low_bound <= max_pred) |
 	  # max stage in size class:]min_pred;max_pred]
-	(min_pred < !!upper_bound | !!upper_bound <= max_pred) |
-	(!!low_bound < min_pred & max_pred <= !!upper_bound) | #stage class strictly in size class:]min_pred;max_pred]
-	(!!low_bound > min_pred & max_pred >= !!upper_bound)#size class strictly in stage class:]low_bound;upper_bound]
+	(min_pred < !!upper_bound & !!upper_bound <= max_pred) |
+	#stage class strictly around size class:]min_pred;max_pred]
+	## stage class
+	(!!low_bound <= min_pred & max_pred < !!upper_bound) |
+	#size class strictly in stage class:]low_bound;upper_bound]
+	(!!low_bound > min_pred & max_pred >= !!upper_bound)
 	)
 
-    # Check if size classes has matched a life stage
-    if (nrow(pred_diet_class_match) != 0) {
       resource_int_values <- pred_diet_class_match %>%
 	select(!! resource_list) %>%
 	gather(resource, troph_index) %>%
 	group_by(resource) %>%
-	summarise(troph_index = (sum(troph_index) >0) * 1) %>% 
+	summarise(troph_index = (sum(troph_index) >0) * 1) %>%
 	spread(resource, troph_index) %>%
 	unlist
 
       fish_resource_int[, j] <- resource_int_values
-    }
   }
 
   # Resource-Resource matrix
   resource_resource_int <- t(resource_diet_shift[, resource_list])
   # Resource-Fish matrix
   resource_fish_int <- matrix(0, ncol = ncol(resource_resource_int),
-    nrow = nrow(fish_fish_int))
+    nrow = nrow(fish_fish_int)) #0 because no resources are eating fishes
   colnames(resource_resource_int) <- colnames(resource_fish_int) <- resource_list
-  # Resource-Fish matrix
+
   # Merge the matrix
   metaweb <- rbind(
     cbind(fish_fish_int, resource_fish_int),
@@ -161,6 +162,16 @@ compute_piscivory <- function (size_class, fish_diet_shift, species, low_bound, 
   upper_stage_bound <- rlang::enquo(upper_bound) #not use until now
   fish <- rlang::enquo(fish)
 
+  # Check variables
+  type_variable <- fish_diet_shift %>%
+    #dplyr::select(!!lower_stage_bound) %>%#, !!upper_stage_bound
+    dplyr::summarise(type = typeof(!!lower_stage_bound)) %>%
+    dplyr::select(type) %>% unlist(.)
+  if (any(!(type_variable %in% c("double", "integer")))) {
+    stop("In fish_diet_shift, the low_bound variable is not numeric")
+  }
+  
+
   get_piscivory <- function(fish, lower) {
     if (sum(fish) > 0) { # Is there at least one picivory life stage?
       # Get min size at piscivory
@@ -176,7 +187,7 @@ compute_piscivory <- function (size_class, fish_diet_shift, species, low_bound, 
     dplyr::select(!!species, min_pisc)
 
   dplyr::left_join(size_class, min_pisc, by = rlang::quo_name(species)) %>%
-    dplyr::mutate(pisc_index = (upper > min_pisc) * 1) %>%
+    dplyr::mutate(pisc_index = ifelse(is.na(min_pisc), 0, (upper > min_pisc) * 1)) %>%
     dplyr::select(-min_pisc, - lower, - upper)
 }
 
@@ -237,25 +248,46 @@ compute_classes <- function(size, group_var, var, class_method = "percentile",
     size %<>% na.omit
     message("NAs has been removed with na.omit")
   } else {
-    if(length(which(is.na(size))) > 0){
+    if (length(which(is.na(size))) > 0) {
       stop("There are NAs in your dataset. Please set na.rm = TRUE")
     }
   }
 
 
-  nested_size <- size %>%
+  size %<>%
     dplyr::group_by(!!group_var) %>%
-    dplyr::select(!!group_var, !!var) %>% #ensure that there is only the varialble of interest
-    tidyr::nest()
+    dplyr::select(!!group_var, !!var) # ensure that there is only the variable
+  #of interest
+  nested_size <- size %>% tidyr::nest()
+
+  ## Check that there are at least 2 different values
+  check_nb_data <- size %>%
+    dplyr::summarise(nb = length(unique(!!var))) %>%
+    dplyr::mutate(good = ifelse(nb >= 2, TRUE, FALSE)) %>%
+    dplyr::select(-nb)
+
+  if (!all(check_nb_data$good)) {
+  species_not_good <- dplyr::filter(check_nb_data, good == FALSE) %>%
+    dplyr::select(!!group_var) %>% unlist(.)
+    
+  warnings("The following species had less than two unique size values, so we got rid of them:", species_not_good)
+
+  nested_size %<>% dplyr::filter(!(species %in% species_not_good))
+  }
+
+  if (nrow(nested_size) == 0) {
+  stop("None of the species got more of two unique values. Check your dataset.")
+  }
+
   nested_size %<>%
     dplyr::mutate(
-      classes = purrr::map(data, unlist),
-      classes = purrr::map(classes, split_in_classes, nb_class = nb_class, class_method = class_method)) %>%
-  select(-data)
+      classes = purrr::map(data, split_in_classes, nb_class = nb_class,
+	class_method = class_method)
+      ) %>%
+    dplyr::select(-data)
 
 nested_size %>%
   tidyr::unnest(classes)
-    
 
 }
 

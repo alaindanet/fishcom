@@ -62,6 +62,28 @@ test_that("Class dataframe is correct", {
   expect_error(compute_classes(fish_length_toy, species, length, nb_class = nb_class), message = "There are NAs in your dataset. Please set na.rm = TRUE")
   
 })
+test_that("Remove species when revelant", {
+
+ten_one <- tibble(
+  species = rep(c("Pikachu", "Salameche"), each = 10),
+  size = c(seq(1, 10), rep(1, 10))
+  )
+
+expect_warning(compute_classes(ten_one, species, size, nb_class = nb_class), message = "The following species had less than two unique size values, so we got rid of them: Salameche")
+
+not_one <- tibble(
+  species = rep("Salameche", each = 10),
+  size = c(rep(1, 10))
+  )
+expect_error(compute_classes(not_one, species, size, nb_class = nb_class), message = "None of the species got more of two unique values. Check your dataset.")
+
+one <- tibble(
+  species = rep("Salameche", each = 1),
+  size = c(rep(1, 1))
+  )
+
+expect_error(compute_classes(one, species, size, nb_class = nb_class), message = "None of the species got more of two unique values. Check your dataset.")
+})
 
 #######################
 #  Compute prey size  #
@@ -104,9 +126,23 @@ test_that("piscivory is well computed", {
    expected_table <- th_prey_size %>%
      mutate(pisc_index = c(rep(0, 2), rep(1, 7), 0, rep(1, 8))) %>%
      select(-min_prey, -max_prey)
-    
    expect_identical(piscivory_table, expected_table)
     })
+test_that("piscivory is sensible to variable definition", {
+fake_onto_diet_shift$min <- c(0, "max", 0, 102) 
+
+expect_error(compute_piscivory(classes_species, fake_onto_diet_shift, species = species, low_bound = min, upper_bound = max, fish = pisc), "In fish_diet_shift, the low_bound variable is not numeric")
+    })
+test_that("it returns piscivory index non-piscivorous fishes", {
+# Salameche does not eat fishes 
+fake_onto_diet_shift$pisc <- c(0, 1, 0, 0)
+
+   expected_table <- th_prey_size %>%
+     mutate(pisc_index = c(rep(0, 2), rep(1, 7), 0, rep(0, 8))) %>%
+     select(-min_prey, -max_prey)
+expect_identical(compute_piscivory(classes_species, fake_onto_diet_shift, species = species, low_bound = min, upper_bound = max, fish = pisc), expected_table)
+    }
+  )
 
 #############
 #  Metaweb  #
@@ -130,15 +166,32 @@ test_that("Metabuild returns a correct matrix",{
     })
 test_that("metaweb works on a true dataset", {
   ## TRUE dataset
-  data(fish_length_toy)
+  data(fish_length)
   data(fish_diet_shift)
   data(resource_diet_shift)
   data(pred_win)
-  fish_diet_shift %<>% filter(species_name %in% fish_length_toy$species)
+  #fish_diet_shift %<>% filter(species %in% fish_length_toy$species)
+  #pred_win %<>% filter(species %in% fish_length_toy$species)
   matrix_to_rep <- read_csv2("../../bonnafe_work/data/bib_data/output/AccMat_quant_9_PWvar_partOverlap.csv") %>% as.matrix
+  ## Remove OBL which has only one record:
+  if (filter(fish_length, species == "OBL") %>% nrow <= 1) {
+    col_to_rm <- str_detect(colnames(matrix_to_rep), "OBL")
+    matrix_to_rep2 <- matrix_to_rep[- which(col_to_rm) , - which(col_to_rm)]
+  }
+# Order matrix:
+order_species_to_rep <- str_extract_all(colnames(matrix_to_rep2), "[A-Za-z]+", simplify = TRUE) %>% as.vector
 
-  metaweb <- build_metaweb(fish_length_toy, species, length, pred_win, fish_diet_shift, resource_diet_shift)
+  metaweb <- build_metaweb(fish_length, species, length, pred_win, fish_diet_shift, size_min, size_max, fish, resource_diet_shift, na.rm = TRUE)
+col_species <- str_extract_all(colnames(metaweb), "[A-Za-z]+", simplify = TRUE) %>% as.vector
 
-  expect_identical(metaweb, matrix_to_rep)
+metaweb2 <- metaweb[order(match(col_species, order_species_to_rep)), order(match(col_species, order_species_to_rep))]
+colnames(matrix_to_rep2) <- colnames(metaweb2)
+rownames(matrix_to_rep2) <- colnames(metaweb2)
+
+  expect_identical(metaweb2, matrix_to_rep2)
+#HERE: replace properly dimnames to see where are the differences between the
+##two matrices
+attr(metaweb2, "dimnames")  <- list(order_species_to_rep, order_species_to_rep)
+attr(matrix_to_rep2, "dimnames")  <- list(order_species_to_rep, order_species_to_rep)
 
 })

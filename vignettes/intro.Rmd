@@ -47,18 +47,19 @@ According to the postdoc advertisement:
     - network build: `../R/metaweb_build.R`
       - [x]: quantile size distribution
 	- [x]: set min as the lower size value
+	- [ ]: how to manage when there are few data points ?
       - [x]: Generate class for each species
 	- [ ] compare with willem 
       - [x]: compute piscivory 
       - [x]: compute theoretical prey range
       - [ ]: metaweb:
-	- [ ] fish-fish:
+	- [x] fish-fish:
 	  - [ ] to test
 	- [x] fish-resources
-	  - [ ] think about size class matching
-	  - [ ] fix size class match: some intermediate classes do not have match 
+	  - [x] think about size class matching
+	  - [x] fix size class match: some intermediate classes do not have match 
 	- [x] resources-resources
-	- [ ] merge matrices
+	- [x] merge matrices
     - network methods:
     - network indices:
     - network indices:

@@ -13,7 +13,6 @@ library(magrittr)
 ## Sample dataset
 fish_op <- read_csv("../data-raw/fishing_operation_test.csv")
 
-
 ############################
 #  User friendly variable  #
 ############################
