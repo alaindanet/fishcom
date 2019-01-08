@@ -137,7 +137,13 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
     cbind(fish_fish_int, resource_fish_int),
     cbind(fish_resource_int, resource_resource_int)
     )
-  metaweb
+
+  list(
+  metaweb = metaweb,
+  species = species_list,
+  resource = resource_list,
+  nb_class = nb_class
+  )
 
 }
 

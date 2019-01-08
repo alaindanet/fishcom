@@ -22,7 +22,7 @@ build_local_network <- function (metaweb, classes, data, species, var, group_var
   #Attribute size class for each fish
   classes_assigned <- assign_size_class(data, !!species, !!var, classes)
 
-  classes_assigned
+  resource_list <- metaweb$resource_list
 }
 #' Assign size classes, for all species 
 #' 
@@ -72,6 +72,7 @@ get_size_class <- function (data, species_name, var, classes) {
   data %<>% dplyr::select(!!var) %>% unlist(.)
 
   # Use findInterval
+  # see https://rpubs.com/josephuses626/findInterval to improve
   mat_match <- apply(classes, 1, findInterval, x = data, left.open = TRUE) == 1
   #correct for first interval which is left close:
   mat_match[1,1] <- TRUE

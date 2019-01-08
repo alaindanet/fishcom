@@ -161,7 +161,7 @@ test_that("Metabuild returns a correct matrix",{
 
   metaweb <- build_metaweb(fake, species, size = size, fake_prey_win, fake_onto_diet_shift, min, max, fish = pisc, fake_resource_shift)
 
-  expect_is(metaweb, "matrix")
+  expect_is(metaweb$metaweb, "matrix")
 
     })
 test_that("metaweb works on a true dataset", {
@@ -182,9 +182,9 @@ test_that("metaweb works on a true dataset", {
 order_species_to_rep <- str_extract_all(colnames(matrix_to_rep2), "[A-Za-z]+", simplify = TRUE) %>% as.vector
 
   metaweb <- build_metaweb(fish_length, species, length, pred_win, fish_diet_shift, size_min, size_max, fish, resource_diet_shift, na.rm = TRUE)
-col_species <- str_extract_all(colnames(metaweb), "[A-Za-z]+", simplify = TRUE) %>% as.vector
+col_species <- str_extract_all(colnames(metaweb$metaweb), "[A-Za-z]+", simplify = TRUE) %>% as.vector
 
-metaweb2 <- metaweb[order(match(col_species, order_species_to_rep)), order(match(col_species, order_species_to_rep))]
+metaweb2 <- metaweb$metaweb[order(match(col_species, order_species_to_rep)), order(match(col_species, order_species_to_rep))]
 colnames(matrix_to_rep2) <- colnames(metaweb2)
 rownames(matrix_to_rep2) <- colnames(metaweb2)
 
@@ -193,5 +193,10 @@ rownames(matrix_to_rep2) <- colnames(metaweb2)
 ##two matrices
 attr(metaweb2, "dimnames")  <- list(order_species_to_rep, order_species_to_rep)
 attr(matrix_to_rep2, "dimnames")  <- list(order_species_to_rep, order_species_to_rep)
+
+# There is problems with fish fish interactions:
+metaweb2[37]; dimnames(metaweb2)[[2]][37]; dimnames(metaweb2)[[1]][1]
+metaweb2[46]
+sum(matrix_to_rep2-metaweb2)
 
 })
