@@ -21,7 +21,7 @@ quartile <- fish_length %>%
   nest() %>%
   mutate(
     quartile = map(data, ~ quantile(.$length)),
-    quartile = map(quartile, ~ bind_rows(.) %>% 
+    quartile = map(quartile, ~ bind_rows(.) %>%
       gather(quartile, size))
     ) %>%
   unnest(quartile)

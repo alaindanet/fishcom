@@ -3,7 +3,6 @@ context("metaweb_build")
 library('tidyverse')
 library('magrittr')
 
-
 #######################
 #  Size distribution  #
 #######################
@@ -83,6 +82,10 @@ one <- tibble(
   )
 
 expect_error(compute_classes(one, species, size, nb_class = nb_class), message = "None of the species got more of two unique values. Check your dataset.")
+})
+test_that("classification handles df", {
+  # Because quantile function takes a numeric vector as input 
+  expect_is(split_in_classes(fake[, "size"], nb_class = nb_class, class_method = "quantile"), "data.frame")
 })
 
 #######################
@@ -188,7 +191,7 @@ metaweb2 <- metaweb$metaweb[order(match(col_species, order_species_to_rep)), ord
 colnames(matrix_to_rep2) <- colnames(metaweb2)
 rownames(matrix_to_rep2) <- colnames(metaweb2)
 
-  expect_identical(metaweb2, matrix_to_rep2)
+expect_identical(metaweb2, matrix_to_rep2)
 #HERE: replace properly dimnames to see where are the differences between the
 ##two matrices
 attr(metaweb2, "dimnames")  <- list(order_species_to_rep, order_species_to_rep)

@@ -1,3 +1,4 @@
+
 ###########################################
 #  Functions necessary to create metaweb  #
 ###########################################
@@ -27,7 +28,7 @@
 #'
 #' @return matrix 
 #'
-build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bound, upper_bound, fish, resource_diet_shift, class_method = "percentile",
+build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bound, upper_bound, fish, resource_diet_shift, class_method = "quantile",
   nb_class = 9, pred_win_method = "midpoint", na.rm = FALSE) {
 
   #Capture var:
@@ -142,7 +143,10 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
   metaweb = metaweb,
   species = species_list,
   resource = resource_list,
-  nb_class = nb_class
+  nb_class = nb_class,
+  size_class = size_class,
+  piscivory_index = piscivory_index,
+  th_prey_size = th_prey_size
   )
 
 }
@@ -220,9 +224,9 @@ compute_piscivory <- function (size_class, fish_diet_shift, species, low_bound, 
 compute_prey_size <- function (class_size, pred_win, species, beta_min, beta_max, pred_win_method = "midpoint") {
 
   #Get var:
-  species  <- quo(species)
-  beta_min <- quo(beta_min)
-  beta_max <- quo(beta_max)
+  species  <- rlang::quo(species)
+  beta_min <- rlang::quo(beta_min)
+  beta_max <- rlang::quo(beta_max)
   
   if (pred_win_method != "midpoint") {
     message("Other methods are not yet implemented")
@@ -241,14 +245,14 @@ compute_prey_size <- function (class_size, pred_win, species, beta_min, beta_max
 #' @inheritParams split_in_classes 
 #'
 #' @return
-compute_classes <- function(size, group_var, var, class_method = "percentile",
+compute_classes <- function(size, group_var, var, class_method = "quantile",
   nb_class = 9, na.rm = FALSE) {
 
   stopifnot(is.numeric(nb_class))
 
   #Capture variables:
-  group_var <- enquo(group_var)
-  var <- enquo(var)
+  group_var <- rlang::enquo(group_var)
+  var <- rlang::enquo(var)
 
   if (na.rm) {
     size %<>% na.omit
@@ -302,12 +306,16 @@ nested_size %>%
 #' @param to_class a numeric vector
 #' @param class_method character percentile or quantile. Default to percentile. 
 #' @param nb_class integer number of size class to create. Default to 9. 
-  split_in_classes <- function (to_class, class_method = "percentile",
-    nb_class = 9) {
+split_in_classes <- function (to_class, class_method = "quantile",
+  nb_class = 9) {
 
   stopifnot(class_method %in% c("percentile", "quantile"))
 
     if (class_method == "quantile") {
+      if (is.list(to_class)) {
+	to_class %<>% unlist
+	stopifnot(is.numeric(to_class))
+      }
       classified <- quantile(to_class, probs = seq(0, 1, by = 1 / nb_class))
     } else {
       classified <- seq(min(to_class), max(to_class), by = (max(to_class) - min(to_class)) / nb_class)
