@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Alain Danet" />
+
+<meta name="date" content="2019-01-10" />
+
+<title>How to build the metaweb</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#header {
+text-align: center;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">How to build the metaweb</h1>
+<h4 class="author"><em>Alain Danet</em></h4>
+<h4 class="date"><em>2019-01-10</em></h4>
+
+
+
+<div id="objectives" class="section level1">
+<h1>Objectives</h1>
+<p>Here I describe how we are currently building metaweb and how it could be improve.</p>
+</div>
+<div id="preambule" class="section level1">
+<h1>Preambule </h1>
+<p>logic follow:</p>
+<ol style="list-style-type: decimal">
+<li>Setting the nodes:</li>
+</ol>
+<ul>
+<li>Compute the size class</li>
+<li>Determine resource nodes</li>
+<li>Determine diet shift</li>
+</ul>
+<ol start="2" style="list-style-type: decimal">
+<li>Set the interactions</li>
+<li>Fish - Fish interactions</li>
+</ol>
+<ul>
+<li>Theoretical prey size</li>
+<li>Compute the piscivory index</li>
+<li>Setting the links</li>
+</ul>
+<ol start="2" style="list-style-type: decimal">
+<li>Fish - Resource interactions</li>
+<li>Resource - Resource interactions</li>
+<li>Determine</li>
+</ol>
+<p>Here the metaweb describes the presence and the absence of only feeding links between (i) species, (ii) species-resources and (iii) resources-resources. It is called a metaweb because it describes the theoretical feeding links between species that is present in a given dataset regarless of the provenance of the species, i.e. if they really cooccur or not. The links (i-ii) are based on size/weight relationship on the basis that your size/weight<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> describes which/what you can eat and ontogenic diet shift.</p>
+<p>The procedure described below is largely retake from the work of <span class="citation">Bonnafé, Legendre, and Edeline (n.d.)</span>.</p>
+<ul>
+<li><span class="math inline">\(C_i\)</span>: Number of class of the species <span class="math inline">\(i\)</span></li>
+<li><span class="math inline">\(c_j\)</span>: class <span class="math inline">\(j\)</span></li>
+<li><span class="math inline">\(n_i\)</span>: species <span class="math inline">\(i\)</span></li>
+<li><span class="math inline">\(N\)</span>: number of species</li>
+<li><span class="math inline">\(R\)</span>: number of resources</li>
+</ul>
+</div>
+<div id="set-the-nodes" class="section level1">
+<h1>Set the nodes</h1>
+<p>You can decide to set one node by species, it is the most simple. However, species can have rather a large size range, and in keeping a low number of nodes can make miss important features of the metaweb. In such a case, the metaweb will not describe some important features like ontogenic diet shifts. Choosing the number of nodes is like piking the magnification of the lens.</p>
+<div id="build-size-classes" class="section level2">
+<h2>Build size classes</h2>
+<p>The number of nodes by species corresponds to the number of classes <span class="math inline">\(C\)</span>, the size classes.</p>
+<p>The classes can be determined by the method of the quantile (<code>?quantile()</code>) or percentile (<code>?seq()</code>).</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">nb_class &lt;-<span class="st"> </span><span class="dv">5</span> </a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">size &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">1</span>, <span class="dv">100</span>)</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">split_quant &lt;-<span class="st"> </span><span class="kw">split_in_classes</span>(size, <span class="dt">class_method =</span> <span class="st">&quot;quantile&quot;</span>, <span class="dt">nb_class =</span></a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">  nb_class)</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">split_percent &lt;-<span class="st"> </span><span class="kw">split_in_classes</span>(size, <span class="dt">class_method =</span> <span class="st">&quot;percentile&quot;</span>, <span class="dt">nb_class =</span></a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">  nb_class)</a>
+<a class="sourceLine" id="cb1-8" data-line-number="8"><span class="kw">identical</span>(split_quant, split_percent)</a>
+<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="co">#&gt; [1] TRUE</span></a></code></pre></div>
+<p>Quantile and percentile methods return the same output when data are uniformly distributed. It is not the case when data are not, for example with normal distribution.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1">size &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">100</span>, <span class="dt">mean =</span> <span class="dv">100</span>, <span class="dt">sd =</span> <span class="dv">10</span>)</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">split_quant &lt;-<span class="st"> </span><span class="kw">split_in_classes</span>(size, <span class="dt">class_method =</span> <span class="st">&quot;quantile&quot;</span>, <span class="dt">nb_class =</span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">  nb_class)</a>
+<a class="sourceLine" id="cb2-5" data-line-number="5">split_percent &lt;-<span class="st"> </span><span class="kw">split_in_classes</span>(size, <span class="dt">class_method =</span> <span class="st">&quot;percentile&quot;</span>, <span class="dt">nb_class =</span></a>
+<a class="sourceLine" id="cb2-6" data-line-number="6">  nb_class)</a>
+<a class="sourceLine" id="cb2-7" data-line-number="7"><span class="kw">identical</span>(split_quant, split_percent)</a>
+<a class="sourceLine" id="cb2-8" data-line-number="8"><span class="co">#&gt; [1] FALSE</span></a></code></pre></div>
+<p>Percentile method will build class of the same size equally distributed between the minimum size 78.5590062 and the maximum size 122.3029863. Quantile method build classes containing the same number of observation. So, if <span class="math inline">\(C = 2\)</span>, the cutting point will be the median. In the case of the normal distribution, quantile method created thiner classes (data are centered around the mean) and wider classes at the extremes.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">method &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;quantile&quot;</span>, <span class="st">&quot;percentile&quot;</span>)</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">temp_obj &lt;-<span class="st"> </span><span class="kw">list</span>(split_quant, split_percent)</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="dv">2</span>) {</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">  temp_obj[[ i ]] <span class="op">%&lt;&gt;%</span><span class="st"> </span>dplyr<span class="op">::</span><span class="kw">mutate</span>(<span class="dt">method =</span> method[i]) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb3-5" data-line-number="5"><span class="st">    </span><span class="kw">gather</span>(bound, values, lower, upper)</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">} </a>
+<a class="sourceLine" id="cb3-7" data-line-number="7">temp2 &lt;-<span class="st"> </span>dplyr<span class="op">::</span><span class="kw">bind_rows</span>(temp_obj[[<span class="dv">1</span>]], temp_obj[[<span class="dv">2</span>]])  <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb3-8" data-line-number="8"><span class="st">  </span>tidyr<span class="op">::</span><span class="kw">spread</span>(method, values)</a>
+<a class="sourceLine" id="cb3-9" data-line-number="9">knitr<span class="op">::</span><span class="kw">kable</span>(temp2)</a></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">class_id</th>
+<th align="left">bound</th>
+<th align="right">percentile</th>
+<th align="right">quantile</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="left">lower</td>
+<td align="right">79</td>
+<td align="right">79</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="left">upper</td>
+<td align="right">87</td>
+<td align="right">96</td>
+</tr>
+<tr class="odd">
+<td align="right">2</td>
+<td align="left">lower</td>
+<td align="right">87</td>
+<td align="right">96</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="left">upper</td>
+<td align="right">96</td>
+<td align="right">100</td>
+</tr>
+<tr class="odd">
+<td align="right">3</td>
+<td align="left">lower</td>
+<td align="right">96</td>
+<td align="right">100</td>
+</tr>
+<tr class="even">
+<td align="right">3</td>
+<td align="left">upper</td>
+<td align="right">105</td>
+<td align="right">105</td>
+</tr>
+<tr class="odd">
+<td align="right">4</td>
+<td align="left">lower</td>
+<td align="right">105</td>
+<td align="right">105</td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+<td align="left">upper</td>
+<td align="right">114</td>
+<td align="right">110</td>
+</tr>
+<tr class="odd">
+<td align="right">5</td>
+<td align="left">lower</td>
+<td align="right">114</td>
+<td align="right">110</td>
+</tr>
+<tr class="even">
+<td align="right">5</td>
+<td align="left">upper</td>
+<td align="right">122</td>
+<td align="right">122</td>
+</tr>
+</tbody>
+</table>
+<p>When we have several species, the classes are computed with <code>compute_classes()</code>.</p>
+<p>Let me introduce the toy dataset that we will use. The pokemon are eating each other (although it is not shown in the anime). The feeding interaction is determined by the size relationship (believe me!). So, we can build the metaweb as other food web. The size values are arbitrary.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1">nb_class &lt;-<span class="st"> </span><span class="dv">4</span></a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">pokemon_size &lt;-<span class="st"> </span><span class="kw">tibble</span>(</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">  <span class="dt">species =</span> <span class="kw">rep</span>(<span class="kw">c</span>(<span class="st">&quot;Pikachu&quot;</span>, <span class="st">&quot;Roucoups&quot;</span>, <span class="st">&quot;Dracofeu&quot;</span>), <span class="dt">each =</span> <span class="dv">10</span>),</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">  <span class="dt">size =</span> <span class="kw">c</span>(<span class="kw">seq</span>(<span class="dv">1</span>,<span class="dv">10</span>), <span class="kw">seq</span>(<span class="dv">11</span>, <span class="dv">20</span>), <span class="kw">seq</span>(<span class="dv">101</span>,<span class="dv">110</span>)))</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb4-6" data-line-number="6">size_classes &lt;-<span class="st"> </span><span class="kw">compute_classes</span>(pokemon_size, <span class="dt">var =</span> size, <span class="dt">group_var =</span> species, <span class="dt">nb_class =</span> nb_class,</a>
+<a class="sourceLine" id="cb4-7" data-line-number="7">  <span class="dt">class_method =</span> <span class="st">&quot;percentile&quot;</span>)</a>
+<a class="sourceLine" id="cb4-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb4-9" data-line-number="9">knitr<span class="op">::</span><span class="kw">kable</span>(size_classes)</a></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">species</th>
+<th align="right">class_id</th>
+<th align="right">lower</th>
+<th align="right">upper</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Pikachu</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">Pikachu</td>
+<td align="right">2</td>
+<td align="right">3</td>
+<td align="right">6</td>
+</tr>
+<tr class="odd">
+<td align="left">Pikachu</td>
+<td align="right">3</td>
+<td align="right">6</td>
+<td align="right">8</td>
+</tr>
+<tr class="even">
+<td align="left">Pikachu</td>
+<td align="right">4</td>
+<td align="right">8</td>
+<td align="right">10</td>
+</tr>
+<tr class="odd">
+<td align="left">Roucoups</td>
+<td align="right">1</td>
+<td align="right">11</td>
+<td align="right">13</td>
+</tr>
+<tr class="even">
+<td align="left">Roucoups</td>
+<td align="right">2</td>
+<td align="right">13</td>
+<td align="right">16</td>
+</tr>
+<tr class="odd">
+<td align="left">Roucoups</td>
+<td align="right">3</td>
+<td align="right">16</td>
+<td align="right">18</td>
+</tr>
+<tr class="even">
+<td align="left">Roucoups</td>
+<td align="right">4</td>
+<td align="right">18</td>
+<td align="right">20</td>
+</tr>
+<tr class="odd">
+<td align="left">Dracofeu</td>
+<td align="right">1</td>
+<td align="right">101</td>
+<td align="right">103</td>
+</tr>
+<tr class="even">
+<td align="left">Dracofeu</td>
+<td align="right">2</td>
+<td align="right">103</td>
+<td align="right">106</td>
+</tr>
+<tr class="odd">
+<td align="left">Dracofeu</td>
+<td align="right">3</td>
+<td align="right">106</td>
+<td align="right">108</td>
+</tr>
+<tr class="even">
+<td align="left">Dracofeu</td>
+<td align="right">4</td>
+<td align="right">108</td>
+<td align="right">110</td>
+</tr>
+</tbody>
+</table>
+<p>We end up with species classification. Each class of each species (<span class="math inline">\(c_{i,j}\)</span>) will constitute a node. So here, with 4 classes and 3 species, we will have 12 species nodes in the metaweb.</p>
+<p>In <span class="citation">Bonnafé, Legendre, and Edeline (n.d.)</span> they use the quantile methods.</p>
+<p>We use percentile method because for us, it is justified that the size range the most abundant get more weight and more precise feeding links resolution at the metaweb scale because once the local networks will re-built, it does not make sens that the resolution at which they will be solved depends on the abundance distribution of the species at the regional scale.</p>
+</div>
+<div id="other-nodes" class="section level2">
+<h2>Other nodes</h2>
+</div>
+<div id="hypotheses-reminder" class="section level2">
+<h2>Hypotheses (reminder)</h2>
+<ul>
+<li>determine piscivory is currently based on upper bound of the class</li>
+<li>Ontogenic diet class interval are closed (<span class="math inline">\([min;max]\)</span>), which is different from size class which is left open <span class="math inline">\(]min;max]\)</span>: please unify</li>
+<li>Fish resource link is determined if the life stage is partly in or is including size class interval: [stage min size; stage max size] <span class="math inline">\(\in\)</span> [min class size; max class size] | [stage min size; stage max size] <span class="math inline">\(\supset\)</span> [min class size; max class size]</li>
+<li>The <code>class_id = 1</code> is left open, meaning that the min size fishes will not belong to the size class.</li>
+</ul>
+</div>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1>References</h1>
+<div id="refs" class="references">
+<div id="ref-bonnafe_trophic_nodate">
+<p>Bonnafé, Willem, Stéphane Legendre, and Érice Edeline. n.d. “Trophic Network Topology Along Thermal Gradient Highlights Antagonistic Individual- and Species-Level Response to Temperature.”</p>
+</div>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>I will use only size later for the sake of simplicity but it works also for weight<a href="#fnref1" class="footnote-back">↩</a></p></li>
+</ol>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
