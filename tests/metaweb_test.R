@@ -8,9 +8,7 @@ library(data.table)
 ##############################
 #  Comparision of raw files  #
 ##############################
-
-# Bonnafe:
-
+#Done in clean_fish_op_data.R
 
 ## set working directory
 setwd(getwd())

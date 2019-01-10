@@ -124,8 +124,8 @@ fake_onto_diet_shift <- tibble(
     Paras = c(0, 0, 1, 1),
     pisc = rep(c(0, 1), times = 2)
     )
+piscivory_table <- compute_piscivory(classes_species, fake_onto_diet_shift, species = species, low_bound = min, upper_bound = max, fish = pisc)
 test_that("piscivory is well computed", {
-   piscivory_table <- compute_piscivory(classes_species, fake_onto_diet_shift, species = species, low_bound = min, upper_bound = max, fish = pisc)
    expected_table <- th_prey_size %>%
      mutate(pisc_index = c(rep(0, 2), rep(1, 7), 0, rep(1, 8))) %>%
      select(-min_prey, -max_prey)
@@ -147,9 +147,9 @@ expect_identical(compute_piscivory(classes_species, fake_onto_diet_shift, specie
     }
   )
 
-#############
-#  Metaweb  #
-#############
+###################
+#  Compute links  #
+###################
 fake_resource_shift <- tibble(
     species = c("Chetiflor", "Paras"),
     life_stage = c(0, 0),
@@ -160,12 +160,20 @@ fake_resource_shift <- tibble(
     Paras = c(0, 0),
     pisc = c(0, 0)
     )
+test_that("the links are correctly computed", {
+  int_matrices <- compute_links(classes_species, th_prey_size, piscivory_table,
+    fake_onto_diet_shift, fake_resource_shift, species, pisc, min, max,
+    fish_resource_method = "overlap", pred_win_method = "midpoint" 
+  )
+  expect_is(int_matrices, "list")
+    })
+
+#############
+#  Metaweb  #
+#############
 test_that("Metabuild returns a correct matrix",{
-
   metaweb <- build_metaweb(fake, species, size = size, fake_prey_win, fake_onto_diet_shift, min, max, fish = pisc, fake_resource_shift)
-
   expect_is(metaweb$metaweb, "matrix")
-
     })
 test_that("metaweb works on a true dataset", {
   ## TRUE dataset
@@ -181,25 +189,29 @@ test_that("metaweb works on a true dataset", {
     col_to_rm <- str_detect(colnames(matrix_to_rep), "OBL")
     matrix_to_rep2 <- matrix_to_rep[- which(col_to_rm) , - which(col_to_rm)]
   }
-# Order matrix:
-order_species_to_rep <- str_extract_all(colnames(matrix_to_rep2), "[A-Za-z]+", simplify = TRUE) %>% as.vector
+  # Order matrix:
+  order_species_to_rep <- str_extract_all(colnames(matrix_to_rep2), "[A-Za-z]+", simplify = TRUE) %>% as.vector
 
-  metaweb <- build_metaweb(fish_length, species, length, pred_win, fish_diet_shift, size_min, size_max, fish, resource_diet_shift, na.rm = TRUE)
-col_species <- str_extract_all(colnames(metaweb$metaweb), "[A-Za-z]+", simplify = TRUE) %>% as.vector
+  ## Compute metaweb
+  fish_length %<>% filter(species != "OBL")
+  metaweb <- build_metaweb(fish_length, species, length, pred_win,
+    fish_diet_shift, size_min, size_max, fish, resource_diet_shift,
+    na.rm = TRUE, fish_resource_method = "overlap", pred_win_method = "midpoint")
+  col_species <- str_extract_all(colnames(metaweb$metaweb), "[A-Za-z]+", simplify = TRUE) %>% as.vector
 
-metaweb2 <- metaweb$metaweb[order(match(col_species, order_species_to_rep)), order(match(col_species, order_species_to_rep))]
-colnames(matrix_to_rep2) <- colnames(metaweb2)
-rownames(matrix_to_rep2) <- colnames(metaweb2)
+  metaweb2 <- metaweb$metaweb[order(match(col_species, order_species_to_rep)), order(match(col_species, order_species_to_rep))] 
+  colnames(matrix_to_rep2) <- colnames(metaweb2)
+  rownames(matrix_to_rep2) <- colnames(metaweb2)
 
-expect_identical(metaweb2, matrix_to_rep2)
-#HERE: replace properly dimnames to see where are the differences between the
-##two matrices
-attr(metaweb2, "dimnames")  <- list(order_species_to_rep, order_species_to_rep)
-attr(matrix_to_rep2, "dimnames")  <- list(order_species_to_rep, order_species_to_rep)
+  expect_identical(metaweb2, matrix_to_rep2)
+  #HERE: replace properly dimnames to see where are the differences between the
+  ##two matrices
+  attr(metaweb2, "dimnames")  <- list(order_species_to_rep, order_species_to_rep)
+  attr(matrix_to_rep2, "dimnames")  <- list(order_species_to_rep, order_species_to_rep)
 
-# There is problems with fish fish interactions:
-metaweb2[37]; dimnames(metaweb2)[[2]][37]; dimnames(metaweb2)[[1]][1]
-metaweb2[46]
-sum(matrix_to_rep2-metaweb2)
+  # There is problems with fish fish interactions:
+  metaweb2[37]; dimnames(metaweb2)[[2]][37]; dimnames(metaweb2)[[1]][1]
+  metaweb2[46]
+  sum(matrix_to_rep2-metaweb2)
 
 })
