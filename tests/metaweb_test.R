@@ -150,7 +150,7 @@ for(j in 1:length(sizeClasses))
     
   }else
   {
-    piscivoryIndex <- 0 
+    piscivoryIndex <- 0
   }
   
   ## ff interactions
@@ -234,7 +234,7 @@ data(pred_win)
 metaweb <- build_metaweb(fish_length, species, length, pred_win,
   fish_diet_shift, size_min, size_max, fish,
   resource_diet_shift, class_method = "quantile",
-  nb_class = 9, pred_win_method = "midpoint", na.rm = TRUE, replace_min_by_one = FALSE)
+  nb_class = 9, pred_win_method = "midpoint", fish_resource_method = "willem", na.rm = TRUE, replace_min_by_one = TRUE)
 filter(metaweb$size_class, species == "BRO")
 colnames(metaweb$metaweb)
 colnames(mat_alain_2)
@@ -248,6 +248,7 @@ rownames(mat_alain_2) <- colnames(metaweb2)
 all.equal(metaweb2, mat_alain_2)
 test <- ifelse(metaweb2 == mat_alain_2, 0, 1)
 
+length(metaweb2[which(test ==1)])
 length(metaweb2[which(test ==1)]) / length(metaweb2) * 100
 
 get_error <- function(x){
@@ -265,28 +266,17 @@ get_error <- function(x){
   }
 }
 
-for (i in 30:40) {
+for (i in 1:4) {
   get_error(i)
 }
 
-filter(metaweb$size_class, species %in% c("BRO", "ASP"), class_id ==1)
-filter(metaweb$th_prey_size, species %in% c("BRO", "ASP"), class_id ==1)
-filter(metaweb$piscivory_index, species %in% c("BRO", "ASP"), class_id ==1)
+filter(metaweb$size_class, species %in% c("BRO", "ANG"), class_id ==1)
+filter(fish_diet_shift, species %in% c("BRO", "ANG"))
+filter(metaweb$th_prey_size, species %in% c("BRO", "ANG"), class_id ==1)
+filter(metaweb$piscivory_index, species %in% c("BRO", "ANG"), class_id ==1)
 
-#ff_matrix[,j] <-  ((thMinPreySize <= ((minPreySizeVect+maxPreySizeVect)/2) & ((minPreySizeVect+maxPreySizeVect)/2) <= thMaxPreySize))*piscivoryIndex
-1.68 <= (31 + 57)/2
-32.2 >= (31 + 57)/2
-## No problem, normally BRO_1 eats PER_1
-### Full Check
-col_BRO <- str_detect(colnames(mat_alain), "BRO")
-row_PER <- str_detect(colnames(mat_alain), "PER")
-mat_alain[row_PER, col_BRO]
-colnames(mat_alain)[row_PER]
-colnames(mat_alain)[col_BRO]
-### OKAYYYY: the class size are defined from 1 to max
-0.03 <= (1 + 57)/2
-30.2 >= (1 + 57)/2
-
+metaweb$metaweb["zoopl", "BRO_1"]
+mat_alain[, "BRO_1_104"]
 
 ## write the matrix for nw
 # remove size min in size class

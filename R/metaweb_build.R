@@ -133,9 +133,42 @@ compute_links <- function (size_class, th_prey_size, piscivory_index,
   rownames(fish_resource_int) <- resource_list
   colnames(fish_resource_int) <- fish_class_names
   
+  # Set method of resource assignement 
+    if (fish_resource_method == "midpoint") {
+      condition <- rlang::quo(
+	#size class midpoint in stage interval
+	midpoint >= !!low_bound & midpoint <= !!upper_bound
+      )
+    } else if (fish_resource_method == "willem") {
+      condition <- rlang::quo(
+	# min stage in size class: ]min_pred;max_pred]
+	(min_pred < !!low_bound & !!low_bound < max_pred) |#<-diff with overlap
+	  # max stage in size class:]min_pred;max_pred]
+	(min_pred < !!upper_bound & !!upper_bound <= max_pred) |
+	#stage class strictly around size class:]min_pred;max_pred]
+	## stage class
+	(!!low_bound < min_pred & max_pred <= !!upper_bound) |#<-diff with overlap
+	#size class strictly in stage class:]low_bound;upper_bound]
+	(!!low_bound > min_pred & max_pred >= !!upper_bound)
+      )
+    } else {
+     condition <- rlang::quo(
+	# min stage in size class: ]min_pred;max_pred]
+	(min_pred < !!low_bound & !!low_bound <= max_pred) |
+	  # max stage in size class:]min_pred;max_pred]
+	(min_pred < !!upper_bound & !!upper_bound <= max_pred) |
+	#stage class strictly around size class:]min_pred;max_pred]
+	## stage class
+	(!!low_bound <= min_pred & max_pred < !!upper_bound) |
+	#size class strictly in stage class:]low_bound;upper_bound]
+	(!!low_bound > min_pred & max_pred >= !!upper_bound)
+      )
+    }
+
   # merge dataset 
-  trophic_data <- dplyr::left_join(size_class, th_prey_size) %>%
-    dplyr::left_join(., piscivory_index) %>%
+  trophic_data <- dplyr::left_join(size_class, th_prey_size,
+    by = c("species", "class_id")) %>%
+    dplyr::left_join(., piscivory_index, by = c("species", "class_id")) %>%
     tidyr::unite(sp_class, !!species, class_id)
     
   pred_classes <- colnames(fish_fish_int)
@@ -175,48 +208,25 @@ compute_links <- function (size_class, th_prey_size, piscivory_index,
     pred_diet <- dplyr::filter(fish_diet_shift, !!species == stringr::str_extract(pred_classes[j], "[a-zA-Z]+")) %>%
       dplyr::select(- !!fish)
 
+
     if (fish_resource_method == "midpoint") {
       midpoint <- (min_pred + max_pred) / 2
-      condition <- rlang::quo(
-	#size class midpoint in stage interval
-	midpoint >= !!low_bound & midpoint <= !!upper_bound
-      )
-    } else if (fish_resource_method == "willem") {
-      condition <- rlang::quo(
-	# min stage in size class: ]min_pred;max_pred]
-	(min_pred < !!low_bound & !!low_bound < max_pred) |#<-diff with overlap
-	  # max stage in size class:]min_pred;max_pred]
-	(min_pred < !!upper_bound & !!upper_bound <= max_pred) |
-	#stage class strictly around size class:]min_pred;max_pred]
-	## stage class
-	(!!low_bound < min_pred & max_pred <= !!upper_bound) |#<-diff with overlap
-	#size class strictly in stage class:]low_bound;upper_bound]
-	(!!low_bound > min_pred & max_pred >= !!upper_bound)
-      )
-    } else {
-     condition <- rlang::quo(
-	# min stage in size class: ]min_pred;max_pred]
-	(min_pred < !!low_bound & !!low_bound <= max_pred) |
-	  # max stage in size class:]min_pred;max_pred]
-	(min_pred < !!upper_bound & !!upper_bound <= max_pred) |
-	#stage class strictly around size class:]min_pred;max_pred]
-	## stage class
-	(!!low_bound <= min_pred & max_pred < !!upper_bound) |
-	#size class strictly in stage class:]low_bound;upper_bound]
-	(!!low_bound > min_pred & max_pred >= !!upper_bound)
-      )
     }
     pred_diet_class_match <- pred_diet %>%
       filter(!!condition)
+    if (nrow(pred_diet_class_match) == 0) {
+      message(paste("Species/class", pred_classes[j], "had no matches with life stages."))
 
-    resource_int_values <- pred_diet_class_match %>%
-      select(!! resource_list) %>%
-      gather(resource, troph_index) %>%
-      group_by(resource) %>%
-      summarise(troph_index = (sum(troph_index) > 0) * 1) %>%
-      spread(resource, troph_index) %>%
-      unlist
-
+      resource_int_values <- rep(0, length(resource_list))
+    } else {
+      resource_int_values <- pred_diet_class_match %>%
+	select(!! resource_list) %>%
+	gather(resource, troph_index) %>%
+	group_by(resource) %>%
+	summarise(troph_index = (sum(troph_index) > 0) * 1) %>%
+	spread(resource, troph_index) %>%
+	unlist
+    }
     fish_resource_int[, j] <- resource_int_values
   }
 
@@ -312,7 +322,7 @@ compute_prey_size <- function (class_size, pred_win, species, beta_min, beta_max
   if (pred_win_method != "midpoint") {
     message("Other methods are not yet implemented")
   }
-  dplyr::left_join(class_size, pred_win) %>%
+  dplyr::left_join(class_size, pred_win, by = rlang::quo_name(species)) %>%
     dplyr::mutate(
       min_prey = !!beta_min * ( (lower + upper) / 2),
       max_prey = !!beta_max * ( (lower + upper) / 2)

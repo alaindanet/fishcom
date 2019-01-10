@@ -167,6 +167,20 @@ test_that("the links are correctly computed", {
   )
   expect_is(int_matrices, "list")
     })
+test_that("compute_links supports non default options", {
+  int_matrices <- compute_links(classes_species, th_prey_size, piscivory_table,
+    fake_onto_diet_shift, fake_resource_shift, species, pisc, min, max,
+    fish_resource_method = "willem", pred_win_method = "midpoint"
+  )
+  expect_is(int_matrices, "list")
+
+  int_matrices <- compute_links(classes_species, th_prey_size, piscivory_table,
+    fake_onto_diet_shift, fake_resource_shift, species, pisc, min, max,
+    fish_resource_method = "midpoint", pred_win_method = "midpoint"
+  )
+  expect_is(int_matrices, "list")
+
+    })
 
 #############
 #  Metaweb  #
@@ -196,7 +210,7 @@ test_that("metaweb works on a true dataset", {
   fish_length %<>% filter(species != "OBL")
   metaweb <- build_metaweb(fish_length, species, length, pred_win,
     fish_diet_shift, size_min, size_max, fish, resource_diet_shift,
-    na.rm = TRUE, fish_resource_method = "overlap", pred_win_method = "midpoint")
+    na.rm = TRUE, fish_resource_method = "willem", pred_win_method = "midpoint")
   col_species <- str_extract_all(colnames(metaweb$metaweb), "[A-Za-z]+", simplify = TRUE) %>% as.vector
 
   metaweb2 <- metaweb$metaweb[order(match(col_species, order_species_to_rep)), order(match(col_species, order_species_to_rep))] 
