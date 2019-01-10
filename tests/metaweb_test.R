@@ -215,16 +215,19 @@ dim(ff_fr_rf_rr_matrix)[1]==dim(ff_fr_rf_rr_matrix)[2]
 
 ## write the matrix 
 write.table(ff_fr_rf_rr_matrix,paste("./output/AccMat_","quant_",nSizeClasses,"_PWvar_partOverlap",".csv",sep=""),sep=";",row.names=FALSE,col.names=TRUE)
-matrix_to_rep <- read_csv2("../bonnafe_work/data/bib_data/output/AccMat_quant_9_PWvar_partOverlap.csv") %>% as.matrix
+matrix_to_rep <- read_csv2("../bonnafe_work/data/bib_data/output/AccMat_quant_9_PWvar_partOverlap-alain.csv") %>% as.matrix
 new_mat  <- sapply(ff_fr_rf_rr_matrix, as.numeric)
 names(new_mat) <- NULL 
 all.equal(new_mat, as.numeric(matrix_to_rep))
 
-#TEST
+###############################################################
+#  Test differences between my metaweb and the one of Willem  #
+###############################################################
+
 # Mat generated with modification in Fish resources rules
-mat_alain <- read_csv2(paste("./output/AccMat_","quant_9_PWvar_partOverlap",".csv",sep=""))
+mat_alain <- read_csv2(paste("./output/AccMat_","quant_9_PWvar_partOverlap","-alain.csv",sep=""))
 col_to_rm <- str_detect(colnames(mat_alain), "OBL")
-mat_alain_2 <- mat_alain[- which(col_to_rm) , - which(col_to_rm)] %>% as.matrix(.)
+mat_alain_2 <- mat_alain[- which(col_to_rm), - which(col_to_rm)] %>% as.matrix(.)
 ## Generate my metaweb:
 data(fish_length)
 data(fish_diet_shift)
@@ -233,7 +236,8 @@ data(pred_win)
 metaweb <- build_metaweb(fish_length, species, length, pred_win,
   fish_diet_shift, size_min, size_max, fish,
   resource_diet_shift, class_method = "quantile",
-  nb_class = 9, pred_win_method = "midpoint", na.rm = TRUE)
+  nb_class = 9, pred_win_method = "midpoint", na.rm = TRUE, replace_min_by_one = FALSE)
+filter(metaweb$size_class, species == "BRO")
 colnames(metaweb$metaweb)
 colnames(mat_alain_2)
 # Order matrix:
@@ -246,15 +250,26 @@ rownames(mat_alain_2) <- colnames(metaweb2)
 all.equal(metaweb2, mat_alain_2)
 test <- ifelse(metaweb2 == mat_alain_2, 0, 1)
 
-metaweb2[which(test ==1, arr.ind = TRUE)[1,1], which(test ==1, arr.ind = TRUE)[1,2]]
 length(metaweb2[which(test ==1)]) / length(metaweb2) * 100
 
-# BRO_1 ne mange pas ASP_1 dans metaweb2
-metaweb2[which(test ==1, arr.ind = TRUE)[1,1], which(test ==1, arr.ind = TRUE)[1,2]]
-# Predator and prey
-colnames(metaweb2)[which(test ==1, arr.ind = TRUE)[1,2]]; cat("eats"); rownames(metaweb2)[which(test ==1, arr.ind = TRUE)[1,1]]
-# Not in mat_alain_2
-mat_alain_2[which(test ==1, arr.ind = TRUE)[1,1], which(test ==1, arr.ind = TRUE)[1,2]]
+get_error <- function(x){
+  row_position <- which(test==1, arr.ind = TRUE)[x, 1]
+  col_position <- which(test==1, arr.ind = TRUE)[x, 2]
+
+  # Predator and prey
+  me <- metaweb2[row_position, col_position]
+  predator <- colnames(metaweb2)[col_position]
+  prey <- rownames(metaweb2)[row_position]
+  if (me) {
+    cat(predator, "eats", prey, "in my metaweb but not in willem's one", "\n")
+  } else {
+    cat(predator, "does not eat", prey, "in my metaweb but does in willem's one", "\n")
+  }
+}
+
+for (i in 30:40) {
+  get_error(i)
+}
 
 filter(metaweb$size_class, species %in% c("BRO", "ASP"), class_id ==1)
 filter(metaweb$th_prey_size, species %in% c("BRO", "ASP"), class_id ==1)

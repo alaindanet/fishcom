@@ -68,23 +68,23 @@ ten_one <- tibble(
   size = c(seq(1, 10), rep(1, 10))
   )
 
-expect_warning(compute_classes(ten_one, species, size, nb_class = nb_class), message = "The following species had less than two unique size values, so we got rid of them: Salameche")
+expect_warning(compute_classes(ten_one, species, size, nb_class = nb_class), "The following species had less than two unique size values, so we got rid of them:Salameche", ignore.case = TRUE, all = TRUE)
 
 not_one <- tibble(
   species = rep("Salameche", each = 10),
   size = c(rep(1, 10))
   )
-expect_error(compute_classes(not_one, species, size, nb_class = nb_class), message = "None of the species got more of two unique values. Check your dataset.")
+expect_error(compute_classes(not_one, species, size, nb_class = nb_class), "None of the species got more of two unique values. Check your dataset.")
 
 one <- tibble(
   species = rep("Salameche", each = 1),
   size = c(rep(1, 1))
   )
 
-expect_error(compute_classes(one, species, size, nb_class = nb_class), message = "None of the species got more of two unique values. Check your dataset.")
+expect_error(compute_classes(one, species, size, nb_class = nb_class), "None of the species got more of two unique values. Check your dataset.")
 })
 test_that("classification handles df", {
-  # Because quantile function takes a numeric vector as input 
+  # Because quantile function takes a numeric vector as input
   expect_is(split_in_classes(fake[, "size"], nb_class = nb_class, class_method = "quantile"), "data.frame")
 })
 

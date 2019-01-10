@@ -29,7 +29,7 @@
 #' @return matrix 
 #'
 build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bound, upper_bound, fish, resource_diet_shift, class_method = "quantile",
-  nb_class = 9, pred_win_method = "midpoint", na.rm = FALSE) {
+  nb_class = 9, pred_win_method = "midpoint", na.rm = FALSE, replace_min_by_one = FALSE) {
 
   #Capture var:
   species <- rlang::enquo(species)
@@ -42,7 +42,7 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
   ## eg. species, (life_stage), low_bound, upper_bound, fish
 
   # Build the size class
-  size_class <- compute_classes(data, group_var = !!species, var = !!size, class_method = class_method, na.rm = na.rm)
+  size_class <- compute_classes(data, group_var = !!species, var = !!size, class_method = class_method, na.rm = na.rm, replace_min_by_one = replace_min_by_one)
 
   # Build the Fish-Fish matrix
   species_list <- unique(select(size_class, !!species)) %>% unlist
@@ -52,6 +52,7 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
   fish_class_names <- rep(species_list, each = nb_class) %>%
     paste(., seq(1, nb_class), sep = "_")
   rownames(fish_fish_int) <- colnames(fish_fish_int)  <- fish_class_names
+
   # Build the Fish-Resource matrix
   resource_list <- dplyr::select(resource_diet_shift, !!species) %>% unlist
   names(resource_list) <- NULL
@@ -196,6 +197,8 @@ compute_piscivory <- function (size_class, fish_diet_shift, species, low_bound, 
     dplyr::summarise(min_pisc = get_piscivory(!!fish, !!lower_stage_bound)) %>%
     dplyr::select(!!species, min_pisc)
 
+  ## Piscivory if upper bound of the size class is sup to the size min at which
+  ## the species begins to be piscivorous (if it does)
   dplyr::left_join(size_class, min_pisc, by = rlang::quo_name(species)) %>%
     dplyr::mutate(pisc_index = ifelse(is.na(min_pisc), 0, (upper > min_pisc) * 1)) %>%
     dplyr::select(-min_pisc, - lower, - upper)
@@ -242,11 +245,19 @@ compute_prey_size <- function (class_size, pred_win, species, beta_min, beta_max
 #' Compute classes
 #'
 #' @param size data.frame containing species and length.
+#' @param group_var variable to group the data. E.g. species.
+#' @param var variable containing the values to class. 
+#' @param na.rm logical. Should the NAs be removed ? 
+#' @param replace_min_by_one logical. In the first class, replace low bound by
+#' 1.    
 #' @inheritParams split_in_classes 
+#' @details The replace_min_by_one option is to reflect the choice made by
+#' Bonnafé et al. to replace the low bound of the first class (= lowest value)
+#' by one. It leads to slighty different results (env. 0.6% of the links).
 #'
 #' @return
 compute_classes <- function(size, group_var, var, class_method = "quantile",
-  nb_class = 9, na.rm = FALSE) {
+  nb_class = 9, na.rm = FALSE, replace_min_by_one = FALSE) {
 
   stopifnot(is.numeric(nb_class))
 
@@ -263,7 +274,6 @@ compute_classes <- function(size, group_var, var, class_method = "quantile",
     }
   }
 
-
   size %<>%
     dplyr::group_by(!!group_var) %>%
     dplyr::select(!!group_var, !!var) # ensure that there is only the variable
@@ -276,19 +286,24 @@ compute_classes <- function(size, group_var, var, class_method = "quantile",
     dplyr::mutate(good = ifelse(nb >= 2, TRUE, FALSE)) %>%
     dplyr::select(-nb)
 
+  ## Warn which species species had been removed
   if (!all(check_nb_data$good)) {
   species_not_good <- dplyr::filter(check_nb_data, good == FALSE) %>%
     dplyr::select(!!group_var) %>% unlist(.)
     
-  warnings("The following species had less than two unique size values, so we got rid of them:", species_not_good)
 
   nested_size %<>% dplyr::filter(!(species %in% species_not_good))
-  }
 
   if (nrow(nested_size) == 0) {
-  stop("None of the species got more of two unique values. Check your dataset.")
+    stop("None of the species got more of two unique values. Check your dataset.")
   }
 
+  warning("The following species had less than two unique size values, so we got rid of them:", species_not_good)
+
+  }
+
+
+  ## Compute classes
   nested_size %<>%
     dplyr::mutate(
       classes = purrr::map(data, split_in_classes, nb_class = nb_class,
@@ -296,9 +311,14 @@ compute_classes <- function(size, group_var, var, class_method = "quantile",
       ) %>%
     dplyr::select(-data)
 
-nested_size %>%
-  tidyr::unnest(classes)
+  output <- nested_size %>%
+    tidyr::unnest(classes)
 
+  if (replace_min_by_one) {
+    output[output$class_id == 1, "lower"] <- 1
+  }
+
+  return(output)
 }
 
 #' Split in classes

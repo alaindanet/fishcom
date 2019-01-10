@@ -1,5 +1,5 @@
 ---
-title: "Introduction - Description of previous work"
+title: "Introduction - Description of the project"
 author: "Alain Danet"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -49,25 +49,25 @@ According to the postdoc advertisement:
       - [x]: quantile size distribution
 	- [x]: set min as the lower size value
 	- [ ]: how to manage when there are few data points ?
-        - [ ] Same as Willem
+        - [x] Same as Willem
       - [x]: Generate class for each species
 	- [x] Same as willem 
       - [x]: compute piscivory 
 	- [x] ODS for fish and resources
 	  - [x] Same as willem
       - [x]: compute theoretical prey range
-	- [ ] Pred window
+	- [x] Pred window
 	  - [x] Same as willem 
       - [ ]: metaweb:
 	- [x] fish-fish:
-	  - [ ] Same as Willem
+	  - [x] Same as Willem
 	- [x] fish-resources
 	  - [x] think about size class matching
 	  - [x] fix size class match: some intermediate classes do not have match 
+	  - [ ] Same as Willem
 	- [x] resources-resources
 	- [x] merge matrices
     - network methods:
-    - network indices:
     - network indices:
 - [ ] Assess quality of the dataset:
   - [x] Which community are best followed in time?
