@@ -199,7 +199,6 @@ test_that("compute_links supports non default options", {
   expect_is(int_matrices, "list")
 
     })
-
 #############
 #  Metaweb  #
 #############
@@ -207,44 +206,3 @@ test_that("Metabuild returns a correct matrix",{
   metaweb <- build_metaweb(fake, species, size = size, fake_prey_win, fake_onto_diet_shift, min, max, fish = pisc, fake_resource_shift)
   expect_is(metaweb$metaweb, "matrix")
     })
-test_that("metaweb works on a true dataset", {
-  ## TRUE dataset
-  data(fish_length)
-  data(fish_diet_shift)
-  data(resource_diet_shift)
-  data(pred_win)
-  #fish_diet_shift %<>% filter(species %in% fish_length_toy$species)
-  #pred_win %<>% filter(species %in% fish_length_toy$species)
-  matrix_to_rep <- read_csv2("../../bonnafe_work/data/bib_data/output/AccMat_quant_9_PWvar_partOverlap.csv") %>% as.matrix
-  #matrix_to_rep <- read_csv2("../output/AccMat_quant_9_PWvar_partOverlap.csv") %>% as.matrix
-  ## Remove OBL which has only one record:
-  if (filter(fish_length, species == "OBL") %>% nrow <= 1) {
-    col_to_rm <- str_detect(colnames(matrix_to_rep), "OBL")
-    matrix_to_rep2 <- matrix_to_rep[- which(col_to_rm) , - which(col_to_rm)]
-  }
-  # Order matrix:
-  order_species_to_rep <- str_extract_all(colnames(matrix_to_rep2), "[A-Za-z]+", simplify = TRUE) %>% as.vector
-
-  ## Compute metaweb
-  fish_length %<>% filter(species != "OBL")
-  metaweb <- build_metaweb(fish_length, species, length, pred_win,
-    fish_diet_shift, size_min, size_max, fish, resource_diet_shift,
-    na.rm = TRUE, fish_resource_method = "willem", pred_win_method = "midpoint", replace_min_by_one = TRUE)
-  col_species <- str_extract_all(colnames(metaweb$metaweb), "[A-Za-z]+", simplify = TRUE) %>% as.vector
-
-  metaweb2 <- metaweb$metaweb[order(match(col_species, order_species_to_rep)), order(match(col_species, order_species_to_rep))] 
-  colnames(matrix_to_rep2) <- colnames(metaweb2)
-  rownames(matrix_to_rep2) <- colnames(metaweb2)
-
-  expect_equal(metaweb2, matrix_to_rep2)
-  #HERE: replace properly dimnames to see where are the differences between the
-  ##two matrices
-  attr(metaweb2, "dimnames")  <- list(order_species_to_rep, order_species_to_rep)
-  attr(matrix_to_rep2, "dimnames")  <- list(order_species_to_rep, order_species_to_rep)
-
-  # There is problems with fish fish interactions:
-  metaweb2[37]; dimnames(metaweb2)[[2]][37]; dimnames(metaweb2)[[1]][1]
-  metaweb2[46]
-  sum(matrix_to_rep2-metaweb2)
-
-})
