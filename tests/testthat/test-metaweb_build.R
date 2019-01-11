@@ -119,7 +119,7 @@ fake_onto_diet_shift <- tibble(
     life_stage = rep(c(1, 2), times = 2),
     min = c(0, 3, 0, 102),
     max = c(3, Inf, 102, Inf),
-    light = c(0, 0, 0, 0),
+    light = c(1, 0, 0, 0),
     Chetiflor = c(0, 1, 1, 0),
     Paras = c(0, 0, 1, 1),
     pisc = rep(c(0, 1), times = 2)
@@ -163,9 +163,27 @@ fake_resource_shift <- tibble(
 test_that("the links are correctly computed", {
   int_matrices <- compute_links(classes_species, th_prey_size, piscivory_table,
     fake_onto_diet_shift, fake_resource_shift, species, pisc, min, max,
-    fish_resource_method = "overlap", pred_win_method = "midpoint" 
+    fish_resource_method = "overlap", pred_win_method = "midpoint"
   )
-  expect_is(int_matrices, "list")
+  expected_fish_resource_int <- matrix(rep(0, nb_class * 2 * 2), ncol = nb_class * 2)
+  rownames(expected_fish_resource_int) <- unique(fake_resource_shift$species)
+  colnames(expected_fish_resource_int) <- c(unite(classes_species, sp_class,
+      species, class_id, sep = "_") %>% select(sp_class) %>% unlist)
+  names(colnames(expected_fish_resource_int)) <- NULL 
+  expected_fish_resource_int["Chetiflor",] <- c(0, 1, 1, rep(1, nb_class-3),
+  1, rep(0, nb_class-1))
+  expected_fish_resource_int["Paras",] <- c(rep(0, nb_class),
+  rep(1, nb_class))
+  expect_identical(int_matrices$fish_resource_int, expected_fish_resource_int)
+
+  int_matrices <- compute_links(classes_species, th_prey_size, piscivory_table,
+    fake_onto_diet_shift, fake_resource_shift, species, pisc, min, max,
+    fish_resource_method = "willem", pred_win_method = "midpoint"
+  )
+  expected_fish_resource_int["Chetiflor",] <- c(0, 0, 0, rep(1, nb_class-3),
+  1, rep(0, nb_class-1))
+  expected_fish_resource_int["Paras",] <- c(rep(0, nb_class), 1, 0, 1, rep(1, nb_class-3))
+  expect_identical(int_matrices$fish_resource_int, expected_fish_resource_int)
     })
 test_that("compute_links supports non default options", {
   int_matrices <- compute_links(classes_species, th_prey_size, piscivory_table,
@@ -198,6 +216,7 @@ test_that("metaweb works on a true dataset", {
   #fish_diet_shift %<>% filter(species %in% fish_length_toy$species)
   #pred_win %<>% filter(species %in% fish_length_toy$species)
   matrix_to_rep <- read_csv2("../../bonnafe_work/data/bib_data/output/AccMat_quant_9_PWvar_partOverlap.csv") %>% as.matrix
+  #matrix_to_rep <- read_csv2("../output/AccMat_quant_9_PWvar_partOverlap.csv") %>% as.matrix
   ## Remove OBL which has only one record:
   if (filter(fish_length, species == "OBL") %>% nrow <= 1) {
     col_to_rm <- str_detect(colnames(matrix_to_rep), "OBL")
@@ -210,14 +229,14 @@ test_that("metaweb works on a true dataset", {
   fish_length %<>% filter(species != "OBL")
   metaweb <- build_metaweb(fish_length, species, length, pred_win,
     fish_diet_shift, size_min, size_max, fish, resource_diet_shift,
-    na.rm = TRUE, fish_resource_method = "willem", pred_win_method = "midpoint")
+    na.rm = TRUE, fish_resource_method = "willem", pred_win_method = "midpoint", replace_min_by_one = TRUE)
   col_species <- str_extract_all(colnames(metaweb$metaweb), "[A-Za-z]+", simplify = TRUE) %>% as.vector
 
   metaweb2 <- metaweb$metaweb[order(match(col_species, order_species_to_rep)), order(match(col_species, order_species_to_rep))] 
   colnames(matrix_to_rep2) <- colnames(metaweb2)
   rownames(matrix_to_rep2) <- colnames(metaweb2)
 
-  expect_identical(metaweb2, matrix_to_rep2)
+  expect_equal(metaweb2, matrix_to_rep2)
   #HERE: replace properly dimnames to see where are the differences between the
   ##two matrices
   attr(metaweb2, "dimnames")  <- list(order_species_to_rep, order_species_to_rep)

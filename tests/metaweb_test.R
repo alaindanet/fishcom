@@ -2,9 +2,6 @@
 #              Compare my metaweb with the one of Bonnafe et al.               #
 ################################################################################
 
-library(tidyverse)
-library('magrittr')
-library(data.table)
 ##############################
 #  Comparision of raw files  #
 ##############################
@@ -222,16 +219,21 @@ all.equal(new_mat, as.numeric(matrix_to_rep))
 #  Test differences between my metaweb and the one of Willem  #
 ###############################################################
 
+library(tidyverse)
+library('magrittr')
+library(data.table)
 # Mat generated with modification in Fish resources rules
 mat_alain <- read_csv2(paste("./output/AccMat_","quant_9_PWvar_partOverlap","-alain.csv",sep=""))
 col_to_rm <- str_detect(colnames(mat_alain), "OBL")
 mat_alain_2 <- mat_alain[- which(col_to_rm), - which(col_to_rm)] %>% as.matrix(.)
+mat_alain_1 <- mat_alain_2 
+rownames(mat_alain_1) <- colnames(mat_alain_1)
 ## Generate my metaweb:
 data(fish_length)
 data(fish_diet_shift)
 data(resource_diet_shift)
 data(pred_win)
-metaweb <- build_metaweb(fish_length, species, length, pred_win,
+metaweb <- build_metaweb(filter(fish_length), species, length, pred_win,
   fish_diet_shift, size_min, size_max, fish,
   resource_diet_shift, class_method = "quantile",
   nb_class = 9, pred_win_method = "midpoint", fish_resource_method = "willem", na.rm = TRUE, replace_min_by_one = TRUE)
@@ -270,13 +272,17 @@ for (i in 1:4) {
   get_error(i)
 }
 
-filter(metaweb$size_class, species %in% c("BRO", "ANG"), class_id ==1)
-filter(fish_diet_shift, species %in% c("BRO", "ANG"))
-filter(metaweb$th_prey_size, species %in% c("BRO", "ANG"), class_id ==1)
-filter(metaweb$piscivory_index, species %in% c("BRO", "ANG"), class_id ==1)
+filter(metaweb$size_class, species %in% c("BRO"), class_id ==1)
+filter(fish_diet_shift, species %in% c("BRO"))
+#filter(metaweb$th_prey_size, species %in% c("BRO", "ANG"), class_id ==1)
+#filter(metaweb$piscivory_index, species %in% c("BRO", "ANG"), class_id ==1)
 
-metaweb$metaweb["zoopl", "BRO_1"]
-mat_alain[, "BRO_1_104"]
+# HERE
+metaweb$metaweb["zoopl", "BRO_1"];mat_alain_1["zoopl_0_0", "BRO_1_104"]
+metaweb$metaweb["zoob", "BRO_1"];mat_alain_1["zoob_0_0", "BRO_1_104"]
+# Erreur dans mon script car BRO ne peut pas manger de zoobenthos car ça ne fait
+# pas parti de son régime alimentaire
+
 
 ## write the matrix for nw
 # remove size min in size class

@@ -1,4 +1,3 @@
-
 ###########################################
 #  Functions necessary to create metaweb  #
 ###########################################
@@ -208,7 +207,6 @@ compute_links <- function (size_class, th_prey_size, piscivory_index,
     pred_diet <- dplyr::filter(fish_diet_shift, !!species == stringr::str_extract(pred_classes[j], "[a-zA-Z]+")) %>%
       dplyr::select(- !!fish)
 
-
     if (fish_resource_method == "midpoint") {
       midpoint <- (min_pred + max_pred) / 2
     }
@@ -226,6 +224,8 @@ compute_links <- function (size_class, th_prey_size, piscivory_index,
 	summarise(troph_index = (sum(troph_index) > 0) * 1) %>%
 	spread(resource, troph_index) %>%
 	unlist
+      good_order <- match(names(resource_int_values), resource_list)
+      resource_int_values <- resource_int_values[good_order]
     }
     fish_resource_int[, j] <- resource_int_values
   }
