@@ -26,7 +26,9 @@ library(mapview)
 
 # Goal 
 
-Get the localisation of the station
+- Get the localisation of the station.
+- Estimation quality of community survey
+- Look at the possibility to merge stations
 
 ## Localisation of the stations
 
@@ -70,6 +72,12 @@ Il y a deux stations qui sont biens dans les choux!
 # Compute distance between points: https://stackoverflow.com/a/53559542
 ```
 
+# Assembling station
 
+## Station nature
+
+After talking to Simon, the GPS points are not corresponding to sampling points.
+Station are points from where, agents use to derive sampling points for
+different surveys.
 
 

@@ -18,20 +18,25 @@ knitr::opts_chunk$set(
 library(tidyverse)
 library(magrittr)
 library(cowplot)
+library(sf)
+library(rgdal)
+library(raster)
 devtools::load_all()
 theme_set(theme_alain())
 ```
 
 ```{r data_prep}
 data(operation_data)
-op <- select(operation_data, opcod:year, count)
+op <- dplyr::select(operation_data, opcod:year, count)
 rm(operation_data)
 ```
 
 There was `r nb_op <- length(unique(op$opcod)); nb_op` fishing operations from
 `r min(op$year)` to `r max(op$year)`. The sampling was distributed over `r nb_st <- length(unique(op$station)); nb_st` stations. It represents a average effort of `r round(nb_op/nb_st, 1)` (# visit/station).
 
-# Distribution of sampling effort
+# Sampling
+
+## Distribution of sampling effort
 
 ```{r sampling effort} 
 op_sampling <- op %>%
@@ -39,7 +44,7 @@ op_sampling <- op %>%
   summarise(
     nb_ind = sum(count),
     nb_sp  = n()
-    ) 
+    )
 
 op_hist <- op_sampling %>%
   group_by(station) %>%
@@ -67,30 +72,77 @@ than 50% of the station had been visited one time and only 10% had been visited
 more than 10 times. But we have no information about the spatial distribution of
 the station. Some of them are surely really close from each other.
 
-# Sampling effort by year 
+## Sampling effort by year 
 
 ```{r}
 op_year <- op_sampling %>% group_by(year) %>%
   summarise(freq = n()) %>%
   arrange(desc(freq)) 
 
-cdf_op <- ggplot(op_year, aes(x = freq)) + stat_ecdf() +
-  labs(x = "Number of sampling by year",
-    y = "Frequency",
-    title = "Cumulative distribution function") +
-  scale_x_continuous(breaks = seq(0, 1500, by = 100)) 
 year_op <- ggplot(op_year, aes(y = freq, x = year)) +
   geom_line() +
   geom_point() +
   labs(y = "Number of sampling events",
     x = "Year",
     title = "")
-plot_grid(cdf_op, year_op, nrow = 2) 
+plot_grid(year_op) 
 ```
 
 We see that the sampling effort increase around 1992 from nearly 250 to 1000
 sampled stations by year.
 
-# Sampling area
+## Sampling area
 
-I need the geographical datas
+### Where are the station best followed?
+
+```{r}
+# good station names
+good_station <- op_hist %>% 
+  dplyr::filter(freq >= 10) %>%
+  dplyr::select(station) %>%
+  unlist(., use.names = FALSE)
+
+# get their localisation
+station <- read_delim("../data-raw/fishing_station_localisation_wsg84.csv",
+  delim = ";", locale = locale("fr", decimal_mark = "."),
+  col_types = cols(ST_CODECSP = col_character()))
+xy_station <- dplyr::select(station, XCOORD, YCOORD)
+station <- SpatialPointsDataFrame(coords = xy_station, data = station,
+                               proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
+station <- st_as_sf(station)
+loc_good_station <- dplyr::filter(station, ST_ID %in% good_station)
+
+# France map
+region_fr <- raster::shapefile("../data-raw/france_region_shp/regions-20180101.shp")
+##Get only metropolitan areas:
+region_fr <- st_as_sf(region_fr) #easier to manipulate
+region_to_filter <- c("La Réunion", "Martinique", "Guadeloupe", "Mayotte",
+  "Guyane", "Corse")
+region_fr <- filter(region_fr, !(nom %in% region_to_filter))
+region_fr <- region_fr[, c("nom", "geometry")]
+
+plot(st_geometry(region_fr), lwd = 1.5, col = "grey85")
+plot(loc_good_station, pch = 20, col = "red", add = T)
+```
+The good stations are well distributed over France, this is suprising and super
+nice. There is may be a deficit in the south east and east.
+
+#### Number of individuals and species by station
+
+```{r}
+good_station_sampling <- op_sampling %>%
+  dplyr::filter(station %in% good_station)
+
+hist_good_station <- good_station_sampling %>%
+  gather(stat, values, nb_ind, nb_sp) %>%
+  group_by(station, stat) %>%
+  summarise(
+    avg = mean(values),
+    std = sd(values) 
+    ) %>%
+  arrange(desc(avg)) %>%
+  ungroup() %>%
+  mutate(station = fct_inorder(as.factor(station)))
+
+```
+
