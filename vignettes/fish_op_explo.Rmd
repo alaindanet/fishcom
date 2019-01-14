@@ -21,6 +21,7 @@ library(cowplot)
 library(sf)
 library(rgdal)
 library(raster)
+library(lubridate)
 devtools::load_all()
 theme_set(theme_alain())
 ```
@@ -95,7 +96,7 @@ sampled stations by year.
 
 ### Where are the station best followed?
 
-```{r}
+```{r, fig.dim = c(4, 4)}
 # good station names
 good_station <- op_hist %>% 
   dplyr::filter(freq >= 10) %>%
@@ -124,25 +125,87 @@ region_fr <- region_fr[, c("nom", "geometry")]
 plot(st_geometry(region_fr), lwd = 1.5, col = "grey85")
 plot(loc_good_station, pch = 20, col = "red", add = T)
 ```
-The good stations are well distributed over France, this is suprising and super
-nice. There is may be a deficit in the south east and east.
 
-#### Number of individuals and species by station
+They are `r length(good_station)` that has 10 or more sampling points. The good
+stations are well distributed over France, this is suprising and super nice.
+There is may be a deficit in the south east and east.
+
+#### Number of individuals and species by sampling operation 
 
 ```{r}
 good_station_sampling <- op_sampling %>%
   dplyr::filter(station %in% good_station)
+filter(good_station_sampling, nb_sp ==0)
 
 hist_good_station <- good_station_sampling %>%
-  gather(stat, values, nb_ind, nb_sp) %>%
-  group_by(station, stat) %>%
-  summarise(
-    avg = mean(values),
-    std = sd(values) 
-    ) %>%
-  arrange(desc(avg)) %>%
   ungroup() %>%
   mutate(station = fct_inorder(as.factor(station)))
 
+hist_ind <- ggplot(hist_good_station, aes(x = nb_ind)) +
+  geom_histogram(bins = 35) +
+  labs(x = "Number of individuals by fish operation",
+    y = "Frequency",
+    title = "Frequency distribution") +
+  scale_x_log10()
+hist_sp <- ggplot(hist_good_station, aes(x = nb_sp)) +
+  geom_histogram(bins = 32) +
+  labs(x = "Number of species by fish operation",
+    y = "Frequency",
+    title = "Frequency distribution")
+plot_grid(hist_ind, hist_sp, ncol = 2)
+```
+
+#### Regularity of monitoring
+
+```{r}
+time_sampling <- good_station_sampling %>%
+  ungroup() %>%
+  unite(year_month, year, month, sep = "-") %>%
+  mutate(times = ymd(paste0(year_month, "-01"))) %>%
+  dplyr::select(-year_month)
+
+time_sampling %<>%
+  group_by(station) %>%
+  arrange(times) %>%
+  mutate(
+    point = seq(1, length(station)),
+    sample_sep = c(NA, times[-1] - times[-length(station)])
+  )
+hist_time_int <- time_sampling %>%
+  summarise(mean_sep = mean(sample_sep, na.rm =TRUE))
+
+global_sep <- ggplot(time_sampling, aes(x = sample_sep)) +
+  geom_histogram() +
+  geom_vline(aes(xintercept=mean(sample_sep, na.rm = TRUE)),
+            color="blue", linetype="dashed", size=1) +
+  labs(title = "Frequency distribution",
+  x = "Number of days between two sampling points") +
+scale_x_continuous(breaks = c(0, 300, 600, 1000, 2000))
+
+average_sep <- ggplot(hist_time_int, aes(x = mean_sep)) +
+  geom_histogram() +
+  geom_vline(aes(xintercept = mean(mean_sep)),
+            color="blue", linetype="dashed", size=1) +
+  labs(title = "Frequency distribution",
+  x = "Average number of days between two sampling points by station") +
+scale_x_continuous(breaks = c(0, 300, 600, 1000, 2000))
+
+plot_grid(global_sep, average_sep, ncol = 2)
+
+#HERE compute number of month separating two sampling by station
+#see zoo
+
+filter(time_sampling, sample_sep < 10) %>%
+  ungroup() %>%
+  arrange(station)
+filter(time_sampling, station ==  140) # When the fishing operation was bad, they went again the same say!
+
+filter(time_sampling, station ==  186) # HERE, I do not why they did two!
+filter(time_sampling, station ==  244) # HERE, I do not why they did two!
+filter(time_sampling, station ==  472) # Too low first time!
+#To generalize...
+# Are the methods constant for each station?
+# Are the strategy constant for each station?
+# Correlation strategy/methods/nb_pass vs nb_ind/station
 ```
 
