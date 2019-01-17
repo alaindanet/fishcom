@@ -44,35 +44,15 @@ According to the postdoc advertisement:
 - [ ] Re-run willem analysis
   - [ ] Function structure:
     - [x] cleaning: `../data-raw/clean_fish_op_data.R`
-      - [x] Same as Willem
-    - network build: `../R/metaweb_build.R`
-      - [x]: quantile size distribution
-	- [x]: set min as the lower size value
-	- [ ]: how to manage when there are few data points ?
-        - [x] Same as Willem
-      - [x]: Generate class for each species
-	- [x] Same as willem 
-      - [x]: compute piscivory 
-	- [x] ODS for fish and resources
-	  - [x] Same as willem
-      - [x]: compute theoretical prey range
-	- [x] Pred window
-	  - [x] Same as willem 
-      - [ ]: metaweb:
-	- [x] fish-fish:
-	  - [x] Same as Willem
-	- [x] fish-resources
-	  - [x] think about size class matching
-	  - [x] fix size class match: some intermediate classes do not have match 
-	  - [ ] Same as Willem
-	- [x] resources-resources
-	- [x] merge matrices
-    - network methods:
-    - network indices:
+    - [x] metaweb build: `../R/metaweb_build.R`
+    - [ ] local network: `../R/local_network_build.R`
+    - [ ] network methods:
+    - [ ] network analysis:
 - [ ] Assess quality of the dataset:
   - [x] Which community are best followed in time?
-  - [ ] Where are they ?
+  - [x] Where are they ?
 - [ ] Assess availability of environmental data
+  - [ ] temporal pollution data (cf Colin, FIRE meeting)
 
 # Temporal stability and diversity 
 

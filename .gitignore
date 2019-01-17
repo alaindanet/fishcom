@@ -1,6 +1,7 @@
 .Rproj.user
 .Rhistory
 .RData
+*.png
 inst/doc
 bonnafe_work
 edeline_work
