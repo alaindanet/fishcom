@@ -13,7 +13,7 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.dim = c(7, 7)
+  fig.dim = c(4, 4)
 )
 library(tidyverse)
 library(magrittr)
@@ -39,7 +39,7 @@ There was `r nb_op <- length(unique(op$opcod)); nb_op` fishing operations from
 
 ## Distribution of sampling effort
 
-```{r sampling effort} 
+```{r sampling effort, fig.width = 7}
 op_sampling <- op %>%
   group_by(opcod, station, year, month) %>%
   summarise(
@@ -65,7 +65,7 @@ hist_op <- ggplot(op_hist, aes(x = freq)) +
     title = "Frequency distribution") +
   scale_x_continuous(breaks = seq(0, 30, by = 5))
 
-plot_grid(cdf_op, hist_op, nrow = 2) 
+plot_grid(cdf_op, hist_op, ncol = 2) 
 ``` 
 
 Overall, the sampling effort by station is low and unevenly distributed. More
@@ -75,7 +75,7 @@ the station. Some of them are surely really close from each other.
 
 ## Sampling effort by year 
 
-```{r}
+```{r, fig.dim = c(4, 4)}
 op_year <- op_sampling %>% group_by(year) %>%
   summarise(freq = n()) %>%
   arrange(desc(freq)) 
@@ -86,7 +86,7 @@ year_op <- ggplot(op_year, aes(y = freq, x = year)) +
   labs(y = "Number of sampling events",
     x = "Year",
     title = "")
-plot_grid(year_op) 
+plot_grid(year_op)
 ```
 
 We see that the sampling effort increase around 1992 from nearly 250 to 1000
@@ -127,12 +127,12 @@ plot(loc_good_station, pch = 20, col = "red", add = T)
 ```
 
 They are `r length(good_station)` that has 10 or more sampling points. The good
-stations are well distributed over France, this is suprising and super nice.
+stations are well distributed over France, this is surprising and super nice.
 There is may be a deficit in the south east and east.
 
 #### Number of individuals and species by sampling operation 
 
-```{r}
+```{r, fig.width = 7}
 good_station_sampling <- op_sampling %>%
   dplyr::filter(station %in% good_station)
 filter(good_station_sampling, nb_sp ==0)
@@ -157,7 +157,7 @@ plot_grid(hist_ind, hist_sp, ncol = 2)
 
 #### Regularity of monitoring
 
-```{r}
+```{r, fig.width = 7}
 time_sampling <- good_station_sampling %>%
   ungroup() %>%
   unite(year_month, year, month, sep = "-") %>%
@@ -192,20 +192,86 @@ scale_x_continuous(breaks = c(0, 300, 600, 1000, 2000))
 
 plot_grid(global_sep, average_sep, ncol = 2)
 
-#HERE compute number of month separating two sampling by station
-#see zoo
-
-filter(time_sampling, sample_sep < 10) %>%
-  ungroup() %>%
-  arrange(station)
-filter(time_sampling, station ==  140) # When the fishing operation was bad, they went again the same say!
-
-filter(time_sampling, station ==  186) # HERE, I do not why they did two!
-filter(time_sampling, station ==  244) # HERE, I do not why they did two!
-filter(time_sampling, station ==  472) # Too low first time!
-#To generalize...
 # Are the methods constant for each station?
 # Are the strategy constant for each station?
 # Correlation strategy/methods/nb_pass vs nb_ind/station
 ```
 
+The fishing operations (FO) resulted in the collect of several
+hundreds of fish (`r mean(hist_good_station$nb_ind)` fishes in average) which is
+quite impressive. The delay between two fishing operations by station was of
+ `r mean(hist_time_int$mean_sep) %>% round` days, iow 1 year which is great! However, the 
+FO that have been spaced by less than one month (30 days), have been taken place
+the same day! It concerns `r n_l_samp <- nrow(low_fo_int); n_l_samp` stations,
+`r round(n_l_samp / length(good_station) * 100)`% of the good stations. 
+
+```{r}
+low_fo_int <- filter(time_sampling, sample_sep < 30 & nb_ind > 100) %>%
+  ungroup() %>%
+  arrange(station)
+# Those FO took place the same day:
+summarise(low_fo_int, mean = mean(sample_sep))
+
+# Sometimes the first FO was not successful:
+filter(time_sampling, station ==  140, point %in% c(9, 10)) 
+filter(time_sampling, station ==  472, point %in% c(6, 7))
+
+# But sometimes, no: 
+filter(time_sampling, station ==  186, point %in% c(4, 5)) 
+filter(time_sampling, station ==  244, point %in% c(15, 16))
+# Is it because of differences of sampling methods?
+#To generalize...
+```
+
+#### Sampling method regularity
+
+```{r}
+# Get operation data
+data(operation_data)
+operation_data %<>% distinct(opcod, .keep_all = TRUE) %>%
+  dplyr::select(-species, -station, -count, -year, -month)
+st_method <- left_join(good_station_sampling, operation_data,
+  by = c("opcod"))
+```
+
+We want to see if the good stations had the same sampling methods across time. 
+
+```{r, fig.width = 7}
+## Global distribution of the methods and fishing strategies:
+p_met <- ggplot(st_method, aes(method, fill = strategy)) + 
+  geom_bar() +
+  labs(x = "Sampling Methods",
+    y = "Frequency",
+    title = "") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p_met
+
+## Distribution of sampling methods/strategies by station
+distri_samp <- st_method %>%
+  group_by(station) %>%
+  summarise(
+    method = length(unique(method)),
+    strategy = length(unique(strategy))
+  )
+p_samp <- ggplot(gather(distri_samp, samp, uniq, method, strategy), aes(x = uniq)) +
+  geom_bar() +
+  labs(x = "# of different methods/strategies by station",
+  y = "Frequency") +
+  facet_grid(cols = vars(samp))
+p_samp
+```
+
+Most of the FO has been realized with the "on foot" strategy. It is probable
+that boat has been used in case which the river was too deep.
+It is more complicated for the methods. We see hopefully that the methods the
+most frequently used was "complete". However, when looking at the number of
+different methods used for each station, we see that in general, 1 to 3 methods
+are used inside a station.
+
+When there are 2 sampling events at the same station, do they belong to methods
+different from complete ? If so, can we merge them ? If not, are they separated
+by less than one year ? If not, we should delete them I guess.
+
+- TODO:
+  - Correlation between method and nb ind & sp
+  - Correlation nb_pass & surf vs nb ind & sp
