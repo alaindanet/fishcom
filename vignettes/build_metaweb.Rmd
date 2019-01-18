@@ -166,41 +166,255 @@ system. Those nodes are really important for non-carnivorous fish species and
 little fishes (regarless the species) for which the drawn feeding links will
 come from only from the resource nodes.
 
-For our toy metaweb, we know that Paras (crustacean) and Chetiflor (plant) are important resources for the little pokemons and vegetarian ones.  
+For our toy metaweb, we know that Paras (crustacean) and Chetiflor (plant) are
+important resources for the little pokemons and vegetarian ones.  
 
 ```{r}
 resource <- c("Chetiflor", "Paras")
 ```
 
-# The links
+# Biological data
+
+Before to move on the computation of the links, we will see how we can inform
+our metaweb with some important biological details namely species and resource
+diets, species carnivory (here i.e., eating other non-resource species) and
+species theoretical prey sizes  
 
 ## The diet 
 
-### Fish diet
+Many organisms change their diet along their life. The most caricatural exemple
+can be found in insects, some have dramatic developmental shift (life stage
+change) that are accompagnied by an equally important diet shift. 
+ 
+We said earlier that the links were determined by the size relationship between
+predators and preys. However, we can improve the biological realism of the
+network by introducing size dependant diets, based on litterature, expert
+knowledge and theoretical hypotheses^[For example, for fishes species, the
+larvae hypothese states that a fish that has a size below 20cm will not
+eat other things than protists].
 
+So we will build here species and resource diet shift for the pokemon, based on
+my (poor) expert knowledge.
+
+### Species diet
+
+The species diet is determined by known life stage which have lower and upper
+bounds. It reads as follow (for the first line): *The Pikachu of stage 1 (< 3
+) are eating only Chetiflor*.
+
+```{r}
+species_shift <- tibble(
+  species = rep(c("Pikachu", "Roucoups", "Dracofeu"), each = 2),
+  life_stage = rep(c(1, 2), times = 3),
+  min = c(0, 3, 0, 13, 0, 103),
+  max = c(3, Inf, 13, Inf, 103, Inf),
+  Chetiflor = c(1, 0, 1, 1, 1, 0),
+  Paras = c(0, 1, 0, 1, 1, 0),
+  carn = c(0, 1, 0, 0, 0, 1)
+    )
+knitr::kable(species_shift)
+```
 
 ### Resource diet
 
+Same thing for the resource nodes.  However, we see that we do not set up life
+stages for resource.  We can see that Chetiflor just feed on light and Paras on
+Chetiflor. Please not that only the resource species will be include, so the
+light will be not part of the network.
 
 ```{r}
 resource_shift <- tibble(
-    species = c("Chetiflor", "Paras"),
-    life_stage = c(0, 0),
-    min = c(0, 0),
-    max = c(0, 0),
-    light = c(1, 0),
-    Chetiflor = c(0, 1),
-    Paras = c(0, 0),
-    pisc = c(0, 0)
+  species = c("Chetiflor", "Paras"),
+  life_stage = c(0, 0),
+  min = c(0, 0),
+  max = c(0, 0),
+  light = c(1, 0),
+  Chetiflor = c(0, 1),
+  Paras = c(0, 0),
+  carn = c(0, 0)
     )
-knitr::kable()
+knitr::kable(resource_shift)
+```
+
+## Carnivory
+
+Now we have all the data that we needed to moving forward. For each species
+class, we will determine if it is a carnivorous species. Right now, we implement only 
+the "overlap" method. The given class is carnivorous if the size class overlap
+the first carnivorous life stage.
+
+```{r}
+carn_classes <- compute_piscivory(
+  size_class = size_classes,
+  fish_diet_shift = species_shift,
+  species = species,
+  low_bound = min,
+  upper_bound = max,
+  fish = carn)
+knitr::kable(carn_classes)
+```
+
+## Theoretical prey size 
+
+Now that we know the diet of the species size classes, we can computed which
+prey they can theoretically eat. Before to do this, we need to know the nature
+of the relationship between the size of the predators and of its preys.
+Among fish, numerous studies have shown that it exists a linear relationship
+between the size of the predator and the size of a prey. The slope coefficient   
+is different across species but if the data is not available, it is possible to
+use generic parameters.
+Two slope values are necessary to determine that is called the predation window. 
+
+```{r}
+## Let's determine the theoretical relationship for each species 
+pred_prey_size <- tibble(
+  species = c("Pikachu", "Roucoups", "Dracofeu"),
+  lwr_slope = rep(.03, 3),
+  upr_slope = rep(.45, 3)
+) 
+```
+
+The predation window represents the relationship between the size predator and
+the size of the prey. I show an example below.
+
+```{r}
+# Each species as column
+spd_pkm <- group_by(pokemon_size, species) %>%
+ mutate(id = row_number()) %>%
+ spread(species, size)
+
+## Get slopes
+slopes <- filter(pred_prey_size, species == "Dracofeu") %>% 
+  dplyr::select(lwr_slope, upr_slope) %>%
+  unlist()
+
+pred_win <- ggplot(spd_pkm, aes(x = Dracofeu, y = Roucoups)) +
+  ylim(0, max(spd_pkm$Dracofeu)) +
+  xlim(0, max(spd_pkm$Dracofeu)) +
+  geom_blank() +
+  geom_abline(intercept = 0, slope = slopes["lwr_slope"], color = "red") +
+  geom_abline(intercept = 0, slope = slopes["upr_slope"], color = "red")
+
+pred_win +
+  labs(x = "Dracofeu size", y = "Prey size",
+    title = "Predation window of Dracofeu")
 ```
 
 
 
+
+# The links
+
+The trophic links between species (species-species), species and resource
+(species-resource), resource and resource (resource-resource) can be computed
+following different rules. Here, I will present the "midpoint" and "overlap"
+rules.
+
+## species-species link
+
+Before we have computed the carnivory and we have the theoretical prey size
+range for each predator species (based on a linear relationship). We have to
+choose a method to determine if there is or not a trophic link between a
+predator and a prey size class.
+
+There is two methods: *overlap* and *midpoint*. The *overlap* is the same than
+the one for determining piscivory, an overlap between the classes. It means that
+the minimal prey size for a predator would be each size contained in the
+predation window of the predator. For a given predator size class, it
+corresponds to ]`min(pred) * lwr_slope`; `max(pred) * upr_slope`]. According to
+the *midpoint* method, the range of prey size that can be eaten by a predator
+class is constrained by the mid of the predator size class. The range of prey
+size is detemined as ]`mid(pred)* lwr_slope`; `mid(pred) * upr_slope`]. 
+
+$$
+x_{mid} = \frac{(x_{min} + x_{max})}{2}
+$$
+
+```{r}
+## Let's compute the prey sizes for each predator
+## with the midpoint method 
+prey_size <- compute_prey_size(
+  class_size = size_classes,
+  pred_win = pred_prey_size,
+  species = species,
+  beta_min = lwr_slope,
+  beta_max = upr_slope,
+  pred_win_method = "midpoint")
+knitr::kable(prey_size)
+```
+
+Now, that we have this table, we can determine the species-species links. A
+species-species link is drawn if (i) the predator class is carnivorous and if
+(ii) the correspondant prey class satisfies the characteristics of either the
+*overlap* nor the *midpoint* method. 
+
+If the *overlap* is used, the link is drawn if the range of a given prey class
+overlap the prey range of the predator class. If the *midpoint* method is used,
+the link is drawn if the mid of the given prey class fell in the prey range of
+the predator class.  
+
+- *overlap*: $L = 1 ssi ]N_{c, min};N_{c, max}] \in ]P_{c, min}*\beta_{min};P_{c, max}*\beta_{max}]$
+- *midpoint* = $L = 1 ssi N_{c, mid} \in ]P_{c, mid}*\beta_{min};P_{c, mid}*\beta_{max}]$
+
+
+```{r}
+size_classes
+## Draw an overlap
+floor <- 0
+draco_2 <- filter(size_classes, species == "Dracofeu", class_id == 2) %>%
+  dplyr::select(lower, upper) %>% unlist
+rou_2 <- filter(size_classes, species == "Roucoups", class_id == 3) %>%
+  dplyr::select(lower, upper) %>% unlist
+rou <- data.frame(x1 = floor, x2 = floor, y1 = rou_2["lower"], y2 = rou_2["upper"])
+draco <- data.frame(x1 = draco_2["lower"], x2 = rou_2["upper"], y1 = floor, y2 = floor)
+
+pred_range <- geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2, colour = "segment"), colour = "blue", data = draco) 
+prey_range <- geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2, colour = "segment"), colour = "green", data = rou) 
+
+## Theoretical prey size
+coord_del_min <- with(draco, c(x2, x2, x2*slopes["lwr_slope"], x2*slopes["upr_slope"]))
+coord_del_max <- with(draco, c(x1, x1, x1*slopes["lwr_slope"], x1*slopes["upr_slope"])) 
+th_prey_coord <- rbind(coord_del_min, coord_del_max) %>% as.tibble
+colnames(th_prey_coord) <- c("x1", "x2", "y1", "y2")
+th_prey <- geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2, colour = "segment"), colour = "blue", data = th_prey_coord)
+
+pred_win + 
+  pred_range +
+  prey_range +
+  th_prey 
+
+```
+
+## species-resource 
+
+As there is no size for the resources, we assume that species class is
+consumming the resource of the stage it belongs to.  As for species-species
+trophic link, the species-resource link can be drawn either according to the
+*overlap* nor the *midpoint* method. With the *overlap* method, a link is drawn
+if there is an overlap between life stage boundaries and species size class.
+With the *midpoint* method, there is a match where the mid of the species class
+range  fell in life stage. A link is drawn between the given species class and
+all the  resources of the given life stage.
+
+- *overlap*: $L = 1 ssi ]L_{i, j, min};L_{i, j, max}] \in ]P_{c, min}; P_{c, max}] | ]L_{i, j, min};L_{i, j, max}] \supset ]P_{c, min}; P_{c, max}]$
+- *midpoint* = $L = 1 ssi P_{c, mid} \in ]L_{i, j, min};L_{i, j, max}]$
+
+## Other links
+
+To complete the need, we still to define two more link types: resource-species
+and resource-resource. Those types of link are straightforward to define.
+Because we consider that resources cannot feed on species, there are not
+resource-species links. The resource-resource links are defined in the resource
+diet shift table, there are just to be reported.
+
+# Midpoint or overlap
+
+- f-r link: resource of several stage when *overlap* 
+
 ## Hypotheses (reminder)
 
 - determine piscivory is currently based on upper bound of the class
+- Explain downsize of each method: overlap, midpoint
 - Ontogenic diet class interval are closed ($[min;max]$), which is different from
   size class which is left open $]min;max]$: please unify
 - Fish resource link is determined if the life stage is partly in or is

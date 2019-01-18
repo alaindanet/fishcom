@@ -12,7 +12,7 @@
 
 <meta name="author" content="Alain Danet" />
 
-<meta name="date" content="2019-01-10" />
+<meta name="date" content="2019-01-18" />
 
 <title>How to build the metaweb</title>
 
@@ -37,7 +37,7 @@ a.sourceLine { text-indent: -1em; padding-left: 1em; }
 pre.numberSource a.sourceLine
   { position: relative; left: -4em; }
 pre.numberSource a.sourceLine::before
-  { content: attr(data-line-number);
+  { content: attr(title);
     position: relative; left: -1em; text-align: right; vertical-align: baseline;
     border: none; pointer-events: all; display: inline-block;
     -webkit-touch-callout: none; -webkit-user-select: none;
@@ -278,7 +278,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 <h1 class="title toc-ignore">How to build the metaweb</h1>
 <h4 class="author"><em>Alain Danet</em></h4>
-<h4 class="date"><em>2019-01-10</em></h4>
+<h4 class="date"><em>2019-01-18</em></h4>
 
 
 
@@ -328,34 +328,34 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <h2>Build size classes</h2>
 <p>The number of nodes by species corresponds to the number of classes <span class="math inline">\(C\)</span>, the size classes.</p>
 <p>The classes can be determined by the method of the quantile (<code>?quantile()</code>) or percentile (<code>?seq()</code>).</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">nb_class &lt;-<span class="st"> </span><span class="dv">5</span> </a>
-<a class="sourceLine" id="cb1-2" data-line-number="2">size &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">1</span>, <span class="dv">100</span>)</a>
-<a class="sourceLine" id="cb1-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb1-4" data-line-number="4">split_quant &lt;-<span class="st"> </span><span class="kw">split_in_classes</span>(size, <span class="dt">class_method =</span> <span class="st">&quot;quantile&quot;</span>, <span class="dt">nb_class =</span></a>
-<a class="sourceLine" id="cb1-5" data-line-number="5">  nb_class)</a>
-<a class="sourceLine" id="cb1-6" data-line-number="6">split_percent &lt;-<span class="st"> </span><span class="kw">split_in_classes</span>(size, <span class="dt">class_method =</span> <span class="st">&quot;percentile&quot;</span>, <span class="dt">nb_class =</span></a>
-<a class="sourceLine" id="cb1-7" data-line-number="7">  nb_class)</a>
-<a class="sourceLine" id="cb1-8" data-line-number="8"><span class="kw">identical</span>(split_quant, split_percent)</a>
-<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="co">#&gt; [1] TRUE</span></a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1">nb_class &lt;-<span class="st"> </span><span class="dv">5</span> </a>
+<a class="sourceLine" id="cb1-2" title="2">size &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">1</span>, <span class="dv">100</span>)</a>
+<a class="sourceLine" id="cb1-3" title="3"></a>
+<a class="sourceLine" id="cb1-4" title="4">split_quant &lt;-<span class="st"> </span><span class="kw">split_in_classes</span>(size, <span class="dt">class_method =</span> <span class="st">&quot;quantile&quot;</span>, <span class="dt">nb_class =</span></a>
+<a class="sourceLine" id="cb1-5" title="5">  nb_class)</a>
+<a class="sourceLine" id="cb1-6" title="6">split_percent &lt;-<span class="st"> </span><span class="kw">split_in_classes</span>(size, <span class="dt">class_method =</span> <span class="st">&quot;percentile&quot;</span>, <span class="dt">nb_class =</span></a>
+<a class="sourceLine" id="cb1-7" title="7">  nb_class)</a>
+<a class="sourceLine" id="cb1-8" title="8"><span class="kw">identical</span>(split_quant, split_percent)</a>
+<a class="sourceLine" id="cb1-9" title="9"><span class="co">#&gt; [1] TRUE</span></a></code></pre></div>
 <p>Quantile and percentile methods return the same output when data are uniformly distributed. It is not the case when data are not, for example with normal distribution.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1">size &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">100</span>, <span class="dt">mean =</span> <span class="dv">100</span>, <span class="dt">sd =</span> <span class="dv">10</span>)</a>
-<a class="sourceLine" id="cb2-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb2-3" data-line-number="3">split_quant &lt;-<span class="st"> </span><span class="kw">split_in_classes</span>(size, <span class="dt">class_method =</span> <span class="st">&quot;quantile&quot;</span>, <span class="dt">nb_class =</span></a>
-<a class="sourceLine" id="cb2-4" data-line-number="4">  nb_class)</a>
-<a class="sourceLine" id="cb2-5" data-line-number="5">split_percent &lt;-<span class="st"> </span><span class="kw">split_in_classes</span>(size, <span class="dt">class_method =</span> <span class="st">&quot;percentile&quot;</span>, <span class="dt">nb_class =</span></a>
-<a class="sourceLine" id="cb2-6" data-line-number="6">  nb_class)</a>
-<a class="sourceLine" id="cb2-7" data-line-number="7"><span class="kw">identical</span>(split_quant, split_percent)</a>
-<a class="sourceLine" id="cb2-8" data-line-number="8"><span class="co">#&gt; [1] FALSE</span></a></code></pre></div>
-<p>Percentile method will build class of the same size equally distributed between the minimum size 78.5590062 and the maximum size 122.3029863. Quantile method build classes containing the same number of observation. So, if <span class="math inline">\(C = 2\)</span>, the cutting point will be the median. In the case of the normal distribution, quantile method created thiner classes (data are centered around the mean) and wider classes at the extremes.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">method &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;quantile&quot;</span>, <span class="st">&quot;percentile&quot;</span>)</a>
-<a class="sourceLine" id="cb3-2" data-line-number="2">temp_obj &lt;-<span class="st"> </span><span class="kw">list</span>(split_quant, split_percent)</a>
-<a class="sourceLine" id="cb3-3" data-line-number="3"><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="dv">2</span>) {</a>
-<a class="sourceLine" id="cb3-4" data-line-number="4">  temp_obj[[ i ]] <span class="op">%&lt;&gt;%</span><span class="st"> </span>dplyr<span class="op">::</span><span class="kw">mutate</span>(<span class="dt">method =</span> method[i]) <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb3-5" data-line-number="5"><span class="st">    </span><span class="kw">gather</span>(bound, values, lower, upper)</a>
-<a class="sourceLine" id="cb3-6" data-line-number="6">} </a>
-<a class="sourceLine" id="cb3-7" data-line-number="7">temp2 &lt;-<span class="st"> </span>dplyr<span class="op">::</span><span class="kw">bind_rows</span>(temp_obj[[<span class="dv">1</span>]], temp_obj[[<span class="dv">2</span>]])  <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb3-8" data-line-number="8"><span class="st">  </span>tidyr<span class="op">::</span><span class="kw">spread</span>(method, values)</a>
-<a class="sourceLine" id="cb3-9" data-line-number="9">knitr<span class="op">::</span><span class="kw">kable</span>(temp2)</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1">size &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">100</span>, <span class="dt">mean =</span> <span class="dv">100</span>, <span class="dt">sd =</span> <span class="dv">10</span>)</a>
+<a class="sourceLine" id="cb2-2" title="2"></a>
+<a class="sourceLine" id="cb2-3" title="3">split_quant &lt;-<span class="st"> </span><span class="kw">split_in_classes</span>(size, <span class="dt">class_method =</span> <span class="st">&quot;quantile&quot;</span>, <span class="dt">nb_class =</span></a>
+<a class="sourceLine" id="cb2-4" title="4">  nb_class)</a>
+<a class="sourceLine" id="cb2-5" title="5">split_percent &lt;-<span class="st"> </span><span class="kw">split_in_classes</span>(size, <span class="dt">class_method =</span> <span class="st">&quot;percentile&quot;</span>, <span class="dt">nb_class =</span></a>
+<a class="sourceLine" id="cb2-6" title="6">  nb_class)</a>
+<a class="sourceLine" id="cb2-7" title="7"><span class="kw">identical</span>(split_quant, split_percent)</a>
+<a class="sourceLine" id="cb2-8" title="8"><span class="co">#&gt; [1] FALSE</span></a></code></pre></div>
+<p>Percentile method will build class of the same size equally distributed between the minimum size 68.7765686 and the maximum size 120.6615538. Quantile method build classes containing the same number of observation. So, if <span class="math inline">\(C = 2\)</span>, the cutting point will be the median. In the case of the normal distribution, quantile method created thiner classes (data are centered around the mean) and wider classes at the extremes.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">method &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;quantile&quot;</span>, <span class="st">&quot;percentile&quot;</span>)</a>
+<a class="sourceLine" id="cb3-2" title="2">temp_obj &lt;-<span class="st"> </span><span class="kw">list</span>(split_quant, split_percent)</a>
+<a class="sourceLine" id="cb3-3" title="3"><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="dv">2</span>) {</a>
+<a class="sourceLine" id="cb3-4" title="4">  temp_obj[[ i ]] <span class="op">%&lt;&gt;%</span><span class="st"> </span>dplyr<span class="op">::</span><span class="kw">mutate</span>(<span class="dt">method =</span> method[i]) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb3-5" title="5"><span class="st">    </span><span class="kw">gather</span>(bound, values, lower, upper)</a>
+<a class="sourceLine" id="cb3-6" title="6">} </a>
+<a class="sourceLine" id="cb3-7" title="7">temp2 &lt;-<span class="st"> </span>dplyr<span class="op">::</span><span class="kw">bind_rows</span>(temp_obj[[<span class="dv">1</span>]], temp_obj[[<span class="dv">2</span>]])  <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb3-8" title="8"><span class="st">  </span>tidyr<span class="op">::</span><span class="kw">spread</span>(method, values)</a>
+<a class="sourceLine" id="cb3-9" title="9">knitr<span class="op">::</span><span class="kw">kable</span>(temp2)</a></code></pre></div>
 <table>
 <thead>
 <tr class="header">
@@ -369,76 +369,76 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <tr class="odd">
 <td align="right">1</td>
 <td align="left">lower</td>
-<td align="right">79</td>
-<td align="right">79</td>
+<td align="right">69</td>
+<td align="right">69</td>
 </tr>
 <tr class="even">
 <td align="right">1</td>
 <td align="left">upper</td>
-<td align="right">87</td>
-<td align="right">96</td>
+<td align="right">79</td>
+<td align="right">91</td>
 </tr>
 <tr class="odd">
 <td align="right">2</td>
 <td align="left">lower</td>
-<td align="right">87</td>
-<td align="right">96</td>
+<td align="right">79</td>
+<td align="right">91</td>
 </tr>
 <tr class="even">
 <td align="right">2</td>
 <td align="left">upper</td>
-<td align="right">96</td>
-<td align="right">100</td>
+<td align="right">90</td>
+<td align="right">97</td>
 </tr>
 <tr class="odd">
 <td align="right">3</td>
 <td align="left">lower</td>
-<td align="right">96</td>
-<td align="right">100</td>
+<td align="right">90</td>
+<td align="right">97</td>
 </tr>
 <tr class="even">
 <td align="right">3</td>
 <td align="left">upper</td>
-<td align="right">105</td>
-<td align="right">105</td>
+<td align="right">100</td>
+<td align="right">101</td>
 </tr>
 <tr class="odd">
 <td align="right">4</td>
 <td align="left">lower</td>
-<td align="right">105</td>
-<td align="right">105</td>
+<td align="right">100</td>
+<td align="right">101</td>
 </tr>
 <tr class="even">
 <td align="right">4</td>
 <td align="left">upper</td>
-<td align="right">114</td>
 <td align="right">110</td>
+<td align="right">108</td>
 </tr>
 <tr class="odd">
 <td align="right">5</td>
 <td align="left">lower</td>
-<td align="right">114</td>
 <td align="right">110</td>
+<td align="right">108</td>
 </tr>
 <tr class="even">
 <td align="right">5</td>
 <td align="left">upper</td>
-<td align="right">122</td>
-<td align="right">122</td>
+<td align="right">121</td>
+<td align="right">121</td>
 </tr>
 </tbody>
 </table>
 <p>When we have several species, the classes are computed with <code>compute_classes()</code>.</p>
 <p>Let me introduce the toy dataset that we will use. The pokemon are eating each other (although it is not shown in the anime). The feeding interaction is determined by the size relationship (believe me!). So, we can build the metaweb as other food web. The size values are arbitrary.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1">nb_class &lt;-<span class="st"> </span><span class="dv">4</span></a>
-<a class="sourceLine" id="cb4-2" data-line-number="2">pokemon_size &lt;-<span class="st"> </span><span class="kw">tibble</span>(</a>
-<a class="sourceLine" id="cb4-3" data-line-number="3">  <span class="dt">species =</span> <span class="kw">rep</span>(<span class="kw">c</span>(<span class="st">&quot;Pikachu&quot;</span>, <span class="st">&quot;Roucoups&quot;</span>, <span class="st">&quot;Dracofeu&quot;</span>), <span class="dt">each =</span> <span class="dv">10</span>),</a>
-<a class="sourceLine" id="cb4-4" data-line-number="4">  <span class="dt">size =</span> <span class="kw">c</span>(<span class="kw">seq</span>(<span class="dv">1</span>,<span class="dv">10</span>), <span class="kw">seq</span>(<span class="dv">11</span>, <span class="dv">20</span>), <span class="kw">seq</span>(<span class="dv">101</span>,<span class="dv">110</span>)))</a>
-<a class="sourceLine" id="cb4-5" data-line-number="5"></a>
-<a class="sourceLine" id="cb4-6" data-line-number="6">size_classes &lt;-<span class="st"> </span><span class="kw">compute_classes</span>(pokemon_size, <span class="dt">var =</span> size, <span class="dt">group_var =</span> species, <span class="dt">nb_class =</span> nb_class,</a>
-<a class="sourceLine" id="cb4-7" data-line-number="7">  <span class="dt">class_method =</span> <span class="st">&quot;percentile&quot;</span>)</a>
-<a class="sourceLine" id="cb4-8" data-line-number="8"></a>
-<a class="sourceLine" id="cb4-9" data-line-number="9">knitr<span class="op">::</span><span class="kw">kable</span>(size_classes)</a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">nb_class &lt;-<span class="st"> </span><span class="dv">4</span></a>
+<a class="sourceLine" id="cb4-2" title="2">pokemon_size &lt;-<span class="st"> </span><span class="kw">tibble</span>(</a>
+<a class="sourceLine" id="cb4-3" title="3">  <span class="dt">species =</span> <span class="kw">rep</span>(<span class="kw">c</span>(<span class="st">&quot;Pikachu&quot;</span>, <span class="st">&quot;Roucoups&quot;</span>, <span class="st">&quot;Dracofeu&quot;</span>), <span class="dt">each =</span> <span class="dv">10</span>),</a>
+<a class="sourceLine" id="cb4-4" title="4">  <span class="dt">size =</span> <span class="kw">c</span>(<span class="kw">seq</span>(<span class="dv">1</span>,<span class="dv">10</span>), <span class="kw">seq</span>(<span class="dv">11</span>, <span class="dv">20</span>), <span class="kw">seq</span>(<span class="dv">101</span>,<span class="dv">110</span>)))</a>
+<a class="sourceLine" id="cb4-5" title="5"></a>
+<a class="sourceLine" id="cb4-6" title="6">size_classes &lt;-<span class="st"> </span><span class="kw">compute_classes</span>(pokemon_size, <span class="dt">var =</span> size, <span class="dt">group_var =</span> species, <span class="dt">nb_class =</span> nb_class,</a>
+<a class="sourceLine" id="cb4-7" title="7">  <span class="dt">class_method =</span> <span class="st">&quot;percentile&quot;</span>)</a>
+<a class="sourceLine" id="cb4-8" title="8"></a>
+<a class="sourceLine" id="cb4-9" title="9">knitr<span class="op">::</span><span class="kw">kable</span>(size_classes)</a></code></pre></div>
 <table>
 <thead>
 <tr class="header">
@@ -525,15 +525,442 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 </table>
 <p>We end up with species classification. Each class of each species (<span class="math inline">\(c_{i,j}\)</span>) will constitute a node. So here, with 4 classes and 3 species, we will have 12 species nodes in the metaweb.</p>
 <p>In <span class="citation">Bonnafé, Legendre, and Edeline (n.d.)</span> they use the quantile methods.</p>
-<p>We use percentile method because for us, it is justified that the size range the most abundant get more weight and more precise feeding links resolution at the metaweb scale because once the local networks will re-built, it does not make sens that the resolution at which they will be solved depends on the abundance distribution of the species at the regional scale.</p>
+<p>We use <strong>percentile method</strong> because for us, it is justified that the size range the most abundant get more weight and more precise feeding links resolution at the metaweb scale because once the local networks will re-built, it does not make sens that the resolution at which they will be solved depends on the abundance distribution of the species at the regional scale.</p>
 </div>
-<div id="other-nodes" class="section level2">
-<h2>Other nodes</h2>
+<div id="resource-nodes" class="section level2">
+<h2>Resource nodes</h2>
+<p>The resource nodes improve the biological reality of the metaweb. It differs from the species nodes by the fact that we do not have information about neither their size nor their abundance (in general). So, we do not generate class sizes for those nodes. For the fish metaweb, the resource nodes are constituted of non-fishes organisms such as, algae, phyto- &amp; zoo-plankton, zoobenthos, … See <code>vignette(&quot;bonnafe_code_structure&quot;)</code> or <code>data(resource_diet_shift)</code>.</p>
+<p>So, the resource nodes are defined by litterature and expert knowledge of the system. Those nodes are really important for non-carnivorous fish species and little fishes (regarless the species) for which the drawn feeding links will come from only from the resource nodes.</p>
+<p>For our toy metaweb, we know that Paras (crustacean) and Chetiflor (plant) are important resources for the little pokemons and vegetarian ones.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">resource &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Chetiflor&quot;</span>, <span class="st">&quot;Paras&quot;</span>)</a></code></pre></div>
+<p># Biological data</p>
+<p>Before to move on the computation of the links, we will see how we can inform our metaweb with some important biological details namely species and resource diets, species carnivory (here i.e., eating other non-resource species) and species theoretical prey sizes</p>
+</div>
+<div id="the-diet" class="section level2">
+<h2>The diet </h2>
+<p>Many organisms change their diet along their life. The most caricatural exemple can be found in insects, some have dramatic developmental shift (life stage change) that are accompagnied by an equally important diet shift.</p>
+<p>We said earlier that the links were determined by the size relationship between predators and preys. However, we can improve the biological realism of the network by introducing size dependant diets, based on litterature, expert knowledge and theoretical hypotheses<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.</p>
+<p>So we will build here species and resource diet shift for the pokemon, based on my (poor) expert knowledge.</p>
+<div id="species-diet" class="section level3">
+<h3>Species diet</h3>
+<p>The species diet is determined by known life stage which have lower and upper bounds. It reads as follow (for the first line): <em>The Pikachu of stage 1 (&lt; 3 ) are eating only Chetiflor</em>.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1">species_shift &lt;-<span class="st"> </span><span class="kw">tibble</span>(</a>
+<a class="sourceLine" id="cb6-2" title="2">  <span class="dt">species =</span> <span class="kw">rep</span>(<span class="kw">c</span>(<span class="st">&quot;Pikachu&quot;</span>, <span class="st">&quot;Roucoups&quot;</span>, <span class="st">&quot;Dracofeu&quot;</span>), <span class="dt">each =</span> <span class="dv">2</span>),</a>
+<a class="sourceLine" id="cb6-3" title="3">  <span class="dt">life_stage =</span> <span class="kw">rep</span>(<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="dt">times =</span> <span class="dv">3</span>),</a>
+<a class="sourceLine" id="cb6-4" title="4">  <span class="dt">min =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">13</span>, <span class="dv">0</span>, <span class="dv">103</span>),</a>
+<a class="sourceLine" id="cb6-5" title="5">  <span class="dt">max =</span> <span class="kw">c</span>(<span class="dv">3</span>, <span class="ot">Inf</span>, <span class="dv">13</span>, <span class="ot">Inf</span>, <span class="dv">103</span>, <span class="ot">Inf</span>),</a>
+<a class="sourceLine" id="cb6-6" title="6">  <span class="dt">Chetiflor =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>),</a>
+<a class="sourceLine" id="cb6-7" title="7">  <span class="dt">Paras =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>),</a>
+<a class="sourceLine" id="cb6-8" title="8">  <span class="dt">carn =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb6-9" title="9">    )</a>
+<a class="sourceLine" id="cb6-10" title="10">knitr<span class="op">::</span><span class="kw">kable</span>(species_shift)</a></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">species</th>
+<th align="right">life_stage</th>
+<th align="right">min</th>
+<th align="right">max</th>
+<th align="right">Chetiflor</th>
+<th align="right">Paras</th>
+<th align="right">carn</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Pikachu</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">3</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Pikachu</td>
+<td align="right">2</td>
+<td align="right">3</td>
+<td align="right">Inf</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">Roucoups</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">13</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Roucoups</td>
+<td align="right">2</td>
+<td align="right">13</td>
+<td align="right">Inf</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">Dracofeu</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">103</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Dracofeu</td>
+<td align="right">2</td>
+<td align="right">103</td>
+<td align="right">Inf</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">1</td>
+</tr>
+</tbody>
+</table>
+<p>### Resource diet</p>
+<p>Same thing for the resource nodes. However, we see that we do not set up life stages for resource. We can see that Chetiflor just feed on light and Paras on Chetiflor. Please not that only the resource species will be include, so the light will be not part of the network.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1">resource_shift &lt;-<span class="st"> </span><span class="kw">tibble</span>(</a>
+<a class="sourceLine" id="cb7-2" title="2">  <span class="dt">species =</span> <span class="kw">c</span>(<span class="st">&quot;Chetiflor&quot;</span>, <span class="st">&quot;Paras&quot;</span>),</a>
+<a class="sourceLine" id="cb7-3" title="3">  <span class="dt">life_stage =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>),</a>
+<a class="sourceLine" id="cb7-4" title="4">  <span class="dt">min =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>),</a>
+<a class="sourceLine" id="cb7-5" title="5">  <span class="dt">max =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>),</a>
+<a class="sourceLine" id="cb7-6" title="6">  <span class="dt">light =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">0</span>),</a>
+<a class="sourceLine" id="cb7-7" title="7">  <span class="dt">Chetiflor =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>),</a>
+<a class="sourceLine" id="cb7-8" title="8">  <span class="dt">Paras =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>),</a>
+<a class="sourceLine" id="cb7-9" title="9">  <span class="dt">carn =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>)</a>
+<a class="sourceLine" id="cb7-10" title="10">    )</a>
+<a class="sourceLine" id="cb7-11" title="11">knitr<span class="op">::</span><span class="kw">kable</span>(resource_shift)</a></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">species</th>
+<th align="right">life_stage</th>
+<th align="right">min</th>
+<th align="right">max</th>
+<th align="right">light</th>
+<th align="right">Chetiflor</th>
+<th align="right">Paras</th>
+<th align="right">carn</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Chetiflor</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Paras</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="carnivory" class="section level2">
+<h2>Carnivory</h2>
+<p>Now we have all the data that we needed to moving forward. For each species class, we will determine if it is a carnivorous species. Right now, we implement only the “overlap” method. The given class is carnivorous if the size class overlap the first carnivorous life stage.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">carn_classes &lt;-<span class="st"> </span><span class="kw">compute_piscivory</span>(</a>
+<a class="sourceLine" id="cb8-2" title="2">  <span class="dt">size_class =</span> size_classes,</a>
+<a class="sourceLine" id="cb8-3" title="3">  <span class="dt">fish_diet_shift =</span> species_shift,</a>
+<a class="sourceLine" id="cb8-4" title="4">  <span class="dt">species =</span> species,</a>
+<a class="sourceLine" id="cb8-5" title="5">  <span class="dt">low_bound =</span> min,</a>
+<a class="sourceLine" id="cb8-6" title="6">  <span class="dt">upper_bound =</span> max,</a>
+<a class="sourceLine" id="cb8-7" title="7">  <span class="dt">fish =</span> carn)</a>
+<a class="sourceLine" id="cb8-8" title="8">knitr<span class="op">::</span><span class="kw">kable</span>(carn_classes)</a></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">species</th>
+<th align="right">class_id</th>
+<th align="right">pisc_index</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Pikachu</td>
+<td align="right">1</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Pikachu</td>
+<td align="right">2</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">Pikachu</td>
+<td align="right">3</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">Pikachu</td>
+<td align="right">4</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">Roucoups</td>
+<td align="right">1</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Roucoups</td>
+<td align="right">2</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">Roucoups</td>
+<td align="right">3</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Roucoups</td>
+<td align="right">4</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">Dracofeu</td>
+<td align="right">1</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Dracofeu</td>
+<td align="right">2</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">Dracofeu</td>
+<td align="right">3</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">Dracofeu</td>
+<td align="right">4</td>
+<td align="right">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="theoretical-prey-size" class="section level2">
+<h2>Theoretical prey size</h2>
+<p>Now that we know the diet of the species size classes, we can computed which prey they can theoretically eat. Before to do this, we need to know the nature of the relationship between the size of the predators and of its preys. Among fish, numerous studies have shown that it exists a linear relationship between the size of the predator and the size of a prey. The slope coefficient<br />
+is different across species but if the data is not available, it is possible to use generic parameters. Two slope values are necessary to determine that is called the predation window.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="co">## Let's determine the theoretical relationship for each species </span></a>
+<a class="sourceLine" id="cb9-2" title="2">pred_prey_size &lt;-<span class="st"> </span><span class="kw">tibble</span>(</a>
+<a class="sourceLine" id="cb9-3" title="3">  <span class="dt">species =</span> <span class="kw">c</span>(<span class="st">&quot;Pikachu&quot;</span>, <span class="st">&quot;Roucoups&quot;</span>, <span class="st">&quot;Dracofeu&quot;</span>),</a>
+<a class="sourceLine" id="cb9-4" title="4">  <span class="dt">lwr_slope =</span> <span class="kw">rep</span>(.<span class="dv">03</span>, <span class="dv">3</span>),</a>
+<a class="sourceLine" id="cb9-5" title="5">  <span class="dt">upr_slope =</span> <span class="kw">rep</span>(.<span class="dv">45</span>, <span class="dv">3</span>)</a>
+<a class="sourceLine" id="cb9-6" title="6">) </a></code></pre></div>
+<p>The predation window represents the relationship between the size predator and the size of the prey. I show an example below.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1"><span class="co"># Each species as column</span></a>
+<a class="sourceLine" id="cb10-2" title="2">spd_pkm &lt;-<span class="st"> </span><span class="kw">group_by</span>(pokemon_size, species) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb10-3" title="3"><span class="st"> </span><span class="kw">mutate</span>(<span class="dt">id =</span> <span class="kw">row_number</span>()) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb10-4" title="4"><span class="st"> </span><span class="kw">spread</span>(species, size)</a>
+<a class="sourceLine" id="cb10-5" title="5"></a>
+<a class="sourceLine" id="cb10-6" title="6"><span class="co">## Get slopes</span></a>
+<a class="sourceLine" id="cb10-7" title="7">slopes &lt;-<span class="st"> </span><span class="kw">filter</span>(pred_prey_size, species <span class="op">==</span><span class="st"> &quot;Dracofeu&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb10-8" title="8"><span class="st">  </span>dplyr<span class="op">::</span><span class="kw">select</span>(lwr_slope, upr_slope) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb10-9" title="9"><span class="st">  </span><span class="kw">unlist</span>()</a>
+<a class="sourceLine" id="cb10-10" title="10"></a>
+<a class="sourceLine" id="cb10-11" title="11">pred_win &lt;-<span class="st"> </span><span class="kw">ggplot</span>(spd_pkm, <span class="kw">aes</span>(<span class="dt">x =</span> Dracofeu, <span class="dt">y =</span> Roucoups)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb10-12" title="12"><span class="st">  </span><span class="kw">ylim</span>(<span class="dv">0</span>, <span class="kw">max</span>(spd_pkm<span class="op">$</span>Dracofeu)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb10-13" title="13"><span class="st">  </span><span class="kw">xlim</span>(<span class="dv">0</span>, <span class="kw">max</span>(spd_pkm<span class="op">$</span>Dracofeu)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb10-14" title="14"><span class="st">  </span><span class="kw">geom_blank</span>() <span class="op">+</span></a>
+<a class="sourceLine" id="cb10-15" title="15"><span class="st">  </span><span class="kw">geom_abline</span>(<span class="dt">intercept =</span> <span class="dv">0</span>, <span class="dt">slope =</span> slopes[<span class="st">&quot;lwr_slope&quot;</span>], <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb10-16" title="16"><span class="st">  </span><span class="kw">geom_abline</span>(<span class="dt">intercept =</span> <span class="dv">0</span>, <span class="dt">slope =</span> slopes[<span class="st">&quot;upr_slope&quot;</span>], <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>)</a>
+<a class="sourceLine" id="cb10-17" title="17"></a>
+<a class="sourceLine" id="cb10-18" title="18">pred_win <span class="op">+</span></a>
+<a class="sourceLine" id="cb10-19" title="19"><span class="st">  </span><span class="kw">labs</span>(<span class="dt">x =</span> <span class="st">&quot;Dracofeu size&quot;</span>, <span class="dt">y =</span> <span class="st">&quot;Prey size&quot;</span>,</a>
+<a class="sourceLine" id="cb10-20" title="20">    <span class="dt">title =</span> <span class="st">&quot;Predation window of Dracofeu&quot;</span>)</a></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+</div>
+</div>
+<div id="the-links" class="section level1">
+<h1>The links</h1>
+<p>The trophic links between species (species-species), species and resource (species-resource), resource and resource (resource-resource) can be computed following different rules. Here, I will present the “midpoint” and “overlap” rules.</p>
+<p>## species-species link</p>
+<p>Before we have computed the carnivory and we have the theoretical prey size range for each predator species (based on a linear relationship). We have to choose a method to determine if there is or not a trophic link between a predator and a prey size class.</p>
+<p>There is two methods: <em>overlap</em> and <em>midpoint</em>. The <em>overlap</em> is the same than the one for determining piscivory, an overlap between the classes. It means that the minimal prey size for a predator would be each size contained in the predation window of the predator. For a given predator size class, it corresponds to ]<code>min(pred) * lwr_slope</code>; <code>max(pred) * upr_slope</code>]. According to the <em>midpoint</em> method, the range of prey size that can be eaten by a predator class is constrained by the mid of the predator size class. The range of prey size is detemined as ]<code>mid(pred)* lwr_slope</code>; <code>mid(pred) * upr_slope</code>].</p>
+<p><span class="math display">\[
+x_{mid} = \frac{(x_{min} + x_{max})}{2}
+\]</span></p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="co">## Let's compute the prey sizes for each predator</span></a>
+<a class="sourceLine" id="cb11-2" title="2"><span class="co">## with the midpoint method </span></a>
+<a class="sourceLine" id="cb11-3" title="3">prey_size &lt;-<span class="st"> </span><span class="kw">compute_prey_size</span>(</a>
+<a class="sourceLine" id="cb11-4" title="4">  <span class="dt">class_size =</span> size_classes,</a>
+<a class="sourceLine" id="cb11-5" title="5">  <span class="dt">pred_win =</span> pred_prey_size,</a>
+<a class="sourceLine" id="cb11-6" title="6">  <span class="dt">species =</span> species,</a>
+<a class="sourceLine" id="cb11-7" title="7">  <span class="dt">beta_min =</span> lwr_slope,</a>
+<a class="sourceLine" id="cb11-8" title="8">  <span class="dt">beta_max =</span> upr_slope,</a>
+<a class="sourceLine" id="cb11-9" title="9">  <span class="dt">pred_win_method =</span> <span class="st">&quot;midpoint&quot;</span>)</a>
+<a class="sourceLine" id="cb11-10" title="10">knitr<span class="op">::</span><span class="kw">kable</span>(prey_size)</a></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">species</th>
+<th align="right">class_id</th>
+<th align="right">min_prey</th>
+<th align="right">max_prey</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Pikachu</td>
+<td align="right">1</td>
+<td align="right">0.060</td>
+<td align="right">0.900</td>
+</tr>
+<tr class="even">
+<td align="left">Pikachu</td>
+<td align="right">2</td>
+<td align="right">0.135</td>
+<td align="right">2.025</td>
+</tr>
+<tr class="odd">
+<td align="left">Pikachu</td>
+<td align="right">3</td>
+<td align="right">0.210</td>
+<td align="right">3.150</td>
+</tr>
+<tr class="even">
+<td align="left">Pikachu</td>
+<td align="right">4</td>
+<td align="right">0.270</td>
+<td align="right">4.050</td>
+</tr>
+<tr class="odd">
+<td align="left">Roucoups</td>
+<td align="right">1</td>
+<td align="right">0.360</td>
+<td align="right">5.400</td>
+</tr>
+<tr class="even">
+<td align="left">Roucoups</td>
+<td align="right">2</td>
+<td align="right">0.435</td>
+<td align="right">6.525</td>
+</tr>
+<tr class="odd">
+<td align="left">Roucoups</td>
+<td align="right">3</td>
+<td align="right">0.510</td>
+<td align="right">7.650</td>
+</tr>
+<tr class="even">
+<td align="left">Roucoups</td>
+<td align="right">4</td>
+<td align="right">0.570</td>
+<td align="right">8.550</td>
+</tr>
+<tr class="odd">
+<td align="left">Dracofeu</td>
+<td align="right">1</td>
+<td align="right">3.060</td>
+<td align="right">45.900</td>
+</tr>
+<tr class="even">
+<td align="left">Dracofeu</td>
+<td align="right">2</td>
+<td align="right">3.135</td>
+<td align="right">47.025</td>
+</tr>
+<tr class="odd">
+<td align="left">Dracofeu</td>
+<td align="right">3</td>
+<td align="right">3.210</td>
+<td align="right">48.150</td>
+</tr>
+<tr class="even">
+<td align="left">Dracofeu</td>
+<td align="right">4</td>
+<td align="right">3.270</td>
+<td align="right">49.050</td>
+</tr>
+</tbody>
+</table>
+<p>Now, that we have this table, we can determine the species-species links. A species-species link is drawn if (i) the predator class is carnivorous and if (ii) the correspondant prey class satisfies the characteristics of either the <em>overlap</em> nor the <em>midpoint</em> method.</p>
+<p>If the <em>overlap</em> is used, the link is drawn if the range of a given prey class overlap the prey range of the predator class. If the <em>midpoint</em> method is used, the link is drawn if the mid of the given prey class fell in the prey range of the predator class.</p>
+<ul>
+<li><em>overlap</em>: <span class="math inline">\(L = 1 ssi ]N_{c, min};N_{c, max}] \in ]P_{c, min}*\beta_{min};P_{c, max}*\beta_{max}]\)</span></li>
+<li><em>midpoint</em> = <span class="math inline">\(L = 1 ssi N_{c, mid} \in ]P_{c, mid}*\beta_{min};P_{c, mid}*\beta_{max}]\)</span></li>
+</ul>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1">size_classes</a>
+<a class="sourceLine" id="cb12-2" title="2"><span class="co">#&gt; # A tibble: 12 x 4</span></a>
+<a class="sourceLine" id="cb12-3" title="3"><span class="co">#&gt;    species  class_id lower upper</span></a>
+<a class="sourceLine" id="cb12-4" title="4"><span class="co">#&gt;    &lt;chr&gt;       &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;</span></a>
+<a class="sourceLine" id="cb12-5" title="5"><span class="co">#&gt;  1 Pikachu         1     1     3</span></a>
+<a class="sourceLine" id="cb12-6" title="6"><span class="co">#&gt;  2 Pikachu         2     3     6</span></a>
+<a class="sourceLine" id="cb12-7" title="7"><span class="co">#&gt;  3 Pikachu         3     6     8</span></a>
+<a class="sourceLine" id="cb12-8" title="8"><span class="co">#&gt;  4 Pikachu         4     8    10</span></a>
+<a class="sourceLine" id="cb12-9" title="9"><span class="co">#&gt;  5 Roucoups        1    11    13</span></a>
+<a class="sourceLine" id="cb12-10" title="10"><span class="co">#&gt;  6 Roucoups        2    13    16</span></a>
+<a class="sourceLine" id="cb12-11" title="11"><span class="co">#&gt;  7 Roucoups        3    16    18</span></a>
+<a class="sourceLine" id="cb12-12" title="12"><span class="co">#&gt;  8 Roucoups        4    18    20</span></a>
+<a class="sourceLine" id="cb12-13" title="13"><span class="co">#&gt;  9 Dracofeu        1   101   103</span></a>
+<a class="sourceLine" id="cb12-14" title="14"><span class="co">#&gt; 10 Dracofeu        2   103   106</span></a>
+<a class="sourceLine" id="cb12-15" title="15"><span class="co">#&gt; 11 Dracofeu        3   106   108</span></a>
+<a class="sourceLine" id="cb12-16" title="16"><span class="co">#&gt; 12 Dracofeu        4   108   110</span></a>
+<a class="sourceLine" id="cb12-17" title="17"><span class="co">## Draw an overlap</span></a>
+<a class="sourceLine" id="cb12-18" title="18">floor &lt;-<span class="st"> </span><span class="dv">0</span></a>
+<a class="sourceLine" id="cb12-19" title="19">draco_<span class="dv">2</span> &lt;-<span class="st"> </span><span class="kw">filter</span>(size_classes, species <span class="op">==</span><span class="st"> &quot;Dracofeu&quot;</span>, class_id <span class="op">==</span><span class="st"> </span><span class="dv">2</span>) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb12-20" title="20"><span class="st">  </span>dplyr<span class="op">::</span><span class="kw">select</span>(lower, upper) <span class="op">%&gt;%</span><span class="st"> </span>unlist</a>
+<a class="sourceLine" id="cb12-21" title="21">rou_<span class="dv">2</span> &lt;-<span class="st"> </span><span class="kw">filter</span>(size_classes, species <span class="op">==</span><span class="st"> &quot;Roucoups&quot;</span>, class_id <span class="op">==</span><span class="st"> </span><span class="dv">3</span>) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb12-22" title="22"><span class="st">  </span>dplyr<span class="op">::</span><span class="kw">select</span>(lower, upper) <span class="op">%&gt;%</span><span class="st"> </span>unlist</a>
+<a class="sourceLine" id="cb12-23" title="23">rou &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">x1 =</span> floor, <span class="dt">x2 =</span> floor, <span class="dt">y1 =</span> rou_<span class="dv">2</span>[<span class="st">&quot;lower&quot;</span>], <span class="dt">y2 =</span> rou_<span class="dv">2</span>[<span class="st">&quot;upper&quot;</span>])</a>
+<a class="sourceLine" id="cb12-24" title="24">draco &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">x1 =</span> draco_<span class="dv">2</span>[<span class="st">&quot;lower&quot;</span>], <span class="dt">x2 =</span> rou_<span class="dv">2</span>[<span class="st">&quot;upper&quot;</span>], <span class="dt">y1 =</span> floor, <span class="dt">y2 =</span> floor)</a>
+<a class="sourceLine" id="cb12-25" title="25"></a>
+<a class="sourceLine" id="cb12-26" title="26">pred_range &lt;-<span class="st"> </span><span class="kw">geom_segment</span>(<span class="kw">aes</span>(<span class="dt">x =</span> x1, <span class="dt">y =</span> y1, <span class="dt">xend =</span> x2, <span class="dt">yend =</span> y2, <span class="dt">colour =</span> <span class="st">&quot;segment&quot;</span>), <span class="dt">colour =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">data =</span> draco) </a>
+<a class="sourceLine" id="cb12-27" title="27">prey_range &lt;-<span class="st"> </span><span class="kw">geom_segment</span>(<span class="kw">aes</span>(<span class="dt">x =</span> x1, <span class="dt">y =</span> y1, <span class="dt">xend =</span> x2, <span class="dt">yend =</span> y2, <span class="dt">colour =</span> <span class="st">&quot;segment&quot;</span>), <span class="dt">colour =</span> <span class="st">&quot;green&quot;</span>, <span class="dt">data =</span> rou) </a>
+<a class="sourceLine" id="cb12-28" title="28"></a>
+<a class="sourceLine" id="cb12-29" title="29"><span class="co">## Theoretical prey size</span></a>
+<a class="sourceLine" id="cb12-30" title="30">coord_del_min &lt;-<span class="st"> </span><span class="kw">with</span>(draco, <span class="kw">c</span>(x2, x2, x2<span class="op">*</span>slopes[<span class="st">&quot;lwr_slope&quot;</span>], x2<span class="op">*</span>slopes[<span class="st">&quot;upr_slope&quot;</span>]))</a>
+<a class="sourceLine" id="cb12-31" title="31">coord_del_max &lt;-<span class="st"> </span><span class="kw">with</span>(draco, <span class="kw">c</span>(x1, x1, x1<span class="op">*</span>slopes[<span class="st">&quot;lwr_slope&quot;</span>], x1<span class="op">*</span>slopes[<span class="st">&quot;upr_slope&quot;</span>])) </a>
+<a class="sourceLine" id="cb12-32" title="32">th_prey_coord &lt;-<span class="st"> </span><span class="kw">rbind</span>(coord_del_min, coord_del_max) <span class="op">%&gt;%</span><span class="st"> </span>as.tibble</a>
+<a class="sourceLine" id="cb12-33" title="33"><span class="kw">colnames</span>(th_prey_coord) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;x1&quot;</span>, <span class="st">&quot;x2&quot;</span>, <span class="st">&quot;y1&quot;</span>, <span class="st">&quot;y2&quot;</span>)</a>
+<a class="sourceLine" id="cb12-34" title="34">th_prey &lt;-<span class="st"> </span><span class="kw">geom_segment</span>(<span class="kw">aes</span>(<span class="dt">x =</span> x1, <span class="dt">y =</span> y1, <span class="dt">xend =</span> x2, <span class="dt">yend =</span> y2, <span class="dt">colour =</span> <span class="st">&quot;segment&quot;</span>), <span class="dt">colour =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">data =</span> th_prey_coord)</a>
+<a class="sourceLine" id="cb12-35" title="35"></a>
+<a class="sourceLine" id="cb12-36" title="36">pred_win <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb12-37" title="37"><span class="st">  </span>pred_range <span class="op">+</span></a>
+<a class="sourceLine" id="cb12-38" title="38"><span class="st">  </span>prey_range <span class="op">+</span></a>
+<a class="sourceLine" id="cb12-39" title="39"><span class="st">  </span>th_prey </a></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<div id="species-resource" class="section level2">
+<h2>species-resource </h2>
+<p>As there is no size for the resources, we assume that species class is consumming the resource of the stage it belongs to. As for species-species trophic link, the species-resource link can be drawn either according to the <em>overlap</em> nor the <em>midpoint</em> method. With the <em>overlap</em> method, a link is drawn if there is an overlap between life stage boundaries and species size class. With the <em>midpoint</em> method, there is a match where the mid of the species class range fell in life stage. A link is drawn between the given species class and all the resources of the given life stage.</p>
+<ul>
+<li><em>overlap</em>: <span class="math inline">\(L = 1 ssi ]L_{i, j, min};L_{i, j, max}] \in ]P_{c, min}; P_{c, max}] | ]L_{i, j, min};L_{i, j, max}] \supset ]P_{c, min}; P_{c, max}]\)</span></li>
+<li><em>midpoint</em> = <span class="math inline">\(L = 1 ssi P_{c, mid} \in ]L_{i, j, min};L_{i, j, max}]\)</span></li>
+</ul>
+</div>
+<div id="other-links" class="section level2">
+<h2>Other links</h2>
+<p>To complete the need, we still to define two more link types: resource-species and resource-resource. Those types of link are straightforward to define. Because we consider that resources cannot feed on species, there are not resource-species links. The resource-resource links are defined in the resource diet shift table, there are just to be reported.</p>
+<p># Midpoint or overlap</p>
+<ul>
+<li>f-r link: resource of several stage when <em>overlap</em></li>
+</ul>
 </div>
 <div id="hypotheses-reminder" class="section level2">
 <h2>Hypotheses (reminder)</h2>
 <ul>
 <li>determine piscivory is currently based on upper bound of the class</li>
+<li>Explain downsize of each method: overlap, midpoint</li>
 <li>Ontogenic diet class interval are closed (<span class="math inline">\([min;max]\)</span>), which is different from size class which is left open <span class="math inline">\(]min;max]\)</span>: please unify</li>
 <li>Fish resource link is determined if the life stage is partly in or is including size class interval: [stage min size; stage max size] <span class="math inline">\(\in\)</span> [min class size; max class size] | [stage min size; stage max size] <span class="math inline">\(\supset\)</span> [min class size; max class size]</li>
 <li>The <code>class_id = 1</code> is left open, meaning that the min size fishes will not belong to the size class.</li>
@@ -552,6 +979,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <hr />
 <ol>
 <li id="fn1"><p>I will use only size later for the sake of simplicity but it works also for weight<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>For example, for fishes species, the larvae hypothese states that a fish that has a size below 20cm will not eat other things than protists<a href="#fnref2" class="footnote-back">↩</a></p></li>
 </ol>
 </div>
 

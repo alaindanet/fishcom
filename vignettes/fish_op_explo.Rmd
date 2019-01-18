@@ -13,7 +13,7 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.dim = c(4, 4)
+  fig.dim = c(7, 4)
 )
 library(tidyverse)
 library(magrittr)
@@ -26,6 +26,19 @@ devtools::load_all()
 theme_set(theme_alain())
 ```
 
+## Summary of the analysis
+
+There is around 600 hundreds stations that have been followed for more than 10
+times. Those stations have been sampled every year in average. The sampling
+methods seems homogeneous in terms of sampled area. The choice of the sampling
+method seems to have been decided according to the size of the river because
+alternative to *complete* method has been performed in the high width river. The
+*other* method should be exclude of the analysis because they are badly
+documented, not numerous and present sampled areas that 5 times higher than the
+other methods.
+
+## Preambule
+
 ```{r data_prep}
 data(operation_data)
 op <- dplyr::select(operation_data, opcod:year, count)
@@ -33,7 +46,9 @@ rm(operation_data)
 ```
 
 There was `r nb_op <- length(unique(op$opcod)); nb_op` fishing operations from
-`r min(op$year)` to `r max(op$year)`. The sampling was distributed over `r nb_st <- length(unique(op$station)); nb_st` stations. It represents a average effort of `r round(nb_op/nb_st, 1)` (# visit/station).
+`r min(op$year)` to `r max(op$year)`. The sampling was distributed over 
+`r nb_st <- length(unique(op$station)); nb_st` stations. It represents a average
+effort of `r round(nb_op/nb_st, 1)` (# visit/station).
 
 # Sampling
 
@@ -190,11 +205,7 @@ average_sep <- ggplot(hist_time_int, aes(x = mean_sep)) +
   x = "Average number of days between two sampling points by station") +
 scale_x_continuous(breaks = c(0, 300, 600, 1000, 2000))
 
-plot_grid(global_sep, average_sep, ncol = 2)
-
-# Are the methods constant for each station?
-# Are the strategy constant for each station?
-# Correlation strategy/methods/nb_pass vs nb_ind/station
+plot_grid(average_sep, ncol = 1)
 ```
 
 The fishing operations (FO) resulted in the collect of several
@@ -202,11 +213,11 @@ hundreds of fish (`r mean(hist_good_station$nb_ind)` fishes in average) which is
 quite impressive. The delay between two fishing operations by station was of
  `r mean(hist_time_int$mean_sep) %>% round` days, iow 1 year which is great! However, the 
 FO that have been spaced by less than one month (30 days), have been taken place
-the same day! It concerns `r n_l_samp <- nrow(low_fo_int); n_l_samp` stations,
-`r round(n_l_samp / length(good_station) * 100)`% of the good stations. 
+the same day! It is normal because I do not have a date resolution thiner than
+the month!
 
 ```{r}
-low_fo_int <- filter(time_sampling, sample_sep < 30 & nb_ind > 100) %>%
+low_fo_int <- filter(time_sampling, sample_sep < 30) %>%
   ungroup() %>%
   arrange(station)
 # Those FO took place the same day:
@@ -223,6 +234,9 @@ filter(time_sampling, station ==  244, point %in% c(15, 16))
 #To generalize...
 ```
 
+It concerns `r n_l_samp <- nrow(low_fo_int); n_l_samp` stations,
+`r round(n_l_samp / length(good_station) * 100)`% of the good stations.
+
 #### Sampling method regularity
 
 ```{r}
@@ -230,8 +244,9 @@ filter(time_sampling, station ==  244, point %in% c(15, 16))
 data(operation_data)
 operation_data %<>% distinct(opcod, .keep_all = TRUE) %>%
   dplyr::select(-species, -station, -count, -year, -month)
-st_method <- left_join(good_station_sampling, operation_data,
-  by = c("opcod"))
+st_method <- left_join(good_station_sampling, operation_data, by = c("opcod")) %>%
+  ungroup()
+
 ```
 
 We want to see if the good stations had the same sampling methods across time. 
@@ -272,6 +287,105 @@ When there are 2 sampling events at the same station, do they belong to methods
 different from complete ? If so, can we merge them ? If not, are they separated
 by less than one year ? If not, we should delete them I guess.
 
-- TODO:
-  - Correlation between method and nb ind & sp
-  - Correlation nb_pass & surf vs nb ind & sp
+```{r}
+# let see the states of the variables
+op_type <- read_csv("../data-raw/fish_op_variables.csv")
+knitr::kable(op_type)
+```
+
+- What matters the most:
+  - sampling permit to have a good idea of community composition
+    - adequat sampling  
+    - adequat sampling effort
+
+```{r}
+p_surf <- ggplot(st_method, aes(x = method, y = surf)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  labs(x = "Sampling methods", y = "Sampled surface (m^2?)")
+p_surf
+```
+
+The sampled surfaces are in the same order, which is good. It remains the
+question to know if each sampling method allow to have a unbiaised estimation of
+the abundances of the species.
+
+```{r fig.dim = c(7, 4)}
+data(environmental_data)
+st_env <- left_join(st_method, environmental_data, by = "opcod")
+
+# Let's see if some sampling point were to large to perform complete:
+width_meth <- ggplot(st_env, aes(x = method, y = width)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  labs(x = "Sampling methods", y = "River width")
+width_meth
+```
+```{r, echo = FALSE}
+m_other_surf <- mean(filter(st_method, method == "other")$surf) %>% round
+m_autres_surf <- mean(filter(st_method, method != "other")$surf) %>% round
+```
+
+We see that the sampling was dependant of the width of the river. It was
+expected that in case where the river was really wide. So, may be we should keep
+all the methods except "other" because "other" method contains op that has
+sampled area `r round(m_other_surf / m_autres_surf, 1)` times higher than the other
+(`r m_other_surf` vs `r m_autres_surf`). Furthermore, the variability of the
+fishing operation output for "other" method seems much lower.
+
+
+```{r}
+# Let see the correlation between methods and the output of the fishing
+# operation
+fo_out_methods <- ggplot(gather(st_env, var, nb, nb_ind, nb_sp), aes(x = method, y = nb)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  facet_grid(rows = vars(var), scale = "free_y") +
+  labs(x = "Sampling methods", y = "Number of items")
+fo_out_methods
+
+## Can those variation be explained by the  area ?
+fo_out_surf<- ggplot(gather(st_env, var, nb, nb_ind, nb_sp), aes(x = surf, y = nb)) +
+  geom_point() +
+  scale_y_log10() +
+  scale_x_log10() +
+  facet_grid(rows = vars(var), scale = "free_y") +
+  labs(x = "Sampled area", y = "Number of items")
+fo_out_surf
+```
+
+They are quite some differences in the number of species and individuals sampled
+according to different methods. But those differences could be attributed to
+differences in sampled areas.
+
+# Check variables
+
+```{r}
+st_method %>%
+  keep(is.numeric) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+    facet_wrap(~ key, scales = "free") +
+    geom_histogram()
+
+# It seems that some sampled surfaces are really big:
+filter(st_method, surf > 10000)
+filter(st_method, station == 8609)
+filter(st_method, station == 2952)
+## It seems that it is some keyboard errors
+
+# It seems that some sampled surfaces are really big:
+filter(st_method, width > 300)
+## Looks okay but some surface are 0, I guess that we should replace by NA.
+## Idem for nb_pass, should be zero when method != complete 
+st_method %<>% ungroup()
+filter(st_method, method != "complete") %>%
+  dplyr::select(nbpass) %>%
+  unique()
+# From the document:
+#RQ pour pêches partielles par ambiance et par point, par défaut on a supprimé
+#toutes les valeurs qui pouvaient avoir été indiquées de façon à ce que la
+#cellule apparaisse vide- ; pour les autres (berge, autre) on a laissé les
+#valeurs même si elles sont contradictoire avec la méthode
+```
+
