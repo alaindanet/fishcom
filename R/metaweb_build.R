@@ -117,7 +117,7 @@ compute_links <- function (size_class, th_prey_size, piscivory_index,
 
   # Build the empty matrices
   ## Fish-Fish
-  species_list <- unique(select(size_class, !!species)) %>% unlist
+  species_list <- unique(dplyr::select(size_class, !!species)) %>% unlist
   nb_species <- length(species_list)
   nb_class <- length(unique(size_class$class_id))
   fish_fish_int <- matrix(rep(0, (nb_species * nb_class) ^ 2), ncol = nb_species * nb_class)
@@ -172,7 +172,7 @@ compute_links <- function (size_class, th_prey_size, piscivory_index,
     
   pred_classes <- colnames(fish_fish_int)
   trophic_data <- trophic_data[order(match(unlist(trophic_data[, "sp_class"]), rownames(fish_fish_int))), ]
-  prey_data <- select(trophic_data, sp_class, lower, upper)
+  prey_data <- dplyr::select(trophic_data, sp_class, lower, upper)
 
   for (j in 1:ncol(fish_fish_int)) {#Predators
     pred_data <- dplyr::filter(trophic_data, sp_class == pred_classes[j]) %>%
@@ -211,18 +211,18 @@ compute_links <- function (size_class, th_prey_size, piscivory_index,
       midpoint <- (min_pred + max_pred) / 2
     }
     pred_diet_class_match <- pred_diet %>%
-      filter(!!condition)
+      dplyr::filter(!!condition)
     if (nrow(pred_diet_class_match) == 0) {
       message(paste("Species/class", pred_classes[j], "had no matches with life stages."))
 
       resource_int_values <- rep(0, length(resource_list))
     } else {
       resource_int_values <- pred_diet_class_match %>%
-	select(!! resource_list) %>%
-	gather(resource, troph_index) %>%
-	group_by(resource) %>%
-	summarise(troph_index = (sum(troph_index) > 0) * 1) %>%
-	spread(resource, troph_index) %>%
+	dplyr::select(!! resource_list) %>%
+	tidyr::gather(resource, troph_index) %>%
+	dplyr::group_by(resource) %>%
+	dplyr::summarise(troph_index = (sum(troph_index) > 0) * 1) %>%
+	tidyr::spread(resource, troph_index) %>%
 	unlist
       good_order <- match(names(resource_int_values), resource_list)
       resource_int_values <- resource_int_values[good_order]
@@ -315,9 +315,9 @@ compute_piscivory <- function (size_class, fish_diet_shift, species, low_bound, 
 compute_prey_size <- function (class_size, pred_win, species, beta_min, beta_max, pred_win_method = "midpoint") {
 
   #Get var:
-  species  <- rlang::quo(species)
-  beta_min <- rlang::quo(beta_min)
-  beta_max <- rlang::quo(beta_max)
+  species  <- rlang::enquo(species)
+  beta_min <- rlang::enquo(beta_min)
+  beta_max <- rlang::enquo(beta_max)
   
   if (pred_win_method != "midpoint") {
     message("Other methods are not yet implemented")

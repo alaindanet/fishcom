@@ -7,6 +7,7 @@
 
 library(tidyverse)
 library(magrittr)
+library('data.table')
 
 
 
@@ -57,7 +58,6 @@ columns_meaning <- read_delim("../bonnafe_work/data/raw_data/Codes_colonne.txt",
   delim = ":", locale = locale("fr"), trim_ws = TRUE)
 
 ## Clean 
-library('data.table')
 fish_op <- fread("../bonnafe_work/data/raw_data/NEW_DATA.txt")
 colnames(fish_op) <- str_to_lower(colnames(fish_op))
 write_csv(fish_op[!(fish_op$species %in% c("SAT", "LPP", "LPR"))],
@@ -99,7 +99,7 @@ environmental_data <- fread("global_fish_op.csv",
   select=c("opcod", "tempmf1", "tempmf2", "summf1", "summf2", "alt", "slope", "distsource", "surfbv", "bassin"))
 # Normaly, we have one unique data by opcod, i.e. one by fishing operation:
 is_unique <- environmental_data %>%
-  select(opcod, tempmf1, tempmf2, summf1, summf2) %>% # Check for highly details variable values, because duplicate artefacts are less probable 
+  dplyr::select(opcod, tempmf1, tempmf2, summf1, summf2) %>% # Check for highly details variable values, because duplicate artefacts are less probable 
   gather(variable, values, tempmf1, tempmf2, summf1, summf2) %>%
   group_by(opcod, variable) %>%
   summarise(n_unique = length(unique(values)))

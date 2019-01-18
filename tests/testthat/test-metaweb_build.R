@@ -92,7 +92,7 @@ test_that("classification handles df", {
 #  Compute prey size  #
 #######################
 fake_prey_win <- distinct(fake, species) %>%
-  select(species) %>%
+  dplyr::select(species) %>%
   mutate(
     beta_min = .03,
     beta_max = .45,
@@ -105,7 +105,7 @@ test_that("We get a correct prey size dataframe", {
     mutate(
     min_prey = 0.03 * ( (lower + upper) / 2),
     max_prey = 0.45 * ( (lower + upper) / 2)
-    ) %>% select(-lower, -upper)
+    ) %>% dplyr::select(-lower, -upper)
 
   expect_identical(th_prey_size, expected_prey_size)
 
@@ -128,7 +128,7 @@ piscivory_table <- compute_piscivory(classes_species, fake_onto_diet_shift, spec
 test_that("piscivory is well computed", {
    expected_table <- th_prey_size %>%
      mutate(pisc_index = c(rep(0, 2), rep(1, 7), 0, rep(1, 8))) %>%
-     select(-min_prey, -max_prey)
+     dplyr::select(-min_prey, -max_prey)
    expect_identical(piscivory_table, expected_table)
     })
 test_that("piscivory is sensible to variable definition", {
@@ -142,7 +142,7 @@ fake_onto_diet_shift$pisc <- c(0, 1, 0, 0)
 
    expected_table <- th_prey_size %>%
      mutate(pisc_index = c(rep(0, 2), rep(1, 7), 0, rep(0, 8))) %>%
-     select(-min_prey, -max_prey)
+     dplyr::select(-min_prey, -max_prey)
 expect_identical(compute_piscivory(classes_species, fake_onto_diet_shift, species = species, low_bound = min, upper_bound = max, fish = pisc), expected_table)
     }
   )
@@ -168,7 +168,7 @@ test_that("the links are correctly computed", {
   expected_fish_resource_int <- matrix(rep(0, nb_class * 2 * 2), ncol = nb_class * 2)
   rownames(expected_fish_resource_int) <- unique(fake_resource_shift$species)
   colnames(expected_fish_resource_int) <- c(unite(classes_species, sp_class,
-      species, class_id, sep = "_") %>% select(sp_class) %>% unlist)
+      species, class_id, sep = "_") %>% dplyr::select(sp_class) %>% unlist)
   names(colnames(expected_fish_resource_int)) <- NULL 
   expected_fish_resource_int["Chetiflor",] <- c(0, 1, 1, rep(1, nb_class-3),
   1, rep(0, nb_class-1))
