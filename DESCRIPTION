@@ -13,3 +13,4 @@ Suggests: testthat,
     rmarkdown
 VignetteBuilder: knitr
 Imports: tidyverse
+RoxygenNote: 6.0.1
