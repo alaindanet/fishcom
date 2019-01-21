@@ -59,6 +59,12 @@ The procedure described below is largely retake from the work of
 - $C_i$: Number of class of the species $i$
 - $c_j$: class $j$
 - $n_i$: species $i$ 
+- $l$: link
+- $l_{j, k}$: link between class $j$ and $k$
+- $s$: life stage
+- $s_{i,j}$: The bounds $j$ life stage of the species $i$
+- $s_{i,j, min}$: The lower bound $j$ life stage of the species $i$
+- $s_{i,j, max}$: The upper bound $j$ life stage of the species $i$
 - $N$: number of species
 - $R$: number of resources 
 
@@ -353,23 +359,21 @@ overlap the prey range of the predator class. If the *midpoint* method is used,
 the link is drawn if the mid of the given prey class fell in the prey range of
 the predator class.  
 
-- *overlap*: $L = 1 ssi ]N_{c, min};N_{c, max}] \in ]P_{c, min}*\beta_{min};P_{c, max}*\beta_{max}]$
-- *midpoint* = $L = 1 ssi N_{c, mid} \in ]P_{c, mid}*\beta_{min};P_{c, mid}*\beta_{max}]$
-
+- *overlap*: $l = 1$ si et seulement si $]N_{c, min};N_{c, max}] \in ]P_{c, min}*\beta_{min};P_{c, max}*\beta_{max}]$
+- *midpoint* = $l = 1$ si et seulement si $N_{c, mid} \in ]P_{c, mid}*\beta_{min};P_{c, mid}*\beta_{max}]$
 
 ```{r}
 size_classes
 ## Draw an overlap
-floor <- 0
+floor <- 0 
 draco_2 <- filter(size_classes, species == "Dracofeu", class_id == 2) %>%
   dplyr::select(lower, upper) %>% unlist
 rou_2 <- filter(size_classes, species == "Roucoups", class_id == 3) %>%
   dplyr::select(lower, upper) %>% unlist
 rou <- data.frame(x1 = floor, x2 = floor, y1 = rou_2["lower"], y2 = rou_2["upper"])
-draco <- data.frame(x1 = draco_2["lower"], x2 = rou_2["upper"], y1 = floor, y2 = floor)
-
-pred_range <- geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2, colour = "segment"), colour = "blue", data = draco) 
-prey_range <- geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2, colour = "segment"), colour = "green", data = rou) 
+draco <- data.frame(x1 = draco_2["lower"], x2 = draco_2["upper"], y1 = floor, y2 = floor)
+pred_range <- geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2, colour = "segment"), colour = "black", data = draco) 
+prey_range <- geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2, colour = "segment"), colour = "black", data = rou) 
 
 ## Theoretical prey size
 coord_del_min <- with(draco, c(x2, x2, x2*slopes["lwr_slope"], x2*slopes["upr_slope"]))
@@ -378,10 +382,24 @@ th_prey_coord <- rbind(coord_del_min, coord_del_max) %>% as.tibble
 colnames(th_prey_coord) <- c("x1", "x2", "y1", "y2")
 th_prey <- geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2, colour = "segment"), colour = "blue", data = th_prey_coord)
 
-pred_win + 
+## Prey range projection
+prey_seg <- tibble(
+  x1 = rep(floor, 2),
+  x2 = rep(draco_2["upper"], 2),
+  y1 = rou_2,
+  y2 = rou_2)
+prey_proj <- geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2,
+    colour = "segment"), colour = "blue", linetype = "dashed" ,data = prey_seg)
+
+
+
+## overlap
+overlap <- pred_win + 
   pred_range +
   prey_range +
-  th_prey 
+  th_prey +
+  prey_proj
+overlap
 
 ```
 
@@ -396,8 +414,8 @@ With the *midpoint* method, there is a match where the mid of the species class
 range  fell in life stage. A link is drawn between the given species class and
 all the  resources of the given life stage.
 
-- *overlap*: $L = 1 ssi ]L_{i, j, min};L_{i, j, max}] \in ]P_{c, min}; P_{c, max}] | ]L_{i, j, min};L_{i, j, max}] \supset ]P_{c, min}; P_{c, max}]$
-- *midpoint* = $L = 1 ssi P_{c, mid} \in ]L_{i, j, min};L_{i, j, max}]$
+- *overlap*: $l = 1$ si et seulement si $]s_{i, j, min};s_{i, j, max}] \in ]P_{c, min}; P_{c, max}]$ ou si $]s_{i, j, min};s_{i, j, max}] \supset ]P_{c, min}; P_{c, max}]$
+- *midpoint* = $l = 1$ si et seulement si $P_{c, mid} \in ]s_{i, j, min};s_{i, j, max}]$
 
 ## Other links
 
@@ -409,7 +427,8 @@ diet shift table, there are just to be reported.
 
 # Midpoint or overlap
 
-- f-r link: resource of several stage when *overlap* 
+- overlap: more type I error (put a link where there is not)
+- midpoint: more type II error (Not put a link when there is)
 
 ## Hypotheses (reminder)
 

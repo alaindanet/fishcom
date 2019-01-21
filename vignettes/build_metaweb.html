@@ -12,7 +12,7 @@
 
 <meta name="author" content="Alain Danet" />
 
-<meta name="date" content="2019-01-18" />
+<meta name="date" content="2019-01-21" />
 
 <title>How to build the metaweb</title>
 
@@ -278,7 +278,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 <h1 class="title toc-ignore">How to build the metaweb</h1>
 <h4 class="author"><em>Alain Danet</em></h4>
-<h4 class="date"><em>2019-01-18</em></h4>
+<h4 class="date"><em>2019-01-21</em></h4>
 
 
 
@@ -317,6 +317,12 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <li><span class="math inline">\(C_i\)</span>: Number of class of the species <span class="math inline">\(i\)</span></li>
 <li><span class="math inline">\(c_j\)</span>: class <span class="math inline">\(j\)</span></li>
 <li><span class="math inline">\(n_i\)</span>: species <span class="math inline">\(i\)</span></li>
+<li><span class="math inline">\(l\)</span>: link</li>
+<li><span class="math inline">\(l_{j, k}\)</span>: link between class <span class="math inline">\(j\)</span> and <span class="math inline">\(k\)</span></li>
+<li><span class="math inline">\(s\)</span>: life stage</li>
+<li><span class="math inline">\(s_{i,j}\)</span>: The bounds <span class="math inline">\(j\)</span> life stage of the species <span class="math inline">\(i\)</span></li>
+<li><span class="math inline">\(s_{i,j, min}\)</span>: The lower bound <span class="math inline">\(j\)</span> life stage of the species <span class="math inline">\(i\)</span></li>
+<li><span class="math inline">\(s_{i,j, max}\)</span>: The upper bound <span class="math inline">\(j\)</span> life stage of the species <span class="math inline">\(i\)</span></li>
 <li><span class="math inline">\(N\)</span>: number of species</li>
 <li><span class="math inline">\(R\)</span>: number of resources</li>
 </ul>
@@ -346,7 +352,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <a class="sourceLine" id="cb2-6" title="6">  nb_class)</a>
 <a class="sourceLine" id="cb2-7" title="7"><span class="kw">identical</span>(split_quant, split_percent)</a>
 <a class="sourceLine" id="cb2-8" title="8"><span class="co">#&gt; [1] FALSE</span></a></code></pre></div>
-<p>Percentile method will build class of the same size equally distributed between the minimum size 68.7765686 and the maximum size 120.6615538. Quantile method build classes containing the same number of observation. So, if <span class="math inline">\(C = 2\)</span>, the cutting point will be the median. In the case of the normal distribution, quantile method created thiner classes (data are centered around the mean) and wider classes at the extremes.</p>
+<p>Percentile method will build class of the same size equally distributed between the minimum size 76.723978 and the maximum size 123.4525313. Quantile method build classes containing the same number of observation. So, if <span class="math inline">\(C = 2\)</span>, the cutting point will be the median. In the case of the normal distribution, quantile method created thiner classes (data are centered around the mean) and wider classes at the extremes.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">method &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;quantile&quot;</span>, <span class="st">&quot;percentile&quot;</span>)</a>
 <a class="sourceLine" id="cb3-2" title="2">temp_obj &lt;-<span class="st"> </span><span class="kw">list</span>(split_quant, split_percent)</a>
 <a class="sourceLine" id="cb3-3" title="3"><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="dv">2</span>) {</a>
@@ -369,62 +375,62 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <tr class="odd">
 <td align="right">1</td>
 <td align="left">lower</td>
-<td align="right">69</td>
-<td align="right">69</td>
+<td align="right">77</td>
+<td align="right">77</td>
 </tr>
 <tr class="even">
 <td align="right">1</td>
 <td align="left">upper</td>
-<td align="right">79</td>
-<td align="right">91</td>
+<td align="right">86</td>
+<td align="right">94</td>
 </tr>
 <tr class="odd">
 <td align="right">2</td>
 <td align="left">lower</td>
-<td align="right">79</td>
-<td align="right">91</td>
+<td align="right">86</td>
+<td align="right">94</td>
 </tr>
 <tr class="even">
 <td align="right">2</td>
 <td align="left">upper</td>
-<td align="right">90</td>
-<td align="right">97</td>
+<td align="right">95</td>
+<td align="right">100</td>
 </tr>
 <tr class="odd">
 <td align="right">3</td>
 <td align="left">lower</td>
-<td align="right">90</td>
-<td align="right">97</td>
+<td align="right">95</td>
+<td align="right">100</td>
 </tr>
 <tr class="even">
 <td align="right">3</td>
 <td align="left">upper</td>
-<td align="right">100</td>
-<td align="right">101</td>
+<td align="right">105</td>
+<td align="right">103</td>
 </tr>
 <tr class="odd">
 <td align="right">4</td>
 <td align="left">lower</td>
-<td align="right">100</td>
-<td align="right">101</td>
+<td align="right">105</td>
+<td align="right">103</td>
 </tr>
 <tr class="even">
 <td align="right">4</td>
 <td align="left">upper</td>
-<td align="right">110</td>
-<td align="right">108</td>
+<td align="right">114</td>
+<td align="right">109</td>
 </tr>
 <tr class="odd">
 <td align="right">5</td>
 <td align="left">lower</td>
-<td align="right">110</td>
-<td align="right">108</td>
+<td align="right">114</td>
+<td align="right">109</td>
 </tr>
 <tr class="even">
 <td align="right">5</td>
 <td align="left">upper</td>
-<td align="right">121</td>
-<td align="right">121</td>
+<td align="right">123</td>
+<td align="right">123</td>
 </tr>
 </tbody>
 </table>
@@ -897,8 +903,8 @@ x_{mid} = \frac{(x_{min} + x_{max})}{2}
 <p>Now, that we have this table, we can determine the species-species links. A species-species link is drawn if (i) the predator class is carnivorous and if (ii) the correspondant prey class satisfies the characteristics of either the <em>overlap</em> nor the <em>midpoint</em> method.</p>
 <p>If the <em>overlap</em> is used, the link is drawn if the range of a given prey class overlap the prey range of the predator class. If the <em>midpoint</em> method is used, the link is drawn if the mid of the given prey class fell in the prey range of the predator class.</p>
 <ul>
-<li><em>overlap</em>: <span class="math inline">\(L = 1 ssi ]N_{c, min};N_{c, max}] \in ]P_{c, min}*\beta_{min};P_{c, max}*\beta_{max}]\)</span></li>
-<li><em>midpoint</em> = <span class="math inline">\(L = 1 ssi N_{c, mid} \in ]P_{c, mid}*\beta_{min};P_{c, mid}*\beta_{max}]\)</span></li>
+<li><em>overlap</em>: <span class="math inline">\(l = 1\)</span> si et seulement si <span class="math inline">\(]N_{c, min};N_{c, max}] \in ]P_{c, min}*\beta_{min};P_{c, max}*\beta_{max}]\)</span></li>
+<li><em>midpoint</em> = <span class="math inline">\(l = 1\)</span> si et seulement si <span class="math inline">\(N_{c, mid} \in ]P_{c, mid}*\beta_{min};P_{c, mid}*\beta_{max}]\)</span></li>
 </ul>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1">size_classes</a>
 <a class="sourceLine" id="cb12-2" title="2"><span class="co">#&gt; # A tibble: 12 x 4</span></a>
@@ -944,8 +950,8 @@ x_{mid} = \frac{(x_{min} + x_{max})}{2}
 <h2>species-resource </h2>
 <p>As there is no size for the resources, we assume that species class is consumming the resource of the stage it belongs to. As for species-species trophic link, the species-resource link can be drawn either according to the <em>overlap</em> nor the <em>midpoint</em> method. With the <em>overlap</em> method, a link is drawn if there is an overlap between life stage boundaries and species size class. With the <em>midpoint</em> method, there is a match where the mid of the species class range fell in life stage. A link is drawn between the given species class and all the resources of the given life stage.</p>
 <ul>
-<li><em>overlap</em>: <span class="math inline">\(L = 1 ssi ]L_{i, j, min};L_{i, j, max}] \in ]P_{c, min}; P_{c, max}] | ]L_{i, j, min};L_{i, j, max}] \supset ]P_{c, min}; P_{c, max}]\)</span></li>
-<li><em>midpoint</em> = <span class="math inline">\(L = 1 ssi P_{c, mid} \in ]L_{i, j, min};L_{i, j, max}]\)</span></li>
+<li><em>overlap</em>: <span class="math inline">\(l = 1\)</span> si et seulement si <span class="math inline">\(]s_{i, j, min};s_{i, j, max}] \in ]P_{c, min}; P_{c, max}]\)</span> ou si <span class="math inline">\(]s_{i, j, min};s_{i, j, max}] \supset ]P_{c, min}; P_{c, max}]\)</span></li>
+<li><em>midpoint</em> = <span class="math inline">\(l = 1\)</span> si et seulement si <span class="math inline">\(P_{c, mid} \in ]s_{i, j, min};s_{i, j, max}]\)</span></li>
 </ul>
 </div>
 <div id="other-links" class="section level2">
@@ -953,7 +959,8 @@ x_{mid} = \frac{(x_{min} + x_{max})}{2}
 <p>To complete the need, we still to define two more link types: resource-species and resource-resource. Those types of link are straightforward to define. Because we consider that resources cannot feed on species, there are not resource-species links. The resource-resource links are defined in the resource diet shift table, there are just to be reported.</p>
 <p># Midpoint or overlap</p>
 <ul>
-<li>f-r link: resource of several stage when <em>overlap</em></li>
+<li>overlap: more type I error (put a link where there is not)</li>
+<li>midpoint: more type II error (Not put a link when there is)</li>
 </ul>
 </div>
 <div id="hypotheses-reminder" class="section level2">
