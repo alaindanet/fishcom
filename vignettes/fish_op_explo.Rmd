@@ -363,29 +363,23 @@ differences in sampled areas.
 ```{r}
 st_method %>%
   keep(is.numeric) %>% 
+  filter(surf < 20000) %>%
   gather() %>% 
   ggplot(aes(value)) +
     facet_wrap(~ key, scales = "free") +
     geom_histogram()
 
 # It seems that some sampled surfaces are really big:
-filter(st_method, surf > 10000)
+filter(st_method, surf > 5000)
 filter(st_method, station == 8609)
 filter(st_method, station == 2952)
 ## It seems that it is some keyboard errors
 
 # It seems that some sampled surfaces are really big:
 filter(st_method, width > 300)
-## Looks okay but some surface are 0, I guess that we should replace by NA.
-## Idem for nb_pass, should be zero when method != complete 
 st_method %<>% ungroup()
 filter(st_method, method != "complete") %>%
   dplyr::select(nbpass) %>%
   unique()
-# From the document:
-#RQ pour pêches partielles par ambiance et par point, par défaut on a supprimé
-#toutes les valeurs qui pouvaient avoir été indiquées de façon à ce que la
-#cellule apparaisse vide- ; pour les autres (berge, autre) on a laissé les
-#valeurs même si elles sont contradictoire avec la méthode
 ```
 

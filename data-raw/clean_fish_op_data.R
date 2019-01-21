@@ -79,8 +79,8 @@ operation_data %<>%
   mutate(
     method = str_replace_all(method,
       c("partielle sur be" = "partial_over_be",
-	"partielle sur be" = "partial_over_to",
 	"Point grand mil"  = "point_big_mil",
+	"partielle sur to"  = "partial_over_to",
 	"autres"           = "other")),
     strategy = str_replace_all(strategy,
       c("A pied"        = "on_foot",
@@ -91,6 +91,19 @@ operation_data %<>%
 )
 # One data by species and fishing operation 
 operation_data %<>% distinct(opcod, species, .keep_all = TRUE)
+
+# Remove spurious data:
+## nbpass is irrevelant for method != complete
+operation_data %<>% mutate(
+  nbpass = replace(nbpass, method != "complete", NA),
+  surf = ifelse(surf == 0, NA, surf)# if sampled area is 0, there is a problem
+)
+#RQ pour pêches partielles par ambiance et par point, par défaut on a supprimé
+#toutes les valeurs qui pouvaient avoir été indiquées de façon à ce que la
+#cellule apparaisse vide- ; pour les autres (berge, autre) on a laissé les
+#valeurs même si elles sont contradictoire avec la méthode
+
+
 devtools::use_data(operation_data, overwrite = TRUE)
 rm(operation_data)
 
