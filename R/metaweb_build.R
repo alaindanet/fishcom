@@ -28,7 +28,7 @@
 #'
 #' @return matrix 
 #'
-build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bound, upper_bound, fish, resource_diet_shift, class_method = "quantile",
+build_metaweb <- function(data, species, size, pred_win, beta_min, beta_max, fish_diet_shift, low_bound, upper_bound, fish, resource_diet_shift, class_method = "quantile",
   nb_class = 9, pred_win_method = "midpoint", na.rm = FALSE, replace_min_by_one = FALSE, fish_resource_method = "overlap") {
 
   #Capture var:
@@ -37,6 +37,8 @@ build_metaweb <- function(data, species, size, pred_win, fish_diet_shift, low_bo
   low_bound <- rlang::enquo(low_bound)
   upper_bound <- rlang::enquo(upper_bound)
   fish <- rlang::enquo(fish)
+  beta_min <- rlang::enquo(beta_min)
+  beta_max <- rlang::enquo(beta_max)
 
   # Check
   # TODO: Check concordance of column names between datasets

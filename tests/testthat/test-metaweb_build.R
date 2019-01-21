@@ -203,6 +203,6 @@ test_that("compute_links supports non default options", {
 #  Metaweb  #
 #############
 test_that("Metabuild returns a correct matrix",{
-  metaweb <- build_metaweb(fake, species, size = size, fake_prey_win, fake_onto_diet_shift, min, max, fish = pisc, fake_resource_shift)
+  metaweb <- build_metaweb(fake, species, size = size, fake_prey_win, beta_min, beta_max, fake_onto_diet_shift, min, max, fish = pisc, fake_resource_shift)
   expect_is(metaweb$metaweb, "matrix")
     })

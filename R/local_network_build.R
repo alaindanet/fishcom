@@ -21,6 +21,11 @@ build_local_network <- function (metaweb, classes, data, species, var, group_var
 
   #Attribute size class for each fish
   classes_assigned <- assign_size_class(data, !!species, !!var, classes)
+  #Subset the matrix 
+  ## Created the species id variable
+  ## By station, subset fish-fish int
+  ## Message: be careful, you have only fish fish
+  ## Or put an option: complete
 
   resource_list <- metaweb$resource_list
 }
