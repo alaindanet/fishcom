@@ -328,7 +328,7 @@ compute_prey_size <- function (class_size, pred_win, species, beta_min, beta_max
     dplyr::mutate(
       min_prey = !!beta_min * ( (lower + upper) / 2),
       max_prey = !!beta_max * ( (lower + upper) / 2)
-      )%>%
+      ) %>%
   dplyr::select(!!species, class_id, min_prey, max_prey)
 }
 

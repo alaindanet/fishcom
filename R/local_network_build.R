@@ -13,7 +13,7 @@
 #' @return data.frame containing local network code and interaction matrix.
 #'
 build_local_network <- function (data, species, var, group_var, metaweb = NULL, classes = NULL, ...) {
-  
+
   species <- rlang::enquo(species)
   var <- rlang::enquo(var)
   group_var <- rlang::enquo(group_var)
@@ -30,7 +30,6 @@ build_local_network <- function (data, species, var, group_var, metaweb = NULL, 
     mutate(network = map(data, extract_network,
 	species = !!species, var = !!var, metaweb = metaweb, ...))
 
-  
 }
 
 #' Extract network
