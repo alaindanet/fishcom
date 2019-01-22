@@ -270,12 +270,13 @@ library('igraph')
 g <- igraph::graph_from_adjacency_matrix(metaweb$metaweb, mode = "directed")
 plot(g) # Ugly
 
-n_nodes <- length(metaweb$metaweb)
 library(NetIndices)
 # Define layout
-lay <- matrix(nrow=n_nodes,ncol=2) # create a matrix with one column as runif, the other as trophic level
-lay[, 1] <- runif(n_nodes)
-## Compute trophic level
+lay <- layout.fruchterman.reingold(g)
+#n_nodes <- length(colnames(metaweb$metaweb))
+#lay <- matrix(nrow=n_nodes,ncol=2) # create a matrix with one column as runif, the other as trophic level
+#lay[, 1] <- runif(n_nodes)
+# Compute trophic level
 lay[, 2] <- TrophInd(metaweb$metaweb, Dead = metaweb$resource)$TL - 1
 # Plot
 par(mar=rep(5, 4))
