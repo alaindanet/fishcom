@@ -67,7 +67,7 @@ build_metaweb <- function(data, species, size, pred_win, beta_min, beta_max, fis
   fish_resource_int <- int_matrices$fish_resource_int
 
   # Resource-Resource matrix
-  resource_list <- int_matrices$resource_list 
+  resource_list <- int_matrices$resource_list
   resource_resource_int <- t(resource_diet_shift[, resource_list])
   # Resource-Fish matrix
   resource_fish_int <- matrix(0, ncol = ncol(resource_resource_int),
@@ -82,7 +82,7 @@ build_metaweb <- function(data, species, size, pred_win, beta_min, beta_max, fis
 
   list(
   metaweb = metaweb,
-  species = int_matrices$resource_list,
+  species = int_matrices$species_list,
   resource = resource_list,
   nb_class = nb_class,
   size_class = size_class,

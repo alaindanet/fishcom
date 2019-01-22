@@ -5,7 +5,6 @@
 #' Local network building
 #' 
 #' 
-#' @param metaweb an object created by the build_metaweb function.
 #' @inheritParams get_size_class 
 #' @param group_var variable characterizing different communities.
 #'
@@ -13,22 +12,84 @@
 #'
 #' @return data.frame containing local network code and interaction matrix.
 #'
-build_local_network <- function (metaweb, classes, data, species, var, group_var) {
+build_local_network <- function (data, species, var, group_var, metaweb = NULL, classes = NULL, ...) {
   
   species <- rlang::enquo(species)
   var <- rlang::enquo(var)
   group_var <- rlang::enquo(group_var)
 
-  #Attribute size class for each fish
-  classes_assigned <- assign_size_class(data, !!species, !!var, classes)
-  #Subset the matrix 
-  ## Created the species id variable
-  ## By station, subset fish-fish int
-  ## Message: be careful, you have only fish fish
-  ## Or put an option: complete
+  if (is.null(classes)) {
+    stopifnot("size_class" %in% names(metaweb))
+    classes <- metaweb$size_class
+  }
 
-  resource_list <- metaweb$resource_list
+  #Subset the matrix
+  data %>%
+    group_by(!!group_var) %>%
+    nest() %>%
+    mutate(network = map(data, extract_network,
+	species = !!species, var = !!var, metaweb = metaweb, ...))
+
+  
 }
+
+#' Extract network
+#' 
+#' Extract local network from a list of species and size 
+#' 
+#' @inheritParams assign_size_class
+#' @param metaweb an object created by the build_metaweb function.
+#'
+#' @return a matrix containing the species class and links between them
+#' @export
+extract_network <- function (data, species, var, metaweb, classes = NULL, link = "flux", out_format = "adjacency") {
+
+  species <- rlang::enquo(species)
+  var <- rlang::enquo(var)
+
+  if(is.null(classes)) {
+    stopifnot("size_class" %in% names(metaweb))
+    classes <- metaweb$size_class
+  }
+  stopifnot(link %in% c("flux", "pred"))
+  stopifnot(out_format %in% c("adjacency", "igraph", "edge"))
+
+  classes_assigned <- assign_size_class(data, !!species, !!var, classes)
+  species_class <- classes_assigned %>%
+    tidyr::unite(sp_class, !!species, class_id, sep = "_") %>%
+    dplyr::select(sp_class) %>%
+    unlist
+  to_select <- c(species_class, metaweb$resource)
+
+  full_meta <- metaweb$metaweb
+  # If it is a square matrix
+  if (is.matrix(full_meta) & nrow(full_meta) == ncol(full_meta)) {
+
+    pos_to_select <- which(colnames(full_meta) %in% to_select)
+    output <- full_meta[pos_to_select, pos_to_select]
+
+  } else {
+    stop("Metaweb should be a squared matrix.")
+  }
+
+  ## May be that the format should be done in the upper function (faster)  
+  # Transform to edge dataframe:
+  if (link == "pred") {
+    output <- t(output)
+  }
+  if (out_format == "igraph") {
+
+    output %<>% igraph::graph_from_adjacency_matrix(., mode = "directed") %>%
+      igraph::as_data_frame()
+  } else if (out_format == "edge") {
+    
+    output %<>% igraph::graph_from_adjacency_matrix(., mode = "directed") %>%
+      igraph::as_edgelist()
+  } 
+
+  output
+}
+
 #' Assign size classes, for all species 
 #' 
 #' @param data a data.frame containing species and size variable.
@@ -47,13 +108,14 @@ assign_size_class <- function (data, species, var, classes) {
   classes_assigned <- data %>% dplyr::group_by(!!species) %>%
     tidyr::nest() %>%
     dplyr::mutate(
-      class_id = purrr::pmap(list(data = data, species_name = !!species),
-	get_size_class, var = !!var, classes = classes)
-    )
+      class_id = purrr::pmap(list(data = data, species_name = !! species ),
+	get_size_class, var = !!var, classes = classes))
 
   classes_assigned %>% tidyr::unnest() %>%
-    dplyr::select(-!!var) %>%
-    mutate(class_id = as.integer(class_id))
+    #dplyr::select(-!!var) %>%
+    dplyr::mutate(class_id = as.integer(class_id)) %>%
+    dplyr::select(!!species, class_id, !!var, tidyselect::everything())
+
 }
 #' Get size classes for a given species 
 #' 
@@ -69,17 +131,30 @@ get_size_class <- function (data, species_name, var, classes) {
   species_name <- rlang::enquo(species_name)
   var <- rlang::enquo(var)
 
-  #Get good classes
+  #Get species classes
   classes %<>% dplyr::filter(species == rlang::quo_name(species_name)) %>%
   dplyr::select(lower, upper)
 
-  #Attribute size class for each fish
-  data %<>% dplyr::select(!!var) %>% unlist(.)
+  # Get species size
+  data %<>% dplyr::select(!!var) %>%
+    unlist(.)
 
   # Use findInterval
   # see https://rpubs.com/josephuses626/findInterval to improve
   mat_match <- apply(classes, 1, findInterval, x = data, left.open = TRUE) == 1
-  #correct for first interval which is left close:
-  mat_match[1,1] <- TRUE
-  apply(mat_match, 1, function(x) which(x)) %>% unlist(.)
+  #correct for first interval which is left close if one of the data is equal to
+  #the lower bound of the the first interval
+  if (any(data == min(classes$lower))) {
+    row_min <- which(data == min(classes$lower))
+    mat_match[row_min, 1]  <- TRUE
+  }
+  apply(mat_match, 1, function(x) {
+    int <- which(x)
+    if (all(x == FALSE)) {
+      NA
+    } else {
+      int
+    }
+    }
+    ) %>% unlist(.)
 }
