@@ -4,6 +4,7 @@
 library('tidyverse')
 library('magrittr')
 library('data.table')
+devtools::load_all()
 
 ##############################
 #  Comparision of raw files  #
@@ -282,6 +283,16 @@ lay[, 2] <- TrophInd(metaweb$metaweb, Dead = metaweb$resource)$TL - 1
 par(mar=rep(5, 4))
 plot.igraph(g,layout=lay,vertex.label=NA,vertex.size=2,edge.arrow.size=.5,edge.width=.5)
 
+#With ggraph
+library('ggraph')
+## layout
+lay <- create_layout(g, "fr")
+lay$y <- TrophInd(metaweb$metaweb, Dead = metaweb$resource)$TL
+
+p_meta <- ggraph(lay) +
+  geom_edge_link() +
+  geom_node_point() +
+  theme_graph()
 
 get_error <- function(x){
   row_position <- which(test==1, arr.ind = TRUE)[x, 1]
