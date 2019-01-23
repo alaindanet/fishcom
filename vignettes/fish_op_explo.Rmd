@@ -18,9 +18,9 @@ knitr::opts_chunk$set(
 library(tidyverse)
 library(magrittr)
 library(cowplot)
+library(ggpmisc)
 library(sf)
 library(rgdal)
-library(raster)
 library(lubridate)
 devtools::load_all()
 theme_set(theme_alain())
@@ -28,14 +28,17 @@ theme_set(theme_alain())
 
 ## Summary of the analysis
 
-There is around 600 hundreds stations that have been followed for more than 10
+There are around 6 hundreds stations that have been followed for more than 10
 times. Those stations have been sampled every year in average. The sampling
 methods seems homogeneous in terms of sampled area. The choice of the sampling
 method seems to have been decided according to the size of the river because
 alternative to *complete* method has been performed in the high width river. The
 *other* method should be exclude of the analysis because they are badly
 documented, not numerous and present sampled areas that 5 times higher than the
-other methods.
+other methods. For the *complete* operation, we kept only the operation which
+have two passages.
+
+Following the analysis, we refined the dataset for the analysis here: 
 
 ## Preambule
 
@@ -287,6 +290,8 @@ When there are 2 sampling events at the same station, do they belong to methods
 different from complete ? If so, can we merge them ? If not, are they separated
 by less than one year ? If not, we should delete them I guess.
 
+#### Characteristics of the sampling methods
+
 ```{r}
 # let see the states of the variables
 op_type <- read_csv("../data-raw/fish_op_variables.csv")
@@ -358,6 +363,145 @@ They are quite some differences in the number of species and individuals sampled
 according to different methods. But those differences could be attributed to
 differences in sampled areas.
 
+#### Quantification of the sampling effort
+
+There is several ways to quantify the sampling effort:
+- Sampled area over the river width
+
+
+
+```{r}
+cte <- 100
+test <- tibble(
+  width = seq(1, 500),
+  raw = width * cte,
+  log10 = log10(raw)
+)
+test %<>% gather(method, surf, raw, log10)
+th_surf_width <- ggplot(test, aes(y = surf, x = width)) +
+  geom_line() +
+  #scale_x_log10() +
+  facet_grid(vars(method), scales = "free_y") +
+  labs(y = "Sampled area", y = "River width",
+    title = "Theoretical relationship")
+th_surf_width
+```
+
+If we assume a constant length of transect (but it does not make a lot of sens
+for other than *complete*), we expect a linear relationship between the sampled
+surface and the width of the river. At the log scale, we then expect a
+saturating relationship. 
+
+```{r}
+surf_width <- ggplot(st_method, aes(y = surf, x = width)) +
+  geom_point() +
+  scale_y_log10() +
+  #scale_x_log10() +
+  facet_grid(vars(method)) +
+  labs(y = "Sampled area", y = "River width")
+surf_width
+```
+
+We see that the method *complete*, *facies* and *partial_over_to* are showing
+this pattern.
+
+```{r}
+# Let's try again without the two big sampled areas
+# and free scale for each panel
+surf_width <- ggplot(filter(st_method, surf < 10000), aes(y = surf, x = width)) +
+  geom_point() +
+  facet_grid(vars(method), scales = "free_y") +
+  labs(y = "Sampled area", y = "River width")
+surf_width
+```
+
+We see know that only the *complete* and *partial_over_to* displayed a linear
+relationship between sampled surface and river width. It means that the other
+methods displayed a more or less constant relationship (*partial_over_be* and
+*ambiances* and *facies*).
+
+I think about two solutions:
+- We rarefy the little river to equal the poor sampling effort of the big river.
+- We separate big rivers and little rivers in the analysis.
+
+What is important is that the sampling effort is homogeneous within station,
+right ?
+
+```{r}
+# Let's compute the coefficient of variation of sampled area for each station
+cv_st <- st_method %>%
+  group_by(station) %>%
+  summarise(
+    avg_width = mean(width, na.rm = TRUE), 
+    sd_width = sd(width, na.rm = TRUE),
+    avg_surf = mean(surf, na.rm = TRUE), 
+    sd_surf = sd(surf, na.rm = TRUE)
+  )
+
+p_cv_surf_width <- ggplot(cv_st, aes(y = sd_surf / avg_surf * 100, x = sd_width / avg_width * 100)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1, color = "red") +
+  ylim(0, 300) + xlim(0, 300) + 
+  labs(y = "CV of the sampled area (%)", x = "CV of the river width (%)")
+p_cv_surf_width
+
+p_cv_surf <- ggplot(cv_st, aes(x = sd_surf / avg_surf * 100)) +
+  geom_histogram() +
+  labs(x = "CV of the sampled area (%)")
+p_cv_surf
+```
+
+```{r}
+## Watch one
+st_test <- filter(st_method, station == sample(good_station, 1))
+ggplot(st_test, aes(x = surf)) +
+  geom_histogram()
+
+
+formul <- y ~ x
+ggplot(st_test, aes(y = surf, x = width)) +
+  geom_point() +
+  geom_smooth(method = "lm", color="black") +
+  stat_poly_eq(aes(label =  paste(..eq.label.., ..adj.rr.label.., sep = "~~~~")),
+               formula = formul, parse = TRUE)
+
+```
+
+```{r}
+## Theoretical CV
+gen_curve <- function (avg, cv, color) {
+  stat_function(fun = dnorm, args = list(mean = avg, sd = cv * avg),
+    color = color)
+}
+gen_label <- function (cv, color, ylabel, avg) {
+  annotate("text", x = avg, y = ylabel, label = paste("CV = ", cv * 100, "%"), color = color, size = 5)
+}
+### data_curve
+test <- tibble(
+  avg = 500,
+  cv = c(.25, .5, 1),
+  color = c("blue", "orange", "red"),
+  ylabel = c(1.5, .85, .5) / avg
+)
+### Generate curve
+test <- mutate(test, curves = pmap(list(avg, cv, color), gen_curve))
+### Generate labels
+test <- mutate(test, label = pmap(list(cv, color, ylabel, avg), gen_label))
+## Plot
+th_cv <- ggplot(data.frame(x = c(0, 1000)), aes(x)) +
+  test$curves +# list of curve
+  test$label
+th_cv
+```
+
+The theoretical curve shows that, in case of normal distribution, it would be
+safe to remove station were the CV is superior to $.25$. However, this measure
+does not take in account the shift of river width. Further exploration are
+needed.
+
+One idea: if the length of the transect is *constant*. For each station, we compute the residuals of
+the relation between sampled area and the width of the river
+
 # Check variables
 
 ```{r}
@@ -368,6 +512,9 @@ st_method %>%
   ggplot(aes(value)) +
     facet_wrap(~ key, scales = "free") +
     geom_histogram()
+```
+
+```{r, eval = FALSE}
 
 # It seems that some sampled surfaces are really big:
 filter(st_method, surf > 5000)
