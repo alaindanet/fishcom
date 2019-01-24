@@ -45,12 +45,18 @@ According to the postdoc advertisement:
   - [ ] Function structure:
     - [x] cleaning: `../data-raw/clean_fish_op_data.R`
     - [x] metaweb build: `../R/metaweb_build.R`
-    - [ ] local network: `../R/local_network_build.R`
+    - [x] local network: `../R/local_network_build.R`
     - [ ] network methods:
     - [ ] network analysis:
 - [ ] Assess quality of the dataset:
   - [x] Which community are best followed in time?
   - [x] Where are they ?
+  - [ ] When new data, cf Edeline filtering methods
+  - [ ] Algorithm for op fusion (when poor fisheries):
+    `../data-raw/generate_analysis_dataset.R`
+  - [ ] When selecting station, update all `_analysis` dataset (env).
+    - [ ] expect for `fish_length` bc we need all the dataset for metaweb (I
+      guess)
 - [ ] Assess availability of environmental data
   - [ ] temporal pollution data (cf Colin, FIRE meeting)
 

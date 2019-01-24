@@ -38,7 +38,8 @@ documented, not numerous and present sampled areas that 5 times higher than the
 other methods. For the *complete* operation, we kept only the operation which
 have two passages.
 
-Following the analysis, we refined the dataset for the analysis here: 
+Following the analysis, we refined the dataset for the analysis here:
+`data-raw/generate_analysis_dataset.R`
 
 ## Preambule
 
@@ -234,6 +235,11 @@ filter(time_sampling, station ==  472, point %in% c(6, 7))
 filter(time_sampling, station ==  186, point %in% c(4, 5)) 
 filter(time_sampling, station ==  244, point %in% c(15, 16))
 # Is it because of differences of sampling methods?
+
+# 
+qplot(times, data = low_fo_int, fill = method) +
+  labs(x = "Time of monthly repeated sampling")
+
 #To generalize...
 ```
 
@@ -499,8 +505,9 @@ safe to remove station were the CV is superior to $.25$. However, this measure
 does not take in account the shift of river width. Further exploration are
 needed.
 
-One idea: if the length of the transect is *constant*. For each station, we compute the residuals of
-the relation between sampled area and the width of the river
+One idea: if the length of the transect is *constant*. For each station, we
+compute the residuals of the relation between sampled area and the width of the
+river
 
 # Check variables
 
@@ -515,7 +522,6 @@ st_method %>%
 ```
 
 ```{r, eval = FALSE}
-
 # It seems that some sampled surfaces are really big:
 filter(st_method, surf > 5000)
 filter(st_method, station == 8609)
