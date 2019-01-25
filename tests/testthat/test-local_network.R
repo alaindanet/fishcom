@@ -63,6 +63,28 @@ test_that("extraction of a network works", {
 })
 
 test_that("local network generation works", {
-   local_network <- build_local_network(fake_station, species, size, station, metaweb = toy_metaweb, out_format = "igraph")
-   expect_is(local_network, "data.frame")
+  local_network <- build_local_network(fake_station, species, size, station,
+   metaweb = toy_metaweb, out_format = "igraph")
+  local_network %<>% mutate(
+    network = map(network, function(x) arrange(x, from, to)),
+    test = map(data,
+      # Replicate network extraction
+      function(x, metaweb) {
+      node <- unite(x, sp_class, species, class_id) %>%
+	select(sp_class) %>% unlist
+      to_subset <- c(node, metaweb$resource) %>% unique
+      local_network <- metaweb$metaweb[to_subset, to_subset]
+      local_network %<>%
+	igraph::graph_from_adjacency_matrix(., mode = "directed") %>%
+	igraph::as_data_frame() %>%
+	arrange(from, to)
+      }, metaweb = toy_metaweb)
+)
+  expect_equal(
+    map_chr(local_network$test, class) %>% unique,
+    "data.frame")
+  expect_identical(
+    local_network$network,
+    local_network$test
+  )
 })

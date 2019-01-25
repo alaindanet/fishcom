@@ -12,7 +12,7 @@
 #'
 #' @return data.frame containing local network code and interaction matrix.
 #'
-build_local_network <- function (data, species, var, group_var, metaweb = NULL, classes = NULL, ...) {
+build_local_network <- function (data, species, var, group_var, metaweb, classes = NULL, ...) {
 
   species <- rlang::enquo(species)
   var <- rlang::enquo(var)
@@ -22,19 +22,28 @@ build_local_network <- function (data, species, var, group_var, metaweb = NULL, 
     stopifnot("size_class" %in% names(metaweb))
     classes <- metaweb$size_class
   }
+  # Compute the class_id
+  classes_assigned <- assign_size_class(data, !!species, !!var, classes)
 
   #Subset the matrix
-  data %>%
+  output <- data %>%
     group_by(!!group_var) %>%
     nest() %>%
-    mutate(network = map(data, extract_network,
-	species = !!species, var = !!var, metaweb = metaweb, ...))
+    mutate(
+      data = map(data, assign_size_class,
+	species = !!species, var = !!var, classes = classes),
+      network = map(data, extract_network,
+	species = !!species, var = !!var, metaweb = metaweb,
+	classes = classes, ...)
+    )
+
+  output
 
 }
 
 #' Extract network
 #' 
-#' Extract local network from a list of species and size 
+#' Extract local network from a list of species and size
 #' 
 #' @inheritParams assign_size_class
 #' @param metaweb an object created by the build_metaweb function.
@@ -46,27 +55,31 @@ extract_network <- function (data, species, var, metaweb, classes = NULL, link =
   species <- rlang::enquo(species)
   var <- rlang::enquo(var)
 
-  if(is.null(classes)) {
+  if (is.null(classes)) {
     stopifnot("size_class" %in% names(metaweb))
     classes <- metaweb$size_class
   }
   stopifnot(link %in% c("flux", "pred"))
   stopifnot(out_format %in% c("adjacency", "igraph", "edge"))
 
-  classes_assigned <- assign_size_class(data, !!species, !!var, classes)
+  # Idea if class_id present in data, do not do it build_local_network.
+  if ("class_id" %in% colnames(data)) {
+    classes_assigned <- data
+  } else {
+    classes_assigned <- assign_size_class(data, !!species, !!var, classes)
+  }
   species_class <- classes_assigned %>%
     tidyr::unite(sp_class, !!species, class_id, sep = "_") %>%
     dplyr::select(sp_class) %>%
     unlist
-  to_select <- c(species_class, metaweb$resource)
+  to_select <- c(species_class, metaweb$resource) %>%
+    unique
 
   full_meta <- metaweb$metaweb
   # If it is a square matrix
   if (is.matrix(full_meta) & nrow(full_meta) == ncol(full_meta)) {
-
-    pos_to_select <- which(colnames(full_meta) %in% to_select)
-    output <- full_meta[pos_to_select, pos_to_select]
-
+    #pos_to_select <- which(colnames(full_meta) %in% to_select)
+    output <- full_meta[to_select, to_select]
   } else {
     stop("Metaweb should be a squared matrix.")
   }
@@ -77,14 +90,12 @@ extract_network <- function (data, species, var, metaweb, classes = NULL, link =
     output <- t(output)
   }
   if (out_format == "igraph") {
-
     output %<>% igraph::graph_from_adjacency_matrix(., mode = "directed") %>%
       igraph::as_data_frame()
   } else if (out_format == "edge") {
-    
     output %<>% igraph::graph_from_adjacency_matrix(., mode = "directed") %>%
       igraph::as_edgelist()
-  } 
+  }
 
   output
 }
