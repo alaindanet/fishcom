@@ -33,7 +33,7 @@ op_method <- operation_data %>%
 op <- left_join(op_stat, op_method, by = "opcod")
 
 #plot rep of methods
-qplot(times, data = low_int, fill = method) +
+qplot(times, data = op_method, fill = method) +
   labs(x = "Time of monthly repeated sampling")
 
 op %<>% filter(
@@ -58,6 +58,27 @@ length(good_station_id)
 
 # For temporal analysis, we keep station followed more than 10 times
 op <- filter(op, station %in% good_station_id)
+
+op_analysis <- op
+devtools::use_data(op_analysis, overwrite = TRUE)
+
+good_opcod_id <- select(ungroup(op_analysis), opcod) %>% unlist 
+
+data(environmental_data)
+env_analysis <- filter(environmental_data, opcod %in% good_opcod_id)
+devtools::use_data(env_analysis, overwrite = TRUE)
+rm(environmental_data, env_analysis)
+
+data(fish_length)
+length_analysis <- filter(fish_length, opcod %in% good_opcod_id)
+devtools::use_data(length_analysis, overwrite = TRUE)
+rm(fish_length, length_analysis)
+
+
+
+######################
+#  Further analysis  #
+######################
 
 # Get the time between each sampling event  
 int_op <- op %>%
@@ -85,8 +106,6 @@ qplot(times, data = low_int, fill = method) +
 # Look careful to point_big_mil: big sampled surface and less fish than the
 # other ?
 
-op_analysis <- op
-devtools::use_data(op_analysis, overwrite = TRUE)
 
 ##################
 #  Plot station  #
