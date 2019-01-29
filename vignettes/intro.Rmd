@@ -47,18 +47,23 @@ According to the postdoc advertisement:
     - [x] metaweb build: `../R/metaweb_build.R`
     - [x] local network: `../R/local_network_build.R`
     - [ ] network methods:
+      - [ ] connectance, average trophic level, richness
     - [ ] network analysis:
+      - [ ] variance of the biomass series 
 - [ ] Assess quality of the dataset:
   - [x] Which community are best followed in time?
   - [x] Where are they ?
   - [ ] When new data, cf Edeline filtering methods
   - [ ] Algorithm for op fusion (when poor fisheries):
     `../data-raw/generate_analysis_dataset.R`
-  - [ ] When selecting station, update all `_analysis` dataset (env).
-    - [ ] expect for `fish_length` bc we need all the dataset for metaweb (I
+  - [x] When selecting station, update all `_analysis` dataset (env).
+    - [x] expect for `fish_length` bc we need all the dataset for metaweb (I
       guess)
+    - [ ] select only *complete* station
 - [ ] Assess availability of environmental data
   - [ ] temporal pollution data (cf Colin, FIRE meeting)
+  - [ ] ONDE for etiage
+  - [ ] ROE for obstacle
 
 # Temporal stability and diversity 
 
@@ -99,7 +104,7 @@ According to the postdoc advertisement:
     - Measurement: time until a change appear after invasion of a species or a
       loss a species 
   - **Tipping point**: permanent change of system state
-    - Measurement: bimodality for same environmental variable [@berdugo_plant_2017;@blonder_predictability_2017]
+    - Measurement: bimodality for same environmental variable [@berdugo_plant_2017; @blonder_predictability_2017]
   - **Resilience**: multi-dimensional notion. Capacity of the system to keep the
     same relationship between population and state variables
     - Measurement:

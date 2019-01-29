@@ -26,6 +26,64 @@ devtools::load_all()
 theme_set(theme_alain())
 ```
 
+# What is known 
+
+A meeting with Camille Riviere has permit to get a lot of information about the
+fishing operation.
+
+## Historic of the fishing
+
+- Before 1995:
+  - Each delegation has its own fishing protocol.
+  - Favors sp with high fishing hobby interest
+  - unfavorable for sp "bad" for fishing hobbies (Anguille & Lamproie)
+- 1995 -: Common protocols
+- 2007: Fusion of the regional "Conseil Supérieur de la Pêche" units
+  - creation of ONEMA
+  - Creation of the `partial_by_point` method: 
+    - equal to *complete* when 50 to 100 pt
+- 2013 -:
+  - Fishing operations are externalized
+  - when complete, the passage number is know to 1!
+
+## The fishing network
+
+- RHP:
+  - op every year
+  - be careful of protocol switch
+  - 2% of the site switched location
+- RCS (2007-):
+  - op every two years
+  - standardized fishing operation
+
+## The different fishing method 
+
+
+
+## Advise (from Camille Rivière)
+
+- Keep *complete* if
+  - series end > 2013, keep only first passage 
+  - length of fishing varies more than 30%, delete!
+
+- Merge *point_big_mil* and *partial_over_be* if:
+  *partial_over_be* op is:
+    - 100% of the points on berges
+    - followed over the two berges
+    - the two rives have been sampled
+
+- Exclude:
+  - site near piscicole station  
+  - op concerning targeted species
+  - if there is stocking (empoissonnement) 
+  - 2 following fishing operations:
+    - keep the most complete
+    - look at the op objective
+    - can be IPR+ program
+  
+
+# Analysis
+
 ## Summary of the analysis
 
 There are around 6 hundreds stations that have been followed for more than 10
@@ -35,11 +93,10 @@ method seems to have been decided according to the size of the river because
 alternative to *complete* method has been performed in the high width river. The
 *other* method should be exclude of the analysis because they are badly
 documented, not numerous and present sampled areas that 5 times higher than the
-other methods. For the *complete* operation, we kept only the operation which
-have two passages.
+other methods. For the *complete* operations, there are one or two passages. 
 
 Following the analysis, we refined the dataset for the analysis here:
-`data-raw/generate_analysis_dataset.R`
+`data-raw/generate_analysis_dataset.R` (See details in it).
 
 ## Preambule
 
@@ -221,9 +278,20 @@ the same day! It is normal because I do not have a date resolution thiner than
 the month!
 
 ```{r}
+# Get operation data
+data(operation_data)
+operation_data %<>% distinct(opcod, .keep_all = TRUE) %>%
+  dplyr::select(-species, -station, -count, -year, -month)
+st_method <- left_join(good_station_sampling, operation_data, by = c("opcod")) %>%
+  ungroup()
+
+```
+
+```{r}
 low_fo_int <- filter(time_sampling, sample_sep < 30) %>%
   ungroup() %>%
-  arrange(station)
+  arrange(station) %>%
+  left_join(., operation_data, by = c("opcod"))
 # Those FO took place the same day:
 summarise(low_fo_int, mean = mean(sample_sep))
 
@@ -248,15 +316,6 @@ It concerns `r n_l_samp <- nrow(low_fo_int); n_l_samp` stations,
 
 #### Sampling method regularity
 
-```{r}
-# Get operation data
-data(operation_data)
-operation_data %<>% distinct(opcod, .keep_all = TRUE) %>%
-  dplyr::select(-species, -station, -count, -year, -month)
-st_method <- left_join(good_station_sampling, operation_data, by = c("opcod")) %>%
-  ungroup()
-
-```
 
 We want to see if the good stations had the same sampling methods across time. 
 
