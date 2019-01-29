@@ -24,14 +24,11 @@ build_local_network <- function (data, species, var, group_var, metaweb, classes
   }
   # Compute the class_id
   classes_assigned <- assign_size_class(data, !!species, !!var, classes)
-
   #Subset the matrix
-  output <- data %>%
+  output <- classes_assigned %>%
     group_by(!!group_var) %>%
     nest() %>%
     mutate(
-      data = map(data, assign_size_class,
-	species = !!species, var = !!var, classes = classes),
       network = map(data, extract_network,
 	species = !!species, var = !!var, metaweb = metaweb,
 	classes = classes, ...)
@@ -68,6 +65,16 @@ extract_network <- function (data, species, var, metaweb, classes = NULL, link =
   } else {
     classes_assigned <- assign_size_class(data, !!species, !!var, classes)
   }
+
+  if (any(is.na(classes_assigned$class_id))) {
+    unassigned <- filter(classes_assigned, is.na(class_id)) %>%
+      select(!!species) %>% unlist
+    msg <- paste("Unassigned individuals (marked as NAs) found in species: ", unassigned, "\n",
+    "they have been excluded with na.omit")
+    message(msg)
+    classes_assigned %<>% na.omit
+  }
+
   species_class <- classes_assigned %>%
     tidyr::unite(sp_class, !!species, class_id, sep = "_") %>%
     dplyr::select(sp_class) %>%

@@ -416,22 +416,26 @@ compute_classes <- function(size, group_var, var, class_method = "quantile",
 #' @param to_class a numeric vector
 #' @param class_method character percentile or quantile. Default to percentile. 
 #' @param nb_class integer number of size class to create. Default to 9. 
+#' @param round_limits logical Does the class limits should be rounded ?.
 split_in_classes <- function (to_class, class_method = "quantile",
-  nb_class = 9) {
+  nb_class = 9, round_limits = TRUE) {
 
   stopifnot(class_method %in% c("percentile", "quantile"))
 
-    if (class_method == "quantile") {
-      if (is.list(to_class)) {
-	to_class %<>% unlist
-	stopifnot(is.numeric(to_class))
-      }
-      classified <- quantile(to_class, probs = seq(0, 1, by = 1 / nb_class))
-    } else {
-      classified <- seq(min(to_class), max(to_class), by = (max(to_class) - min(to_class)) / nb_class)
+  if (class_method == "quantile") {
+    if (is.list(to_class)) {
+      to_class %<>% unlist
+      stopifnot(is.numeric(to_class))
     }
-    classified %<>% round
+    classified <- quantile(to_class, probs = seq(0, 1, by = 1 / nb_class))
+  } else {
+    classified <- seq(min(to_class), max(to_class),
+      by = (max(to_class) - min(to_class)) / nb_class)
+  }
 
+  if (round_limits) {
+    classified %<>% round
+  }
     # Determine the lower and upper limit of each size class:
     tibble::tibble(
       class_id = seq(1, nb_class),
