@@ -69,6 +69,11 @@ rm(fish_op)
 fish_length <- fread("global_fish_op.csv",
   select = c("opcod", "species", "length")) %>%
   as.tibble()
+# keyboard error
+fish_length %<>%
+  mutate(
+    length = replace(length, length < 1 & species == "TRF", 77)
+  )
 devtools::use_data(fish_length, overwrite = TRUE)
 rm(fish_length)
 
