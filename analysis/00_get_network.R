@@ -40,8 +40,11 @@ metaweb_analysis <- build_metaweb(
 devtools::use_data(metaweb_analysis, overwrite = TRUE)
 rm(list = ls())
 
-# Build local network
+###################
+#  Local network  #
+###################
 
+# Build local network
 data(length_analysis)
 data(op_analysis)
 ## Get station id for the op
@@ -50,13 +53,16 @@ length_analysis %<>%
   left_join(., op_analysis, by = "opcod")
 rm(op_analysis)
 ##
-classes <- assign_size_class(length_analysis, species, length, classes = metaweb_analysis$class_size)
 data(metaweb_analysis)
+filter(classes, is.na(class_id))
+qplot(x = length, data = filter(classes, species == "TRF"), geom = "histogram")
+filter(classes, species == "TRF") %>% map(., summary)
+filter(metaweb_analysis$size_class, species == "TRF")
 network_analysis <- build_local_network(
   data = length_analysis,
   species = species,
   var = length,
-  group_var = station,
+  group_var = opcod,
   metaweb = metaweb_analysis,
   classes = NULL,
   out_format = "igraph"
