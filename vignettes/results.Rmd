@@ -1,0 +1,94 @@
+---
+title: "Vignette Title"
+author: "Vignette Author"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(tidyverse)
+library(ggpmisc)
+library(cowplot)
+library(magrittr)
+library(igraph)
+library(lubridate)
+devtools::load_all()
+theme_set(theme_alain())
+```
+
+```{r, fig.dim = c(7,7) }
+# Get network metrics
+data(biomass_analysis)
+data(network_metrics)
+cv <- left_join(network_metrics, biomass_analysis, by = "opcod") %>%
+  gather(metrics, values, connectance, richness, biomass) %>%
+  group_by(station, metrics) %>%
+  summarise(
+    cv = sd(values) / mean(values),
+    avg = mean(values)
+  )
+
+# plot
+faceted_cv <- dplyr::select(cv, - avg) %>%
+  spread(metrics, cv) %>%
+  gather(network_metrics, values, connectance, richness)
+# Facet label:
+label <- as_labeller(c(
+    connectance = "Connectance",
+    richness = "Number of nodes"
+    ))
+formula <- y ~ x #needed for stat_poly_eq
+p <- ggplot(faceted_cv, aes(y = biomass, x = values)) +
+  geom_point() +
+  facet_grid(cols = vars(network_metrics), labeller = label) +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(
+    x = "CV of the network indices",
+    y = "CV of the community biomass"
+  )
+faceted_cv_avg <- gather(cv, mesurements, values, cv, avg) %>%
+  filter(
+    metrics == "biomass" & mesurements == "cv" |
+    metrics %in% c("connectance", "richness") & mesurements == "avg"
+  )
+faceted_cv_avg <- left_join(
+  filter(faceted_cv_avg, metrics == "biomass") %>%
+    spread(mesurements, values) %>% spread(metrics, cv),
+  filter(faceted_cv_avg, metrics != "biomass") %>%
+    spread(mesurements, values) %>% spread(metrics, avg),
+  by = "station"
+) %>%
+  gather(network_metrics, values, connectance, richness)
+formula <- y ~ x #needed for stat_poly_eq
+p2 <- ggplot(faceted_cv_avg,
+  aes(y = biomass, x = values)) +
+  geom_point() +
+  facet_grid(cols = vars(network_metrics), labeller = label, scales = "free_x") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(
+    x = "Average of the network indices",
+    y = "CV of the community biomass"
+  )
+
+plot_grid(p, p2, ncol = 1, labels = "AUTO")
+
+```
+
