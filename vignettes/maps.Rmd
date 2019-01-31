@@ -1,0 +1,39 @@
+---
+title: "Vignette Title"
+author: "Vignette Author"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.dim = c(7, 7)
+)
+library(tidyverse)
+library(magrittr)
+library(sp)
+library(sf)
+library(rgdal)
+library(raster)
+library(mapview)
+```
+
+```{r cours d'eau}
+eau <- read_sf("../data-raw/cours_eau_shp/CoursEau_FXX.shp")
+
+
+plot(sample_n(eau, 26), add = T)
+#mapview(eau)@map
+```
+
+```{r}
+
+```
+
+
