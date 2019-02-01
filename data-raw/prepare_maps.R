@@ -51,10 +51,32 @@ plot(station, add = TRUE, pch = 20, col = "red")
 ## Save station
 st_write(station, "station_wgs84.shp")
 
+############
+#  Stream  #
+############
+
+stream <- read_sf("cours_eau_shp/CoursEau_FXX.shp")
+# Long time to run:
+simplestream <- rmapshaper::ms_simplify(input = sample_n(stream ,100), keep = .01) %>% 
+  st_as_sf()
+rm(stream)
+object.size(simplestream)
+plot(simplestream[, "gid"])
+
+################
+#  SSN object  #
+################
+# See openSTARS
+# https://github.com/MiKatt/openSTARS
+
+#get MNT
+file_mnt <- "BDALTIV2/1_DONNEES_LIVRAISON_2018-01-00246/BDALTIV2_MNT_250M_ASC_LAMB93_IGN69_FRANCE/BDALTIV2_250M_FXX_0098_7150_MNT_LAMB93_IGN69.asc"
+mnt <- raster::raster(file_mnt)
+plot(mnt)
+
 ## To continue with
 #- cours_eau_shp
 #- obstacles
 # Match points to lines:
 #https://github.com/r-spatial/sf/issues/790
 #https://www.gis-blog.com/nearest-neighbour-search-for-spatial-points-in-r/
-#
