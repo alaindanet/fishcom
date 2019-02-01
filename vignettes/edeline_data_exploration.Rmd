@@ -36,41 +36,34 @@ library(mapview)
 station <- read_delim("../data-raw/fishing_station_localisation_wsg84.csv",
   delim = ";", locale = locale("fr", decimal_mark = "."),
   col_types = cols(ST_CODECSP = col_character()))
-# Modif ID in integer
-xy_station <- dplyr::select(station, XCOORD, YCOORD)
-station <- SpatialPointsDataFrame(coords = xy_station, data = station,
-                               proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
-
-station <- st_as_sf(station)
+# Lambert II
+station <- sf::st_as_sf(station, coords = c("ST_ABCISSE", "ST_ORDONNEE"), crs = 27572)
+## Convert
+data(region_polygon)
+station <- st_transform(station, st_crs(region_polygon))
 ```
 
 ## Get France map
 
-```{r}
-region_fr <- raster::shapefile("../data-raw/france_region_shp/regions-20180101.shp")
-
-#Get only metropolitan areas:
-region_fr <- st_as_sf(region_fr) #easier to manipulate
-region_to_filter <- c("La Réunion", "Martinique", "Guadeloupe", "Mayotte",
-  "Guyane", "Corse")
-region_fr <- filter(region_fr, !(nom %in% region_to_filter))
-region_fr <- region_fr[, c("nom", "geometry")]
-
-```
 
 ```{r}
-plot(st_geometry(region_fr), lwd = 1.5, col = "grey85")
+plot(st_geometry(region_polygon), lwd = 1.5, col = "grey85")
 plot(station, pch = 20, col = "red", add = T)
 ```
 
 ```{r}
-mapview(station)@map
+mapview::mapview(station)@map
 ```
 Il y a deux stations qui sont biens dans les choux!
 
 ```{r}
 # Compute distance between points: https://stackoverflow.com/a/53559542
 ```
+
+```{r}
+
+```
+
 
 # Assembling station
 
