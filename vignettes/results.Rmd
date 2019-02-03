@@ -12,22 +12,80 @@ vignette: >
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.dim = c(7, 7)
 )
 library(tidyverse)
 library(ggpmisc)
 library(cowplot)
 library(magrittr)
 library(igraph)
+library(NetIndices)
+library(tidygraph)
+library(ggraph)
 library(lubridate)
 devtools::load_all()
 theme_set(theme_alain())
 ```
 
+# Network exploration 
+
+## Metaweb
+
+```{r}
+data(metaweb_analysis)
+meta <- metaweb_analysis; rm(metaweb_analysis)
+
+g <- igraph::graph_from_adjacency_matrix(meta$metaweb, mode = "directed")
+
+# Define layout
+lay <- layout.fruchterman.reingold(g)
+# Compute trophic level
+lay[, 2] <- TrophInd(meta$metaweb, Dead = meta$resource)$TL - 1
+# Plot
+par(mar=rep(5, 4))
+plot.igraph(g,layout=lay,vertex.label=NA,vertex.size=2,edge.arrow.size=.5,edge.width=.5)
+
+```
+
+## Local network
+
+```{r}
+data(network_analysis)
+net <- network_analysis %>%
+  dplyr::select(opcod, network) %>%
+  unnest() %>%
+  left_join(., dplyr::select(op_analysis, opcod, station, year)) %>%
+ dplyr::select(from, to, everything())
+
+# Get a station
+net_ex <- filter(net, station == unique(net$station) %>% sample(., 1))
+## Graph -------------------------
+net_graph <- graph_from_data_frame(net_ex, directed = TRUE)
+ 
+## Layout --------------------------------
+lay <- create_layout(graph_from_adjacency_matrix(meta$metaweb, mode = "directed"), layout = "kk")
+node_pos <- TrophInd(meta$metaweb,
+  Dead = meta$resource)$TL - 1
+lay$y <- node_pos
+
+
+net_graph <- select(net_ex, from, to, year) %>%
+  arrange(year) %>%
+  group_by(year) %>%
+  nest() %>%
+  mutate(
+    net_graph = pmap(list(net = data, title = year), 
+    set_layout_graph, glay = lay)
+  )
+plot_grid(plotlist = net_graph$net_graph)
+```
+
+# Biomass and network 
+
 ```{r, fig.dim = c(7,7) }
 # Get network metrics
 data(biomass_analysis)
-data(network_metrics)
 cv <- left_join(network_metrics, biomass_analysis, by = "opcod") %>%
   gather(metrics, values, connectance, richness, biomass) %>%
   group_by(station, metrics) %>%
