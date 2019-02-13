@@ -41,7 +41,8 @@ g <- igraph::graph_from_adjacency_matrix(meta$metaweb, mode = "directed")
 # Define layout
 lay <- layout.fruchterman.reingold(g)
 # Compute trophic level
-lay[, 2] <- TrophInd(meta$metaweb, Dead = meta$resource)$TL - 1
+dead_material <- c("det", "biof")
+lay[, 2] <- TrophInd(meta$metaweb, Dead = dead_material)$TL
 # Plot
 par(mar=rep(5, 4))
 plot.igraph(g,layout=lay,vertex.label=NA,vertex.size=2,edge.arrow.size=.5,edge.width=.5)
@@ -66,9 +67,9 @@ net_graph <- graph_from_data_frame(net_ex, directed = TRUE)
 ## Layout --------------------------------
 lay <- create_layout(graph_from_adjacency_matrix(meta$metaweb, mode = "directed"), layout = "kk")
 node_pos <- TrophInd(meta$metaweb,
-  Dead = meta$resource)$TL - 1
+  Dead = dead_material)$TL - 1
 lay$y <- node_pos
-
+lay$species <- get_species(lay$name)
 
 net_graph <- select(net_ex, from, to, year) %>%
   arrange(year) %>%
@@ -76,9 +77,11 @@ net_graph <- select(net_ex, from, to, year) %>%
   nest() %>%
   mutate(
     net_graph = pmap(list(net = data, title = year), 
-    set_layout_graph, glay = lay)
+    set_layout_graph, glay = lay, color_scale = set_color_species(lay))
   )
-plot_grid(plotlist = net_graph$net_graph)
+plot_grid(plotlist = net_graph[1:4,]$net_graph)
+plot_grid(net_graph[1, ]$net_graph[[1]])
+my <- set_color_species(lay)
 ```
 
 # Biomass and network 
@@ -148,5 +151,10 @@ p2 <- ggplot(faceted_cv_avg,
 
 plot_grid(p, p2, ncol = 1, labels = "AUTO")
 
+```
+
+# Compartimentalization
+
+```{r}
 ```
 

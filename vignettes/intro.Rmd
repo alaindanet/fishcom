@@ -48,22 +48,26 @@ According to the postdoc advertisement:
     - [x] local network: `../R/local_network_build.R`
     - [x] network methods:
       - [x] connectance, average trophic level, richness
+      - [ ] nestedness, trophic length, modularity, trophic group:
+	- [ ] nestedness: Bastolla et al. (2009): should compute it 
+	- [ ] trophic length: netIndices
+	- [ ] modularity: igraph
+	- [ ] trophic group: NetIndices?
     - [x] network analysis:
       - [x] variance of the biomass series 
 - [ ] Assess quality of the dataset:
-  - [x] Which community are best followed in time?
-  - [x] Where are they ?
   - [ ] When new data, cf Edeline filtering methods
-  - [x] Algorithm for op fusion (when poor fisheries):
-    `../data-raw/generate_analysis_dataset.R`
-  - [x] When selecting station, update all `_analysis` dataset (env).
-    - [x] expect for `fish_length` bc we need all the dataset for metaweb (I
-      guess)
-    - [x] select only *complete* station
+  - [ ] Add `point_big_mil` and `partial_over_be`
 - [ ] Assess availability of environmental data
+  - [ ] Temperature data
   - [ ] temporal pollution data (cf Colin, FIRE meeting)
-  - [ ] ONDE for etiage
-  - [ ] ROE for obstacle
+  - [x] ONDE for etiage: from 2012 to 2018 
+  - [ ] ROE for obstacle:
+    - [ ] To explore
+  - [ ] ADES for map of rock types 
+    - http://www.ades.eaufrance.fr/
+    - [x] professional access
+    - [ ] Map of water quality and level
 
 # Temporal stability and diversity 
 

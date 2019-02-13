@@ -33,11 +33,16 @@ toc()
 network_analysis %<>%
   mutate(
     connectance = map_dbl(metrics, "C"),
-    richness = map_dbl(metrics, "N")
+    richness = map_dbl(metrics, "N"),
+    compartiment = map_dbl(metrics, "Cbar"),
+    troph_level = future_map(network, NetIndices::TrophInd),
+    troph_level2 = map(troph_level, "TL"),
+    troph_length = map_dbl(troph_level2, max)
   )
 
+network_analysis[1,]$troph_level2[[1]]
 network_metrics <- network_analysis %<>%
-  dplyr::select(opcod, connectance, richness)
+  dplyr::select(opcod, connectance, richness, compartiment, troph_length)
 
 devtools::use_data(network_metrics, overwrite = TRUE)
 rm(list = ls())
