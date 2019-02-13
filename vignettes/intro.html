@@ -12,9 +12,9 @@
 
 <meta name="author" content="Alain Danet" />
 
-<meta name="date" content="2018-12-05" />
+<meta name="date" content="2019-02-13" />
 
-<title>Introduction - Description of previous work</title>
+<title>Introduction - Description of the project</title>
 
 
 
@@ -212,22 +212,98 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 
 
-<h1 class="title toc-ignore">Introduction - Description of previous work</h1>
+<h1 class="title toc-ignore">Introduction - Description of the project</h1>
 <h4 class="author"><em>Alain Danet</em></h4>
-<h4 class="date"><em>2018-12-05</em></h4>
+<h4 class="date"><em>2019-02-13</em></h4>
 
 
 
-<p>## Post-doc objectives</p>
+<p># Post-doc objectives</p>
 <p>According to the postdoc advertisement:</p>
 <ol style="list-style-type: decimal">
 <li>Characterize the temporal stability of the studied communities</li>
 <li>Disentangle the drivers of stability and to understand how trophic and community structures influence stability</li>
 </ol>
-<div id="temporal-stability-and-diversity" class="section level2">
-<h2>Temporal stability and diversity </h2>
-<div id="the-big-questions" class="section level3">
-<h3>The big questions</h3>
+<div id="priority" class="section level2">
+<h2>Priority</h2>
+<ol style="list-style-type: decimal">
+<li>Obtain networks and indicators</li>
+<li>Pulses identification (ex. extreme summer of 2003)</li>
+<li>Traits and phylogeny
+<ul>
+<li>See <code>fish_trait</code> zotero collection</li>
+<li>See those authors (from Maud):
+<ul>
+<li>Christine Argillier (Irstea Aix/Provence)</li>
+<li>Thierry Oberdorff (Toulouse ?)</li>
+<li>Bernard Hugueny (IRD, Toulouse)</li>
+</ul></li>
+<li>Ask to (by Maud):
+<ul>
+<li>Sébastien Brosse</li>
+<li>Sébastien Villégier</li>
+</ul></li>
+</ul></li>
+</ol>
+</div>
+<div id="immediate-objectives-end-of-december" class="section level2">
+<h2>Immediate objectives (end of December)</h2>
+<ul>
+<li>[ ] Re-run willem analysis
+<ul>
+<li>[ ] Function structure:
+<ul>
+<li>[x] cleaning: <code>../data-raw/clean_fish_op_data.R</code></li>
+<li>[x] metaweb build: <code>../R/metaweb_build.R</code></li>
+<li>[x] local network: <code>../R/local_network_build.R</code></li>
+<li>[x] network methods:
+<ul>
+<li>[x] connectance, average trophic level, richness</li>
+<li>[ ] beautiful plots</li>
+</ul></li>
+<li>[ ] colored node by species</li>
+<li>[ ] node size according to biomass
+<ul>
+<li>[ ] compute biomass by node</li>
+<li>[ ] nestedness, trophic length, modularity, trophic group:</li>
+</ul></li>
+<li>[ ] nestedness: Bastolla et al. (2009): should compute it</li>
+<li>[ ] trophic length: netIndices</li>
+<li>[ ] modularity: igraph</li>
+<li>[ ] trophic group: NetIndices?</li>
+<li>[ ] network analysis:
+<ul>
+<li>[ ] compute above network indices</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>[ ] Assess quality of the dataset:
+<ul>
+<li>[ ] When new data, cf Edeline filtering methods</li>
+<li>[ ] Add <code>point_big_mil</code> and <code>partial_over_be</code></li>
+</ul></li>
+<li>[ ] Assess availability of environmental data
+<ul>
+<li>[ ] Temperature data</li>
+<li>[ ] temporal pollution data (cf Colin, FIRE meeting)</li>
+<li>[x] ONDE for etiage: from 2012 to 2018</li>
+<li>[ ] ROE for obstacle:
+<ul>
+<li>[ ] To explore</li>
+</ul></li>
+<li>[ ] ADES for map of rock types
+<ul>
+<li><a href="http://www.ades.eaufrance.fr/" class="uri">http://www.ades.eaufrance.fr/</a></li>
+<li>[x] professional access</li>
+<li>[ ] Map of water quality and level</li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="temporal-stability-and-diversity" class="section level1">
+<h1>Temporal stability and diversity </h1>
+<div id="the-big-questions" class="section level2">
+<h2>The big questions</h2>
 <ul>
 <li>What are the effects of global changes on community stability?
 <ul>
@@ -237,8 +313,8 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <li>Are species role constant in time ? (e.g. keystone ?)</li>
 </ul>
 </div>
-<div id="reading-notes" class="section level3">
-<h3>Reading notes </h3>
+<div id="reading-notes" class="section level2">
+<h2>Reading notes </h2>
 <ul>
 <li>A lot of studies assume that the community stability facing global changes is driven by richness and its effects on population asynchrony, but other suggest that there are <strong>independant effects of forcing</strong> and <strong>richness</strong> on community stability <span class="citation">(Olivier et al., n.d.)</span>.
 <ul>
@@ -269,13 +345,12 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <ul>
 <li>Measurement: bimodality for same environmental variable <span class="citation">(Berdugo et al. 2017; Blonder et al. 2017)</span></li>
 </ul></li>
-<li><strong>Resilience</strong>: multi-dimensional notion. Capaticity of the system to keep the same relationship between population and state variables
+<li><strong>Resilience</strong>: multi-dimensional notion. Capacity of the system to keep the same relationship between population and state variables
 <ul>
 <li>Measurement:</li>
 </ul></li>
 </ul></li>
 </ul>
-</div>
 </div>
 <div id="fish-data-information" class="section level2">
 <h2>Fish Data information</h2>
@@ -425,6 +500,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 </ul></li>
 </ol></li>
 </ul>
+</div>
 </div>
 </div>
 </div>

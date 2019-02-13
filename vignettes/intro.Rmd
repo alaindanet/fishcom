@@ -48,13 +48,17 @@ According to the postdoc advertisement:
     - [x] local network: `../R/local_network_build.R`
     - [x] network methods:
       - [x] connectance, average trophic level, richness
+      - [ ] beautiful plots
+	- [ ] colored node by species
+	- [ ] node size according to biomass 
+	  - [ ] compute biomass by node
       - [ ] nestedness, trophic length, modularity, trophic group:
 	- [ ] nestedness: Bastolla et al. (2009): should compute it 
 	- [ ] trophic length: netIndices
 	- [ ] modularity: igraph
 	- [ ] trophic group: NetIndices?
-    - [x] network analysis:
-      - [x] variance of the biomass series 
+    - [ ] network analysis:
+      - [ ] compute above network indices 
 - [ ] Assess quality of the dataset:
   - [ ] When new data, cf Edeline filtering methods
   - [ ] Add `point_big_mil` and `partial_over_be`

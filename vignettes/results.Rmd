@@ -82,6 +82,7 @@ net_graph <- select(net_ex, from, to, year) %>%
 plot_grid(plotlist = net_graph[1:4,]$net_graph)
 plot_grid(net_graph[1, ]$net_graph[[1]])
 my <- set_color_species(lay)
+net_graph[1,]$data
 ```
 
 # Biomass and network 
