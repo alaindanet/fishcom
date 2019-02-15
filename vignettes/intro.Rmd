@@ -62,7 +62,9 @@ According to the postdoc advertisement:
     - [ ] network analysis:
       - [ ] compute above network indices 
     - [ ] community methods:
-      - [ ] Compute temporal beta-diversity
+      - [x] Compute temporal beta-diversity
+      - [ ] create community_analysis with richness, species abundance & biomass
+      - [ ] create community_metrics with mean_richness, cv_richness, cv_biomass, mean_biomass, beta_div
 - [ ] Assess quality of the dataset:
   - [ ] When new data, cf Edeline filtering methods
   - [ ] Add `point_big_mil` and `partial_over_be`
