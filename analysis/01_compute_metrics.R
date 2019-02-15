@@ -93,3 +93,69 @@ weight_analysis <- length_analysis %>%
 # length is given in milimeters
 
 devtools::use_data(weight_analysis, overwrite = TRUE)
+
+######################
+#  Community metric  #
+######################
+library(vegan)
+# Caution: Here the richness of the community is different from the richness of
+# the network beacause we do not have basal nodes.
+#
+
+# Get station and  
+data(length_analysis)
+data(op_analysis)
+op_analysis %<>%
+  select(opcod, station, year)
+length_analysis %<>%
+  group_by(opcod, species) %>%
+  summarise(nind = n()) %>%
+  left_join(., op_analysis, by = "opcod")
+com <- length_analysis %>%
+  group_by(station) %>%
+  select(-opcod) %>%
+  nest()
+
+com %<>%
+  mutate(
+    com = map2(data, station, function(x, y) {
+      message(sprintf('Station %s', y))
+      com_matrix <- x %>%
+    rowid_to_column() %>%
+    spread(species, nind) %>%
+    select(-rowid) %>%
+    group_by(year) %>%
+    summarise_all(funs(sum(., na.rm =TRUE))) %>%
+    ungroup() %>%
+    select(-year) %>%
+    as.matrix()
+  com_matrix
+}
+    )
+  )
+
+# Compute beta-diversity 
+
+# Here I take the overall mean of differences between years but could be an idea
+# to consider the mean of dissimilarity year to year (i.e. the diagonal values)
+com %<>%
+  mutate(
+    betadiv = map_dbl(com, function(com){
+      vegdist(com, method = "bray", binary = FALSE) %>% mean
+    })
+  )
+# Compute mean and cv of richness
+com$richness <- map(com$data, function(x){
+  x %<>% group_by(year) %>%
+    summarise(richness = n())
+
+  list(mean = mean(x$richness), cv = mean(x$richness) / sd(x$richness))
+  })
+com %<>% mutate(
+  mean_richness = map_dbl(richness, "mean"),
+  cv_richness = map_dbl(richness, "cv")
+) %>%
+  select(-com, -richness)
+
+community_metrics <- com
+devtools::use_data(community_metrics, overwrite = TRUE)

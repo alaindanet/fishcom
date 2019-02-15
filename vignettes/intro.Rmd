@@ -41,7 +41,7 @@ According to the postdoc advertisement:
 
 ## Immediate objectives (end of December)
 
-- [ ] Re-run willem analysis
+- [x] Re-run willem analysis
   - [ ] Function structure:
     - [x] cleaning: `../data-raw/clean_fish_op_data.R`
     - [x] metaweb build: `../R/metaweb_build.R`
@@ -49,16 +49,20 @@ According to the postdoc advertisement:
     - [x] network methods:
       - [x] connectance, average trophic level, richness
       - [ ] beautiful plots
-	- [ ] colored node by species
+	- [x] colored node by species
 	- [ ] node size according to biomass 
-	  - [ ] compute biomass by node
+	  - [x] compute biomass by node
+	  - [ ] connect biomass to graph plot
       - [ ] nestedness, trophic length, modularity, trophic group:
-	- [ ] nestedness: Bastolla et al. (2009): should compute it 
-	- [ ] trophic length: netIndices
-	- [ ] modularity: igraph
-	- [ ] trophic group: NetIndices?
+	- [x] nestedness: Bastolla et al. (2009): should compute it 
+	- [x] trophic length: netIndices
+	- [x] modularity: netcarto  
+	- [x] compartment: NetIndices
+	- [ ] trophic group: [cf legendre website](https://www.biologie.ens.fr/~legendre/n_w/n_w.html) 
     - [ ] network analysis:
       - [ ] compute above network indices 
+    - [ ] community methods:
+      - [ ] Compute temporal beta-diversity
 - [ ] Assess quality of the dataset:
   - [ ] When new data, cf Edeline filtering methods
   - [ ] Add `point_big_mil` and `partial_over_be`
@@ -66,9 +70,9 @@ According to the postdoc advertisement:
   - [ ] Temperature data
   - [ ] temporal pollution data (cf Colin, FIRE meeting)
   - [x] ONDE for etiage: from 2012 to 2018 
-  - [ ] ROE for obstacle:
+  - [x] ROE for obstacle:
     - [ ] To explore
-  - [ ] ADES for map of rock types 
+  - [x] ADES for map of rock types 
     - http://www.ades.eaufrance.fr/
     - [x] professional access
     - [ ] Map of water quality and level
