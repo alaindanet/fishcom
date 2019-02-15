@@ -4,10 +4,11 @@
 \alias{build_metaweb}
 \title{Metaweb building}
 \usage{
-build_metaweb(data, species, size, pred_win, fish_diet_shift, low_bound,
-  upper_bound, fish, resource_diet_shift, class_method = "quantile",
-  nb_class = 9, pred_win_method = "midpoint", na.rm = FALSE,
-  replace_min_by_one = FALSE, fish_resource_method = "overlap")
+build_metaweb(data, species, size, pred_win, beta_min, beta_max,
+  fish_diet_shift, low_bound, upper_bound, fish, resource_diet_shift,
+  class_method = "quantile", nb_class = 9, pred_win_method = "midpoint",
+  na.rm = FALSE, replace_min_by_one = FALSE,
+  fish_resource_method = "overlap")
 }
 \arguments{
 \item{data}{a dataframe containing species and size variable}
@@ -18,6 +19,10 @@ build_metaweb(data, species, size, pred_win, fish_diet_shift, low_bound,
 
 \item{pred_win}{data.frame containing species and the predation window
 parameters (\alpha and \beta).}
+
+\item{beta_min}{column name containing beta_min parameters}
+
+\item{beta_max}{column name contains beta_max parameters}
 
 \item{class_method}{character percentile or quantile. Default to percentile.}
 

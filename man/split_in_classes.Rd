@@ -4,7 +4,8 @@
 \alias{split_in_classes}
 \title{Split in classes}
 \usage{
-split_in_classes(to_class, class_method = "quantile", nb_class = 9)
+split_in_classes(to_class, class_method = "quantile", nb_class = 9,
+  round_limits = TRUE)
 }
 \arguments{
 \item{to_class}{a numeric vector}
@@ -12,6 +13,8 @@ split_in_classes(to_class, class_method = "quantile", nb_class = 9)
 \item{class_method}{character percentile or quantile. Default to percentile.}
 
 \item{nb_class}{integer number of size class to create. Default to 9.}
+
+\item{round_limits}{logical Does the class limits should be rounded ?.}
 }
 \description{
 Split in classes

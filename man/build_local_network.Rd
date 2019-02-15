@@ -4,13 +4,10 @@
 \alias{build_local_network}
 \title{Local network building}
 \usage{
-build_local_network(metaweb, classes, data, species, var, group_var)
+build_local_network(data, species, var, group_var, metaweb, classes = NULL,
+  ...)
 }
 \arguments{
-\item{metaweb}{an object created by the build_metaweb function.}
-
-\item{classes}{data.frame created by the compute_classes function.}
-
 \item{data}{a data.frame containing species and size variable.}
 
 \item{species}{data.frame containing species and the predation window.}
@@ -18,6 +15,8 @@ build_local_network(metaweb, classes, data, species, var, group_var)
 \item{var}{variable characterizing the size.}
 
 \item{group_var}{variable characterizing different communities.}
+
+\item{classes}{data.frame created by the compute_classes function.}
 }
 \value{
 data.frame containing local network code and interaction matrix.

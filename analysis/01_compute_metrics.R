@@ -15,6 +15,7 @@ devtools::load_all()
 
 library(NetIndices)
 library(furrr)
+options(mc.cores = 3)
 library(tictoc)
 
 data(network_analysis)
@@ -24,20 +25,25 @@ plan(multiprocess)
 network_analysis %<>%
   mutate(
     network = future_map(network, igraph::graph_from_data_frame, directed = TRUE),
+    modul_group = future_map(network, igraph::cluster_spinglass),
     network = future_map(network, igraph::as_adjacency_matrix, sparse = FALSE),
     metrics = future_map(network, NetIndices::GenInd)
     )
 toc()
 #with parallel: 158 sec
 #without parallel: 217 sec
+network_analysis %>%
+  mutate(modul_guimera = future_map(network, rnetcarto::netcarto))
+
 network_analysis %<>%
   mutate(
     connectance = map_dbl(metrics, "C"),
-    richness = map_dbl(metrics, "N"),
+    nbnode = map_dbl(metrics, "N"),
     compartiment = map_dbl(metrics, "Cbar"),
     troph_level = future_map(network, NetIndices::TrophInd),
-    troph_level2 = map(troph_level, "TL"),
-    troph_length = map_dbl(troph_level2, max)
+    troph_level = map(troph_level, "TL"),
+    troph_level_avg = map(troph_level, mean),
+    troph_length = map_dbl(troph_level, max)
   )
 
 network_analysis[1,]$troph_level2[[1]]
