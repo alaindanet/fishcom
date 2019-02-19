@@ -1,0 +1,128 @@
+################################################################################
+#                           Compute network metrics                            #
+################################################################################
+
+
+# Dep 
+library(tidyverse)
+library(magrittr)
+library(igraph)
+devtools::load_all()
+
+#########################################
+#  Add node biomass and node abundance  #
+#########################################
+
+
+# Load
+data(weight_analysis)
+data(metaweb_analysis)
+# compute weight by node and by opcod
+weight_analysis %<>% assign_size_class(., species, var = length,
+  classes = metaweb_analysis$size_class) %>%
+  unite(sp_class, species, class_id, sep = "_") %>%
+  dplyr::select(opcod, sp_class, weight)
+# Get abundance class
+abundance <- weight_analysis %>%
+  group_by(opcod, sp_class) %>% 
+  summarise(nind = n())
+
+# Get biomass by op
+data(op_analysis)
+st_timing <- op_analysis %>%
+  dplyr::select(opcod, station, year, month) %>%
+  unite(year_month, year, month, sep = "-") %>%
+  mutate(times = ymd(paste0(year_month, "-01"))) %>%
+  dplyr::select(-year_month)
+rm(op_analysis)
+
+# Sum biomass by op
+biomass <- left_join(weight_analysis, st_timing, by = "opcod") %>%
+  group_by(opcod, station, times) %>%
+  nest()
+
+# Associate biomass to network 
+data(network_analysis)
+biomass_node <- weight_analysis %>%
+  group_by(opcod, sp_class) %>%
+  summarise(biomass = sum(weight))
+network_composition <-
+  left_join(abundance, biomass_node, by = c("opcod", "sp_class")) %>%
+  group_by(opcod) %>%
+  nest(.key = composition)
+network_analysis <-
+  left_join(network_analysis, network_composition, by = "opcod")
+
+devtools::use_data(network_analysis, overwrite = TRUE)
+
+#####################
+#  Network metrics  #
+#####################
+
+library(NetIndices)
+library(furrr)
+options(mc.cores = 3)
+library(tictoc)
+
+data(network_analysis)
+
+tic()
+plan(multiprocess)
+network_analysis %<>%
+  mutate(
+    network = future_map(network, igraph::graph_from_data_frame, directed = TRUE),
+    network = future_map(network, igraph::as_adjacency_matrix, sparse = FALSE),
+    metrics = future_map(network, NetIndices::GenInd)
+    )
+toc()
+#with parallel: 158 sec
+#without parallel: 217 sec
+
+# Compute nestedness et modularity: 
+network_analysis %<>%
+  mutate(
+  nestedness = future_map_dbl(network, nestedness),
+  modul_guimera = future_map(network, rnetcarto::netcarto)
+  )
+
+test <- network_analysis %>%
+  mutate(
+  is_sym = future_map_lgl(network, function (x) nrow(x) == ncol(x))
+  )
+
+network_analysis %<>%
+  mutate(
+    connectance = map_dbl(metrics, "C"),
+    nbnode = map_dbl(metrics, "N"),
+    compartiment = map_dbl(metrics, "Cbar"),
+    troph_level = future_map(network, NetIndices::TrophInd),
+    troph_level = map(troph_level, "TL"),
+    troph_level_avg = map_dbl(troph_level, mean),
+    troph_length = map_dbl(troph_level, max),
+    modularity = map_dbl(modul_guimera, 2),
+  )
+rownames(network_analysis[1, ]$network[[1]]) %>% get_species %>% unique
+
+network_metrics <- network_analysis %>%
+  dplyr::select(-network, -community, -metrics, -troph_level)
+devtools::use_data(network_metrics, overwrite = TRUE)
+rm(list = ls())
+
+######################################
+#  Temporal network characteristics  #
+######################################
+
+data(network_metrics)
+data(op_analysis)
+op_analysis %<>%
+  select(opcod, station, year)
+to_be_summarized <- c("nestedness", "connectance", "nbnode", "compartiment", "mean_troph_level", "max_troph_level", "modularity")
+com <- left_join(network_metrics, op_analysis, by = "opcod") %>%
+  group_by(station) %>%
+  rename(mean_troph_level = troph_level_avg,
+    max_troph_level = troph_length) %>%
+  summarise_at(to_be_summarized,
+    funs(avg = mean, cv = sd(.) / mean(.)))
+
+temporal_network_metrics <- com
+devtools::use_data(temporal_network_metrics, overwrite = TRUE)
