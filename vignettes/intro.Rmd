@@ -61,6 +61,7 @@ According to the postdoc advertisement:
 	- [ ] trophic group: [cf legendre website](https://www.biologie.ens.fr/~legendre/n_w/n_w.html) 
     - [ ] network analysis:
       - [ ] compute above network indices 
+      - [ ] null model for nestedness
     - [ ] community methods:
       - [x] Compute temporal beta-diversity
       - [ ] create community_analysis with richness, species abundance & biomass
@@ -77,7 +78,7 @@ According to the postdoc advertisement:
   - [x] ADES for map of rock types 
     - http://www.ades.eaufrance.fr/
     - [x] professional access
-    - [ ] Map of water quality and level
+    - [ ] Map of water quality and level 
 
 # Temporal stability and diversity 
 
@@ -122,6 +123,8 @@ According to the postdoc advertisement:
   - **Resilience**: multi-dimensional notion. Capacity of the system to keep the
     same relationship between population and state variables
     - Measurement:
+
+# Fish data and network construction
 
 ## Fish Data information
 
