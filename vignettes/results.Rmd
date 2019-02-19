@@ -79,38 +79,73 @@ net_graph <- select(net_ex, from, to, year) %>%
     net_graph = pmap(list(net = data, title = year), 
     set_layout_graph, glay = lay, color_scale = set_color_species(lay))
   )
-plot_grid(plotlist = net_graph[1:4,]$net_graph)
+## Get legend
+species_colour_legend <- get_legend(net_graph[1,]$net_graph[[1]])
+## Remove legend in the other plots
+net_graph %<>%
+  mutate(net_graph = map(net_graph, function(x) x + theme(legend.position = "none")))
+plot_grid(plotlist = net_graph[1:4,]$net_graph,
+species_colour_legend)
 plot_grid(net_graph[1, ]$net_graph[[1]])
-my <- set_color_species(lay)
-net_graph[1,]$data
 ```
 
-# Biomass and network 
+# Correlation between network indices
+
+```{r}
+# Get network metrics
+data(temporal_network_metrics)
+data(temporal_community_metrics)
+cor_avg <- temporal_network_metrics %>%
+  select_at(vars(matches("avg"))) %>%
+  cor()
+knitr::kable(cor_avg)
+```
+
+```{r}
+cor_cv <- temporal_network_metrics %>%
+  select_at(vars(matches("cv"))) %>%
+  cor()
+knitr::kable(cor_cv)
+```
+
+
+# Classic biomass and community
+
+```{r}
+biomass_com <- temporal_community_metrics %>%
+  select(richness_avg, biomass_cv, richness_cv) %>%
+  gather(type, richness, richness_avg, richness_cv)
+formula <- y ~ x #needed for stat_poly_eq
+qplot(richness, biomass_cv, data =  biomass_com, geom = "point") +
+  facet_grid(cols = vars(type), labeller = label, scales = "free_x") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(x = "richness", y = "biomass_cv")
+```
+
+# Biomass and network structure
 
 ```{r, fig.dim = c(7,7) }
-# Get network metrics
-data(biomass_analysis)
-cv <- left_join(network_metrics, biomass_analysis, by = "opcod") %>%
-  gather(metrics, values, connectance, richness, biomass) %>%
-  group_by(station, metrics) %>%
-  summarise(
-    cv = sd(values) / mean(values),
-    avg = mean(values)
-  )
-
 # plot
-faceted_cv <- dplyr::select(cv, - avg) %>%
-  spread(metrics, cv) %>%
-  gather(network_metrics, values, connectance, richness)
+avg_network <- temporal_network_metrics %>%
+  select_at(vars(matches("avg|station")))
+biomass_cv_station <- temporal_community_metrics %>%
+  select(station, biomass_cv)
+cv_biomass_net_avg <- left_join(avg_network, biomass_cv_station) %>%
+  gather(metrics, values, colnames(select_at(., vars((matches("avg")))))) %>%
+  mutate(metrics = str_replace(metrics, "_avg", "")) %>%
+  filter(metrics != "nbnode")
+
+# TODO: think about not facetting (list of plots ?)
 # Facet label:
-label <- as_labeller(c(
-    connectance = "Connectance",
-    richness = "Number of nodes"
-    ))
 formula <- y ~ x #needed for stat_poly_eq
-p <- ggplot(faceted_cv, aes(y = biomass, x = values)) +
+p <- ggplot(cv_biomass_net_avg, aes(y = biomass_cv, x = values)) +
   geom_point() +
-  facet_grid(cols = vars(network_metrics), labeller = label) +
+  facet_grid(vars(metrics), scales = "free_x") +
   geom_smooth(method = 'lm') +
   stat_poly_eq(
     formula = formula,
@@ -121,35 +156,9 @@ p <- ggplot(faceted_cv, aes(y = biomass, x = values)) +
     x = "CV of the network indices",
     y = "CV of the community biomass"
   )
-faceted_cv_avg <- gather(cv, mesurements, values, cv, avg) %>%
-  filter(
-    metrics == "biomass" & mesurements == "cv" |
-    metrics %in% c("connectance", "richness") & mesurements == "avg"
-  )
-faceted_cv_avg <- left_join(
-  filter(faceted_cv_avg, metrics == "biomass") %>%
-    spread(mesurements, values) %>% spread(metrics, cv),
-  filter(faceted_cv_avg, metrics != "biomass") %>%
-    spread(mesurements, values) %>% spread(metrics, avg),
-  by = "station"
-) %>%
-  gather(network_metrics, values, connectance, richness)
-formula <- y ~ x #needed for stat_poly_eq
-p2 <- ggplot(faceted_cv_avg,
-  aes(y = biomass, x = values)) +
-  geom_point() +
-  facet_grid(cols = vars(network_metrics), labeller = label, scales = "free_x") +
-  geom_smooth(method = 'lm') +
-  stat_poly_eq(
-    formula = formula,
-    eq.with.lhs = "italic(hat(y))~`=`~",
-    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
-    parse = TRUE) +
-  labs(
-    x = "Average of the network indices",
-    y = "CV of the community biomass"
-  )
 
+
+p
 plot_grid(p, p2, ncol = 1, labels = "AUTO")
 
 ```

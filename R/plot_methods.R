@@ -145,3 +145,35 @@ theme_alain <- function(){
     plot.margin = unit(c(.5, .5, .5, .5), "cm")
     )
 }
+xylabs <- function (...) {
+  dots <- pryr::named_dots(...)
+  dots <- map(dots, eval) %>% unlist
+
+  lab_list <- list(
+    del = expression(bold(paste("Fraction of global dispersal (", delta, ")"))),
+    biomass_cv = paste("CV of biomass"),
+    biomass_avg = paste("Average biomass (g)"),
+    richness = paste("Species richness"),
+    richness_cv = paste("CV of richness"),
+    richness_avg = paste("Average richness"),
+    connectance_avg = paste("Average connectance"),
+    connectance_cv = paste("CV of connectance")
+    )
+  
+  lab_used <- lab_list[dots]
+  names(lab_used) <- names(dots)
+
+  labs(
+    x = lab_used["x"][[1]],
+    y = lab_used["y"][[1]]
+    )
+}
+
+mylabel <- function(){
+ as_labeller(c(
+    connectance = "Connectance",
+    richness = "Number of nodes",
+    richness_cv = "CV",
+    richness_avg = "Average"
+    ))
+}
