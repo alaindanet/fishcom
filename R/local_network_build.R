@@ -145,11 +145,14 @@ assign_size_class <- function (data, species, var, classes) {
 #'
 get_size_class <- function (data, species_name, var, classes) {
   
-  species_name <- rlang::enquo(species_name)
   var <- rlang::enquo(var)
+  species_name <- rlang::enquo(species_name)
 
   #Get species classes
-  classes %<>% dplyr::filter(species == rlang::quo_name(species_name)) %>%
+  if (!rlang::quo_is_null(species_name)) {
+  classes %<>% dplyr::filter(species == rlang::quo_name(species_name))
+  }
+  classes %<>%
   dplyr::select(lower, upper)
 
   # Get species size

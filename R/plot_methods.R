@@ -157,7 +157,8 @@ xylabs <- function (...) {
     richness_cv = paste("CV of richness"),
     richness_avg = paste("Average richness"),
     connectance_avg = paste("Average connectance"),
-    connectance_cv = paste("CV of connectance")
+    connectance_cv = paste("CV of connectance"),
+    diversity = paste("Diversity")
     )
   
   lab_used <- lab_list[dots]
@@ -169,11 +170,12 @@ xylabs <- function (...) {
     )
 }
 
-mylabel <- function(){
+mylabel <- function() {
  as_labeller(c(
     connectance = "Connectance",
     richness = "Number of nodes",
     richness_cv = "CV",
-    richness_avg = "Average"
+    richness_avg = "Average",
+    betadiv = expression(bold(paste(beta, "-diversity", sep = "")))
     ))
 }
