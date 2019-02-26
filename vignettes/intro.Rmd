@@ -53,11 +53,14 @@ According to the postdoc advertisement:
 	- [ ] node size according to biomass 
 	  - [x] compute biomass by node
 	  - [ ] connect biomass to graph plot
+	- [ ] plot "tableau de bord"
+	  - [ ] réseau + some information
       - [/] nestedness, trophic length, modularity, trophic group:
-	- [x] nestedness: Bastolla et al. (2009): should compute it 
+	- [x] nestedness: Bastolla et al. (2009): should compute it
 	- [x] trophic length: netIndices
 	- [x] modularity: netcarto  
 	- [x] compartment: NetIndices
+	- [ ] compute betalink: [ingnacio bartomeus](https://github.com/ibartomeus/betalink/tree/new_features)
 	- [ ] trophic group: [cf legendre website](https://www.biologie.ens.fr/~legendre/n_w/n_w.html) 
     - [ ] network analysis:
       - [ ] compute above network indices
@@ -67,15 +70,17 @@ According to the postdoc advertisement:
       - [ ] null models everywhere ?
     - [ ] community methods:
       - [x] Compute temporal beta-diversity
+      - [ ] compute turnover, rank shift, rate of change
       - [x] create community_analysis with richness, species abundance & biomass
       - [x] create community_metrics with mean_richness, cv_richness, cv_biomass, mean_biomass, beta_div
-- [ ] Get bassin data (collab with Christophe Gireaud and Solène Thépaud):
-  - [ ] Determine the two most abundant species
-  - [ ] Get stations for a bassin
-  - [ ] Send river data and abundance data for the two species  
+- [x] Get bassin data (collab with Christophe Gireaud and Solène Thépaud):
+  - [x] Determine the two most abundant species
+  - [x] Get stations for a bassin
+  - [x] Send river data and abundance data for the two species  
 - [ ] Assess quality of the dataset:
   - [ ] When new data, cf Edeline filtering methods
   - [ ] Add `point_big_mil` and `partial_over_be`
+  - [ ] select data after 1995 only?
 - [ ] Assess availability of environmental data
   - [ ] Temperature data
   - [ ] temporal pollution data (cf Colin, FIRE meeting)

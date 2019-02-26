@@ -142,8 +142,16 @@ com <- left_join(community_metrics, op_analysis, by = c("opcod")) %>%
   group_by(station) %>%
   select(station, richness, nind, biomass) %>%
   summarise_at(c("richness", "nind", "biomass"),
-    funs(avg = mean, cv = sd(.) / mean(.)))
+    funs(avg = mean, cv = sd(.) / mean(.), med = median, stab = mean(.) / sd(.)))
 
 com <- left_join(com, select(betadiv, station, betadiv), by = "station")
+
+# Strange biomass cv: 
+filter(com, biomass_cv > 1.2)
+left_join(community_metrics, op_analysis, by = c("opcod")) %>%
+  filter(station == 1706)
+filter(community_analysis, opcod == 4223)
+# There was 57 ANG, and pretty big ones!
+
 temporal_community_metrics <- com
 devtools::use_data(temporal_community_metrics, overwrite = TRUE)

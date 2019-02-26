@@ -121,13 +121,26 @@ as.data.frame(round(cor_cv,2)) %>%
   kable(format = "html", escape = F)
 ```
 
+```{r}
+cor_med <- temporal_network_metrics %>%
+  select_at(vars(matches("med"))) %>%
+  cor()
+as.data.frame(round(cor_med,2)) %>%
+  mutate_all(funs(cell_spec(., "html", color = ifelse(abs(.) > .65 & . != 1, "red",
+	  "black")))) %>%
+  mutate(variable = colnames(.)) %>%
+  select(variable, everything()) %>%
+  kable(format = "html", escape = F)
+```
+
+
 
 # Classic biomass and community
 
 ```{r}
 biomass_com <- temporal_community_metrics %>%
-  select(richness_avg, biomass_cv, richness_cv, betadiv) %>%
-  gather(type, diversity, richness_avg, richness_cv, betadiv)
+  select(richness_avg, biomass_cv, richness_cv, richness_med, betadiv) %>%
+  gather(type, diversity, richness_avg, richness_med, richness_cv, betadiv)
 formula <- y ~ x #needed for stat_poly_eq
 qplot(diversity, biomass_cv, data =  biomass_com, geom = "point") +
   facet_grid(cols = vars(type), labeller = mylabel(), scales = "free_x") +
@@ -145,12 +158,12 @@ qplot(diversity, biomass_cv, data =  biomass_com, geom = "point") +
 ```{r,}
 # plot
 avg_network <- temporal_network_metrics %>%
-  select_at(vars(matches("avg|station")))
+  select_at(vars(matches("med|station")))
 biomass_cv_station <- temporal_community_metrics %>%
   select(station, biomass_cv)
 cv_biomass_net_avg <- left_join(avg_network, biomass_cv_station) %>%
-  gather(metrics, values, colnames(select_at(., vars((matches("avg")))))) %>%
-  mutate(metrics = str_replace(metrics, "_avg", "")) %>%
+  gather(metrics, values, colnames(select_at(., vars((matches("med")))))) %>%
+  mutate(metrics = str_replace(metrics, "_med", "")) %>%
   filter(metrics != "nbnode")
 
 # TODO: think about not facetting (list of plots ?)

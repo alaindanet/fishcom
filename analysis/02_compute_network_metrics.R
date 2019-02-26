@@ -7,6 +7,9 @@
 library(tidyverse)
 library(magrittr)
 library(igraph)
+library(furrr)
+options(mc.cores = 3)
+library(tictoc)
 devtools::load_all()
 
 #########################################
@@ -84,9 +87,6 @@ devtools::use_data(network_analysis, overwrite = TRUE)
 #####################
 
 library(NetIndices)
-library(furrr)
-options(mc.cores = 3)
-library(tictoc)
 
 data(network_analysis)
 
@@ -132,6 +132,41 @@ network_metrics <- network_analysis %>%
 devtools::use_data(network_metrics, overwrite = TRUE)
 rm(list = ls())
 
+#####################################
+#  Compute further network_indices  #
+#####################################
+# Compute betalink, motif distribution
+library(betalink)
+data(network_analysis)
+data(op_analysis)
+
+net <- left_join(network_analysis, select(op_analysis, opcod, station, year)) %>%
+  ungroup()
+
+## Get network as matrices
+net %<>%
+  mutate(
+    network = map2(network, station, function(x, y) {
+      message(sprintf('Station %s', y))
+      igraph::graph_from_data_frame(x, directed = TRUE)
+}
+))
+## betalink:
+plan(multiprocess)
+net %<>%
+  group_by(station) %>%
+  nest() %>%
+  mutate(betal = map2(data, station,
+      function (data, station) {
+      message(sprintf("Station %s", station))
+      network_betadiversity(data$network)
+      }
+      )
+  )
+
+# Motif
+
+
 ######################################
 #  Temporal network characteristics  #
 ######################################
@@ -141,13 +176,14 @@ data(op_analysis)
 op_analysis %<>%
   select(opcod, station, year)
 to_be_summarized <- c("nestedness", "connectance", "nbnode", "compartiment",
-  "mean_troph_level", "max_troph_level", "modularity") com <-
+  "mean_troph_level", "max_troph_level", "modularity")
+com <-
     left_join(network_metrics, op_analysis, by = "opcod") %>%
   group_by(station) %>%
   rename(mean_troph_level = troph_level_avg,
     max_troph_level = troph_length) %>%
   summarise_at(to_be_summarized,
-    funs(avg = mean, cv = sd(.) / mean(.)))
+    funs(avg = mean, cv = sd(.) / mean(.), med = median))
 
 temporal_network_metrics <- com
 devtools::use_data(temporal_network_metrics, overwrite = TRUE)
