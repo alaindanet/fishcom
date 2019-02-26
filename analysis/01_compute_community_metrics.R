@@ -132,7 +132,7 @@ com %<>%
 betadiv <- com %>%
   mutate(
     betadiv = map_dbl(com, function(com){
-      vegdist(com, method = "bray", binary = FALSE) %>% mean
+      vegan::vegdist(com, method = "bray", binary = FALSE) %>% mean
     })
   )
 
@@ -145,6 +145,5 @@ com <- left_join(community_metrics, op_analysis, by = c("opcod")) %>%
     funs(avg = mean, cv = sd(.) / mean(.)))
 
 com <- left_join(com, select(betadiv, station, betadiv), by = "station")
-
 temporal_community_metrics <- com
 devtools::use_data(temporal_community_metrics, overwrite = TRUE)

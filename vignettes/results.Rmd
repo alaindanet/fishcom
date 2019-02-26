@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 library(tidyverse)
 library(ggpmisc)
 library(cowplot)
+library(kableExtra)
 library(magrittr)
 library(igraph)
 library(NetIndices)
@@ -98,14 +99,26 @@ data(temporal_community_metrics)
 cor_avg <- temporal_network_metrics %>%
   select_at(vars(matches("avg"))) %>%
   cor()
-knitr::kable(cor_avg)
+#knitr::kable(cor_avg)
+as.data.frame(round(cor_avg,2)) %>%
+  mutate_all(funs(cell_spec(., "html", color = ifelse(abs(.) > .65 & . != 1, "red",
+	  "black")))) %>%
+  mutate(variable = colnames(.)) %>%
+  select(variable, everything()) %>%
+  kable(format = "html", escape = F)
+
 ```
 
 ```{r}
 cor_cv <- temporal_network_metrics %>%
   select_at(vars(matches("cv"))) %>%
   cor()
-knitr::kable(cor_cv)
+as.data.frame(round(cor_cv,2)) %>%
+  mutate_all(funs(cell_spec(., "html", color = ifelse(abs(.) > .65 & . != 1, "red",
+	  "black")))) %>%
+  mutate(variable = colnames(.)) %>%
+  select(variable, everything()) %>%
+  kable(format = "html", escape = F)
 ```
 
 
@@ -113,23 +126,23 @@ knitr::kable(cor_cv)
 
 ```{r}
 biomass_com <- temporal_community_metrics %>%
-  select(richness_avg, biomass_cv, richness_cv) %>%
-  gather(type, richness, richness_avg, richness_cv)
+  select(richness_avg, biomass_cv, richness_cv, betadiv) %>%
+  gather(type, diversity, richness_avg, richness_cv, betadiv)
 formula <- y ~ x #needed for stat_poly_eq
-qplot(richness, biomass_cv, data =  biomass_com, geom = "point") +
-  facet_grid(cols = vars(type), labeller = label, scales = "free_x") +
+qplot(diversity, biomass_cv, data =  biomass_com, geom = "point") +
+  facet_grid(cols = vars(type), labeller = mylabel(), scales = "free_x") +
   geom_smooth(method = 'lm') +
   stat_poly_eq(
     formula = formula,
     eq.with.lhs = "italic(hat(y))~`=`~",
     aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
     parse = TRUE) +
-  xylabs(x = "richness", y = "biomass_cv")
+  xylabs(x = "diversity", y = "biomass_cv")
 ```
 
 # Biomass and network structure
 
-```{r, fig.dim = c(7,7) }
+```{r,}
 # plot
 avg_network <- temporal_network_metrics %>%
   select_at(vars(matches("avg|station")))
@@ -145,7 +158,7 @@ cv_biomass_net_avg <- left_join(avg_network, biomass_cv_station) %>%
 formula <- y ~ x #needed for stat_poly_eq
 p <- ggplot(cv_biomass_net_avg, aes(y = biomass_cv, x = values)) +
   geom_point() +
-  facet_grid(vars(metrics), scales = "free_x") +
+  facet_grid(cols = vars(metrics), scales = "free_x") +
   geom_smooth(method = 'lm') +
   stat_poly_eq(
     formula = formula,
@@ -153,13 +166,10 @@ p <- ggplot(cv_biomass_net_avg, aes(y = biomass_cv, x = values)) +
     aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
     parse = TRUE) +
   labs(
-    x = "CV of the network indices",
+    x = "Average of the network indices",
     y = "CV of the community biomass"
   )
-
-
 p
-plot_grid(p, p2, ncol = 1, labels = "AUTO")
 
 ```
 

@@ -45,7 +45,6 @@ station <- sf::st_as_sf(station, coords = c("ST_ABCISSE", "ST_ORDONNEE"), crs = 
 # Get the same projection than region polygon 
 data(region_polygon)
 station <- st_transform(station, st_crs(region_polygon))
-st_geometry
 plot(st_geometry(region_polygon))
 plot(station, add = TRUE, pch = 20, col = "red")
 ## Save station

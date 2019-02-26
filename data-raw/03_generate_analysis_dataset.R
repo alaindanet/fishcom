@@ -114,7 +114,6 @@ good_station_id <- good_station %>%
 length(good_station_id)
 qplot(x = freq, data = good_station, geom = "histogram")
 
-
 # For temporal analysis, we keep station followed more than 10 times
 op <- filter(op, station %in% good_station_id)
 

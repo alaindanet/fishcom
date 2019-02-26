@@ -24,7 +24,7 @@ weight_analysis %<>% assign_size_class(., species, var = length,
   dplyr::select(opcod, sp_class, weight)
 # Get abundance class
 abundance <- weight_analysis %>%
-  group_by(opcod, sp_class) %>% 
+  group_by(opcod, sp_class) %>%
   summarise(nind = n())
 
 # Get biomass by op
@@ -52,6 +52,30 @@ network_composition <-
   nest(.key = composition)
 network_analysis <-
   left_join(network_analysis, network_composition, by = "opcod")
+
+# Get biomass by trophic level
+## Compute trophic level by node
+g <- igraph::graph_from_adjacency_matrix(metaweb_analysis$metaweb,
+  mode = "directed")
+dead_material <- c("det", "biof")
+trophic_level <- TrophInd(metaweb_analysis$metaweb, Dead = dead_material) %>%
+  mutate(sp_class = colnames(metaweb_analysis$metaweb)) %>%
+  rename(troph_level = TL) %>%
+  select(sp_class, troph_level)
+trophic_class <- split_in_classes(trophic_level$troph_level, class_method = "percentile",
+  nb_class = 3, round_limits = FALSE)
+trophic_level %<>%
+  mutate(
+    group = get_size_class(trophic_level, NULL, troph_level, trophic_class)
+  )
+
+network_analysis$composition[[1]]
+
+network_analysis %<>%
+  mutate(
+  composition = map(composition, function (compo, troph_group){
+    left_join(compo, troph_group, by = "sp_class")
+}, troph_group = trophic_level))
 
 devtools::use_data(network_analysis, overwrite = TRUE)
 
@@ -116,8 +140,9 @@ data(network_metrics)
 data(op_analysis)
 op_analysis %<>%
   select(opcod, station, year)
-to_be_summarized <- c("nestedness", "connectance", "nbnode", "compartiment", "mean_troph_level", "max_troph_level", "modularity")
-com <- left_join(network_metrics, op_analysis, by = "opcod") %>%
+to_be_summarized <- c("nestedness", "connectance", "nbnode", "compartiment",
+  "mean_troph_level", "max_troph_level", "modularity") com <-
+    left_join(network_metrics, op_analysis, by = "opcod") %>%
   group_by(station) %>%
   rename(mean_troph_level = troph_level_avg,
     max_troph_level = troph_length) %>%

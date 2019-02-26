@@ -53,19 +53,26 @@ According to the postdoc advertisement:
 	- [ ] node size according to biomass 
 	  - [x] compute biomass by node
 	  - [ ] connect biomass to graph plot
-      - [ ] nestedness, trophic length, modularity, trophic group:
+      - [/] nestedness, trophic length, modularity, trophic group:
 	- [x] nestedness: Bastolla et al. (2009): should compute it 
 	- [x] trophic length: netIndices
 	- [x] modularity: netcarto  
 	- [x] compartment: NetIndices
 	- [ ] trophic group: [cf legendre website](https://www.biologie.ens.fr/~legendre/n_w/n_w.html) 
     - [ ] network analysis:
-      - [ ] compute above network indices 
+      - [ ] compute above network indices
+      - [ ] post-modularity values? @poisot_an_2013
       - [ ] null model for nestedness
+      - [ ] null model for connectance
+      - [ ] null models everywhere ?
     - [ ] community methods:
       - [x] Compute temporal beta-diversity
-      - [ ] create community_analysis with richness, species abundance & biomass
-      - [ ] create community_metrics with mean_richness, cv_richness, cv_biomass, mean_biomass, beta_div
+      - [x] create community_analysis with richness, species abundance & biomass
+      - [x] create community_metrics with mean_richness, cv_richness, cv_biomass, mean_biomass, beta_div
+- [ ] Get bassin data (collab with Christophe Gireaud and Solène Thépaud):
+  - [ ] Determine the two most abundant species
+  - [ ] Get stations for a bassin
+  - [ ] Send river data and abundance data for the two species  
 - [ ] Assess quality of the dataset:
   - [ ] When new data, cf Edeline filtering methods
   - [ ] Add `point_big_mil` and `partial_over_be`
@@ -75,7 +82,7 @@ According to the postdoc advertisement:
   - [x] ONDE for etiage: from 2012 to 2018 
   - [x] ROE for obstacle:
     - [ ] To explore
-  - [x] ADES for map of rock types 
+  - [x] ADES for map of rock types
     - http://www.ades.eaufrance.fr/
     - [x] professional access
     - [ ] Map of water quality and level 
@@ -84,7 +91,7 @@ According to the postdoc advertisement:
 
 ## The big questions
 
-- What are the effects of global changes on community stability? 
+- What are the effects of global changes on community stability?
   - What are the underlying mechanisms of the response of community stability to
     global changes?
   - Which facets of stability are affected by global changes?
@@ -103,8 +110,8 @@ According to the postdoc advertisement:
       richness)
     - Asynchrony is due to difference in response to forcing variables and/or
       changement of competitive hierarchy?
-- Most research on the subject (link forcing, stability and species richness) has been done in controlled experiment (plant,
-  mesocosm?)
+- Most research on the subject (link forcing, stability and species richness)
+  has been done in controlled experiment (plant, mesocosm?)
     - Few test in local natural population
     - Cedar Creek's experiments [@tilman_biodiversity_2014]
 - Ecology of perturbation is missing: notably its effects on abundance ?
@@ -117,12 +124,24 @@ According to the postdoc advertisement:
     - Measurement: ratio of the variable value before and after perturbation
   - **Persistance**: time length, the community stays in the same state
     - Measurement: time until a change appear after invasion of a species or a
-      loss a species 
+      loss a species
   - **Tipping point**: permanent change of system state
     - Measurement: bimodality for same environmental variable [@berdugo_plant_2017; @blonder_predictability_2017]
   - **Resilience**: multi-dimensional notion. Capacity of the system to keep the
     same relationship between population and state variables
     - Measurement:
+
+- Temporal variability and food web structure:
+  - Few studies exist [@mccann_the_2000] but some found a positive one
+
+- Motifs: [@borelli_selection_2015, @delmas_analysing_2018]
+  - subgraphs; basic building block; studying their distribution
+  - link to trophic role
+  - @holt_community_1997 defines the 13 motifs that can be encoutered in a
+    network
+  - @borelli_selection_2015 linked it to stability (eigen value of the matrix)
+
+- Dissimilary in species interaction networks: @poisot_an_2012, (code)[https://github.com/ibartomeus/betalink/tree/new_features]
 
 # Fish data and network construction
 
