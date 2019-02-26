@@ -44,7 +44,7 @@ station <- sf::st_as_sf(station, coords = c("ST_ABCISSE", "ST_ORDONNEE"), crs = 
 
 # Get the same projection than region polygon 
 data(region_polygon)
-station <- st_transform(station, st_crs(region_polygon))
+station <- st_transform(station, crs = 4326)
 plot(st_geometry(region_polygon))
 plot(station, add = TRUE, pch = 20, col = "red")
 ## Save station
@@ -55,6 +55,11 @@ st_write(station, "station_wgs84.shp")
 ############
 
 stream <- read_sf("cours_eau_shp/CoursEau_FXX.shp")
+stream <- st_transform(stream, crs = 4326)
+object.size(stream) * 10^-6
+# drop 3D layer (necessary to save in shp)
+stream <- st_zm(stream)
+write_sf(stream, "synchrony/stream_shp/stream_wgs84.shp")
 # Long time to run:
 simplestream <- rmapshaper::ms_simplify(input = sample_n(stream ,100), keep = .01) %>% 
   st_as_sf()
@@ -62,17 +67,51 @@ rm(stream)
 object.size(simplestream)
 plot(simplestream[, "gid"])
 
-################
-#  SSN object  #
-################
-# See openSTARS
-# https://github.com/MiKatt/openSTARS
+##########
+#  DEM   #
+##########
+# Get and reproject MNT according to WGS84
+
+#http://r-sig-geo.2731867.n2.nabble.com/issue-in-using-projectRaster-in-raster-library-td7586147.html
 library(raster)
+library(gdalUtils)
+
 #get MNT
 file_mnt <- "BDALTIV2/1_DONNEES_LIVRAISON_2018-01-00246/BDALTIV2_MNT_250M_ASC_LAMB93_IGN69_FRANCE/BDALTIV2_250M_FXX_0098_7150_MNT_LAMB93_IGN69.asc"
 mnt <- raster::raster(file_mnt)
 # Lambert 93: http://spatialreference.org/ref/epsg/rgf93-lambert-93/ 
 crs(mnt) <-  CRS('+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
+# Write temp correct DEM with CRS specification 
+writeRaster(mnt, "temp_dem_250m_lambert_93.tif")
+
+# Convert dem with gdal wrapper
+## Spec files and crs:
+in_mnt <- "temp_dem_250m_lambert_93.tif"
+out_mnt <- "DEM_230m_wgs84.tif"
+##http://www.spatialreference.org/ref/epsg/4326/proj4/
+crs_4326 <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+## Change projection:
+gdalwarp(
+  srcfile       = in_mnt,
+  dstfile       = out_mnt,
+  t_srs         = crs_4326,
+  output_Raster = TRUE,
+  overwrite     = TRUE,
+  multi         = TRUE,
+  #tr            = c(10,10),
+  r             = "bilinear",
+  verbose       = TRUE
+)
+file.remove("temp_dem_250m_lambert_93.tif")
+
+################
+#  SSN object  #
+################
+# See openSTARS
+# https://github.com/MiKatt/openSTARS
+
+
+mnt <- projectRaster(mnt, crs = crs_4326)
 plot(mnt)
 
 ## To continue with
