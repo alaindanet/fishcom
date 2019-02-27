@@ -18,7 +18,7 @@ data(network_metrics)
 data(op_analysis)
 op_analysis %<>%
   dplyr::select(opcod, station, year)
-to_be_summarized <- c("nestedness", "connectance", "nbnode",
+to_be_summarized <- c("nestedness", "connectance", "connectance_corrected", "nbnode",
   "mean_troph_level", "max_troph_level", "modularity")
 com <-
     left_join(network_metrics, op_analysis, by = "opcod") %>%

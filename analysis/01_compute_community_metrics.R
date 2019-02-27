@@ -83,9 +83,9 @@ com <- community_analysis %>%
 community_metrics <- com
 devtools::use_data(community_metrics, overwrite = TRUE)
 
-############################################
-#  Compute temporal community description  #
-############################################
+############################
+#  Compute beta-diversity  #
+############################
 data(community_analysis)
 data(op_analysis)
 
@@ -98,7 +98,7 @@ test <- op_analysis %>%
   ungroup %>%
   select(nb) %>%
   unlist 
-which(test >1)
+which(test > 1)
 
 op_analysis %<>%
   select(opcod, station, year)
@@ -136,8 +136,14 @@ betadiv <- com %>%
     })
   )
 
+
+############################################
+#  Compute temporal community description  #
+############################################
 # Compute mean and cv of richness
 data(community_metrics)
+data(op_analysis)
+
 com <- left_join(community_metrics, op_analysis, by = c("opcod")) %>%
   group_by(station) %>%
   select(station, richness, nind, biomass) %>%

@@ -152,11 +152,16 @@ xylabs <- function (...) {
   lab_list <- list(
     del = expression(bold(paste("Fraction of global dispersal (", delta, ")"))),
     biomass_cv = paste("CV of biomass"),
+    biomass_stab = paste("Stability of Biomass"),
     biomass_avg = paste("Average biomass (g)"),
+    nbnode = paste("Number of nodes"),
     richness = paste("Species richness"),
     richness_cv = paste("CV of richness"),
     richness_avg = paste("Average richness"),
+    richness_avg = paste("Median richness"),
+    connectance = paste("Connectance"),
     connectance_avg = paste("Average connectance"),
+    connectance_med = paste("Median connectance"),
     connectance_cv = paste("CV of connectance"),
     diversity = paste("Diversity")
     )
@@ -170,12 +175,17 @@ xylabs <- function (...) {
     )
 }
 
-mylabel <- function() {
- as_labeller(c(
+mylabel <- function(...) {
+  ggplot2::as_labeller(c(
     connectance = "Connectance",
     richness = "Number of nodes",
+    max_troph_level = "Highest trophic level",
+    mean_troph_level = "Average trophic level",
+    modularity = "Modularity",
+    nestedness = "Nestedness",
+    nbnode = "Number of nodes",
     richness_cv = "CV",
     richness_avg = "Average",
     betadiv = expression(bold(paste(beta, "-diversity", sep = "")))
-    ))
+    ), ...)
 }

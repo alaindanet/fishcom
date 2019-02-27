@@ -156,6 +156,27 @@ network_metrics <- network_analysis %>%
 devtools::use_data(network_metrics, overwrite = TRUE)
 rm(list = ls())
 
+##############################
+#  Standardized connectance  #
+##############################
+data(network_metrics)
+
+c_richness_mod <- lm(connectance ~ nbnode, network_metrics)
+summary(c_richness_mod)
+qplot(nbnode, connectance, data =  network_metrics, geom = "point") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(x = "nbnode", y = "connectance")
+# Take residuals as Morris et al. (2014)
+network_metrics$connectance_corrected <- residuals(c_richness_mod)
+
+devtools::use_data(network_metrics, overwrite = TRUE)
+rm(list = ls())
+
 ################################
 #  Compute motif distribution  #
 ################################
