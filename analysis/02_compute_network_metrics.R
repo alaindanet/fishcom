@@ -45,7 +45,6 @@ biomass <- left_join(weight_analysis, st_timing, by = "opcod") %>%
   nest()
 
 # Associate biomass to network 
-data(network_analysis)
 biomass_node <- weight_analysis %>%
   group_by(opcod, sp_class) %>%
   summarise(biomass = sum(weight))
@@ -56,29 +55,55 @@ network_composition <-
 network_analysis <-
   left_join(network_analysis, network_composition, by = "opcod")
 
+
+devtools::use_data(network_analysis, overwrite = TRUE)
+
+######################################
+#  Network biomass by trophic group  #
+######################################
+
+data(network_analysis)
+data(metaweb_analysis)
+
 # Get biomass by trophic level
 ## Compute trophic level by node
 g <- igraph::graph_from_adjacency_matrix(metaweb_analysis$metaweb,
   mode = "directed")
 dead_material <- c("det", "biof")
-trophic_level <- TrophInd(metaweb_analysis$metaweb, Dead = dead_material) %>%
+## Compute trophic level by node with metaweb
+trophic_level <- NetIndices::TrophInd(metaweb_analysis$metaweb, Dead = dead_material) %>%
   mutate(sp_class = colnames(metaweb_analysis$metaweb)) %>%
   rename(troph_level = TL) %>%
   select(sp_class, troph_level)
+summary(trophic_level)
+## Split trophic level in three classes:
 trophic_class <- split_in_classes(trophic_level$troph_level, class_method = "percentile",
   nb_class = 3, round_limits = FALSE)
+## Assign trophic group to each node  
 trophic_level %<>%
   mutate(
-    group = get_size_class(trophic_level, NULL, troph_level, trophic_class)
+    troph_group = get_size_class(trophic_level, NULL, troph_level, trophic_class)
   )
-
-network_analysis$composition[[1]]
-
+## Assign to each network its trophic group:
 network_analysis %<>%
   mutate(
   composition = map(composition, function (compo, troph_group){
     left_join(compo, troph_group, by = "sp_class")
 }, troph_group = trophic_level))
+## Sum biomass by trophic group:
+network_analysis$composition[[1]]
+network_analysis$troph_group[[2]]
+### I do this way bc of a dplyr bug with n() in nested data.frame
+network_analysis$troph_group <- map(network_analysis$composition, function(compo) {
+      compo %<>%
+	group_by(troph_group) %>%
+	summarise(
+	  biomass = sum(biomass),
+	  nbnode  = n()
+	  ) %>%
+	ungroup()
+})
+network_analysis %<>% dplyr::select(-composition)
 
 devtools::use_data(network_analysis, overwrite = TRUE)
 
@@ -123,67 +148,16 @@ network_analysis %<>%
     troph_level = map(troph_level, "TL"),
     troph_level_avg = map_dbl(troph_level, mean),
     troph_length = map_dbl(troph_level, max),
-    modularity = map_dbl(modul_guimera, 2),
+    modularity = map_dbl(modul_guimera, 2)
   )
-rownames(network_analysis[1, ]$network[[1]]) %>% get_species %>% unique
 
 network_metrics <- network_analysis %>%
   dplyr::select(-network, -community, -metrics, -troph_level)
 devtools::use_data(network_metrics, overwrite = TRUE)
 rm(list = ls())
 
-#####################################
-#  Compute further network_indices  #
-#####################################
-# Compute betalink, motif distribution
-library(betalink)
-data(network_analysis)
-data(op_analysis)
-
-net <- left_join(network_analysis, select(op_analysis, opcod, station, year)) %>%
-  ungroup()
-
-## Get network as matrices
-net %<>%
-  mutate(
-    network = map2(network, station, function(x, y) {
-      message(sprintf('Station %s', y))
-      igraph::graph_from_data_frame(x, directed = TRUE)
-}
-))
-## betalink:
-plan(multiprocess)
-net %<>%
-  group_by(station) %>%
-  nest() %>%
-  mutate(betal = map2(data, station,
-      function (data, station) {
-      message(sprintf("Station %s", station))
-      network_betadiversity(data$network)
-      }
-      )
-  )
-
-# Motif
+################################
+#  Compute motif distribution  #
+################################
 
 
-######################################
-#  Temporal network characteristics  #
-######################################
-
-data(network_metrics)
-data(op_analysis)
-op_analysis %<>%
-  select(opcod, station, year)
-to_be_summarized <- c("nestedness", "connectance", "nbnode", "compartiment",
-  "mean_troph_level", "max_troph_level", "modularity")
-com <-
-    left_join(network_metrics, op_analysis, by = "opcod") %>%
-  group_by(station) %>%
-  rename(mean_troph_level = troph_level_avg,
-    max_troph_level = troph_length) %>%
-  summarise_at(to_be_summarized,
-    funs(avg = mean, cv = sd(.) / mean(.), med = median))
-
-temporal_network_metrics <- com
-devtools::use_data(temporal_network_metrics, overwrite = TRUE)

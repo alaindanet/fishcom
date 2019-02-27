@@ -42,41 +42,43 @@ According to the postdoc advertisement:
 ## Immediate objectives (end of December)
 
 - [x] Re-run willem analysis
-  - [ ] Function structure:
-    - [x] cleaning: `../data-raw/clean_fish_op_data.R`
-    - [x] metaweb build: `../R/metaweb_build.R`
-    - [x] local network: `../R/local_network_build.R`
-    - [x] network methods:
-      - [x] connectance, average trophic level, richness
-      - [ ] beautiful plots
-	- [x] colored node by species
-	- [ ] node size according to biomass 
-	  - [x] compute biomass by node
-	  - [ ] connect biomass to graph plot
-	- [ ] plot "tableau de bord"
-	  - [ ] réseau + some information
-      - [/] nestedness, trophic length, modularity, trophic group:
-	- [x] nestedness: Bastolla et al. (2009): should compute it
-	- [x] trophic length: netIndices
-	- [x] modularity: netcarto  
-	- [x] compartment: NetIndices
-	- [ ] compute betalink: [ingnacio bartomeus](https://github.com/ibartomeus/betalink/tree/new_features)
-	- [ ] trophic group: [cf legendre website](https://www.biologie.ens.fr/~legendre/n_w/n_w.html) 
-    - [ ] network analysis:
-      - [ ] compute above network indices
-      - [ ] post-modularity values? @poisot_an_2013
-      - [ ] null model for nestedness
-      - [ ] null model for connectance
-      - [ ] null models everywhere ?
-    - [ ] community methods:
-      - [x] Compute temporal beta-diversity
-      - [ ] compute turnover, rank shift, rate of change
-      - [x] create community_analysis with richness, species abundance & biomass
-      - [x] create community_metrics with mean_richness, cv_richness, cv_biomass, mean_biomass, beta_div
+- [x] network methods:
+  - [x] connectance, average trophic level, richness
+    - [ ] beautiful plots
+      - [x] colored node by species
+      - [ ] node size according to biomass 
+        - [x] compute biomass by node
+        - [ ] connect biomass to graph plot
+      - [ ] plot "tableau de bord"
+        - [ ] réseau + some information
+    - [/] nestedness, trophic length, modularity, trophic group:
+      - [x] nestedness: Bastolla et al. (2009): should compute it
+      - [x] trophic length: netIndices
+      - [x] modularity: netcarto  
+      - [x] compartment: NetIndices
+      - [ ] compute betalink: [ingnacio bartomeus](https://github.com/ibartomeus/betalink/tree/new_features)
+      - [ ] trophic group: [cf legendre website](https://www.biologie.ens.fr/~legendre/n_w/n_w.html) 
+  - [ ] network analysis:
+    - [ ] compute above network indices
+    - [ ] post-modularity values? @poisot_an_2013
+    - [ ] null model for nestedness
+    - [ ] null model for connectance
+    - [ ] null models everywhere ?
+  - [ ] community methods:
+    - [x] Compute temporal beta-diversity
+    - [ ] compute turnover, rank shift, rate of change
+    - [x] create community_analysis with richness, species abundance & biomass
+    - [x] create community_metrics with mean_richness, cv_richness, cv_biomass, mean_biomass, beta_div
 - [x] Get bassin data (collab with Christophe Gireaud and Solène Thépaud):
-  - [x] Determine the two most abundant species
-  - [x] Get stations for a bassin
-  - [x] Send river data and abundance data for the two species  
+- [ ] Cluster:
+  - [ ] Make cluster home
+  - [ ] Install packages
+  - [ ] Erase options(mc.cores = ) in scripts
+  - [ ] bash script:
+    - git pull
+    - run scripts
+    - export output to the computer
+  - [ ] Run like a badass
 - [ ] Assess quality of the dataset:
   - [ ] When new data, cf Edeline filtering methods
   - [ ] Add `point_big_mil` and `partial_over_be`
