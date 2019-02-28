@@ -154,6 +154,7 @@ xylabs <- function (...) {
     biomass_cv = paste("CV of biomass"),
     biomass_stab = paste("Stability of Biomass"),
     biomass_avg = paste("Average biomass (g)"),
+    network_med = paste("Median of network metrics"),
     nbnode = paste("Number of nodes"),
     richness = paste("Species richness"),
     richness_cv = paste("CV of richness"),
@@ -175,7 +176,11 @@ xylabs <- function (...) {
     )
 }
 
-mylabel <- function(...) {
+###############
+#  Labellers  #
+###############
+
+mylabel <- function() {
   ggplot2::as_labeller(c(
     connectance = "Connectance",
     richness = "Number of nodes",
@@ -187,5 +192,29 @@ mylabel <- function(...) {
     richness_cv = "CV",
     richness_avg = "Average",
     betadiv = expression(bold(paste(beta, "-diversity", sep = "")))
-    ), ...)
+    ))
+}
+
+#' Troph group labeller
+#' Returns a labeller for ggplot2
+#' @param troph_class a object created by get_size_class function
+#' @return a labeller for ggplot2
+troph_group_labeller <- function (troph_class = NULL, round_lvl = 2) {
+
+  if (is.null(troph_class)) {
+    data(trophic_class)
+    troph_class <- trophic_class
+  }
+  troph_class %<>%
+    dplyr::mutate(
+      lower = paste("[", round(lower, round_lvl), sep = ""),
+      upper = paste(round(upper, round_lvl), "]", sep = "")
+      ) %>%
+  tidyr::unite(bounds, lower, upper, sep = ";") %>%
+  dplyr::rename(troph_group = class_id)
+
+  bounds <- troph_class$bounds
+  names(bounds) <- troph_class$troph_group
+  as_labeller(bounds)
+
 }

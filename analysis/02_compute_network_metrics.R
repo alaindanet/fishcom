@@ -35,7 +35,7 @@ data(op_analysis)
 st_timing <- op_analysis %>%
   dplyr::select(opcod, station, year, month) %>%
   unite(year_month, year, month, sep = "-") %>%
-  mutate(times = ymd(paste0(year_month, "-01"))) %>%
+  mutate(times = lubridate::ymd(paste0(year_month, "-01"))) %>%
   dplyr::select(-year_month)
 rm(op_analysis)
 
@@ -79,11 +79,14 @@ summary(trophic_level)
 ## Split trophic level in three classes:
 trophic_class <- split_in_classes(trophic_level$troph_level, class_method = "percentile",
   nb_class = 3, round_limits = FALSE)
+devtools::use_data(trophic_class, overwrite = TRUE)
+
 ## Assign trophic group to each node  
 trophic_level %<>%
   mutate(
     troph_group = get_size_class(trophic_level, NULL, troph_level, trophic_class)
   )
+
 ## Assign to each network its trophic group:
 network_analysis %<>%
   mutate(

@@ -185,8 +185,62 @@ p
 
 ```
 
+## Network structure and richness
+
+```{r, fig.dim = c(6, 15)}
+richness <- temporal_community_metrics %>%
+  select(station, richness_med) %>%
+  rename(richness = richness_med)
+richness_net_avg <- left_join(avg_network, richness) %>%
+  gather(metrics, values, colnames(select_at(., vars((matches("med")))))) %>%
+  mutate(metrics = str_replace(metrics, "_med", "")) %>%
+  filter(metrics != "nbnode")
+p <- ggplot(richness_net_avg, aes(y = values, x = richness)) +
+  geom_point() +
+  facet_grid(rows = vars(metrics), labeller = mylabel(), scales = "free_y") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(
+    x = "Median species richness",
+    y = "Median of the network indices"
+  )
+p
+```
+
+
 # Compartimentalization
 
-```{r}
+```{r, fig.dim = c(20, 4)}
+troph_group_labeller()
+net_troph_group <- temporal_network_metrics %>% 
+  unnest() %>%
+  mutate(troph_group = as.factor(troph_group))
+net_troph_group %<>%
+  select_at(vars(matches("_med|stab|station|troph_group"))) %>%
+  gather(metrics, values, colnames(select_at(., vars((matches("med")))))) %>%
+  mutate(metrics = str_replace(metrics, "_med", ""))
+p <- ggplot(net_troph_group, aes(y = biomass_stab, x = values, color = troph_group)) +
+  geom_point() +
+  ggplot2::scale_fill_manual(
+    labels = troph_group_labeller(),
+    values = c("blue", "green", "red"),
+    name = "Trophic level"
+    ) +
+  facet_grid(cols = vars(metrics), labeller = mylabel(), scales = "free_x") +
+  geom_smooth(method = 'lm')+
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(
+    x = "network_med",
+    y = "biomass_stab"
+  )
+p
 ```
 
