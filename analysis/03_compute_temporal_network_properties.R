@@ -57,18 +57,23 @@ check_obs <- net %>%
   summarise(nobs = n()) %>%
   mutate(enough_obs = ifelse(nobs >= 5, TRUE, FALSE))
 
+filter(biomass_variation, is.na(troph_group))
 ## Let's put values to NA when there is not enough observations:
 biomass_variation %<>%
   left_join(., check_obs, by = c("station", "troph_group")) %>%
   mutate_at(vars(biomass_avg:nbnode_stab), funs(if_else(enough_obs, ., NA_real_))) %>%
-  select_at(vars(matches("biomass|node_avg|station|troph_group")))
+  select_at(vars(matches("biomass|richness_avg|station|troph_group")))
 
 ## Merge with temporal_network_metrics
 biomass_variation %<>%
   group_by(station) %>%
   nest(.key = "troph_group")
-data(temporal_network_metrics)
 
+data(temporal_network_metrics)
+## Check if troph_group already exist:
+if ("troph_group" %in% colnames(temporal_network_metrics)) {
+  temporal_network_metrics %<>% select(-matches("troph_group"))
+}
 temporal_network_metrics <-
   left_join(temporal_network_metrics, biomass_variation, by = "station")
 

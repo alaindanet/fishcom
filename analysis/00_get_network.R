@@ -54,9 +54,14 @@ length_analysis %<>%
 rm(op_analysis)
 ##
 data(metaweb_analysis)
-filter(classes, is.na(class_id))
-qplot(x = length, data = filter(classes, species == "TRF"), geom = "histogram")
-filter(classes, species == "TRF") %>% map(., summary)
+## Check if NA in the metaweb:
+if (any(is.na(metaweb_analysis$size_class))) {
+  stop("NA in class id, something went wrong")
+}
+
+qplot(x = length, data = filter(length_analysis, species == "TRF"), geom = "histogram")
+filter(length_analysis, species == "TRF") %>% map(., summary)
+filter(length_analysis, species == "TRF", is.na(length))
 filter(metaweb_analysis$size_class, species == "TRF")
 network_analysis <- build_local_network(
   data = length_analysis,
@@ -67,4 +72,8 @@ network_analysis <- build_local_network(
   classes = NULL,
   out_format = "igraph"
 )
+network_analysis %>% unnest(data) %>%
+  filter(is.na(class_id))
+
+
 devtools::use_data(network_analysis, overwrite = TRUE)

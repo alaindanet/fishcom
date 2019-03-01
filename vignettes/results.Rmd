@@ -244,3 +244,53 @@ p <- ggplot(net_troph_group, aes(y = biomass_stab, x = values, color = troph_gro
 p
 ```
 
+## Stability of biomass compartment and richness 
+
+```{r}
+biomass_richness_troph <- left_join(
+  select(net_troph_group, station, troph_group, biomass_stab),
+  richness, by = "station")
+p <- ggplot(biomass_richness_troph, aes(y = biomass_stab, x = richness, color = troph_group)) +
+  geom_point() +
+  geom_smooth(method = 'lm')+
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(
+    x = "richess_med",
+    y = "biomass_stab"
+  )
+p
+
+```
+
+Species richness of the community decreased the stability of the total
+biomass of the community. At the trophic level, species richness decreased the
+stability of the higher trophic level biomass. However the stability of lower
+trophic level biomass increased with the increase of species richness of the
+community.
+
+```{r}
+net_troph_group <- temporal_network_metrics %>% 
+  select(station, troph_group) %>%
+  unnest() %>%
+  mutate(troph_group = as.factor(troph_group))
+p <- ggplot(net_troph_group, aes(y = biomass_stab, x = richness_avg)) +
+  geom_point() +
+  facet_grid(cols = vars(troph_group)) +
+  geom_smooth(method = 'lm')+
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(
+    x = "network_med",
+    y = "biomass_stab"
+  )
+p
+
+```
+

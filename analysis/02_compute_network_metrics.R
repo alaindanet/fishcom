@@ -94,20 +94,26 @@ network_analysis %<>%
     left_join(compo, troph_group, by = "sp_class")
 }, troph_group = trophic_level))
 ## Sum biomass by trophic group:
-network_analysis$composition[[1]]
-network_analysis$troph_group[[2]]
 ### I do this way bc of a dplyr bug with n() in nested data.frame
 network_analysis$troph_group <- map(network_analysis$composition, function(compo) {
       compo %<>%
 	group_by(troph_group) %>%
 	summarise(
 	  biomass = sum(biomass),
-	  nbnode  = n()
+	  nbnode  = n(),
+	  richness = str_extract_all(sp_class, "[A-Z]") %>% unique %>% length
 	  ) %>%
 	ungroup()
 })
-network_analysis %<>% dplyr::select(-composition)
 
+network_analysis %>%
+  unnest(troph_group) %>%
+  filter(is.na(troph_group))
+network_analysis %>%
+  unnest(composition) %>%
+  filter(opcod == 25770)
+
+network_analysis %<>% dplyr::select(-composition)
 devtools::use_data(network_analysis, overwrite = TRUE)
 
 #####################
