@@ -41,7 +41,6 @@ test_that("class assignation works with several species", {
     )
   expect_equal(assign_size_class(fake_station, species, size, classes_species),
     expected_df)
-
 })
 
 #################################
@@ -87,4 +86,15 @@ test_that("local network generation works", {
     local_network$network,
     local_network$test
   )
+})
+
+test_that("NA exclusion works", {
+  fake_station$size[sample(1:nrow(fake_station), 1)] <- NA_real_
+
+  expect_message(
+    local_network <- build_local_network(
+    fake_station, species, size, station,
+    metaweb = toy_metaweb, out_format = "igraph")
+  )
+  expect_equal(length(which(is.na(unnest(local_network, data)))), 0)
 })
