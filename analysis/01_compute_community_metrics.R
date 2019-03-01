@@ -7,7 +7,11 @@ library(tidyverse)
 library(magrittr)
 library(lubridate)
 library(furrr)
-options(mc.cores = 3)
+library(vegan)
+# Check if at home:
+if (all(is.na(str_match(getwd(), "Documents")))) {
+  options(mc.cores = parallel::detectCores() - 1)
+}
 devtools::load_all()
 
 #####################
@@ -37,7 +41,6 @@ devtools::use_data(weight_analysis, overwrite = TRUE)
 #########################################
 #  Compute richness and beta-diversity  #
 #########################################
-library(vegan)
 # Caution: Here the richness of the community is different from the richness of
 # the network beacause we do not have basal nodes.
 #
@@ -112,7 +115,7 @@ com <- left_join(community_analysis, op_analysis, by = "opcod") %>%
 ## build community matrices
 com %<>%
   mutate(
-    com = map2(data, station, function(x, y) {
+    com = furrr::future_map2(data, station, function(x, y) {
       message(sprintf('Station %s', y))
       com_matrix <- x %>%
     rowid_to_column() %>%
@@ -131,7 +134,7 @@ com %<>%
 # to consider the mean of dissimilarity year to year (i.e. the diagonal values)
 betadiv <- com %>%
   mutate(
-    betadiv = map_dbl(com, function(com){
+    betadiv = furrr::future_map_dbl(com, function(com){
       vegan::vegdist(com, method = "bray", binary = FALSE) %>% mean
     })
   )

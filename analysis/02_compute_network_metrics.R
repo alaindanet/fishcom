@@ -7,6 +7,7 @@
 library(tidyverse)
 library(magrittr)
 library(igraph)
+library(rnetcarto)
 library(furrr)
 options(mc.cores = 3)
 library(tictoc)
@@ -90,7 +91,7 @@ trophic_level %<>%
 ## Assign to each network its trophic group:
 network_analysis %<>%
   mutate(
-  composition = map(composition, function (compo, troph_group){
+  composition = furrr::future_map(composition, function (compo, troph_group){
     left_join(compo, troph_group, by = "sp_class")
 }, troph_group = trophic_level))
 ## Sum biomass by trophic group:

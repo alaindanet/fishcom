@@ -6,7 +6,11 @@ library(tidyverse)
 library(magrittr)
 library(igraph)
 library(furrr)
-options(mc.cores = 3)
+library(betalink)
+# Check if at home:
+if (all(is.na(str_match(getwd(), "Documents")))) {
+  options(mc.cores = parallel::detectCores() - 1)
+}
 library(tictoc)
 devtools::load_all()
 
@@ -85,7 +89,6 @@ rm(list = ls())
 ###################################################
 
 # Compute betalink
-library(betalink)
 data(network_analysis)
 data(op_analysis)
 
@@ -95,7 +98,7 @@ net <- left_join(network_analysis, select(op_analysis, opcod, station, year)) %>
 ## Get network as matrices
 net %<>%
   mutate(
-    network = map2(network, station, function(x, y) {
+    network = furrr::future_map2(network, station, function(x, y) {
       message(sprintf('Station %s', y))
       igraph::graph_from_data_frame(x, directed = TRUE)
 }
@@ -105,7 +108,7 @@ plan(multiprocess)
 net %<>%
   group_by(station) %>%
   nest() %>%
-  mutate(betal = map2(data, station,
+  mutate(betal = furrr::future_map2(data, station,
       function (data, station) {
       message(sprintf("Station %s", station))
       betalink::network_betadiversity(data$network)
