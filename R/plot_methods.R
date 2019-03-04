@@ -47,11 +47,14 @@ set_color_species <- function (glay) {
 #' @return a tibble containing a list of graph in a net_graph column
 #' @seealso set_layout_graph
 #' 
-plot_temporal_network <- function(net, meta, dead, ...){
-  net_ex <- net
+plot_temporal_network <- function(net, meta = NULL, dead = NULL, lay = NULL, ...){
+
+  if (all(is.null(c(meta, dead, layout)))) {
+   stop("Supply a graph layout (lay) or a metaweb (meta) and a character vector containing name of dead resources of the web")
+  }
+
+  if (is.null(layout)) {
   dead_material <- dead
-  ## Graph -------------------------
-  net_graph <- graph_from_data_frame(net_ex, directed = TRUE)
 
   ## Layout --------------------------------
   lay <- create_layout(graph_from_adjacency_matrix(meta$metaweb, mode = "directed"), layout = "kk")
@@ -61,16 +64,32 @@ plot_temporal_network <- function(net, meta, dead, ...){
   lay$species <- stringr::str_extract_all(lay$name,
     "[A-Za-z]+", simplify = TRUE) %>%
   as.vector
+  }
 
+  ## Graph -------------------------
+  net_graph <- graph_from_data_frame(net, directed = TRUE)
   net_graph <- select(net_ex, from, to, year) %>%
     arrange(year) %>%
     group_by(year) %>%
     nest() %>%
     mutate(
       net_graph = pmap(list(net = data, title = year),
-	set_layout_graph, glay = lay, color_scale = NULL)#set_color_species(lay)
+	set_layout_graph, glay = lay, color_scale = set_color_species(lay))
     )
-  net_graph
+    ## Get legend
+    species_colour_legend <- get_legend(net_graph[1,]$net_graph[[1]])
+    ## Remove legend in the other plots
+    net_graph %<>%
+      mutate(
+	net_graph = map(net_graph, function (x) {
+	  x + theme(
+	    legend.position = "none",
+	    plot.margin = unit(c(0, 0, 0, 0), "cm")
+	  )
+	})
+      )
+    plot_grid(plotlist = net_graph$net_graph,
+      species_colour_legend)
 }
 
 #' Generate ggraph with a common layout
