@@ -1,4 +1,4 @@
-#!/usr/bin/env r
+#!/usr/bin/Rscript
 
 source("../analysis/00_get_network.R")
 cat("Got networks!\n")

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./install.r tidyverse magrittr NetIndices rnetcarto igraph furrr devtools tictoc
-./install.r lubridate
+./install.R tidyverse magrittr NetIndices rnetcarto igraph furrr devtools tictoc
+./install.R lubridate
 
 echo "Packages installed!"
