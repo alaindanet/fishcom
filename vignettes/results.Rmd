@@ -13,7 +13,8 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.dim = c(7, 7)
+  fig.dim = c(7, 7),
+  echo = FALSE
 )
 library(tidyverse)
 library(ggpmisc)
@@ -154,7 +155,7 @@ qplot(diversity, biomass_stab, data =  biomass_com, geom = "point") +
 
 # Biomass and network structure
 
-```{r,}
+```{r, fig.dim = c(14, 7)}
 # plot
 avg_network <- temporal_network_metrics %>%
   select_at(vars(matches("med|station")))
@@ -184,6 +185,9 @@ p <- ggplot(stab_biomass_net_avg, aes(y = biomass_stab, x = values)) +
 p
 
 ```
+
+See this paper for an explanation of the negative effect of nestedness on
+biomass stability [link](https://theoreticalecology.wordpress.com/2015/04/23/all-models-all-wrong-but-which-are-useful-for-understanding-the-effect-of-nestedness-on-plant-pollinator-dynamics/).
 
 ## Network structure and richness
 
@@ -246,6 +250,8 @@ p
 
 ## Stability of biomass compartment and richness 
 
+### Total richness
+
 ```{r}
 biomass_richness_troph <- left_join(
   select(net_troph_group, station, troph_group, biomass_stab),
@@ -272,12 +278,17 @@ stability of the higher trophic level biomass. However the stability of lower
 trophic level biomass increased with the increase of species richness of the
 community.
 
+### Richness by trophic level 
+
 ```{r}
+
 net_troph_group <- temporal_network_metrics %>% 
   select(station, troph_group) %>%
   unnest() %>%
+  filter(!is.na(troph_group)) %>%
   mutate(troph_group = as.factor(troph_group))
-p <- ggplot(net_troph_group, aes(y = biomass_stab, x = richness_avg)) +
+plot_stab_richness_troph_group <-
+  ggplot(net_troph_group, aes(y = biomass_stab, x = richness_avg)) +
   geom_point() +
   facet_grid(cols = vars(troph_group)) +
   geom_smooth(method = 'lm')+
@@ -287,10 +298,141 @@ p <- ggplot(net_troph_group, aes(y = biomass_stab, x = richness_avg)) +
     aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
     parse = TRUE) +
   xylabs(
-    x = "network_med",
+    x = "richness_avg",
     y = "biomass_stab"
   )
-p
+plot_stab_richness_troph_group
+```
+
+There was a negative relationship between the biomass stability and the richness
+at high trophic level unlike biomass stability at medium trophic which increased
+with the number of species in its trophic level.
+
+We saw that biomass stability at highest decreased with richness. However, in
+average, the biomass at the higher trophic level seemed more stable.
+
+
+
+### Correlation between stability of trophic level and  richness
+
+```{r}
+correlation_troph_group <- net_troph_group %>%
+  select(station, biomass_stab, troph_group, richness_avg) %>%
+  gather(var, values, biomass_stab, richness_avg) %>%
+  unite(by_troph, var, troph_group) %>%
+  spread(by_troph, values) %>%
+  select(-station)
+library(GGally)
+ggpairs(correlation_troph_group)
+```
+
+# Productivity
+
+## With network structure
+
+
+```{r, fig.dim = c(14, 7)}
+biomass_prod_station <- temporal_community_metrics %>%
+  select(station, biomass_avg)
+prod_biomass_net_avg <- left_join(avg_network, biomass_prod_station) %>%
+  gather(metrics, values, colnames(select_at(., vars((matches("med")))))) %>%
+  mutate(metrics = str_replace(metrics, "_med", "")) %>%
+  filter(metrics != "nbnode")
+
+# TODO: think about not facetting (list of plots ?)
+# Facet label:
+formula <- y ~ x #needed for stat_poly_eq
+plot_stab_biomass_net_avg <- ggplot(prod_biomass_net_avg, aes(y = biomass_avg, x = values)) +
+  geom_point() +
+  facet_grid(cols = vars(metrics), labeller = mylabel(), scales = "free_x") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(
+    x = "Median of the network indices",
+    y = "Average Biomass"
+  )
+plot_stab_biomass_net_avg
+```
+
+## By trophic level 
+
+```{r, fig.cap="Biomass production and stability by trophic level", , fig.dim = c(10, 7)}
+plot_prod_richness_troph_group <-
+  ggplot(net_troph_group, aes(y = biomass_avg, x = richness_avg)) +
+  geom_point() +
+  facet_grid(cols = vars(troph_group)) +
+  geom_smooth(method = 'lm')+
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(
+    x = "richness_avg",
+    y = "biomass_avg"
+  )
+plot_grid(
+  plot_prod_richness_troph_group,
+  plot_stab_richness_troph_group,
+  nrow = 2
+)
+```
+Overall, if the richness had an destabilizating effect on stability for the
+highest trophic, we saw the same highest trophic level displayed the highest productivity and stability.
+
+
+# Examine networks
+
+Let's look at network that have particular network properties. 
+
+## Modularity
+
+```{r}
+station_high_low_modularity <- temporal_network_metrics %>%
+  arrange(desc(modularity_med)) %>%
+  slice(c(1, n())) %>%
+  select(station) %>%
+  unlist
+names(station_high_low_modularity) <- c("high", "low") 
 
 ```
+```{r}
+# High modularity
+net_ex <- filter(net, station == station_high_low_modularity["high"])
+plot_temporal_network(net_ex, lay = lay)
+```
+```{r}
+# Low modularity
+net_ex <- filter(net, station == station_high_low_modularity["low"])
+plot_temporal_network(net_ex, lay = lay)
+```
+
+## Nestedness
+
+```{r}
+station_high_low_nestedness <- temporal_network_metrics %>%
+  arrange(desc(nestedness_med)) %>%
+  slice(c(1, n())) %>%
+  select(station) %>%
+  unlist
+names(station_high_low_nestedness) <- c("high", "low") 
+```
+```{r}
+# high nestedness
+net_ex <- filter(net, station == station_high_low_nestedness["high"])
+plot_temporal_network(net_ex, lay = lay)
+```
+
+```{r}
+# low nestedness
+net_ex <- filter(net, station == station_high_low_nestedness["low"])
+plot_temporal_network(net_ex, lay = lay)
+```
+
+
+
 
