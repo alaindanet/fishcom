@@ -14,7 +14,7 @@ echo $pwd
 
 if [ -d "$HOME/bin" ] ; then
   PATH="$PATH:$HOME/bin"
-  LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/lib64/"
+  LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/opt/dev/Modules/Libraries"
 fi
 
 # Load R version of the cluster
