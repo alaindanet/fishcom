@@ -14,7 +14,7 @@ devtools::load_all()
 
 # Cores
 ## Check if at home:
-if (all(is.na(str_match(getwd(), "Documents")))) {
+if (!all(is.na(str_match(getwd(), "Documents")))) {
   options(mc.cores = parallel::detectCores() - 1)
 }
 

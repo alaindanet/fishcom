@@ -1,2 +1,19 @@
-#Makefile to run routine on the mesu cluster
+################################################################################
+#                           Routine for the cluster                            #
+################################################################################
 
+EXEC=my_job
+
+all: $(EXEC)
+
+my_job: qsub job_mesu_cluster.sh
+	# check if the job has finished every 300s (5min):
+	while [ ! -f temporal_networks.*]; do sleep 300; done
+	export
+
+
+clean:
+	- rm temporal_network*
+
+export:
+	scp ... #HERE
