@@ -8,12 +8,13 @@ library(magrittr)
 library(lubridate)
 library(furrr)
 library(vegan)
-# Check if at home:
+devtools::load_all()
+
+# Cores
+## Check if at home:
 if (all(is.na(str_match(getwd(), "Documents")))) {
   options(mc.cores = parallel::detectCores() - 1)
 }
-devtools::load_all()
-
 #####################
 #  Compute biomass  #
 #####################

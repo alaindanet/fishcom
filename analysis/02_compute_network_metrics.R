@@ -9,9 +9,15 @@ library(magrittr)
 library(igraph)
 library(rnetcarto)
 library(furrr)
-options(mc.cores = 3)
 library(tictoc)
 devtools::load_all()
+
+# Cores
+## Check if at home:
+if (all(is.na(str_match(getwd(), "Documents")))) {
+  options(mc.cores = parallel::detectCores() - 1)
+}
+
 
 #########################################
 #  Add node biomass and node abundance  #
@@ -162,7 +168,7 @@ network_analysis %<>%
   )
 
 network_metrics <- network_analysis %>%
-  dplyr::select(-network, -community, -metrics, -troph_level)
+  dplyr::select(-network, -metrics, -troph_level)
 devtools::use_data(network_metrics, overwrite = TRUE)
 rm(list = ls())
 
