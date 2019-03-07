@@ -58,6 +58,9 @@ According to the postdoc advertisement:
       - [x] compartment: NetIndices
       - [ ] compute betalink: [ingnacio bartomeus](https://github.com/ibartomeus/betalink/tree/new_features)
       - [ ] trophic group: [cf legendre website](https://www.biologie.ens.fr/~legendre/n_w/n_w.html) 
+      - [ ] Compute species diet overlap
+	- [ ] Modify function to return an overlap matrix
+      - [ ] standardize stability by biomass relative + look at link sd and mean 
   - [ ] network analysis:
     - [ ] compute above network indices
     - [ ] post-modularity values? @poisot_an_2013
