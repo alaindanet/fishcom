@@ -8,6 +8,21 @@
 #' @references Pianka, E. R. (1973). The Structure of Lizard Communities. Annual
 #' Review of Ecology and Systematics, 4(1), 53‑74.
 #' https://doi.org/10.1146/annurev.es.04.110173.000413
+compute_diet_overlap <- function (adj) {
+  if (is.null(colnames(adj))) {
+    colnames(adj) <- seq(1, ncol(adj))
+  }
+  sp_pairs <- combn(colnames(adj), 2, simplify = FALSE)
+
+  overlap <- purrr::map_dbl(sp_pairs, function(sp_pairs, adj) {
+    sp <- adj[, sp_pairs]
+    compute_two_species_overlap(sp[, 1], sp[, 2])
+}
+    , adj = adj)
+  names(overlap) <- purrr::map_chr(sp_pairs,
+    function(x) paste("O", x[1], "_", x[2], sep = ""))
+  overlap
+}
 
 #' Diet overlap between two consumer
 #' @param sp1 vector of interaction
