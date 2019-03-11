@@ -61,6 +61,9 @@ According to the postdoc advertisement:
       - [ ] Compute species diet overlap
 	- [ ] Modify function to return an overlap matrix
       - [ ] standardize stability by biomass relative + look at link sd and mean 
+	- [ ] https://en.wikipedia.org/wiki/Coefficient_of_variation
+	- [ ] but it does not seem to have a problem, it is normal that heavy
+	  predator are more stable if they have higher biomass.
   - [ ] network analysis:
     - [ ] compute above network indices
     - [ ] post-modularity values? @poisot_an_2013

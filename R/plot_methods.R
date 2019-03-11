@@ -77,14 +77,18 @@ plot_temporal_network <- function(net, meta = NULL, dead = NULL, lay = NULL, ...
 	set_layout_graph, glay = lay, color_scale = set_color_species(lay))
     )
     ## Get legend
-    species_colour_legend <- get_legend(net_graph[1,]$net_graph[[1]])
+    species_colour_legend <- get_legend(
+      net_graph[1, ]$net_graph[[1]] +
+	labs(colour = "Species") +
+	guides(fill = guide_legend(nrow = 2, byrow = TRUE))
+    )
     ## Remove legend in the other plots
     net_graph %<>%
       mutate(
 	net_graph = map(net_graph, function (x) {
 	  x + theme(
 	    legend.position = "none",
-	    plot.margin = unit(c(0, 0, 0, 0), "cm")
+	    plot.margin     = unit(c(0, 0, 0, 0), "cm")
 	  )
 	})
       )
@@ -128,7 +132,12 @@ set_layout_graph <- function (net, glay, title = NULL, biomass = NULL, color_sca
       if (!is.null(title)) {
 	p <- p + labs(title = title)
       }
-      p <- p + theme_graph(foreground = 'steelblue', fg_text_colour = 'white', base_family="sans")
+      p <- p + theme_graph(
+	foreground     = "steelblue",
+	fg_text_colour = "white",
+	base_family    = "sans",
+	background     = NA
+      )
 	#theme(legend.position="none")
       if (!is.null(color_scale)) {
 	p <- p + 
@@ -210,8 +219,12 @@ mylabel <- function() {
     nbnode = "Number of nodes",
     richness_cv = "CV",
     richness_avg = "Average",
-    betadiv = expression(bold(paste(beta, "-diversity", sep = "")))
-    ))
+    richness_med = "Median richness",
+    betadiv = "Beta-diversity"
+    #betadiv = expression(bold(paste(beta, "-diversity", sep = "")))
+    #see https://stackoverflow.com/questions/35524202/as-labeller-with-expression-in-ggplot2-facet-wrap?rq=1
+      )
+    )
 }
 
 #' Troph group labeller
