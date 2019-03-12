@@ -62,7 +62,7 @@ According to the postdoc advertisement:
 	- [ ] Modify function to return an overlap matrix
       - [ ] standardize stability by biomass relative + look at link sd and mean 
 	- [ ] https://en.wikipedia.org/wiki/Coefficient_of_variation
-	- [ ] but it does not seem to have a problem, it is normal that heavy
+	- but it does not seem to have a problem, it is normal that heavy
 	  predator are more stable if they have higher biomass.
   - [ ] network analysis:
     - [ ] compute above network indices
@@ -77,10 +77,10 @@ According to the postdoc advertisement:
     - [x] create community_metrics with mean_richness, cv_richness, cv_biomass, mean_biomass, beta_div
 - [x] Get bassin data (collab with Christophe Gireaud and Solène Thépaud):
 - [ ] Cluster:
-  - [ ] Make cluster home
-  - [ ] Install packages
-  - [ ] Erase options(mc.cores = ) in scripts
-  - [ ] bash script:
+  - [x] Make cluster home
+  - [x] Install packages
+  - [x] Erase options(mc.cores = ) in scripts
+  - [ ] Makefile:
     - git pull
     - run scripts
     - export output to the computer
@@ -88,7 +88,9 @@ According to the postdoc advertisement:
 - [ ] Assess quality of the dataset:
   - [ ] When new data, cf Edeline filtering methods
   - [ ] Add `point_big_mil` and `partial_over_be`
-  - [ ] select data after 1995 only?
+    - [ ] 
+  - [ ] select data after 1995:
+    - [ ] Because before the data were not standardized
 - [ ] Assess availability of environmental data
   - [ ] Temperature data
   - [ ] temporal pollution data (cf Colin, FIRE meeting)
@@ -155,6 +157,36 @@ According to the postdoc advertisement:
   - @borelli_selection_2015 linked it to stability (eigen value of the matrix)
 
 - Dissimilary in species interaction networks: @poisot_an_2012, (code)[https://github.com/ibartomeus/betalink/tree/new_features]
+
+## Comment on fish protocol (AFB expertise)
+
+### Comment on fish protocol evolution
+
+Start the analysis in 1995 because before the protocol was to loosely common.
+Some aspects are the lack of enough people to capture all the fish (some the
+juveniles were not captures). The sampled surface was not measured and reported
+(by eye estimation).
+
+The DCE was introduced in 2007 and introduced new protocol standards. First, the
+"ambiance" protocol (continuous fishing over the bank) was replaced by the
+protocol "partial by points" which is a discrete fishing protocol. So, many big
+stations had ambiance protocol until 2007 which were followed by the partial
+protocol. Secondly, a sampling area was standardized to 10, 20 times of the
+sampled stream width.
+
+
+### Problem with fishing protocol merging
+
+- Partial over bank: linear (i.e. continuous)
+- Partial over point: discrete
+
+There are some difficulties to merge those protocol.
+The least bad methods would be to report data standardized by the sampling
+effort. The partial protocol had a standardized sampled area by sampled point.
+So, we can sum all the points and compare to the sampled area of the sampling by
+bank.
+
+
 
 # Fish data and network construction
 
