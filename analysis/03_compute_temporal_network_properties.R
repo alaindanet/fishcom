@@ -11,10 +11,6 @@ library(tictoc)
 devtools::load_all()
 
 # Cores
-## Check if at home:
-if (all(is.na(str_match(getwd(), "Documents")))) {
-  options(mc.cores = parallel::detectCores() - 1)
-}
 
 ######################################
 #  Temporal network characteristics  #
@@ -97,6 +93,7 @@ data(op_analysis)
 net <- left_join(network_analysis, select(op_analysis, opcod, station, year)) %>%
   ungroup()
 
+source('../analysis/misc/parallel_setup.R')
 ## Get network as matrices
 net %<>%
   mutate(
@@ -106,7 +103,6 @@ net %<>%
 }
 ))
 ## betalink:
-plan(multiprocess)
 net %<>%
   group_by(station) %>%
   nest() %>%

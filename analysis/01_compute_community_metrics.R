@@ -11,10 +11,8 @@ library(vegan)
 devtools::load_all()
 
 # Cores
-## Check if at home:
-if (all(is.na(str_match(getwd(), "Documents")))) {
-  options(mc.cores = parallel::detectCores() - 1)
-}
+source('../analysis/misc/parallel_setup.R')
+
 #####################
 #  Compute biomass  #
 #####################
@@ -101,7 +99,7 @@ test <- op_analysis %>%
   summarise(nb = n()) %>%
   ungroup %>%
   select(nb) %>%
-  unlist 
+  unlist
 which(test > 1)
 
 op_analysis %<>%

@@ -13,10 +13,6 @@ library(tictoc)
 devtools::load_all()
 
 # Cores
-## Check if at home:
-if (!all(is.na(str_match(getwd(), "Documents")))) {
-  options(mc.cores = parallel::detectCores() - 1)
-}
 
 
 #########################################
@@ -95,6 +91,7 @@ trophic_level %<>%
   )
 
 ## Assign to each network its trophic group:
+source('../analysis/misc/parallel_setup.R')
 network_analysis %<>%
   mutate(
   composition = furrr::future_map(composition, function (compo, troph_group){
@@ -102,7 +99,7 @@ network_analysis %<>%
 }, troph_group = trophic_level))
 ## Sum biomass by trophic group:
 ### I do this way bc of a dplyr bug with n() in nested data.frame
-network_analysis$troph_group <- map(network_analysis$composition, function(compo) {
+network_analysis$troph_group <- furrr::future_map(network_analysis$composition, function(compo) {
       compo %<>%
 	group_by(troph_group) %>%
 	summarise(
@@ -131,8 +128,8 @@ library(NetIndices)
 
 data(network_analysis)
 
+source('../analysis/misc/parallel_setup.R')
 tic()
-plan(multiprocess)
 network_analysis %<>%
   mutate(
     network = future_map(network, igraph::graph_from_data_frame, directed = TRUE),
@@ -143,6 +140,7 @@ toc()
 #with parallel: 158 sec
 #without parallel: 217 sec
 
+source('../analysis/misc/parallel_setup.R')
 # Compute nestedness et modularity: 
 network_analysis %<>%
   mutate(
@@ -150,11 +148,13 @@ network_analysis %<>%
   modul_guimera = future_map(network, rnetcarto::netcarto)
   )
 
+source('../analysis/misc/parallel_setup.R')
 test <- network_analysis %>%
   mutate(
   is_sym = future_map_lgl(network, function (x) nrow(x) == ncol(x))
   )
 
+source('../analysis/misc/parallel_setup.R')
 network_analysis %<>%
   mutate(
     connectance = map_dbl(metrics, "C"),

@@ -14,7 +14,6 @@ library(future)
 
 nb_cores <- availableCores()
 print(nb_cores)
-cores <- paste("n", seq(1, nb_cores))
 
 cl <- parallel::makeCluster(nb_cores)
 plan(cluster, workers = cl)
