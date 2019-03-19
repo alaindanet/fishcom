@@ -35,6 +35,11 @@ weight_analysis <- length_analysis %>%
   dplyr::select(opcod, species, length, weight)
 # length is given in milimeters
 
+# Sanitize check to be coherent with network:
+weight_analysis %<>%
+  filter(!species %in% "OBL") %>%
+  filter(!length < 1)
+
 devtools::use_data(weight_analysis, overwrite = TRUE)
 
 #########################################

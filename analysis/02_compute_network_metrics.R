@@ -12,8 +12,6 @@ library(furrr)
 library(tictoc)
 devtools::load_all()
 
-# Cores
-
 
 #########################################
 #  Add node biomass and node abundance  #
@@ -23,6 +21,7 @@ devtools::load_all()
 # Load
 data(weight_analysis)
 data(metaweb_analysis)
+data(network_analysis)
 # compute weight by node and by opcod
 weight_analysis %<>% assign_size_class(., species, var = length,
   classes = metaweb_analysis$size_class) %>%
@@ -73,7 +72,7 @@ data(metaweb_analysis)
 g <- igraph::graph_from_adjacency_matrix(metaweb_analysis$metaweb,
   mode = "directed")
 dead_material <- c("det", "biof")
-## Compute trophic level by node with metaweb
+## Compute trophic level by node with metaweb:
 trophic_level <- NetIndices::TrophInd(metaweb_analysis$metaweb, Dead = dead_material) %>%
   mutate(sp_class = colnames(metaweb_analysis$metaweb)) %>%
   rename(troph_level = TL) %>%
@@ -97,9 +96,47 @@ network_analysis %<>%
   composition = furrr::future_map(composition, function (compo, troph_group){
     left_join(compo, troph_group, by = "sp_class")
 }, troph_group = trophic_level))
-## Sum biomass by trophic group:
-### I do this way bc of a dplyr bug with n() in nested data.frame
-network_analysis$troph_group <- furrr::future_map(network_analysis$composition, function(compo) {
+
+## Compute trophic level by species:
+if (!is.null(options("network.type")) & options("network.type") == "species") {
+
+  composition <-
+    network_analysis %>% unnest(composition) %>%
+    mutate(species = str_extract(sp_class, "[A-Z]{3}")) %>%
+    group_by(opcod, species) %>%
+    summarise(
+      # Average species trophic level by biomass:
+      troph_level = sum(biomass * troph_level) / sum(biomass),
+      biomass = sum(biomass)
+    ) %>%
+    ungroup() %>%
+    mutate(
+      troph_group = get_size_class(., NULL, troph_level, trophic_class)
+    ) %>%
+    group_by(opcod) %>%
+    nest(.key = composition)
+
+  network_analysis %<>%
+    select(-composition) %>%
+    left_join(., composition, by = "opcod")
+
+  network_analysis$troph_group <-
+    furrr::future_map(network_analysis$composition, function(compo) {
+      compo %<>%
+	group_by(troph_group) %>%
+	summarise(
+	  biomass = sum(biomass),
+	  nbnode  = n(),
+	  richness = n()
+	  ) %>%
+	ungroup()
+    })
+} else {
+  # for network with classes:
+  ## Sum biomass by trophic group:
+  ### I do this way bc of a dplyr bug with n() in nested data.frame
+  network_analysis$troph_group <-
+    furrr::future_map(network_analysis$composition, function(compo) {
       compo %<>%
 	group_by(troph_group) %>%
 	summarise(
@@ -108,7 +145,8 @@ network_analysis$troph_group <- furrr::future_map(network_analysis$composition, 
 	  richness = str_extract_all(sp_class, "[A-Z]") %>% unique %>% length
 	  ) %>%
 	ungroup()
-})
+    })
+}
 
 network_analysis %>%
   unnest(troph_group) %>%
@@ -130,6 +168,18 @@ data(network_analysis)
 
 source('../analysis/misc/parallel_setup.R')
 tic()
+if (!is.null(options("network.type")) & options("network.type") == "species") {
+  # Network from class to species:
+  network_analysis %<>%
+    mutate(network = future_map(network, function (net){
+	net %<>% mutate(
+	  from = str_extract(from, "[a-zA-Z]+"),
+	  to = str_extract(to, "[a-zA-Z]+")
+	  ) %>%
+	distinct(from, to)
+	  }))
+}
+# Transform network to adjacency matrix and compute generic indices: 
 network_analysis %<>%
   mutate(
     network = future_map(network, igraph::graph_from_data_frame, directed = TRUE),
@@ -146,6 +196,13 @@ network_analysis %<>%
   mutate(
   nestedness = future_map_dbl(network, nestedness),
   modul_guimera = future_map(network, rnetcarto::netcarto)
+  )
+
+# Compute species overlap:
+network_analysis %<>%
+  mutate(
+  diet_overlap = future_map(network, compute_diet_overlap),
+  diet_overlap = future_map_dbl(diet_overlap, average_species_overlap)
   )
 
 source('../analysis/misc/parallel_setup.R')
