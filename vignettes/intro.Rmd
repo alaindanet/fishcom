@@ -59,7 +59,7 @@ According to the postdoc advertisement:
       - [ ] compute betalink: [ingnacio bartomeus](https://github.com/ibartomeus/betalink/tree/new_features)
       - [ ] trophic group: [cf legendre website](https://www.biologie.ens.fr/~legendre/n_w/n_w.html) 
       - [ ] Compute species diet overlap
-	- [ ] Modify function to return an overlap matrix
+	- [x] Modify function to return an overlap matrix
       - [ ] standardize stability by biomass relative + look at link sd and mean 
 	- [ ] https://en.wikipedia.org/wiki/Coefficient_of_variation
 	- but it does not seem to have a problem, it is normal that heavy

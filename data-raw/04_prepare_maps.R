@@ -120,3 +120,23 @@ plot(mnt)
 # Match points to lines:
 #https://github.com/r-spatial/sf/issues/790
 #https://www.gis-blog.com/nearest-neighbour-search-for-spatial-points-in-r/
+
+##############
+#  DCE data  #
+##############
+
+# Localisation des Masses d'eau
+dce <- read_sf("./DCE/2016/SurfaceWaterBodyLine_FR_20170410/SurfaceWaterBodyLine_FR_20170410.gml")
+colnames(dce)
+arrange(dce, thematicIdIdentifier)
+plot(dce["nameLanguage"])
+
+# Load data 
+## Caracterisation of the streams
+file_rapportage <- "./DCE/2016/rapportage_2016.xlsx"
+excel_sheets(file_rapportage)
+carac <- read_excel(file_rapportage, sheet = "ESU_Caract") %>%
+  filter(surfaceWaterBodyCategory == "RW")
+colnames(carac)
+arrange(carac, surfaceWaterBodyCode)
+## surfaceWaterBodyCode corresponds to thematicIdIdentifier
