@@ -8,12 +8,11 @@ all: $(EXEC)
 
 my_job: qsub job_mesu_cluster.sh
 	# check if the job has finished every 300s (5min):
-	while [ ! -f temporal_networks.*]; do sleep 300; done
-	export
+	#while [ ! -f temporal_networks.*]; do sleep 300; done
 
 
 clean:
-	- rm temporal_network*
+	- rm temporal_network.*
 
-export:
-	scp ... #HERE
+import:
+	scp -r danet@mesu.dsi.upmc.fr:/home/danet/fishcom/data/ ../data/
