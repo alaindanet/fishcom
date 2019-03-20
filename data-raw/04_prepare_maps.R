@@ -3,6 +3,7 @@
 ################################################################################
 
 library(tidyverse)
+library(readxl)
 library(magrittr)
 library(sf)
 library(rmapshaper)
@@ -134,9 +135,28 @@ plot(dce["nameLanguage"])
 # Load data 
 ## Caracterisation of the streams
 file_rapportage <- "./DCE/2016/rapportage_2016.xlsx"
+na_spec <- c("Not applicable", "Unknown", "Unknown2010", "No information", "MonitoredButNotUsed")
 excel_sheets(file_rapportage)
-carac <- read_excel(file_rapportage, sheet = "ESU_Caract") %>%
-  filter(surfaceWaterBodyCategory == "RW")
-colnames(carac)
-arrange(carac, surfaceWaterBodyCode)
+eco_status <- read_excel(file_rapportage, sheet = "ESU_Etat_Eco", na = na_spec) %>%
+  filter(surfaceWaterBodyCategory == "RW") %>%
+  select_at(vars(contains("surfaceWaterBody"), ends_with("StatusOrPotentialValue")))
+colnames(eco_status) %<>%
+  str_replace_all(., "QE.{5}(-| |\\d){1,5}", "") %>%
+  str_replace_all(., ":[a-zA-Z]+", "") %>%
+  str_replace_all(., "\\s(C|c)onditions|status", "") %>%
+  str_replace_all(., "\\s(C|c)onditions|status", "") %>%
+  tolower %>%
+  str_replace_all(., ".*$\\s", "") %>%
+  str_replace_all(., "\\s", "_") %>%
+  str_replace_all(., "river_basin_", "")
+
+eco_status %<>%
+  rename(
+    id = surfacewaterbodycode,
+    acidification = acidification_
+  )
+
+## change id to the map
+## match eco-status to the map 
+## fit station in eco_status
 ## surfaceWaterBodyCode corresponds to thematicIdIdentifier
