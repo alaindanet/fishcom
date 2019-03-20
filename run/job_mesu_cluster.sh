@@ -32,7 +32,7 @@ export R_LIBS_USER
 wait
 ./01_install_packages.sh
 wait
-./02_run_analysis.r "PBS"
+./02_run_analysis.R "PBS"
 wait
 
 echo "Is it working ?"
