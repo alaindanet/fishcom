@@ -11,6 +11,8 @@ library(vegan)
 devtools::load_all()
 
 # Cores
+cat("Working directory:\n")
+cat(getwd(), "\n")
 source('../analysis/misc/parallel_setup.R')
 
 #####################

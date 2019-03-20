@@ -8,6 +8,7 @@
 #' @references Pianka, E. R. (1973). The Structure of Lizard Communities. Annual
 #' Review of Ecology and Systematics, 4(1), 53‑74.
 #' https://doi.org/10.1146/annurev.es.04.110173.000413
+#' @export
 compute_diet_overlap <- function (adj) {
   if (is.null(colnames(adj))) {
     colnames(adj) <- seq(1, ncol(adj))

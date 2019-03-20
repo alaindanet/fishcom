@@ -8,6 +8,7 @@
 #' @references Bastolla, U., Fortuna, M. A., Pascual-García, A., Ferrera, A., Luque, B., & Bascompte, J. (2009). The architecture of mutualistic networks minimizes competition and increases biodiversity. Nature, 458(7241), 1018‑1020. https://doi.org/10.1038/nature07950
 #'
 #' @return double. The nestedness value
+#' @export
 nestedness <- function (adj) {
 
   stopifnot(all(colnames(adj) == rownames(adj)))

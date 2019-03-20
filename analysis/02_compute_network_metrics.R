@@ -1,6 +1,9 @@
 ################################################################################
 #                           Compute network metrics                            #
 ################################################################################
+cat("-----------------------\n")
+cat("Compute network metrics\n")
+cat("-----------------------\n")
 
 
 # Dep 
@@ -10,6 +13,7 @@ library(igraph)
 library(rnetcarto)
 library(furrr)
 library(tictoc)
+#library(ggmisc)
 devtools::load_all()
 
 # Cores
@@ -18,7 +22,9 @@ devtools::load_all()
 #########################################
 #  Add node biomass and node abundance  #
 #########################################
-
+cat("-----------------------\n")
+cat("Add node biomass and node abundance\n")
+cat("-----------------------\n")
 
 # Load
 data(weight_analysis)
@@ -64,6 +70,9 @@ devtools::use_data(network_analysis, overwrite = TRUE)
 ######################################
 #  Network biomass by trophic group  #
 ######################################
+cat("-----------------------\n")
+cat("Network biomass by trophic group\n")
+cat("-----------------------\n")
 
 data(network_analysis)
 data(metaweb_analysis)
@@ -123,12 +132,16 @@ devtools::use_data(network_analysis, overwrite = TRUE)
 #####################
 #  Network metrics  #
 #####################
+cat("-----------------------\n")
+cat("Compute network metrics\n")
+cat("-----------------------\n")
 
 library(NetIndices)
 
 data(network_analysis)
 
 source('../analysis/misc/parallel_setup.R')
+cat("Convert graph to matrix:\n")
 tic()
 network_analysis %<>%
   mutate(
@@ -141,7 +154,8 @@ toc()
 #without parallel: 217 sec
 
 source('../analysis/misc/parallel_setup.R')
-# Compute nestedness et modularity: 
+source('../R/nestedness.R')
+cat("Compute nestedness et modularity:\n")
 network_analysis %<>%
   mutate(
   nestedness = future_map_dbl(network, nestedness),
@@ -149,12 +163,14 @@ network_analysis %<>%
   )
 
 source('../analysis/misc/parallel_setup.R')
+cat("Test correctness of network:\n")
 test <- network_analysis %>%
   mutate(
   is_sym = future_map_lgl(network, function (x) nrow(x) == ncol(x))
   )
 
 source('../analysis/misc/parallel_setup.R')
+cat("Get network indices:\n")
 network_analysis %<>%
   mutate(
     connectance = map_dbl(metrics, "C"),
@@ -175,18 +191,22 @@ rm(list = ls())
 ##############################
 #  Standardized connectance  #
 ##############################
+cat("-----------------------\n")
+cat("Standardize connectance\n")
+cat("-----------------------\n")
+
 data(network_metrics)
 
 c_richness_mod <- lm(connectance ~ nbnode, network_metrics)
-summary(c_richness_mod)
-qplot(nbnode, connectance, data =  network_metrics, geom = "point") +
-  geom_smooth(method = 'lm') +
-  stat_poly_eq(
-    formula = formula,
-    eq.with.lhs = "italic(hat(y))~`=`~",
-    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
-    parse = TRUE) +
-  xylabs(x = "nbnode", y = "connectance")
+#summary(c_richness_mod)
+#qplot(nbnode, connectance, data =  network_metrics, geom = "point") +
+#  geom_smooth(method = 'lm') +
+#  stat_poly_eq(
+#    formula = formula,
+#    eq.with.lhs = "italic(hat(y))~`=`~",
+#    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+#    parse = TRUE) +
+#  xylabs(x = "nbnode", y = "connectance")
 # Take residuals as Morris et al. (2014)
 network_metrics$connectance_corrected <- residuals(c_richness_mod)
 
@@ -198,3 +218,6 @@ rm(list = ls())
 ################################
 
 
+cat("-----------------------\n")
+cat("End of network metrics computation\n")
+cat("-----------------------\n")

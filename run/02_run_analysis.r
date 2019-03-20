@@ -10,6 +10,9 @@ if (!is.null(args) & length(args) > 1) {
 }
 options(echo = TRUE)
 
+cat("Working directory:\n")
+cat(getwd(), "\n")
+
 source("../analysis/00_get_network.R")
 cat("Got networks!\n")
  

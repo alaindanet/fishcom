@@ -10,7 +10,7 @@
 
 # Go to my place
 cd $PBS_O_WORKDIR
-echo $pwd
+echo $pwd > loc.txt
 
 if [ -d "$HOME/bin" ] ; then
   PATH="$PATH:$HOME/bin"
@@ -32,7 +32,7 @@ export R_LIBS_USER
 wait
 ./01_install_packages.sh
 wait
-./02_run_analysis.r
+./02_run_analysis.r "PBS"
 wait
 
 echo "Is it working ?"

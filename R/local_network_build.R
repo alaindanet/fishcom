@@ -11,7 +11,7 @@
 #' @details 
 #'
 #' @return data.frame containing local network code and interaction matrix.
-#'
+#' @export
 build_local_network <- function (data, species, var, group_var, metaweb, classes = NULL, ...) {
 
   species <- rlang::enquo(species)
@@ -117,7 +117,7 @@ extract_network <- function (data, species, var, metaweb, classes = NULL, link =
 #' @param classes data.frame created by the compute_classes function.
 #'
 #' @return data.frame containing class_id for each indivual.
-#'
+#' @export
 assign_size_class <- function (data, species, var, classes) {
   
   species <- rlang::enquo(species)
@@ -144,7 +144,7 @@ assign_size_class <- function (data, species, var, classes) {
 #' @param classes data.frame created by the compute_classes function.
 #'
 #' @return data.frame containing local network code and interaction matrix.
-#'
+#' @export
 get_size_class <- function (data, species_name, var, classes) {
   
   var <- rlang::enquo(var)
