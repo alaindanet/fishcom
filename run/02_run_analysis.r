@@ -9,6 +9,7 @@ if (!is.null(args) & length(args) > 1) {
   options(future.availableCores.methods = args[1])
 }
 options(echo = TRUE)
+options("network.type" = "species")
 
 cat("Working directory:\n")
 cat(getwd(), "\n")
