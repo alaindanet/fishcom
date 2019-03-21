@@ -6,6 +6,7 @@ library(tidyverse)
 library(readxl)
 library(magrittr)
 library(sf)
+library(lwgeom)
 library(rmapshaper)
 devtools::load_all()
 
@@ -49,7 +50,12 @@ station <- st_transform(station, crs = 4326)
 plot(st_geometry(region_polygon))
 plot(station, add = TRUE, pch = 20, col = "red")
 ## Save station
-st_write(station, "station_wgs84.shp")
+st_write(station, "station_wgs84.shp", delete_layer = TRUE)
+
+data(op_analysis)
+good_station_id <- op_analysis$station %>% unique
+station_analysis <- filter(station, ST_ID %in% good_station_id)
+devtools::use_data(station_analysis, overwrite = TRUE)
 
 ############
 #  Stream  #
@@ -130,7 +136,6 @@ plot(mnt)
 dce <- read_sf("./DCE/2016/SurfaceWaterBodyLine_FR_20170410/SurfaceWaterBodyLine_FR_20170410.gml")
 colnames(dce)
 arrange(dce, thematicIdIdentifier)
-plot(dce["nameLanguage"])
 
 # Load data 
 ## Caracterisation of the streams
@@ -155,8 +160,24 @@ eco_status %<>%
     id = surfacewaterbodycode,
     acidification = acidification_
   )
+nb_na <- eco_status %>%
+  summarise_all(list(na = ~length(which(is.na(.))))) %>%
+  unlist
+
+eco_status %<>% select(which(nb_na < 10000))
 
 ## change id to the map
+dce %<>% rename(id = thematicIdIdentifier) %>%
+  filter(id %in% eco_status$id)
 ## match eco-status to the map 
+dce %<>% select(id) %>%
+  left_join(., eco_status, by = "id")
 ## fit station in eco_status
-## surfaceWaterBodyCode corresponds to thematicIdIdentifier
+### Get stations matching
+data(station_analysis)
+dce <- st_transform(dce, crs = st_crs(station_analysis))
+nearest_lines_id <- st_nearest_feature(station_analysis, dce)
+nearest_lines <- dce[nearest_lines_id,]
+dist_station_stream <- st_distance(station_analysis, nearest_lines)
+### Get the shortest distance for each station
+### Match station to the nearest river
