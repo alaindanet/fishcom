@@ -37,6 +37,9 @@ rm(list = ls())
 ###############################################
 #  Temporal network biomass by trophic group  #
 ###############################################
+cat("---------------------------------------------\n")
+cat("Temporal network biomass by trophic group\n")
+cat("---------------------------------------------\n")
 data(network_analysis)
 data(op_analysis)
 
@@ -85,6 +88,9 @@ rm(list = ls())
 ###################################################
 #  Compute temporal betadiversity of interaction  #
 ###################################################
+cat("---------------------------------------------\n")
+cat("Compute temporal betadiversity of interaction\n")
+cat("---------------------------------------------\n")
 
 # Compute betalink
 data(network_analysis)
@@ -114,3 +120,7 @@ net %<>%
       )
   )
 # Merge with network_metrics 
+
+cat("-----------------------------------\n")
+cat("End of temporal metrics computation\n")
+cat("-----------------------------------\n")

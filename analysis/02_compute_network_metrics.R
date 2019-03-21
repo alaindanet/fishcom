@@ -212,11 +212,12 @@ network_analysis %<>%
   modul_guimera = future_map(network, rnetcarto::netcarto)
   )
 
-# Compute species overlap:
+source('../R/diet_overlap.R')
+cat("Compute species diet overlap:\n")
 network_analysis %<>%
   mutate(
   diet_overlap = future_map(network, compute_diet_overlap),
-  diet_overlap = future_map_dbl(diet_overlap, average_species_overlap)
+  diet_overlap = future_map(diet_overlap, average_species_overlap)
   )
 
 source('../analysis/misc/parallel_setup.R')
