@@ -8,8 +8,24 @@
 library(tidyverse)
 library(magrittr)
 library('data.table')
+library('RPostgres')
 
+con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "afb_fish", port = 5434)
+dbListObjects(con)
+dbGetInfo(con)
+dbListResults()
+dbListFields()
+# Not working:
+dbListTables(con, schema = DBI::Id(schema="aspe"))
+# But:
+dbIsValid(con)
+con
+DBI::Id(schema="aspe")
 
+library(dplyr)
+
+aspe_tables <- dbListObjects(con, prefix = DBI::Id(schema="aspe"))$table
+db_flights <- tbl(con, in_schema("aspe", "ambiance"))
 
 ## Sample dataset
 fish_op <- read_csv("../data-raw/fishing_operation_test.csv")
