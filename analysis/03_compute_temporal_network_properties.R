@@ -77,7 +77,7 @@ biomass_variation %<>%
 data(temporal_network_metrics)
 ## Check if troph_group already exist:
 if ("troph_group" %in% colnames(temporal_network_metrics)) {
-  temporal_network_metrics %<>% select(-matches("troph_group"))
+  temporal_network_metrics %<>% dplyr::select(-matches("troph_group"))
 }
 temporal_network_metrics <-
   left_join(temporal_network_metrics, biomass_variation, by = "station")
@@ -96,7 +96,7 @@ cat("---------------------------------------------\n")
 data(network_analysis)
 data(op_analysis)
 
-net <- left_join(network_analysis, select(op_analysis, opcod, station, year)) %>%
+net <- left_join(network_analysis, dplyr::select(op_analysis, opcod, station, year)) %>%
   ungroup()
 
 source('../analysis/misc/parallel_setup.R')
