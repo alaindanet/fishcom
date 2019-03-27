@@ -376,10 +376,14 @@ We select the lots that are in relevant elementary prevelement and in belonging
 the operation that we select above.
 
 ```{r}
+# All the relevant prelevement which are in the selected op:
+pre_id_ok <- pre_ele %>%
+  filter(pre_ope_id %in% op$id) %>%
+  select(pre_id) %>%
+  collect() %>% unlist
+# filter: 
 lot_poissons %<>%
-  filter(lop_pre_id %in% collect(pre_ele)$pre_id) %>%
-  filter(lop_id %in% op$id)
-
+  filter(lop_pre_id %in% pre_id_ok) 
 ```
 
 
@@ -391,8 +395,12 @@ All the fishes are measured in lot "N" and "I", but not in the other
 We have to build their size according to samples and assuming a normal
 distribution.
 
+It makes a very long time to run, so it is better to parallelize and to send to
+cluster.
+TODO: write the files as .rda, set up parallel, set script to run and send files to the cluster
+
 ```{r}
-lot_poissons %>%
+lot_poissons %<>%
   collect() %>%
   mutate(
       fish = purrr::pmap(
@@ -411,9 +419,11 @@ lot_poissons %>%
       ) %>%
   select(lop_id, lop_pre_id, species, fish)
 ## HERE: Erreur : Evaluation error: argument a is greater than or equal to b.
-filter(lot_poissons, lop_id == 3749287)
-filter(ind_measure, mei_lop_id == 3749287)
-lot <- ind_measure %>% dplyr::filter(mei_lop_id == 3749287) %>%
+pb_id <- 518228
+filter(lot_poissons, lop_id == pb_id)
+filter(lot_poissons, type_lot == "S/L")
+filter(ind_measure, mei_lop_id == pb_id)
+lot <- ind_measure %>% dplyr::filter(mei_lop_id == pb_id) %>%
   collect() %>%
   dplyr::select(mei_taille) %>%
   unlist(., use.names = FALSE)

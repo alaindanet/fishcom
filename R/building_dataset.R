@@ -33,7 +33,7 @@ gen_fish_from_lot <- function (
       )
       warning(warning_msg)
       lot <- NA
-    } else if (min_size <= max_size) {
+    } else if (min_size >= max_size) {
       warning_msg <- paste(
 	"min_size <= max_size in lot of type G number ",id,", lot put as NA\n",
 	sep = "")
@@ -52,6 +52,14 @@ gen_fish_from_lot <- function (
     size <- ind_measure %>% dplyr::filter(!!ind_id == !!id) %>%
       dplyr::select(!!ind_size) %>%
       unlist(., use.names = FALSE)
+    # Sanity check:
+    if (length(size != 30)) {
+      warning_msg <- paste(
+      "# of obs different from 30 (actual size is,",length(size),
+      ") in Lot type S/L number ", id,".\n", "Lot put as NA\n", sep = "")
+      warning(warning_msg)
+      lot <- NA
+    } else {
     #Distribution parameters:
     avg <- mean(size)
     sdt <- sd(size)
@@ -62,6 +70,10 @@ gen_fish_from_lot <- function (
     lot <- truncdist::rtrunc(n = nb, spec = "norm", a = p05, b = p95,
       mean = avg, sd = sdt)
     stopifnot(length(lot) == nb)
+<<<<<<< Updated upstream
+=======
+    }
+>>>>>>> Stashed changes
   } else if (type == "I") {
     # All individuals have been measured:
     lot <- ind_measure %>% dplyr::filter(!!ind_id == !!id) %>%
@@ -74,7 +86,10 @@ gen_fish_from_lot <- function (
       dplyr::select(!!ind_size) %>%
       unlist(., use.names = FALSE)
     stopifnot(length(lot) == 1)
+<<<<<<< Updated upstream
   
+=======
+>>>>>>> Stashed changes
   }
   # Round to milimeters:
   round(lot)
