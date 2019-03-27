@@ -12,10 +12,12 @@ devtools::load_all()
 #  Metaweb  #
 #############
 # Load data
+cat("Load data\n")
 data(pred_win)
 data(diet_shift)
 data(resource_diet_shift)
 data(fish_length)
+cat("Load data: done\n")
 
 # Build metaweb
 metaweb_analysis <- build_metaweb(
@@ -40,9 +42,11 @@ metaweb_analysis <- build_metaweb(
 devtools::use_data(metaweb_analysis, overwrite = TRUE)
 rm(list = ls())
 
+cat("Metaweb: done\n")
 ###################
 #  Local network  #
 ###################
+cat("Build local network\n")
 
 # Build local network
 data(length_analysis)
@@ -77,3 +81,4 @@ network_analysis %>% unnest(data) %>%
 
 
 devtools::use_data(network_analysis, overwrite = TRUE)
+cat("Local network: done\n")

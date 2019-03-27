@@ -8,6 +8,7 @@ cat("-----------------------\n")
 
 # Dep 
 library(tidyverse)
+library(stringr)
 library(magrittr)
 library(igraph)
 library(rnetcarto)
