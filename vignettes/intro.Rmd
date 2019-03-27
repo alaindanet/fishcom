@@ -38,6 +38,8 @@ According to the postdoc advertisement:
    - Ask to (by Maud):
      - Sébastien Brosse
      - Sébastien Villégier
+4. Effects of perturbation
+   - Coreids project (cf Maud)
 
 ## Immediate objectives (end of December)
 
@@ -91,6 +93,7 @@ According to the postdoc advertisement:
     - [ ] 
   - [ ] select data after 1995:
     - [ ] Because before the data were not standardized
+- [ ]
 - [ ] Assess availability of environmental data
   - [ ] Temperature data
   - [ ] temporal pollution data (cf Colin, FIRE meeting)
