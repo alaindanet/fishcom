@@ -1,0 +1,421 @@
+---
+title: "Build dataset from ASPE database"
+author: "Alain Danet"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Build dataset from ASPE database}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  echo = TRUE
+)
+default::default(unlist) <- list(use.names = FALSE)
+```
+```{r library}
+library(tidyverse)
+library(magrittr)
+library(dbplyr)
+library(lubridate)
+library(ggplot2)
+```
+
+
+This document groups all the questions and remarks that I have regarding the
+ASPE database. Those questionings will be addressed to Thierry Point and Eddy
+Cosson.  
+
+The procedure to build my database is in `data-raw/01_clean_fish_op_data.R`.
+
+```{r}
+# Set up the connection with the database
+con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "afb_fish", port = 5434)
+```
+
+
+## Fishing operation 
+
+```{r fish operation dataset}
+db_op <- tbl(con, in_schema("aspe", "operation"))
+db_op %<>%
+  rename_all(list(~ gsub("ope_", "", make.names(colnames(db_op)))))
+```
+
+
+### Fishing objectives 
+
+In the fishing operation objectives, we can find the following:
+```{r}
+obj_id <- tbl(con, in_schema("aspe", "ref_objectif"))
+obj_id
+```
+
+Here is the distribution of the objectives by year:
+```{r}
+obj_time <- tbl(con, in_schema("aspe", "operation_objectif")) %>%
+  collect() %>%
+  rename(id = opo_ope_id, obj_id = opo_obj_id) %>%
+  left_join(., collect(db_op)) %>%
+  left_join(., collect(obj_id) %>% select(obj_id, obj_libelle)) %>%
+  mutate(year = year(date)) %>%
+  select(obj_libelle, year) %>%
+  group_by(year, obj_libelle) %>%
+  summarise(n = n())
+obj_time
+```
+Wahhh, a lot of objectives are NAs? Let's check:
+```{r}
+ggplot(obj_time, aes(x = year, y = n)) +
+  geom_line(aes(color = obj_libelle))
+```
+
+
+```{r}
+# Plot obj distri
+tbl(con, in_schema("aspe", "operation_objectif")) %>%
+  collect() %>%
+  group_by(opo_obj_id) %>%
+  summarise(n = n())
+```
+
+
+
+I am not really sure of my choice. For intance, I keep the following objectives:
+
+```{r}
+obj_to_keep <- "RHP|DCE|RRP|RCS|CO|restauration|RNSORMCE|Étude"
+obj_kept <- tbl(con, in_schema("aspe", "ref_objectif")) %>%
+  collect() %>%
+  filter(str_detect(obj_libelle, obj_to_keep))
+obj_kept$obj_libelle
+```
+
+```{r}
+# Keep the op id corresponding to the objectives:
+op_id <- tbl(con, in_schema("aspe", "operation_objectif")) %>%
+  collect %>%
+  filter(opo_obj_id %in% obj_kept$obj_id) %>%
+  select(opo_ope_id) %>% unlist
+```
+
+
+### Levels of qualification 
+
+There are different levels of qualification in the database.  
+Those levels allow to filter and correct bugs (I guess). For example, if you enter the bad
+units, introduce letters in numeric fields, etc... 
+
+```{r}
+qualif_lvl <- tbl(con, in_schema("aspe", "ref_niveau_qualification")) %>%
+  collect() 
+qualif_lvl
+```
+Here is the repartition of the qualification levels:
+
+```{r}
+qualif_time <- collect(db_op) %>%
+  #rename(id = opo_ope_id, obj_id = opo_obj_id) %>%
+  left_join(., qualif_lvl) %>%
+  mutate(year = year(date)) %>%
+  select(niq_libelle, year) %>%
+  group_by(year, niq_libelle) %>%
+  summarise(n = n())
+ggplot(qualif_time, aes(x = year, y = n)) +
+  geom_line(aes(color = niq_libelle))
+
+```
+
+We keep everything because a huge part of the operations has not a good
+qualification level, which is strange.
+
+```{r}
+# we keep everything:
+qualif_to_keep <- "[a-z]"#"Correct|Incertaine|Non renseignée"
+qualif_kept <- qualif_lvl %>%
+  collect() %>%
+  filter(str_detect(niq_libelle, qualif_to_keep))
+qualif_kept$niq_libelle
+```
+
+### Protocol
+
+There are seven fish protocols:
+
+```{r}
+protocols <- tbl(con, in_schema("aspe", "ref_protocole")) %>%
+  collect() %>%
+  select(-pro_acronyme, -pro_ordre_affichage)
+protocols
+```
+Here their distribution:
+
+```{r}
+protocol_time <- collect(db_op) %>%
+  #rename(id = opo_ope_id, obj_id = opo_obj_id) %>%
+  left_join(., protocols) %>%
+  mutate(year = year(date)) %>%
+  select(pro_libelle, year) %>%
+  group_by(year, pro_libelle) %>%
+  summarise(n = n())
+ggplot(protocol_time, aes(x = year, y = n)) +
+  geom_line(aes(color = pro_libelle))
+
+```
+
+We keep the "complete" one which is the most homogeneous protocol and typical of
+small rivers because the fishing is done by foot overall the river.
+
+We also keep the "partial" protocols for the big rivers.
+
+```{r}
+protocol_to_keep <- "complète|partielle"
+protocol_kept <- protocols %>%
+  collect() %>%
+  filter(str_detect(pro_libelle, protocol_to_keep))
+protocol_kept$pro_libelle
+```
+
+### Build the dataset
+
+```{r}
+# Selected ids 
+
+col_to_keep <- c("id", "date", "pro_id", "pente_ligne_eau", "section_mouillee",
+  "durete_totale", "temp_max_moyenne_eau", "temp_air_bassin_versant",
+  "precipitation_bassin_versant", "amplitude_thermique_air_station",
+  "temperature_air_station", "surface_calculee", "espece_ciblee", "niq_id",
+  "eta_id", "commentaire")
+
+op <- db_op %>%
+  select(col_to_keep) %>%
+  collect() %>%
+  filter(niq_id %in% qualif_kept$niq_id) %>% # Select qualification
+  filter(id %in% op_id) %>% #operation objectives
+  filter(pro_id %in% protocol_kept$pro_id) %>% #operation prospection methods 
+  filter(date > lubridate::ymd("1995-01-01")) %>% # Because it is the time of protocol standardization
+  arrange(date)
+arrange(op, desc(date))
+```
+
+
+
+Let's check the number of operation by year: 
+```{r}
+op_time <- op %>%
+  mutate(year = year(date)) %>% 
+  group_by(year) %>%
+  summarise(n = n())
+ggplot(op_time, aes(x = year, y = n)) +
+  geom_line() +
+  geom_point() +
+  ylim(0, NA)
+```
+
+## Point prelevement 
+
+```{r}
+pre_ele <- tbl(con, in_schema("aspe", "prelevement_elementaire"))
+pre_ele
+```
+
+```{r}
+ref_pre_ele <- tbl(con, in_schema("aspe", "ref_type_prelevement_elementaire"))
+ref_pre_ele %<>%
+  rename(
+    pre_tpe_id = tpe_id,
+    type_prelevement = tpe_libelle) %>%
+  select(-tpe_ordre_affichage)
+```
+
+We do not want to keep ambiance sampling:
+
+```{r}
+pre_ele <- left_join(pre_ele, ref_pre_ele) %>%
+  select(-pre_tpe_id, -pre_duree) %>%
+  filter(type_prelevement != "Ambiance")
+```
+
+### Passage
+
+The number of passage:
+
+```{r}
+ref_pas <- tbl(con, in_schema("aspe", "passage")) %>%
+  rename(pre_id = pas_id)
+ref_pas
+```
+
+```{r}
+# Join with pre_ele
+pre_ele %<>% left_join(., ref_pas) %>%
+  rename(passage_nb = pas_numero)
+```
+
+From Camille Rivière, operators are now doing fishing only once, so we keep only the
+first passage of all the dataset: (I could check myself!)
+
+```{r}
+pre_ele %<>%
+  filter(is.na(passage_nb)|passage_nb == 1)
+```
+
+### Point groups
+
+```{r}
+point_group <- tbl(con, in_schema("aspe", "groupe_points")) 
+ref_point_group <- tbl(con, in_schema("aspe", "ref_type_groupe_points")) %>%
+  rename(grp_tgp_id = tgp_id, point_type = tgp_libelle) %>%
+  select(grp_tgp_id, point_type) %>%
+  mutate(point_type = str_replace_all(point_type, "Points ", ""))
+point_group %<>%
+  left_join(., ref_point_group) %>%
+  select(-grp_tgp_id) %>%
+  select(grp_id, point_type, everything()) %>%
+  rename_all(list(~ gsub("grp_nombre_points_", "nb_pt_", make.names(colnames(point_group)))))
+point_group
+```
+
+I am not sure about what is the meaning of the points. I guess that that it is
+the fishing protocol "partial by points". If I want to merge it with "partial
+over bank", I have to select standard points in which 100 points were done in
+bank.  
+
+```{r}
+point_group %<>%
+  filter(grp_tgp_id == "standards" & nb_pt_berge == 100)
+```
+
+### Filter elementary prelevement
+
+We exclude all the prelevements that are not coming from standard point or that
+are not in which all the points were not coming from the berge
+
+```{r}
+pre_ele %<>%
+  filter(! (type_prelevement == "Groupe de points" & !(pre_id %in% collect(point_group)$grp_id)))
+```
+
+## Species 
+
+```{r}
+ref_espece <- tbl(con, in_schema("aspe", "ref_espece"))
+ref_espece %<>%
+  rename(lop_esp_id = esp_id, species = esp_code_alternatif) %>%
+  select(lop_esp_id, species)
+```
+To join with lot
+
+## Fish lot
+
+```{r}
+lot_poissons <- tbl(con, in_schema("aspe", "lot_poissons"))
+lot_poissons
+
+```
+
+```{r}
+ref_type_lot <- tbl(con, in_schema("aspe", "ref_type_lot"))
+ref_type_lot %<>%
+  rename(
+    lop_tyl_id = tyl_id,
+    type_lot = tyl_libelle) %>%
+  select(-tyl_ordre_affichage)
+```
+
+```{r add species name}
+lot_poissons <- left_join(lot_poissons, ref_type_lot) %>%
+  left_join(., ref_espece) %>%
+  select(- lop_tyl_id,- lop_esp_id) %>%
+  select(lop_id, lop_pre_id, type_lot, species, everything()) 
+lot_poissons
+```
+
+```{r, echo = FALSE, include = FALSE}
+data_testing <- purrr::map(collect(ref_type_lot)$type_lot, function (lot, data) {
+  temp <- filter(data, type_lot == lot)
+  sample_n(collect(temp), 5)
+    }, data = lot_poissons
+  ) %>%
+  do.call(rbind, .)
+dput(data_testing)
+```
+
+### Individual measurements
+
+```{r}
+ind_measure <- tbl(con, in_schema("aspe", "mesure_individuelle"))
+arrange(ind_measure, mei_lop_id)
+ref_type_lot %<>%
+  rename(
+    lop_tyl_id = tyl_id,
+    type_lot = tyl_libelle) %>%
+  select(-tyl_ordre_affichage)
+```
+
+```{r echo = FALSE, include = FALSE}
+ind_measure_testing <-
+  filter(ind_measure, mei_lop_id %in% data_testing$lop_id) %>%
+  collect()
+dput(ind_measure_testing)
+
+filter(lot_poissons, type_lot == "N") %>%
+  select(lop_id, lop_effectif) %>%
+  collect() %>%
+  slice(10)
+filter(ind_measure, mei_lop_id == 3558592) %>% collect()
+```
+
+### Filter relevant lot
+
+We select the lots that are in relevant elementary prevelement and in belonging
+the operation that we select above.
+
+```{r}
+lot_poissons %<>%
+  filter(lop_pre_id %in% collect(pre_ele)$pre_id) %>%
+  filter(lop_id %in% op$id)
+
+```
+
+
+### Generate fish
+
+All the fishes are measured in lot "N" and "I", but not in the other 
+- lot S/L
+- lot G
+We have to build their size according to samples and assuming a normal
+distribution.
+
+```{r}
+lot_poissons %>%
+  collect() %>%
+  mutate(
+      fish = purrr::pmap(
+	list(
+	  id = lop_id,
+	  type = type_lot,
+	  min_size = lop_longueur_specimens_taille_mini,
+	  max_size = lop_longueur_specimens_taille_maxi,
+	  nb = lop_effectif
+	  ),
+	gen_fish_from_lot, # Arguments from ind_measure:
+	ind_measure = collect(ind_measure),
+	ind_size = mei_taille,
+	ind_id = mei_lop_id,
+	verbose = TRUE)
+      ) %>%
+  select(lop_id, lop_pre_id, species, fish)
+## HERE: Erreur : Evaluation error: argument a is greater than or equal to b.
+filter(lot_poissons, lop_id == 3749287)
+filter(ind_measure, mei_lop_id == 3749287)
+lot <- ind_measure %>% dplyr::filter(mei_lop_id == 3749287) %>%
+  collect() %>%
+  dplyr::select(mei_taille) %>%
+  unlist(., use.names = FALSE)
+```
+

@@ -22,10 +22,50 @@ dbIsValid(con)
 con
 DBI::Id(schema="aspe")
 
-library(dplyr)
+library(dbplyr)
 
 aspe_tables <- dbListObjects(con, prefix = DBI::Id(schema="aspe"))$table
-db_flights <- tbl(con, in_schema("aspe", "ambiance"))
+db_station <- tbl(con, in_schema("aspe", "station"))
+select(db_station, sta_geometrie)
+colnames(db_station)
+
+db_op <- tbl(con, in_schema("aspe", "operation"))
+db_prelevement <- tbl(con, in_schema("aspe", "prelevement_elementaire"))
+db_lot <- tbl(con, in_schema("aspe", "lot_poissons"))
+db_mesure <- tbl(con, in_schema("aspe", "mesure_individuelle"))
+
+#################################
+#  Build the operation dataset  #
+#################################
+
+## get the id:
+obj_to_keep <- "RRP|RCS|CO|RNSORMCE|Étude|restauration"
+obj_id <- tbl(con, in_schema("aspe", "ref_objectif")) %>%
+  collect() %>%
+  filter(str_detect(obj_libelle, obj_to_keep)) %>%
+  select(obj_id) %>% unlist
+
+## Select the op: 
+op_id <- tbl(con, in_schema("aspe", "operation_objectif")) %>%
+  collect %>%
+  filter(opo_obj_id %in% obj_id) %>%
+  select(opo_ope_id) %>% unlist(., use.names = FALSE) 
+op <- db_op %>%
+  filter(ope_id %in% op_id)
+
+## Create the dataset: 
+op %<>%
+  rename_all(funs(gsub("ope_", "", make.names(colnames(op)))))
+#colnames(op)
+col_to_keep <- c("id", "date", "pente_ligne_eau", "section_mouillee",
+  "durete_totale", "temp_max_moyenne_eau", "temp_air_bassin_versant",
+  "precipitation_bassin_versant", "amplitude_thermique_air_station",
+  "temperature_air_station", "surface_calculee", "espece_ciblee", "niq_id",
+  "eta_id", "commentaire")
+### filter for qualified fishing operation:
+op %>%
+  arrange(desc(date))
+unique(op_test$niq_id)
 
 ## Sample dataset
 fish_op <- read_csv("../data-raw/fishing_operation_test.csv")
