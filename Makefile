@@ -26,3 +26,7 @@ import:
 
 export_raw_data:
 	scp -r $(DEST)/data-raw/* danet@mesu.dsi.upmc.fr:/home/danet/fishcom/data-raw/
+	# Replace with rsync
+
+git_update:
+	ssh mesu "cd fishcom && git pull origin master && git pull origin new_db"
