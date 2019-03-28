@@ -33,7 +33,7 @@ source(mypath("analysis", "misc", "parallel_setup.R"))
 
 fish_lot %<>%
   mutate(
-      fish = purrr::future_pmap(
+      fish = furrr::future_pmap(
 	list(
 	  id = lop_id,
 	  type = type_lot,
