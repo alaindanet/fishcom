@@ -9,9 +9,9 @@ cl <- parallel::makeCluster(nb_cores)
 node_name <- Sys.info()["nodename"]
 if (node_name == "Andy") {
   future::plan(multisession)
-} else if (node_name %in% c("mesu0", "migale")) {
-  future::plan(cluster, workers = cl)
+#} else if (node_name %in% c("mesu0", "migale")) {
 } else {
-  warning("Unknow location: parallel session have not been set up")
+  future::plan(cluster, workers = cl)
+  #warning("Unknow location: parallel session have not been set up")
 }
 
