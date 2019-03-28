@@ -15,7 +15,9 @@ if (!is.null(args) & length(args) > 1) {
 options(echo = TRUE)
 default::default(unlist) <- list(use.names = FALSE)
 mypath <- rprojroot::find_package_root_file
-
+max_size_future_gb <- 2 
+options('future.globals.maxSize' = (max_size_future_gb*10^3)*1024^2)
+options('future.globals.maxSize')
 
 library(tidyverse)
 library(magrittr)
