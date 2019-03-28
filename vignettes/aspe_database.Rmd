@@ -16,6 +16,12 @@ knitr::opts_chunk$set(
   echo = TRUE
 )
 default::default(unlist) <- list(use.names = FALSE)
+mypath <- rprojroot::find_package_root_file
+dest_dir <- mypath("data-raw", "fishing_op_build")
+
+if (!dir.exists(dest_dir)) {
+  dir.create(dest_dir)
+}
 ```
 ```{r library}
 library(tidyverse)
@@ -68,6 +74,7 @@ obj_time <- tbl(con, in_schema("aspe", "operation_objectif")) %>%
   summarise(n = n())
 obj_time
 ```
+
 Wahhh, a lot of objectives are NAs? Let's check:
 ```{r}
 ggplot(obj_time, aes(x = year, y = n)) +
@@ -127,7 +134,6 @@ qualif_time <- collect(db_op) %>%
   summarise(n = n())
 ggplot(qualif_time, aes(x = year, y = n)) +
   geom_line(aes(color = niq_libelle))
-
 ```
 
 We keep everything because a huge part of the operations has not a good
@@ -184,7 +190,6 @@ protocol_kept$pro_libelle
 
 ```{r}
 # Selected ids 
-
 col_to_keep <- c("id", "date", "pro_id", "pente_ligne_eau", "section_mouillee",
   "durete_totale", "temp_max_moyenne_eau", "temp_air_bassin_versant",
   "precipitation_bassin_versant", "amplitude_thermique_air_station",
@@ -370,7 +375,7 @@ filter(lot_poissons, type_lot == "N") %>%
 filter(ind_measure, mei_lop_id == 3558592) %>% collect()
 ```
 
-### Filter relevant lot
+### Filter relevant lot and measurement
 
 We select the lots that are in relevant elementary prevelement and in belonging
 the operation that we select above.
@@ -382,8 +387,20 @@ pre_id_ok <- pre_ele %>%
   select(pre_id) %>%
   collect() %>% unlist
 # filter: 
-lot_poissons %<>%
-  filter(lop_pre_id %in% pre_id_ok) 
+fish_lot <- lot_poissons %>%
+  filter(lop_pre_id %in% pre_id_ok) %>%
+  collect()
+
+save(fish_lot, file = mypath("data-raw","fishing_op_build", "fish_lot.rda"))
+
+# The measurement that are in the relevant lot:
+lot_measure <- ind_measure %>%
+  filter(mei_lop_id %in% fish_lot$lop_id) %>%
+  collect()
+
+save(lot_measure, file = mypath("data-raw","fishing_op_build", "lot_measure.rda"))
+rm(fish_lot)
+rm(lot_measure)
 ```
 
 
@@ -399,7 +416,7 @@ It makes a very long time to run, so it is better to parallelize and to send to
 cluster.
 TODO: write the files as .rda, set up parallel, set script to run and send files to the cluster
 
-```{r}
+```{r, eval = FALSE}
 lot_poissons %<>%
   collect() %>%
   mutate(

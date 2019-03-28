@@ -3,14 +3,15 @@
 ####################
 
 
-library(future)
-
-nb_cores <- availableCores()
+nb_cores <- future::availableCores()
 cl <- parallel::makeCluster(nb_cores)
 #Crap hack to determine if in local or on the PBS cluster:
-if (dir.exists("~/Documents")) {
-  plan(multisession)
+node_name <- Sys.info()["nodename"]
+if (node_name == "Andy") {
+  future::plan(multisession)
+} else if (node_name %in% c("mesu0", "migale")) {
+  future::plan(cluster, workers = cl)
 } else {
-  plan(cluster, workers = cl)
+  warning("Unknow location: parallel session have not been set up")
 }
 
