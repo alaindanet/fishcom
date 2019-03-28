@@ -70,10 +70,7 @@ gen_fish_from_lot <- function (
     lot <- truncdist::rtrunc(n = nb, spec = "norm", a = p05, b = p95,
       mean = avg, sd = sdt)
     stopifnot(length(lot) == nb)
-<<<<<<< Updated upstream
-=======
     }
->>>>>>> Stashed changes
   } else if (type == "I") {
     # All individuals have been measured:
     lot <- ind_measure %>% dplyr::filter(!!ind_id == !!id) %>%
@@ -86,10 +83,6 @@ gen_fish_from_lot <- function (
       dplyr::select(!!ind_size) %>%
       unlist(., use.names = FALSE)
     stopifnot(length(lot) == 1)
-<<<<<<< Updated upstream
-  
-=======
->>>>>>> Stashed changes
   }
   # Round to milimeters:
   round(lot)
