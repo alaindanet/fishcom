@@ -56,6 +56,3 @@ cat("Got network metrics!\n")
  
 source(mypath("analysis", "03_compute_temporal_network_properties.R"))
 cat("Got temporal network metrics!\n")
-
-#cat("Compile results\n")
-#rmarkdown::render(mypath("vignettes", "results.Rmd"))

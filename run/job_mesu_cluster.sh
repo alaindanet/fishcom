@@ -50,9 +50,9 @@ cp -rp ../DESCRIPTION $SCRATCH/$PROJECT
 cd $SCRATCH/$PROJECT/run
 # Launch the good guys: 
 
-#./00_dependancies.sh
+./00_dependancies.sh
 wait
-./01_install_packages.sh
+#./01_install_packages.sh
 wait
 # Build network species
 ./02_run_analysis.R "PBS" "species"
