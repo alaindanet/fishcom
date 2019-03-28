@@ -33,7 +33,7 @@ source(mypath("analysis", "misc", "parallel_setup.R"))
 
 fish_lot %<>%
   mutate(
-      fish = furrr::future_pmap(
+      fish = purrr::future_pmap(
 	list(
 	  id = lop_id,
 	  type = type_lot,
@@ -41,15 +41,19 @@ fish_lot %<>%
 	  max_size = lop_longueur_specimens_taille_maxi,
 	  nb = lop_effectif
 	  ),
-	gen_fish_from_lot,
-	# Arguments from ind_measure:
-	ind_measure = lot_measure,
-	ind_size = mei_taille,
-	ind_id = mei_lop_id,
-	verbose = TRUE)
+	~gen_fish_from_lot(id = ..1,
+	  type = ..2,
+	  min_size = ..3,
+	  max_size = ..4,
+	  nb = ..5,
+	  ind_measure = lot_measure,
+	  ind_size = mei_taille,
+	  ind_id = mei_lop_id,
+	  verbose = TRUE)
+	)
       ) %>%
-  select(lop_id, lop_pre_id, species, fish) %>%
-  unnest(fish)
+	select(lop_id, lop_pre_id, species, fish) %>%
+	unnest(fish)
 
 save(mypath("data-raw","fishing_op_build", "fish_length.rda"))
 cat("Done!")
