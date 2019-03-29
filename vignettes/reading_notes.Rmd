@@ -1,0 +1,56 @@
+---
+title: "Reading notes"
+author: "Alain Danet"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Reading notes}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Food webs: integration and dynamics
+
+## What can tell us about the world ?
+
+- Two types of studies:
+  - biogeochemical:
+    - reductionist
+    - physic law, thermodynamics, ecological efficiency
+    - neglects stochasticity, natural selection effects on community dynamics
+    - Flow or energetic webs: flow of matter and energy influence population and
+      ecosystem dynamics
+  - biodemographical
+    - holistic
+    - demography and evolutionary interpretation
+    - emergent properties not shared by their unit
+    - topogical foodweb
+
+Both approaches cannot infer importance of link or species directly from
+measurement of energy transfer or diet composition. So, experiments are needed 
+
+
+- Types of foodwebs:
+  - Trophic chains does not excess three or four trophic level [p4].
+  - Stream ecosystems are largely determined by their surrounding terrestrial habitats.
+  - Diet can be determined by the season and the ontogeny
+
+- Web structure and population dynamics:
+  - Rare species with many interactions can have little effect 
+  - Rare prey species can be important if maintained as this by strong
+    interactions with predators 
+  - Super abundant species with weak links can be important as well
+
+- Foodweb and abiotic factors:
+  - missing link
+
+- Indirect interaction:
+  - can matter: shared prey by predator, three species food chain
+  - resource overlap can matter
