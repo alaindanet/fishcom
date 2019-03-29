@@ -62,6 +62,7 @@ obj_id
 ```
 
 Here is the distribution of the objectives by year:
+
 ```{r}
 obj_time <- tbl(con, in_schema("aspe", "operation_objectif")) %>%
   collect() %>%
@@ -73,24 +74,9 @@ obj_time <- tbl(con, in_schema("aspe", "operation_objectif")) %>%
   group_by(year, obj_libelle) %>%
   summarise(n = n())
 obj_time
-```
-
-Wahhh, a lot of objectives are NAs? Let's check:
-```{r}
 ggplot(obj_time, aes(x = year, y = n)) +
   geom_line(aes(color = obj_libelle))
 ```
-
-
-```{r}
-# Plot obj distri
-tbl(con, in_schema("aspe", "operation_objectif")) %>%
-  collect() %>%
-  group_by(opo_obj_id) %>%
-  summarise(n = n())
-```
-
-
 
 I am not really sure of my choice. For intance, I keep the following objectives:
 
@@ -104,7 +90,7 @@ obj_kept$obj_libelle
 
 ```{r}
 # Keep the op id corresponding to the objectives:
-op_id <- tbl(con, in_schema("aspe", "operation_objectif")) %>%
+objective_op_id <- tbl(con, in_schema("aspe", "operation_objectif")) %>%
   collect %>%
   filter(opo_obj_id %in% obj_kept$obj_id) %>%
   select(opo_ope_id) %>% unlist
@@ -200,14 +186,32 @@ op <- db_op %>%
   select(col_to_keep) %>%
   collect() %>%
   filter(niq_id %in% qualif_kept$niq_id) %>% # Select qualification
-  filter(id %in% op_id) %>% #operation objectives
+  filter(id %in% objective_op_id) %>% #operation objectives
   filter(pro_id %in% protocol_kept$pro_id) %>% #operation prospection methods 
   filter(date > lubridate::ymd("1995-01-01")) %>% # Because it is the time of protocol standardization
   arrange(date)
 arrange(op, desc(date))
 ```
 
+### Op env
 
+```{r}
+env_op_col <- c("id", "pente_ligne_eau", "section_mouillee",
+  "durete_totale", "temp_max_moyenne_eau", "temp_air_bassin_versant",
+  "precipitation_bassin_versant", "amplitude_thermique_air_station",
+  "temperature_air_station", "commentaire")
+op_env <- select(op, env_op_col)
+save(op_env, file = #HERE)
+```
+
+### op
+
+```{r}
+op <- select(op, -env_op_col)
+save(op, file = #HERE)
+```
+
+### Exploration
 
 Let's check the number of operation by year: 
 ```{r}

@@ -1,8 +1,8 @@
 #!/bin/bash
 #Request 20 CPU cores on one node (typical for MeSU-alpha)
 #PBS -q alpha 
-#PBS -l select=1:ncpus=20
-#PBS -l walltime=10:00:00
+#PBS -l select=1:ncpus=90
+#PBS -l walltime=240:00:00
 #PBS -N temporal_networks
  
 #The command below allows"module" to properly initialize a bash / sh shell in
