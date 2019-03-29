@@ -47,25 +47,13 @@ According to the postdoc advertisement:
 - [x] network methods:
   - [x] connectance, average trophic level, richness
     - [ ] beautiful plots
-      - [x] colored node by species
       - [ ] node size according to biomass 
-        - [x] compute biomass by node
         - [ ] connect biomass to graph plot
       - [ ] plot "tableau de bord"
         - [ ] réseau + some information
     - [/] nestedness, trophic length, modularity, trophic group:
-      - [x] nestedness: Bastolla et al. (2009): should compute it
-      - [x] trophic length: netIndices
-      - [x] modularity: netcarto  
-      - [x] compartment: NetIndices
       - [ ] compute betalink: [ingnacio bartomeus](https://github.com/ibartomeus/betalink/tree/new_features)
       - [ ] trophic group: [cf legendre website](https://www.biologie.ens.fr/~legendre/n_w/n_w.html) 
-      - [ ] Compute species diet overlap
-	- [x] Modify function to return an overlap matrix
-      - [ ] standardize stability by biomass relative + look at link sd and mean 
-	- [ ] https://en.wikipedia.org/wiki/Coefficient_of_variation
-	- but it does not seem to have a problem, it is normal that heavy
-	  predator are more stable if they have higher biomass.
   - [ ] network analysis:
     - [ ] compute above network indices
     - [ ] post-modularity values? @poisot_an_2013
@@ -73,27 +61,21 @@ According to the postdoc advertisement:
     - [ ] null model for connectance
     - [ ] null models everywhere ?
   - [ ] community methods:
-    - [x] Compute temporal beta-diversity
     - [ ] compute turnover, rank shift, rate of change
-    - [x] create community_analysis with richness, species abundance & biomass
-    - [x] create community_metrics with mean_richness, cv_richness, cv_biomass, mean_biomass, beta_div
 - [x] Get bassin data (collab with Christophe Gireaud and Solène Thépaud):
-- [ ] Cluster:
-  - [x] Make cluster home
-  - [x] Install packages
-  - [x] Erase options(mc.cores = ) in scripts
-  - [ ] Makefile:
-    - git pull
-    - run scripts
-    - export output to the computer
-  - [ ] Run like a badass
+- [x] Cluster
+- [ ] Script organisation:
+  - [ ] All scripts to generate datasets are in data-raw
+  - [ ] Lightweight cleaned datasets are in data
+- [ ] Fish datasets to generate:
+  - [ ] `station`: station_id, dept, bassin, commune, loc
+  - [ ] `fish_length`: op_id, species, length
+  - [ ] `op`: op_id, station_id, date, method, surface, length, richness, nb_ind
+  - [ ] `op_env`: op_id, slope, prof, temp, etc..., fishing, water activities,
+    op_commentary
 - [ ] Assess quality of the dataset:
   - [ ] When new data, cf Edeline filtering methods
   - [ ] Add `point_big_mil` and `partial_over_be`
-    - [ ] 
-  - [ ] select data after 1995:
-    - [ ] Because before the data were not standardized
-- [ ]
 - [ ] Assess availability of environmental data
   - [ ] Temperature data
   - [ ] temporal pollution data (cf Colin, FIRE meeting)
@@ -104,6 +86,7 @@ According to the postdoc advertisement:
     - http://www.ades.eaufrance.fr/
     - [x] professional access
     - [ ] Map of water quality and level 
+
 
 # Temporal stability and diversity 
 
