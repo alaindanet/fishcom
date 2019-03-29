@@ -1,7 +1,12 @@
 .Rproj.user
 .Rhistory
 .RData
+*.rda
+*.csv
+*.xls*
+*.html
 *.png
+*.doc*
 inst/doc
 bonnafe_work
 edeline_work
