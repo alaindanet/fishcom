@@ -54,8 +54,7 @@ fish_lot %<>%
       verbose = TRUE)
     )
       ) %>%
-    dplyr::select(lop_id, lop_pre_id, species, fish) %>%
-    tidyr::unnest(fish)
+    dplyr::select(lop_id, lop_pre_id, species, fish)
 
 save(mypath("data-raw", "fishing_op_build", "fish_length.rda"))
 cat("Done!")
