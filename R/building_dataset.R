@@ -16,27 +16,26 @@ gen_fish_from_lot <- function (
   id = NULL, type = NULL,  min_size = NULL, max_size = NULL, nb = NULL,
   ind_measure = NULL, ind_id = NULL, ind_size = NULL, verbose = FALSE, ...) {
 
-  if (verbose) {
-    cat(sprintf("Lot number %s \n", id))
-  }
+  #if (verbose) {
+    #cat(sprintf("Lot number %s \n", id))
+  #}
 
   # Promise:
   ind_id <- rlang::enquo(ind_id)
-  id <- rlang::enquo(id)
   ind_size <- rlang::enquo(ind_size)
 
   # Build by lot
   if (type == "G") {
     if (any(is.na(c(min_size, max_size)))) {
       warning_msg <- paste(
-	"NA in lot of type G number ",id,", lot put as NA\n", sep = ""
+    "NA in lot of type G number ",id,", lot put as NA\n", sep = ""
       )
       warning(warning_msg)
       lot <- NA
     } else if (min_size >= max_size) {
       warning_msg <- paste(
-	"min_size <= max_size in lot of type G number ",id,", lot put as NA\n",
-	sep = "")
+    "min_size <= max_size in lot of type G number ",id,", lot put as NA\n",
+    sep = "")
       warning(warning_msg)
       lot <- NA
     } else {
@@ -49,9 +48,8 @@ gen_fish_from_lot <- function (
     }
   } else if (type == "S/L") {
     #Get size:
-    size <- ind_measure %>% dplyr::filter(!!ind_id == !!id) %>%
-      dplyr::select(!!ind_size) %>%
-      unlist(., use.names = FALSE)
+    mask <- which(ind_measure[[rlang::quo_name(ind_id)]] == id)
+    size <- ind_measure[mask, ][[rlang::quo_name(ind_size)]]
     # Sanity check:
     if (length(size != 30)) {
       warning_msg <- paste(
@@ -73,15 +71,13 @@ gen_fish_from_lot <- function (
     }
   } else if (type == "I") {
     # All individuals have been measured:
-    lot <- ind_measure %>% dplyr::filter(!!ind_id == !!id) %>%
-      dplyr::select(!!ind_size) %>%
-      unlist(., use.names = FALSE)
+    mask <- which(ind_measure[[rlang::quo_name(ind_id)]] == id)
+    lot <- ind_measure[mask, ][[rlang::quo_name(ind_size)]]
     stopifnot(length(lot) == nb)
   } else if (type == "N") {
     # One big individual:
-    lot <- ind_measure %>% dplyr::filter(!!ind_id == !!id) %>%
-      dplyr::select(!!ind_size) %>%
-      unlist(., use.names = FALSE)
+    mask <- which(ind_measure[[rlang::quo_name(ind_id)]] == id)
+    lot <- ind_measure[mask, ][[rlang::quo_name(ind_size)]]
     stopifnot(length(lot) == 1)
   }
   # Round to milimeters:
