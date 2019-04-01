@@ -201,14 +201,14 @@ env_op_col <- c("id", "pente_ligne_eau", "section_mouillee",
   "precipitation_bassin_versant", "amplitude_thermique_air_station",
   "temperature_air_station", "commentaire")
 op_env <- select(op, env_op_col)
-save(op_env, file = #HERE)
+#save(op_env, file = #HERE)
 ```
 
 ### op
 
 ```{r}
 op <- select(op, -env_op_col)
-save(op, file = #HERE)
+#save(op, file = #HERE)
 ```
 
 ### Exploration
@@ -345,13 +345,15 @@ lot_poissons
 ```
 
 ```{r, echo = FALSE, include = FALSE}
-data_testing <- purrr::map(collect(ref_type_lot)$type_lot, function (lot, data) {
+lot_testing <- purrr::map(collect(ref_type_lot)$type_lot, function (lot, data) {
   temp <- filter(data, type_lot == lot)
-  sample_n(collect(temp), 5)
+  sample_n(collect(temp), 1000)
     }, data = lot_poissons
   ) %>%
   do.call(rbind, .)
-dput(data_testing)
+
+save(lot_testing, file = mypath("data-raw","fishing_op_build",
+    "lot_testing.rda"))
 ```
 
 ### Individual measurements
@@ -368,9 +370,10 @@ ref_type_lot %<>%
 
 ```{r echo = FALSE, include = FALSE}
 ind_measure_testing <-
-  filter(ind_measure, mei_lop_id %in% data_testing$lop_id) %>%
+  filter(ind_measure, mei_lop_id %in% lot_testing$lop_id) %>%
   collect()
-dput(ind_measure_testing)
+save(ind_measure_testing, file = mypath("data-raw","fishing_op_build",
+    "ind_measure_testing.rda"))
 
 filter(lot_poissons, type_lot == "N") %>%
   select(lop_id, lop_effectif) %>%

@@ -244,6 +244,6 @@ test_that("multiplication works", {
   expect_is(output, "data.frame")
   output %>%
     dplyr::select(lop_id, lop_pre_id, species, fish) %>%
-    unnest(fish)
+    tidyr::unnest(fish)
 
 })
