@@ -2,14 +2,16 @@
 #                           Routine for the cluster                            #
 ################################################################################
 
-RUN=run
+RUN=analysis
 EXEC=my_job
 RUN_DIR:=/home/danet/fishcom
 DEST:=/home/alain/Documents/post-these/mnhn/fishcom
 
 all: $(RUN)
 
-run:
+dataset:
+	ssh mesu "cd $(RUN_DIR)/run && qsub build_dataset_mesu_job.sh"
+analysis:
 	ssh mesu "cd $(RUN_DIR)/run && qsub job_mesu_cluster.sh"
 
 my_job: 

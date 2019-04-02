@@ -187,6 +187,7 @@ op <- db_op %>%
   collect() %>%
   filter(niq_id %in% qualif_kept$niq_id) %>% # Select qualification
   filter(id %in% objective_op_id) %>% #operation objectives
+  filter(espece_ciblee == FALSE) %>% # Do not keep those specific operations
   filter(pro_id %in% protocol_kept$pro_id) %>% #operation prospection methods 
   filter(date > lubridate::ymd("1995-01-01")) %>% # Because it is the time of protocol standardization
   arrange(date)
@@ -201,15 +202,30 @@ env_op_col <- c("id", "pente_ligne_eau", "section_mouillee",
   "precipitation_bassin_versant", "amplitude_thermique_air_station",
   "temperature_air_station", "commentaire")
 op_env <- select(op, env_op_col)
-#save(op_env, file = #HERE)
+save(op_env, file = mypath("data-raw", "fishing_op_build", "op_env.rda"))
 ```
 
 ### op
 
 ```{r}
 op <- select(op, -env_op_col)
+filter(op, espece_ciblee == TRUE) 
 #save(op, file = #HERE)
 ```
+```{r}
+# Collect débit, largeur, longueur, etc
+# and them accordingly to fishing operation env and general
+# HERE
+op_desc <- tbl(con, in_schema("aspe", "operation_description_peche"))
+colnames(op_desc)
+desc_op_col <-  
+aspe_tables <- DBI::dbListObjects(con, prefix = DBI::Id(schema="aspe"))$table %>%
+  unlist %>%
+  str_replace_all(., "<Id> schema = aspe, table = ", "")
+unlist(aspe_tables)
+
+```
+
 
 ### Exploration
 
