@@ -1,8 +1,8 @@
 #!/bin/bash
 #Request 90 CPU cores on one node (typical for MeSU-alpha)
 #PBS -q alpha 
-#PBS -l select=1:ncpus=90
-#PBS -l walltime=48:00:00
+#PBS -l select=1:ncpus=20
+#PBS -l walltime=20:00:00
 #PBS -N build_fish_lot 
  
 #The command below allows"module" to properly initialize a bash / sh shell in
@@ -20,7 +20,7 @@ export R_LIBS_USER
 
 # Define scratch space scratch alpha for UV scratchbeta for ICE
 SCRATCH=/scratchalpha/$USER/my_scratch_space
-PROJECT=fishcom
+PROJECT=fishcom2
 DATADIR=data-raw/fishing_op_build
 PARALLEL=analysis/misc/parallel_setup.R
 mkdir $SCRATCH
@@ -49,7 +49,7 @@ wait
 
 # Copyfile
 cd $PBS_O_WORKDIR
-cp -p  $SCRATCH/$PROJECT/$DATADIR/fish_length.rda ../$DATADIR || exit 1
+cp -p  $SCRATCH/$PROJECT/$DATADIR/fish_length_test.rda ../$DATADIR || exit 1
 
 #clean the temporary directory
 rm -rf "$SCRATCH/$PROJECT”/*
