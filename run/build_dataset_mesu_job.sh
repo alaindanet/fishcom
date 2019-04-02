@@ -1,7 +1,7 @@
 #!/bin/bash
 #Request 90 CPU cores on one node (typical for MeSU-alpha)
 #PBS -q alpha 
-#PBS -l select=1:ncpus=5
+#PBS -l select=1:ncpus=90
 #PBS -l walltime=48:00:00
 #PBS -N build_fish_lot 
  
@@ -25,15 +25,19 @@ DATADIR=data-raw/fishing_op_build
 PARALLEL=analysis/misc/parallel_setup.R
 mkdir $SCRATCH
 mkdir $SCRATCH/$PROJECT
-mkdir $SCRATCH/$PROJECT/$DATADIR
+mkdir $SCRATCH/$PROJECT/data-raw
+mkdir $SCRATCH/$PROJECT/data-raw/fishing_op_build
 mkdir $SCRATCH/$PROJECT/R
+mkdir $SCRATCH/$PROJECT/run
+mkdir $SCRATCH/$PROJECT/analysis
 mkdir $SCRATCH/$PROJECT/analysis/misc
 
 # copy some input files to  $SCRATCH directory
-$PKG_DIR="../"
-cp $PKG_DIR/$DATADIR/* $SCRATCH/$PROJECT/$DATADIR
-cp $PKG_DIR/R/building_dataset.R $SCRATCH/$PROJECT/R/building_dataset.R
-cp $PKG_DIR/$PARALLEL $SCRATCH/$PROJECT/$PARALLEL
+cp ../$DATADIR/* $SCRATCH/$PROJECT/$DATADIR
+cp ../R/building_dataset.R $SCRATCH/$PROJECT/R/building_dataset.R
+cp ../$PARALLEL $SCRATCH/$PROJECT/$PARALLEL
+cp ../run/* $SCRATCH/$PROJECT/run
+cp ../DESCRIPTION $SCRATCH/$PROJECT
 
 cd $SCRATCH/$PROJECT/run
 # Launch the good guys: 

@@ -20,6 +20,7 @@ options('future.globals.maxSize' = (max_size_future_gb*10^3)*1024^2)
 options('future.globals.maxSize')
 
 library(magrittr)
+library(future)
 
 ###############
 #  Load data  #
