@@ -194,7 +194,326 @@ op <- db_op %>%
 arrange(op, desc(date))
 ```
 
-### Op env
+### Description of the fishing conditions
+
+```{r}
+# Collect débit, largeur, longueur, etc
+# and them accordingly to fishing operation env and general
+# HERE
+op_desc <- tbl(con, in_schema("aspe", "operation_description_peche")) %>%
+  filter(odp_ope_id %in% op$id) %>%
+  collect()
+colnames(op_desc)
+desc_op_col <-c(
+"odp_ope_id", "odp_mop_id", "odp_duree_peche",
+"odp_surface_eq_radier_rapide_troncon",
+"odp_observations_generales", "odp_longueur",
+"odp_largeur_lame_eau", "odp_iso_id_aval", "odp_iso_id_amont",
+"odp_largeur_rive_gauche", "odp_longueur_rive_gauche",
+"odp_largeur_rive_droite", "odp_longueur_rive_droite",
+"odp_temperature_instantanee", "odp_conductivite",
+"odp_ted_id", "odp_tur_id", "odp_coh_id",
+"odp_debit_moyen_journalier", "odp_debit_moyen_horaire"
+)
+
+op_desc %<>% select(desc_op_col)
+# simplify naming:
+op_desc %<>% rename_all(
+  list(~ gsub("odp_", "", make.names(colnames(op_desc)))))
+desc_col_replacement <- c(
+ "mop_id"                  = "method_id"            ,
+ "duree_peche"             = "time_fishing"      ,
+ "iso_id_aval"             = "isolation_down_id"    ,
+ "iso_id_amont"            = "isolation_up_id"      ,
+ "largeur_lame_eau"        = "width_river"        ,
+ "largeur_rive_gauche"     = "width_left_shore"   ,
+ "longueur_rive_gauche"    = "length_left_shore"  ,
+ "largeur_rive_droite"     = "width_right_shore"  ,
+ "longueur_rive_droite"    = "length_right_shore" ,
+ "longueur"                = "length_sourced"    ,
+ "temperature_instantanee" = "instant_temperature",
+ "conductivite"            = "conductivity"       ,
+ "ted_id"                  = "flow_trend_id"         ,
+ "tur_id"                  = "turbidity_id"          ,
+ "coh_id"                  = "hydro_condition_id"    ,
+ "debit_moyen_journalier"  = "avg_daily_flow"     ,
+ "debit_moyen_horaire"     = "avg_hourly_flow",
+ "observations_generales"  = "general_observations"
+)
+colnames(op_desc) <- str_replace_all(colnames(op_desc), desc_col_replacement)
+```
+
+#### Replace ids by strings 
+
+```{r}
+ref_method <- tbl(con, in_schema("aspe", "ref_moyen_prospection")) %>%
+  collect() %>%
+  rename(
+    "method_id" = "mop_id",
+    "method" = "mop_libelle"
+  ) %>%
+  select(method_id, method)
+# Translate in english:
+method_replacement <- c(
+  "A pied" = "by_foot",
+  "En bateau" = "by_boat",
+  "Mixte" = "mixed",
+  "Non renseigné" = "unknown"
+)
+ref_method$method %<>% str_replace_all(., method_replacement)
+```
+
+```{r}
+ref_turbidity <- tbl(con, in_schema("aspe", "ref_turbidite")) %>%
+  collect() %>%
+  rename(
+    "turbidity_id" = "tur_id",
+    "turbidity" = "tur_libelle"
+  ) %>%
+  select(turbidity_id, turbidity)
+# Translate in english:
+turbidity_replacement <- c(
+  "Nulle"   = "null",
+  "Faible"  = "weak",
+  "Moyenne" = "medium",
+  "Forte"   = "strong"
+)
+ref_turbidity$turbidity %<>% str_replace_all(., turbidity_replacement)
+```
+
+```{r}
+ref_isolation <- tbl(con, in_schema("aspe", "ref_isolement")) %>%
+  collect() %>%
+  rename(
+    "isolation_id" = "iso_id",
+    "isolation" = "iso_libelle"
+  ) %>%
+  select(isolation_id, isolation)
+
+# Translate in english:
+isolation_replacement <- c(
+ "Pas d’isolement"                   = "no",
+ "Seuil partiellement franchissable" = "partly_crossable",
+ "Obstacle infranchissable"          = "obstable_uncrossable",
+ "Filet"                             = "net",
+ "Barrage électrique"                = "electric_dam",
+ "Autres"                            = "others"
+)
+ref_isolation$isolation %<>% str_replace_all(., isolation_replacement)
+ref_isolation_up <- ref_isolation %>%
+  mutate(
+    isolation_up_id = isolation_id,
+    isolation_up = isolation
+  ) %>%
+  select(isolation_up_id, isolation_up)
+ref_isolation_down <- ref_isolation %>%
+  mutate(
+    isolation_down_id = isolation_id,
+    isolation_down = isolation
+  ) %>%
+  select(isolation_down_id, isolation_down)
+```
+
+```{r}
+ref_hydro_condition <- tbl(con, in_schema("aspe", "ref_condition_hydrologique")) %>%
+  collect() %>%
+  rename(
+    "hydro_condition_id" = "coh_id",
+    "hydro_condition" = "coh_libelle"
+  ) %>%
+  select(hydro_condition_id, hydro_condition)
+# Translate in english:
+hydro_condition_replacement <- c(
+ "Basses eaux"   = "low_water",
+ "Eaux moyennes" = "medium_water",
+ "Hautes eaux"   = "high_water"
+)
+ref_hydro_condition$hydro_condition %<>% str_replace_all(., hydro_condition_replacement)
+```
+
+```{r}
+ref_flow_trend <- tbl(con, in_schema("aspe", "ref_tendance_debit")) %>%
+  collect() %>%
+  rename(
+    "flow_trend_id" = "ted_id",
+    "flow_trend" = "ted_libelle"
+  ) %>%
+  select(flow_trend_id, flow_trend)
+
+# Translate in english:
+flow_trend_replacement <- c(
+ "Augmentation \\(en crue\\)" = "flooding",
+ "Diminution \\(en décrue\\)" = "decline",
+ "Stabilité"              = "stability",
+ "Irrégularité"          = "irregularity"
+)
+ref_flow_trend$flow_trend %<>% str_replace_all(., flow_trend_replacement)
+```
+
+```{r}
+op_desc %<>%
+  left_join(., ref_flow_trend) %>%
+  left_join(., ref_hydro_condition) %>%
+  left_join(., ref_turbidity) %>%
+  left_join(., ref_method) %>%
+  left_join(., ref_isolation_up) %>%
+  left_join(., ref_isolation_down) 
+
+col_to_rm <- tidyselect::vars_select(names(op_desc), ends_with("id"))
+
+op_desc %<>%
+  select(- one_of(col_to_rm[col_to_rm != "ope_id"]))
+save(op_desc, file = mypath("data-raw", "fishing_op_build", "op_desc.rda"))
+```
+
+### Environmental data of the operation
+
+```{r}
+op_env <- tbl(con, in_schema("aspe", "operation_donnees_environnementales")) %>%
+  filter(ode_ope_id %in% op$id) %>%
+  collect()
+colnames(op_env)
+env_op_col <- c(
+"ode_ope_id", "ode_lo3_id_secteur_debit_reserve",
+"ode_lo3_id_secteur_soumis_ecluse", "ode_lo3_id_soutien_etiage",
+"ode_observations_hydrologie", "ode_profondeur_moyenne_station",
+"ode_observation_vegetation", "ode_observation_colmatage",
+"ode_hab_id", "ode_haa_id",
+"ode_omb_id", "ode_col_id",
+"ode_gra_id_granulometrie_dominante", "ode_gra_id_granulometrie_accessoire",
+"ode_observations_station", "ode_rep_id",
+"ode_observations_repeuplement", "ode_lo3_id_station_canalisee",
+"ode_lo3_id_station_naviguee", "ode_lo3_id_frequentation_sports_nautiques",
+"ode_lo3_id_curage", "ode_faucardage",
+"ode_lo4_id_deboisement_total", "ode_lo4_id_modification_morphologie",
+"ode_lo4_id_extraction_granulats", "ode_observations_lits_rives"
+)
+
+op_env %<>% rename_all(
+  list(~ gsub("ode_", "", make.names(colnames(op_env)))))
+```
+
+```{r}
+ref_logique_3 <- tbl(con, in_schema("aspe", "ref_logique_3")) %>%
+  collect()
+logique_3_replacement <- c(
+  "Renseignement inconnu" = "unknown",
+  "Oui" = "yes",
+  "Non" = "no"
+)
+ref_logique_3 %<>% 
+  mutate(lo3_libelle = str_replace_all(lo3_libelle, logique_3_replacement))
+
+replacement_lo3 <- ref_logique_3$lo3_libelle
+names(replacement_lo3) <- ref_logique_3$lo3_id
+```
+```{r}
+ref_logique_4 <- tbl(con, in_schema("aspe", "ref_logique_4")) %>%
+  collect()
+logique_4_replacement <- c(
+  "Renseignement inconnu" = "unknown",
+  "Oui \\(récent - depuis la dernière opération\\)" = "recent",
+  "Oui \\(ancien\\)" = "ancient",
+  "Non" = "no"                                
+)
+ref_logique_4 %<>% 
+  mutate(lo4_libelle = str_replace_all(lo4_libelle, logique_4_replacement))
+
+replacement_lo4 <- ref_logique_4$lo4_libelle
+names(replacement_lo4) <- ref_logique_4$lo4_id
+```
+
+```{r}
+ref_ombrage <- tbl(con, in_schema("aspe", "ref_ombrage")) %>%
+  collect()
+ombrage_replacement <- c(
+  "Très Ombragé" = "very_shady",
+  "Ombragé" = "shady",
+  "Peu Ombragé" = "little_shade",
+  "Éclairé" = "lit",
+  "Très Eclairé" = "very_lit"
+)
+ref_ombrage %<>% 
+  mutate(omb_libelle = str_replace_all(omb_libelle, ombrage_replacement))
+
+replacement_ombrage <- ref_ombrage$omb_libelle 
+names(replacement_ombrage) <- ref_ombrage$omb_id
+```
+
+```{r}
+ref_colmatage <- tbl(con, in_schema("aspe", "ref_colmatage")) %>%
+  collect()
+colmatage_replacement <- c(
+ "Pas de colmatage"     = "no",
+ "Très léger colmatage" = "very_light",
+ "Léger colmatage"      = "light",
+ "Colmatage moyen"      = "medium",
+ "Colmatage important"  = "important",
+ "Colmatage complet"   = "full"
+)
+ref_colmatage %<>%
+  mutate(col_libelle = str_replace_all(col_libelle, colmatage_replacement))
+replacement_colmatage <- ref_colmatage$col_libelle
+names(replacement_colmatage) <- ref_colmatage$col_id
+```
+
+```{r}
+ref_repeuplement <- tbl(con, in_schema("aspe", "ref_repeuplement")) %>%
+  collect()
+repeuplement_replacement <- c(
+ "Oui"            = "yes",
+ "Non"            = "no",
+ "Pas disponible" = "not_available"
+)
+ref_repeuplement %<>%
+  mutate(rep_libelle = str_replace_all(rep_libelle, repeuplement_replacement))
+replacement_repeuplement <- ref_repeuplement$rep_libelle
+names(replacement_repeuplement) <- ref_repeuplement$rep_id
+```
+
+```{r}
+op_env %<>%
+  mutate_at(vars(contains("lo3")), list(~str_replace_all(., replacement_lo3))) %>%
+  mutate_at(vars(contains("lo4")), list(~str_replace_all(., replacement_lo4))) %>%
+  mutate(
+    col_id = str_replace_all(col_id, replacement_colmatage),
+    rep_id = str_replace_all(rep_id, replacement_repeuplement),
+    omb_id = str_replace_all(omb_id, replacement_ombrage)
+    )
+replacement_env_op_col <- c(
+  "lo3_id_secteur_debit_reserve"          = "instream_flow",
+  "lo3_id_secteur_soumis_ecluse"          = "artificial_flow_variation",
+  "lo3_id_soutien_etiage"                 = "replenishment_flow",
+  "observations_hydrologie"               = "hydro_observations",
+  "profondeur_moyenne_station"            = "avg_depth_station",
+  "observation_vegetation"                = "vegetation_observations",
+  "observation_colmatage"                 = "clogging_observations",
+  "hab_id"                                = "habitat_id",
+  "haa_id"                                = "eel_habitat_id",
+  "omb_id"                                = "shade",
+  "col_id"                                = "clogging",
+  #"gra_id_granulometrie_dominante",
+  #"gra_id_granulometrie_accessoire",
+  "observations_station"                  = "station_observations",
+  "rep_id"                                = "resettlement",
+  "observations_repeuplement"             = "resettlement_observations",
+  "lo3_id_station_canalisee"              = "chanelled_station",
+  "lo3_id_station_naviguee"               = "sailed_station",
+  "lo3_id_frequentation_sports_nautiques" = "nautical_sports",
+  "lo3_id_curage"                         = "dredging",
+  "faucardage"                            = "weed_cutting",
+  "lo4_id_deboisement_total"              = "total_deforestation",
+  "lo4_id_modification_morphologie"       = "artificial_morpho_modification",
+  "lo4_id_extraction_granulats"           = "aggregates_extraction",
+  "observations_lits_rives"               = "bank_bed_observations"
+)
+
+colnames(op_env) %<>% str_replace_all(., replacement_env_op_col)
+save(op_env, file = mypath("data-raw", "fishing_op_build", "op_env.rda"))
+```
+
+
+
 
 ```{r}
 env_op_col <- c("id", "pente_ligne_eau", "section_mouillee",
@@ -211,19 +530,6 @@ save(op_env, file = mypath("data-raw", "fishing_op_build", "op_env.rda"))
 op <- select(op, -env_op_col)
 filter(op, espece_ciblee == TRUE) 
 #save(op, file = #HERE)
-```
-```{r}
-# Collect débit, largeur, longueur, etc
-# and them accordingly to fishing operation env and general
-# HERE
-op_desc <- tbl(con, in_schema("aspe", "operation_description_peche"))
-colnames(op_desc)
-desc_op_col <-  
-aspe_tables <- DBI::dbListObjects(con, prefix = DBI::Id(schema="aspe"))$table %>%
-  unlist %>%
-  str_replace_all(., "<Id> schema = aspe, table = ", "")
-unlist(aspe_tables)
-
 ```
 
 
