@@ -32,11 +32,13 @@ load(mypath("data-raw", "fishing_op_build", "fish_lot.rda"))
 source(mypath("R", "building_dataset.R"))
 ## Compile function:
 gen_fish_from_lot <- compiler::cmpfun(gen_fish_from_lot)
-source(mypath("analysis", "misc", "parallel_setup.R"))
+#source(mypath("analysis", "misc", "parallel_setup.R"))
 
-fish_lot %<>%
-  dplyr::mutate(
-      fish = furrr::future_pmap(
+tic()
+fish_length <-
+  dplyr::mutate(fish_lot,
+      #fish = furrr::future_pmap(
+      fish = purrr::pmap(
     list(
       id = lop_id,
       type = type_lot,
@@ -56,6 +58,7 @@ fish_lot %<>%
     )
       ) %>%
     dplyr::select(lop_id, lop_pre_id, species, fish)
+toc()
 
-save(mypath("data-raw", "fishing_op_build", "fish_length.rda"))
+save(fish_length, mypath("data-raw", "fishing_op_build", "fish_length.rda"))
 cat("Done!")

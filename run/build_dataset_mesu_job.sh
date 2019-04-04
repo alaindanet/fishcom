@@ -1,8 +1,8 @@
 #!/bin/bash
 #Request 90 CPU cores on one node (typical for MeSU-alpha)
-#PBS -q alpha 
-#PBS -l select=1:ncpus=20
-#PBS -l walltime=20:00:00
+#PBS -q beta 
+#PBS -l select=1:ncpus=1
+#PBS -l walltime=70:00:00
 #PBS -N build_fish_lot 
  
 #The command below allows"module" to properly initialize a bash / sh shell in
@@ -19,7 +19,7 @@ R_LIBS_USER="$R_LIBS_USER:$HOME/.local/share/R-3.4.3/library/"
 export R_LIBS_USER
 
 # Define scratch space scratch alpha for UV scratchbeta for ICE
-SCRATCH=/scratchalpha/$USER/my_scratch_space
+SCRATCH=/scratchbeta/$USER/my_scratch_space
 PROJECT=fishcom2
 DATADIR=data-raw/fishing_op_build
 PARALLEL=analysis/misc/parallel_setup.R
