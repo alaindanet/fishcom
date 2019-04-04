@@ -14,11 +14,11 @@
 #' @export
 gen_fish_from_lot <- function (
   id = NULL, type = NULL,  min_size = NULL, max_size = NULL, nb = NULL,
-  ind_measure = NULL, ind_id = NULL, ind_size = NULL, verbose = FALSE, ...) {
+  ind_measure = NULL, ind_id = NULL, ind_size = NULL, ...) {
 
-  #if (verbose) {
-    #cat(sprintf("Lot number %s \n", id))
-  #}
+  # check:
+  stopifnot(!is.na(type))
+  stopifnot(type %in% c("G", "S/L", "N", "I"))
 
   # Promise:
   ind_id <- rlang::enquo(ind_id)
@@ -34,7 +34,7 @@ gen_fish_from_lot <- function (
       lot <- NA
     } else if (min_size >= max_size) {
       warning_msg <- paste(
-    "min_size <= max_size in lot of type G number ",id,", lot put as NA\n",
+    "min_size >= max_size in lot of type G number ",id,", lot put as NA\n",
     sep = "")
       warning(warning_msg)
       lot <- NA
@@ -50,10 +50,12 @@ gen_fish_from_lot <- function (
     #Get size:
     mask <- which(ind_measure[[rlang::quo_name(ind_id)]] == id)
     size <- ind_measure[mask, ][[rlang::quo_name(ind_size)]]
+    size <- na.omit(size)
+    stopifnot(is.na(size) | nrow(size) == 0)
     # Sanity check:
-    if (length(size != 30)) {
+    if (length(size) < 30) {
       warning_msg <- paste(
-      "# of obs different from 30 (actual size is,",length(size),
+      "# of obs is inferior to 30 (actual size is,",length(size),
       ") in Lot type S/L number ", id,".\n", "Lot put as NA\n", sep = "")
       warning(warning_msg)
       lot <- NA
@@ -67,7 +69,6 @@ gen_fish_from_lot <- function (
     p95 <- quantile(size, 0.95)
     lot <- truncdist::rtrunc(n = nb, spec = "norm", a = p05, b = p95,
       mean = avg, sd = sdt)
-    stopifnot(length(lot) == nb)
     }
   } else if (type == "I") {
     # All individuals have been measured:
