@@ -41,7 +41,7 @@ fish_length <-
     lot = fish_lot,
     id_var = lop_id,
     type_var = type_lot,
-    nb_var = nb,
+    nb_var = lop_effectif,
     min_var = lop_longueur_specimens_taille_mini,
     max_var = lop_longueur_specimens_taille_maxi,
     species = species,
