@@ -6,7 +6,7 @@
 # For the vignettes:
 ./install.R ggpmisc cowplot kableExtra tidygraph ggraph
 # Misc:
-./install.R default rprojroot
+./install.R default rprojroot tictoc
 
 echo $R_LIBS_USER
 echo "Packages installed!"

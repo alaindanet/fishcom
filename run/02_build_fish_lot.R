@@ -21,6 +21,7 @@ options('future.globals.maxSize')
 
 library(magrittr)
 library(future)
+library(tictoc)
 
 ###############
 #  Load data  #
