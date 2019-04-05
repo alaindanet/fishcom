@@ -1,3 +1,77 @@
+#' Get size from lot (AFB)
+#' 
+#' @param lot data.frame
+#' @inheritParams gen_fish_from_lot
+get_size_from_lot <- function(
+  lot = NULL, id_var = NULL, type_var = NULL, nb_var = NULL,
+  min_var = NULL, max_var = NULL, species = NULL,
+  measure = NULL, measure_id_var = NULL, size_var = NULL,...){
+
+  id_var <- rlang::enquo(id_var)
+  id_var_chr <- rlang::quo_name(id_var)
+  type_var <- rlang::enquo(type_var)
+  type_var_chr <- rlang::quo_name(type_var)
+  nb_var <- rlang::enquo(nb_var)
+  nb_var_chr <- rlang::quo_name(nb_var)
+  species <- rlang::enquo(species)
+
+  max_var <- rlang::enquo(max_var)
+  min_var <- rlang::enquo(min_var)
+  measure_id_var <- rlang::enquo(measure_id_var)
+  size_var <- rlang::enquo(size_var)
+
+  # Filter incorrect lot:
+  diff_lot_type <- c("G", "S/L", "N", "I")
+  if (any(is.na(lot[[type_var_chr]]) |
+      any(!lot[[type_var_chr]] %in% diff_lot_type))
+    ) {
+    lot %<>%
+      dplyr::filter(! is.na(!!id_var) | !(!!type_var %in% diff_lot_type))
+    message("NA lot id and lot type has been filtered")
+  }
+
+  # Filter if effectif is not present:
+  if (any(is.na(lot[[nb_var_chr]])) | any(!lot[[nb_var_chr]] > 0)) {
+    lot %<>%
+      dplyr::filter( (!is.na(!!nb_var)) | !!nb_var > 0)
+    message("Incorrect effectif has been filtered")
+  }
+
+  na_G <- lot %>%
+    dplyr::filter(!!type_var == "G" & (is.na(!!min_var) | is.na(!!max_var)))
+  incorrect_G <-  lot %>%
+    dplyr::filter(!!type_var == "G" & !!min_var >= !!max_var)
+
+  if (any(c(nrow(na_G), nrow(incorrect_G)) != 0)) {
+    G_bad_id <- c(na_G[[id_var_chr]], incorrect_G[[id_var_chr]])
+
+    lot %<>% dplyr::filter(!( !!id_var %in% G_bad_id))
+    message("incorrect lot G have been filtered")
+  }
+
+  output <- lot %>%
+    dplyr::mutate(
+      fish =
+    purrr::pmap(list(
+        id = !!id_var,
+        type = !!type_var,
+        min_size = !!min_var,
+        max_size = !!max_var,
+        nb = !!nb_var
+        ),
+      gen_fish_from_lot,
+      ind_measure = measure,
+      ind_size = !!size_var,
+      ind_id = !!measure_id_var
+    )
+      ) %>%
+  dplyr::select(!!id_var, !!species, fish) %>%
+  tidyr::unnest(fish)
+
+  output
+
+}
+
 #' Generate fish from fishing lot (AFB) 
 #'
 #'
@@ -17,8 +91,6 @@ gen_fish_from_lot <- function (
   ind_measure = NULL, ind_id = NULL, ind_size = NULL, ...) {
 
   # check:
-  stopifnot(!is.na(type))
-  stopifnot(type %in% c("G", "S/L", "N", "I"))
 
   # Promise:
   ind_id <- rlang::enquo(ind_id)

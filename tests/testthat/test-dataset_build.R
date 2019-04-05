@@ -31,7 +31,7 @@ lot_test <- structure(list(lop_id = c(2287257L, 2206696L, 3877352L, 3130579L,
 "lop_numero_lot_wama", "lop_poids", "lop_poids_estime", "lop_mep_id",
 "lop_effectif", "lop_type_longueur"), class = c("tbl_df", "tbl",
 "data.frame"))
-mesure_test <- structure(list(mei_id = c(231804L, 509234L, 1336205L, 2564256L,
+measure_test <- structure(list(mei_id = c(231804L, 509234L, 1336205L, 2564256L,
       2564257L, 2564258L, 2564259L, 2564260L, 2564261L, 2564262L, 2564263L,
 2564264L, 2564265L, 2564266L, 2564267L, 2564268L, 2564269L, 2564270L,
 2564271L, 2564272L, 2564273L, 2564274L, 2564275L, 2564276L, 2564277L,
@@ -222,28 +222,101 @@ NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
 ), class = c("tbl_df", "tbl", "data.frame"), row.names = c(NA,
 -182L))
 
-test_that("multiplication works", {
+test_that("generate fish works on a sample dataset", {
   expect_warning(
-    output <- lot_test %>%
-    dplyr::mutate(
-      fish = purrr::pmap(
-	list(
-	  id = lop_id,
-	  type = type_lot,
-	  min_size = lop_longueur_specimens_taille_mini,
-	  max_size = lop_longueur_specimens_taille_maxi,
-	  nb = lop_effectif
-	  ),
-	gen_fish_from_lot, # Arguments from ind_measure:
-	ind_measure = mesure_test,
-	ind_size = mei_taille,
-	ind_id = mei_lop_id,
-	verbose = TRUE)
-      )
+    output <- get_size_from_lot(
+      lot = lot_test,
+      id_var = lop_id,
+      type_var = type_lot,
+      nb_var = lop_effectif,
+      min_var = lop_longueur_specimens_taille_mini,
+      max_var = lop_longueur_specimens_taille_mini,
+      species = species,
+      measure = measure_test,
+      measure_id_var = mei_lop_id,
+      size_var = mei_taille)
   )
   expect_is(output, "data.frame")
-  output %>%
-    dplyr::select(lop_id, lop_pre_id, species, fish) %>%
-    tidyr::unnest(fish)
+})
+
+test_that("works with NA", {
+  lot <- tibble::tibble(
+    id = seq(1:4),
+    species = rep(c("Pikachu", "Salameche"), each = 2),
+    type = c("I", "N", "S/L", "G"),
+    min = c(rep(NA, 3), 1),
+    max = c(rep(NA, 3), 2),
+    nb = c(5, 1, 50, 10)
+  )
+  measure <- tibble::tibble(
+    id = c(rep(1, 5), 2, rep(3, 30)),
+    size = c(seq(10, 15), rnorm(30, 10, 2))
+  )
+
+  output <- get_size_from_lot(
+    lot = lot,
+    id_var = id,
+    type_var = type,
+    nb_var = nb,
+    min_var = min,
+    max_var = max,
+    species = species,
+    measure = measure,
+    measure_id_var = id,
+    size_var = size)
+  expect_equal(sum(is.na(output[["fish"]])), 0)
+
+  # With Nas:
+  measure_na <- measure
+  set.seed(123)
+  sampled_rows <- sample(seq_along(measure_na$size), 20)
+  measure_na$size[sampled_rows] <- NA
+
+  output <- lot %>%
+    dplyr::mutate(
+      fish =
+    purrr::pmap(list(
+        id = id,
+        type = type,
+        min_size = min,
+        max_size = max,
+        nb = nb
+        ),
+      gen_fish_from_lot,
+      ind_measure = measure_na,
+      ind_size = size,
+      ind_id = id
+    )
+      ) %>%
+  dplyr::select(id, fish) %>%
+  tidyr::unnest(fish)
+
+output$fish
+})
+
+test_that("test for  type G", {
+
+  lot <- tibble::tibble(
+    id = seq(1:4),
+    species = rep("Pikachu", 4),
+    type = c(rep("G", 4)),
+    min = c(NA,1, 2, 1),
+    max = c(3, 2, 2, 2),
+    nb = c(5, 1, 50, 10)
+  )
+
+  expect_message(
+  output <- get_size_from_lot(
+    lot = lot,
+    id_var = id,
+    type_var = type,
+    nb_var = nb,
+    min_var = min,
+    max_var = max,
+    species = species,
+    measure = measure_test,
+    measure_id_var = id,
+    size_var = size)
+)
 
 })

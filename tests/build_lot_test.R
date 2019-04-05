@@ -148,7 +148,7 @@ lot_measure %>%
 
 
 # Type "S/L" and NA in ind measure
-sl_lot <- filter(fish_lot, type_lot == "S/L") %>% .$lop_id 
+sl_lot <- filter(fish_lot, type_lot == "S/L") %>% .$lop_id
 filter(lot_measure, mei_lop_id %in% sl_lot) %>%
   summarise_all(list(~sum(is.na(.)))) %>%
   unlist
