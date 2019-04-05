@@ -37,28 +37,17 @@ gen_fish_from_lot <- compiler::cmpfun(gen_fish_from_lot)
 
 tic()
 fish_length <-
-  dplyr::mutate(fish_lot,
-      #fish = furrr::future_pmap(
-      fish = purrr::pmap(
-    list(
-      id = lop_id,
-      type = type_lot,
-      min_size = lop_longueur_specimens_taille_mini,
-      max_size = lop_longueur_specimens_taille_maxi,
-      nb = lop_effectif
-      ),
-    ~gen_fish_from_lot(id = ..1,
-      type = ..2,
-      min_size = ..3,
-      max_size = ..4,
-      nb = ..5,
-      ind_measure = lot_measure,
-      ind_size = mei_taille,
-      ind_id = mei_lop_id,
-      verbose = TRUE)
-    )
-      ) %>%
-    dplyr::select(lop_id, lop_pre_id, species, fish)
+  get_size_from_lot(
+    lot = fish_lot,
+    id_var = lop_id,
+    type_var = type_lot,
+    nb_var = nb,
+    min_var = lop_longueur_specimens_taille_mini,
+    max_var = lop_longueur_specimens_taille_maxi,
+    species = species,
+    measure = lot_measure,
+    measure_id_var = mei_lop_id,
+    size_var = mei_taille)
 toc()
 
 save(fish_length, mypath("data-raw", "fishing_op_build", "fish_length.rda"))

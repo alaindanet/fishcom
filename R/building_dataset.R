@@ -5,7 +5,8 @@
 get_size_from_lot <- function(
   lot = NULL, id_var = NULL, type_var = NULL, nb_var = NULL,
   min_var = NULL, max_var = NULL, species = NULL,
-  measure = NULL, measure_id_var = NULL, size_var = NULL,...){
+  measure = NULL, measure_id_var = NULL, size_var = NULL,
+  future_enabled = FALSE, ...){
 
   id_var <- rlang::enquo(id_var)
   id_var_chr <- rlang::quo_name(id_var)
@@ -20,20 +21,22 @@ get_size_from_lot <- function(
   measure_id_var <- rlang::enquo(measure_id_var)
   size_var <- rlang::enquo(size_var)
 
+
+
   # Filter incorrect lot:
   diff_lot_type <- c("G", "S/L", "N", "I")
   if (any(is.na(lot[[type_var_chr]]) |
       any(!lot[[type_var_chr]] %in% diff_lot_type))
     ) {
     lot %<>%
-      dplyr::filter(! is.na(!!id_var) | !(!!type_var %in% diff_lot_type))
+      dplyr::filter(! is.na(!!type_var) & !!type_var %in% diff_lot_type)
     message("NA lot id and lot type has been filtered")
   }
 
   # Filter if effectif is not present:
   if (any(is.na(lot[[nb_var_chr]])) | any(!lot[[nb_var_chr]] > 0)) {
     lot %<>%
-      dplyr::filter( (!is.na(!!nb_var)) | !!nb_var > 0)
+      dplyr::filter( (!is.na(!!nb_var)) & !!nb_var > 0)
     message("Incorrect effectif has been filtered")
   }
 
@@ -49,15 +52,20 @@ get_size_from_lot <- function(
     message("incorrect lot G have been filtered")
   }
 
+  if (future_enabled) {
+    loop <- furrr::future_pmap
+  } else {
+    loop <- purrr::pmap
+  }
   output <- lot %>%
     dplyr::mutate(
       fish =
-    purrr::pmap(list(
-        id = !!id_var,
-        type = !!type_var,
-        min_size = !!min_var,
-        max_size = !!max_var,
-        nb = !!nb_var
+    loop(list(
+    id = !!id_var,
+    type = !!type_var,
+    min_size = !!min_var,
+    max_size = !!max_var,
+    nb = !!nb_var
         ),
       gen_fish_from_lot,
       ind_measure = measure,

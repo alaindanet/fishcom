@@ -1,4 +1,7 @@
 context("dataset_build")
+library('magrittr')
+library('tidyverse')
+
 
 lot_test <- structure(list(lop_id = c(2287257L, 2206696L, 3877352L, 3130579L,
 4295910L, 2933315L, 4459126L, 4260512L, 2106269L, 3156183L, 3415133L,
@@ -272,28 +275,110 @@ test_that("works with NA", {
   sampled_rows <- sample(seq_along(measure_na$size), 20)
   measure_na$size[sampled_rows] <- NA
 
-  output <- lot %>%
-    dplyr::mutate(
-      fish =
-    purrr::pmap(list(
-        id = id,
-        type = type,
-        min_size = min,
-        max_size = max,
-        nb = nb
-        ),
-      gen_fish_from_lot,
-      ind_measure = measure_na,
-      ind_size = size,
-      ind_id = id
-    )
-      ) %>%
-  dplyr::select(id, fish) %>%
-  tidyr::unnest(fish)
+  expect_warning(
+  output <- get_size_from_lot(
+    lot = lot,
+    id_var = id,
+    type_var = type,
+    nb_var = nb,
+    min_var = min,
+    max_var = max,
+    species = species,
+    measure = measure_na,
+    measure_id_var = id,
+    size_var = size)
+  )
 
-output$fish
 })
 
+test_that("test for NA or non standard type", {
+
+  lot <- tibble::tibble(
+    id = seq(1:4),
+    species = rep("Pikachu", 4),
+    type = c(rep("G", 4)),
+    min = c(1, 1, 0, 1),
+    max = c(3, 2, 2, 2),
+    nb = c(5, 1, 50, 10)
+  )
+  lot$type[1] <- NA
+
+  expect_is(
+    output <- get_size_from_lot(
+      lot = lot,
+      id_var = id,
+      type_var = type,
+      nb_var = nb,
+      min_var = min,
+      max_var = max,
+      species = species,
+      measure = measure_test,
+      measure_id_var = id,
+      size_var = size),
+    "data.frame"
+  )
+
+  lot$type[1] <- "grrr"
+
+  expect_is(
+    output <- get_size_from_lot(
+      lot = lot,
+      id_var = id,
+      type_var = type,
+      nb_var = nb,
+      min_var = min,
+      max_var = max,
+      species = species,
+      measure = measure_test,
+      measure_id_var = id,
+      size_var = size)
+    ,
+    "data.frame"
+  )
+})
+
+test_that("test for NA or non standard nb", {
+
+  lot <- tibble::tibble(
+    id = seq(1:4),
+    species = rep("Pikachu", 4),
+    type = c(rep("G", 4)),
+    min = c(1, 1, 0, 1),
+    max = c(3, 2, 2, 2),
+    nb = c(5, 1, 50, 10)
+  )
+  lot$nb[1] <- NA
+
+  expect_message(
+    output <- get_size_from_lot(
+      lot = lot,
+      id_var = id,
+      type_var = type,
+      nb_var = nb,
+      min_var = min,
+      max_var = max,
+      species = species,
+      measure = measure_test,
+      measure_id_var = id,
+      size_var = size)
+  )
+
+  lot$nb[1] <- 0
+
+  expect_message(
+    output <- get_size_from_lot(
+      lot = lot,
+      id_var = id,
+      type_var = type,
+      nb_var = nb,
+      min_var = min,
+      max_var = max,
+      species = species,
+      measure = measure_test,
+      measure_id_var = id,
+      size_var = size)
+  )
+})
 test_that("test for  type G", {
 
   lot <- tibble::tibble(
@@ -318,5 +403,23 @@ test_that("test for  type G", {
     measure_id_var = id,
     size_var = size)
 )
+})
+
+test_that("type S/L works with NA", {
+
+  lot <- tibble::tibble(
+    id = seq(1:4),
+    species = rep("Pikachu", 4),
+    type = rep("S/L", 4),
+    min = rep(NA, 4),
+    max = rep(NA, 4),
+    nb = c(5, 1, 50, 10)
+  )
+  measure <- tibble::tibble(
+    id = c(rep(c(1, 2, 3), each = 30), rep(4, 20)),
+    size = c(rnorm(30*3, 50, 4), rnorm(20, 10, 2))
+  )
+  measure$size[31] <- NA
+
 
 })
