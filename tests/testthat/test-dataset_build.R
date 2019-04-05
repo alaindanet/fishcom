@@ -313,8 +313,8 @@ test_that("test for NA or non standard type", {
       max_var = max,
       species = species,
       measure = measure_test,
-      measure_id_var = id,
-      size_var = size),
+      measure_id_var = mei_lop_id,
+      size_var = mei_taille),
     "data.frame"
   )
 
@@ -330,8 +330,8 @@ test_that("test for NA or non standard type", {
       max_var = max,
       species = species,
       measure = measure_test,
-      measure_id_var = id,
-      size_var = size)
+      measure_id_var = mei_lop_id,
+      size_var = mei_taille)
     ,
     "data.frame"
   )
@@ -359,8 +359,8 @@ test_that("test for NA or non standard nb", {
       max_var = max,
       species = species,
       measure = measure_test,
-      measure_id_var = id,
-      size_var = size)
+      measure_id_var = mei_lop_id,
+      size_var = mei_taille)
   )
 
   lot$nb[1] <- 0
@@ -375,8 +375,8 @@ test_that("test for NA or non standard nb", {
       max_var = max,
       species = species,
       measure = measure_test,
-      measure_id_var = id,
-      size_var = size)
+      measure_id_var = mei_lop_id,
+      size_var = mei_taille)
   )
 })
 test_that("test for  type G", {
@@ -400,8 +400,8 @@ test_that("test for  type G", {
     max_var = max,
     species = species,
     measure = measure_test,
-    measure_id_var = id,
-    size_var = size)
+    measure_id_var = mei_lop_id,
+    size_var = mei_taille)
 )
 })
 
@@ -421,5 +421,36 @@ test_that("type S/L works with NA", {
   )
   measure$size[31] <- NA
 
+
+})
+
+test_that("filter of lot measure measure works", {
+
+  lot <- tibble::tibble(
+    id = seq(1:4),
+    species = rep("Pikachu", 4),
+    type = rep("S/L", 4),
+    min = rep(NA, 4),
+    max = rep(NA, 4),
+    nb = c(5, 1, 5, 1)
+  )
+  measure <- tibble::tibble(
+    id = c(rep(c(1, 2, 3), each = 30), rep(c(4, 5), each = 30)),
+    size = c(rnorm(30*3, 50, 4), rnorm(30*2, 10, 2))
+  )
+
+  expect_message(
+  output <- get_size_from_lot(
+    lot = lot,
+    id_var = id,
+    type_var = type,
+    nb_var = nb,
+    min_var = min,
+    max_var = max,
+    species = species,
+    measure = measure,
+    measure_id_var = id,
+    size_var = size)
+  , "surnumerous lot in measure were removed")
 
 })

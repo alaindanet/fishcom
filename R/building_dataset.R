@@ -15,13 +15,25 @@ get_size_from_lot <- function(
   nb_var <- rlang::enquo(nb_var)
   nb_var_chr <- rlang::quo_name(nb_var)
   species <- rlang::enquo(species)
-
   max_var <- rlang::enquo(max_var)
   min_var <- rlang::enquo(min_var)
+
   measure_id_var <- rlang::enquo(measure_id_var)
+  measure_id_var_chr <- rlang::quo_name(measure_id_var)
   size_var <- rlang::enquo(size_var)
 
+  # Filter surnumerous variable:
+  lot %<>%
+    dplyr::select(!!id_var, !!type_var, !!nb_var, !!species, !!min_var, !!max_var)
+  measure %<>%
+    dplyr::select(!!measure_id_var, !!size_var)
 
+  # Filter surnumerous id in measure:
+  if (any(! measure[[measure_id_var_chr]] %in% lot[[id_var_chr]])) {
+    measure %<>%
+      dplyr::filter(!!measure_id_var %in% lot[[id_var_chr]])
+    message("surnumerous lot in measure were removed")
+  }
 
   # Filter incorrect lot:
   diff_lot_type <- c("G", "S/L", "N", "I")
