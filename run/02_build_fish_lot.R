@@ -50,5 +50,5 @@ fish_length <-
     size_var = mei_taille)
 toc()
 
-save(fish_length, mypath("data-raw", "fishing_op_build", "fish_length.rda"))
+save(fish_length, file = mypath("data-raw", "fishing_op_build", "fish_length.rda"))
 cat("Done!")

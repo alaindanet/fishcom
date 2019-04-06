@@ -68,6 +68,7 @@ get_size_from_lot <- function(
     loop <- furrr::future_pmap
   } else {
     loop <- purrr::pmap
+    gen_fish_from_lot <- compiler::cmpfun(gen_fish_from_lot)
   }
   output <- lot %>%
     dplyr::mutate(
