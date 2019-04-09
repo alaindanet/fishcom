@@ -44,7 +44,7 @@ con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "afb_fish", port = 5434)
 ```
 
 
-## Fishing operation 
+# Fishing operation 
 
 ```{r fish operation dataset}
 db_op <- tbl(con, in_schema("aspe", "operation"))
@@ -53,7 +53,7 @@ db_op %<>%
 ```
 
 
-### Fishing objectives 
+## Fishing objectives 
 
 In the fishing operation objectives, we can find the following:
 ```{r}
@@ -97,7 +97,7 @@ objective_op_id <- tbl(con, in_schema("aspe", "operation_objectif")) %>%
 ```
 
 
-### Levels of qualification 
+## Levels of qualification 
 
 There are different levels of qualification in the database.  
 Those levels allow to filter and correct bugs (I guess). For example, if you enter the bad
@@ -134,7 +134,7 @@ qualif_kept <- qualif_lvl %>%
 qualif_kept$niq_libelle
 ```
 
-### Protocol
+## Fishing protocol
 
 There are seven fish protocols:
 
@@ -169,14 +169,19 @@ protocol_to_keep <- "complète|partielle"
 protocol_kept <- protocols %>%
   collect() %>%
   filter(str_detect(pro_libelle, protocol_to_keep))
-protocol_kept$pro_libelle
+protocol_replacement <- c(
+"Pêche complète à un ou plusieurs passages" = "complete",
+"Pêche partielle par points \\(grand milieu\\)" = "partial_by_point",
+"Pêche partielle sur berge" = "partial_over_bank"
+)
+protocol_kept$pro_libelle %<>% str_replace_all(., protocol_replacement)
 ```
 
-### Build the dataset
+## Build the dataset
 
 ```{r}
 # Selected ids 
-col_to_keep <- c("id", "date", "pro_id", "pente_ligne_eau", "section_mouillee",
+col_to_keep <- c("id", "date", "pop_id", "pro_id", "pente_ligne_eau", "section_mouillee",
   "durete_totale", "temp_max_moyenne_eau", "temp_air_bassin_versant",
   "precipitation_bassin_versant", "amplitude_thermique_air_station",
   "temperature_air_station", "surface_calculee", "espece_ciblee", "niq_id",
@@ -191,10 +196,24 @@ op <- db_op %>%
   filter(pro_id %in% protocol_kept$pro_id) %>% #operation prospection methods 
   filter(date > lubridate::ymd("1995-01-01")) %>% # Because it is the time of protocol standardization
   arrange(date)
-arrange(op, desc(date))
+
 ```
 
-### Description of the fishing conditions
+## Get names instead of id
+
+```{r}
+protocol_kept %<>%
+  rename(protocol = pro_libelle) %>%
+  select(pro_id, protocol)
+# TODO: same with qualif, objective, prospection method 
+op %<>%
+  left_join(., protocol_kept) %>% select(-pro_id)
+
+op %<>% select(id, date, station, protocol, everything())
+save(op, file = mypath("data-raw", "fishing_op_build", "op.rda"))
+```
+
+# Description of the fishing conditions
 
 ```{r}
 # Collect débit, largeur, longueur, etc
@@ -243,7 +262,7 @@ desc_col_replacement <- c(
 colnames(op_desc) <- str_replace_all(colnames(op_desc), desc_col_replacement)
 ```
 
-#### Replace ids by strings 
+## Replace ids by strings 
 
 ```{r}
 ref_method <- tbl(con, in_schema("aspe", "ref_moyen_prospection")) %>%
@@ -366,7 +385,7 @@ op_desc %<>%
 save(op_desc, file = mypath("data-raw", "fishing_op_build", "op_desc.rda"))
 ```
 
-### Environmental data of the operation
+# Environmental data of the fishing operation
 
 ```{r}
 op_env <- tbl(con, in_schema("aspe", "operation_donnees_environnementales")) %>%
@@ -512,9 +531,6 @@ colnames(op_env) %<>% str_replace_all(., replacement_env_op_col)
 save(op_env, file = mypath("data-raw", "fishing_op_build", "op_env.rda"))
 ```
 
-
-
-
 ```{r}
 env_op_col <- c("id", "pente_ligne_eau", "section_mouillee",
   "durete_totale", "temp_max_moyenne_eau", "temp_air_bassin_versant",
@@ -524,12 +540,68 @@ op_env <- select(op, env_op_col)
 save(op_env, file = mypath("data-raw", "fishing_op_build", "op_env.rda"))
 ```
 
-### op
+# Station
+
+## Sampling point 
 
 ```{r}
-op <- select(op, -env_op_col)
-filter(op, espece_ciblee == TRUE) 
-#save(op, file = #HERE)
+sampling_point <- tbl(con, in_schema("aspe", "point_prelevement")) %>%
+  filter(pop_id %in% op$pop_id) %>%
+  collect()
+sampling_point %<>% rename_all(
+  list(~ gsub("pop_", "", make.names(colnames(sampling_point)))))
+sampling_point_col <- c(
+  "id", "sta_id",
+  "geometrie", "typ_id", "coordonnees_x", "coordonnees_y",
+  "lieu_dit", "localisation_precise", "distance_mer",
+  "distance_maree_dynamique", "nom_bassin", "fog_id",
+  "ocs_id", "zoh_id", "cap_id", "largeur_lit_mineur",
+  "unh_id", "distance_source", "altitude", "pente_ign_cours_eau",
+  "surface_bassin_versant_amont", "temperature_moyenne_janvier",
+  "temperature_moyenne_juillet") 
+sampling_point %<>% select(sampling_point_col)
+```
+
+## Station
+
+```{r}
+station <- tbl(con, in_schema("aspe", "station")) %>%
+  filter(sta_id %in% sampling_point$sta_id) %>%
+  collect()
+station %<>% rename_all(
+  list(~ gsub("sta_", "", make.names(colnames(station)))))
+```
+
+### References projection type
+
+```{r}
+ref_type_proj <- tbl(con, in_schema("aspe", "ref_type_projection")) %>%
+  collect()
+ref_type_proj %<>%
+  select(typ_id, typ_libelle) %>%
+  rename(proj_type = typ_libelle)
+```
+```{r}
+station %<>%
+  left_join(., ref_type_proj) %>%
+  select(-typ_id)
+unique(station$proj_type)
+```
+
+### Save station 
+
+```{r}
+save(station, file = mypath("data-raw","fishing_op_build", "station.rda"))
+```
+
+## Add station id to fishing operation 
+
+```{r}
+station_id <- select(sampling_point, id, sta_id) %>%
+  rename(pop_id = id, station = sta_id)
+op %<>%
+  left_join(., station_id) %>%
+  select(-pop_id)
 ```
 
 

@@ -79,7 +79,7 @@ net_graph <- select(net_ex, from, to, year) %>%
   nest() %>%
   mutate(
     net_graph = pmap(list(net = data, title = year), 
-    set_layout_graph, glay = lay, color_scale = set_color_species(lay))
+    set_layout_graph, glay = NULL, color_scale = set_color_species(lay))
   )
 ## Get legend
 species_colour_legend <- get_legend(net_graph[1,]$net_graph[[1]])
@@ -424,13 +424,13 @@ names(station_high_low_nestedness) <- c("high", "low")
 ```{r}
 # high nestedness
 net_ex <- filter(net, station == station_high_low_nestedness["high"])
-plot_temporal_network(net_ex, lay = lay)
+plot_temporal_network(net = net_ex, lay = NULL)
 ```
 
 ```{r}
 # low nestedness
 net_ex <- filter(net, station == station_high_low_nestedness["low"])
-plot_temporal_network(net_ex, lay = lay)
+plot_temporal_network(net_ex, lay = NULL)
 ```
 
 
