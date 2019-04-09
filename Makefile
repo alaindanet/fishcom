@@ -28,13 +28,13 @@ clean:
 	rm $(DEST)/run/temporal_networks.*
 
 import_data:
-	rsync -e ssh -avz danet@mesu.dsi.upmc.fr:$(RUN_DIR)/data/* $(DEST)/data/
+	rsync -e ssh -r -avz danet@mesu.dsi.upmc.fr:$(RUN_DIR)/data/* $(DEST)/data/
 
 import_raw_data:
-	rsync -e ssh -avz danet@mesu.dsi.upmc.fr:$(RUN_DIR)/data-raw/* $(DEST)/data-raw/
+	rsync -e ssh -r -avz danet@mesu.dsi.upmc.fr:$(RUN_DIR)/data-raw/* $(DEST)/data-raw/
 
 export_raw_data:
-	rsync -e ssh -avz $(DEST)/data-raw/* danet@mesu.dsi.upmc.fr:$(RUN_DIR)/data-raw/
+	rsync -e ssh -r -avz $(DEST)/data-raw/* danet@mesu.dsi.upmc.fr:$(RUN_DIR)/data-raw/
 	# Replace with rsync
 
 git_update:

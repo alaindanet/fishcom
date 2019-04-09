@@ -209,8 +209,6 @@ protocol_kept %<>%
 op %<>%
   left_join(., protocol_kept) %>% select(-pro_id)
 
-op %<>% select(id, date, station, protocol, everything())
-save(op, file = mypath("data-raw", "fishing_op_build", "op.rda"))
 ```
 
 # Description of the fishing conditions
@@ -551,7 +549,7 @@ sampling_point <- tbl(con, in_schema("aspe", "point_prelevement")) %>%
 sampling_point %<>% rename_all(
   list(~ gsub("pop_", "", make.names(colnames(sampling_point)))))
 sampling_point_col <- c(
-  "id", "sta_id",
+  "id", "sta_id", "code_sandre", "code_wama",
   "geometrie", "typ_id", "coordonnees_x", "coordonnees_y",
   "lieu_dit", "localisation_precise", "distance_mer",
   "distance_maree_dynamique", "nom_bassin", "fog_id",
@@ -566,7 +564,6 @@ sampling_point %<>% select(sampling_point_col)
 
 ```{r}
 station <- tbl(con, in_schema("aspe", "station")) %>%
-  filter(sta_id %in% sampling_point$sta_id) %>%
   collect()
 station %<>% rename_all(
   list(~ gsub("sta_", "", make.names(colnames(station)))))
@@ -600,8 +597,47 @@ save(station, file = mypath("data-raw","fishing_op_build", "station.rda"))
 station_id <- select(sampling_point, id, sta_id) %>%
   rename(pop_id = id, station = sta_id)
 op %<>%
-  left_join(., station_id) %>%
-  select(-pop_id)
+  left_join(., station_id)
+
+op %<>% select(id, date, station, protocol, everything())
+save(op, file = mypath("data-raw","fishing_op_build", "op.rda"))
+```
+
+There are 22% of the operation where the station id is na... Why?
+
+```{r}
+filter(op, is.na(station))
+filter(op, is.na(pop_id))
+
+filter(sampling_point, is.na(id))
+# All the sampling point have ids
+na_station <- filter(sampling_point,
+  is.na(sta_id))
+# But 6000 operations do not have station ids...
+filter(sampling_point, is.na(sta_id) & is.na(code_sandre)) 
+# 4000 have no sandre code and no station id
+filter(sampling_point, is.na(sta_id) & is.na(code_sandre) & is.na(code_wama)) 
+# 22...
+
+## How many op in them:
+filter(op, pop_id %in% na_station$id)
+### 20 %
+filter(sampling_point, is.na(code_sandre))
+filter(station_id, is.na(station))
+filter(station_id, is.na(pop_id))
+```
+
+### Projection
+
+```{r}
+library(sf)
+unique(station$proj_type)
+EPSG <- rgdal::make_EPSG()
+EPSG[grep("RGF93 / Lambert-93", EPSG$note), 1:2]
+EPSG[grep("RGFG95 / UTM 22", EPSG$note), 1:2]
+EPSG[grep("RGR92 / UTM 40", EPSG$note), 1:2]
+EPSG[grep("RRAF 1991 / UTM zone 20", EPSG$note), 1:2]
+EPSG[grep("RGM04 / UTM zone 38", EPSG$note), 1:2]
 ```
 
 
@@ -686,7 +722,7 @@ point_group
 I am not sure about what is the meaning of the points. I guess that that it is
 the fishing protocol "partial by points". If I want to merge it with "partial
 over bank", I have to select standard points in which 100 points were done in
-bank.  
+bank.
 
 ```{r}
 point_group %<>%
@@ -804,7 +840,6 @@ rm(fish_lot)
 rm(lot_measure)
 ```
 
-
 ### Generate fish
 
 All the fishes are measured in lot "N" and "I", but not in the other 
@@ -813,37 +848,4 @@ All the fishes are measured in lot "N" and "I", but not in the other
 We have to build their size according to samples and assuming a normal
 distribution.
 
-It makes a very long time to run, so it is better to parallelize and to send to
-cluster.
-TODO: write the files as .rda, set up parallel, set script to run and send files to the cluster
-
-```{r, eval = FALSE}
-lot_poissons %<>%
-  collect() %>%
-  mutate(
-      fish = purrr::pmap(
-	list(
-	  id = lop_id,
-	  type = type_lot,
-	  min_size = lop_longueur_specimens_taille_mini,
-	  max_size = lop_longueur_specimens_taille_maxi,
-	  nb = lop_effectif
-	  ),
-	gen_fish_from_lot, # Arguments from ind_measure:
-	ind_measure = collect(ind_measure),
-	ind_size = mei_taille,
-	ind_id = mei_lop_id,
-	verbose = TRUE)
-      ) %>%
-  select(lop_id, lop_pre_id, species, fish)
-## HERE: Erreur : Evaluation error: argument a is greater than or equal to b.
-pb_id <- 518228
-filter(lot_poissons, lop_id == pb_id)
-filter(lot_poissons, type_lot == "S/L")
-filter(ind_measure, mei_lop_id == pb_id)
-lot <- ind_measure %>% dplyr::filter(mei_lop_id == pb_id) %>%
-  collect() %>%
-  dplyr::select(mei_taille) %>%
-  unlist(., use.names = FALSE)
-```
-
+Go to `../run/02_build_fish_lot.R` to generate the fish.
