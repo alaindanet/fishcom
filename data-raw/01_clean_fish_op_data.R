@@ -116,7 +116,7 @@ op %>%
   pente_ligne_eau < 0
   )
 #Ok
-save(op, file = mypath("data-raw", "fishing_op_build", "op.rda"))
+save(op, file = mypath("data", "op.rda"))
 
 ################################################################################
 #                            Operation description                             #
@@ -124,13 +124,25 @@ save(op, file = mypath("data-raw", "fishing_op_build", "op.rda"))
 
 load(mypath("data-raw", "fishing_op_build", "op_desc.rda"))
 op_desc
+# Look ok
+op_desc %<>%
+  filter(ope_id %in% op$id)
 
+save(mypath("data", "op_desc.rda"))
 ################################################################################
 #                         Operation environmental data                         #
 ################################################################################
 
+load(mypath("data-raw", "fishing_op_build", "op_env.rda"))
+op_env
+# Convert columns in english
 
 ################################################################################
 #                                   Station                                    #
 ################################################################################
+
+load(mypath("data-raw", "fishing_op_build", "station.rda"))
+station %>%
+  select(id, precise_location, x, y)
+HERE
 

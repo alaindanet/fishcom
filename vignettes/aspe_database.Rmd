@@ -576,6 +576,19 @@ station <- tbl(con, in_schema("aspe", "station")) %>%
   collect()
 station %<>% rename_all(
   list(~ gsub("sta_", "", make.names(colnames(station)))))
+replacement_station_col <- c( 
+"code_sandre" = "sandre_code",
+"com_code_insee" = "insee_town_code",
+"point_km_aval" = "down_km_point",
+"localisation_precise" = "precise_location",
+"code_national_masse_eau"= "body_water_code",
+"geometrie" = "postgis",
+"coordonnees_x" = "x",
+"coordonnees_y" = "y"
+)
+colnames(station) %<>% str_replace_all(., replacement_station_col)
+
+
 ```
 
 ### References projection type
@@ -620,23 +633,6 @@ There are no stations where the stations have no id but a sandre code:
 filter(sampling_point, is.na(sta_id) & !is.na(code_sandre)) 
 ```
 
-### Save station 
-
-```{r}
-save(station, file = mypath("data-raw","fishing_op_build", "station.rda"))
-```
-
-## Add station id to fishing operation 
-
-```{r}
-station_id <- select(sampling_point, id, sta_id) %>%
-  rename(pop_id = id, station = sta_id)
-op %<>%
-  left_join(., station_id)
-
-op %<>% select(id, date, station, protocol, everything())
-save(op, file = mypath("data-raw","fishing_op_build", "op.rda"))
-```
 
 ### Projection
 
@@ -667,7 +663,7 @@ station %<>%
   nest() %>%
   mutate(data = map2(data, crs,
       function (df, crs) {
-	temp <- st_as_sf(df, crs = crs, coords = c("coordonnees_x", "coordonnees_y")) 
+	temp <- st_as_sf(df, crs = crs, coords = c("x", "y")) 
 	st_transform(temp, crs = 4326)
       }
       ))
@@ -688,11 +684,7 @@ plot(st_geometry(station["id"]), add = TRUE)
 region_buffer <- st_buffer(region_polygon, dist = .05)
 station_in_metro <- st_within(station, region_buffer)
 test <- purrr::map(station_in_metro, function(x) {
-  if (length(x) == 0) {
-    FALSE
-  } else {
-    TRUE
-  }
+  if (length(x) == 0) { FALSE } else { TRUE }
     })
 station_in_metro <- slice(station, which(test == TRUE)) 
 
@@ -702,6 +694,40 @@ plot(st_geometry(station_in_metro), col = "red", add = TRUE)
 
 station <- station_in_metro
 save(station, file = mypath("data-raw", "fishing_op_build", "station.rda"))
+```
+
+## Add station id to fishing operation 
+
+Let first take only the sampling points that have a station id
+
+```{r}
+sampling_point %<>%
+  filter(sta_id %in% station$id)
+```
+
+
+```{r}
+if (any(colnames(op) %in% "station")) {
+  op %<>% select(-station)
+}
+station_id <- select(sampling_point, id, sta_id) %>%
+  rename(pop_id = id, station = sta_id)
+op %<>%
+  left_join(., station_id)
+
+op %<>% select(id, date, station, protocol, everything())
+```
+
+### Filter op over station
+
+Some op does not have identified stations. We have to filter them
+
+```{r}
+before_nrow <- nrow(op)
+op %<>% filter(!is.na(station))
+cat(round((before_nrow - nrow(op)) / before_nrow * 100),
+  "% of the operations do not have identified stations.\n")
+save(op, file = mypath("data-raw", "fishing_op_build", "op.rda"))
 ```
 
 # Exploration
