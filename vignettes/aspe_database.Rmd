@@ -124,7 +124,7 @@ ggplot(qualif_time, aes(x = year, y = n)) +
   x = "Year", y = "# of fishing operations")
 ```
 
-We keep everything because a huge part of the operations has not a good
+We keep everything because a huge part of the operations has an incorrect 
 qualification level, which is strange.
 
 ```{r}

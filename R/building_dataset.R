@@ -102,7 +102,8 @@ get_size_from_lot <- function(
 #' @param max_size dbl maximum size of the lot 
 #' @param nb int effectif of the lot 
 #' @param ind_measure data.frame individual measurement of the fish 
-#' @param seed int for set.seed
+#' @param ind_id variable name id of the lot in ind_measure 
+#' @param ind_size variable name for the size in ind_measure 
 #'
 #' @details From fishing lot, we build generate the fish size individual
 #'
@@ -121,7 +122,8 @@ gen_fish_from_lot <- function (
   if (type == "G") {
     if (any(is.na(c(min_size, max_size)))) {
       warning_msg <- paste(
-    "NA in lot of type G number ",id,", lot put as NA\n", sep = ""
+	"NA min_size or max_size in lot of type G number ",id,
+	", lot put as NA\n", sep = ""
       )
       warning(warning_msg)
       lot <- NA
@@ -131,13 +133,19 @@ gen_fish_from_lot <- function (
     sep = "")
       warning(warning_msg)
       lot <- NA
+    } else if (nb < 10) {
+      warning_msg <- paste(
+      "# of obs is inferior to 10 (actual # is,", length(size),
+      ") in Lot type G number", id,".\n", "Lot put as NA\n", sep = "")
+      warning(warning_msg)
+      lot <- NA
     } else {
-    avg <- (min_size + max_size) / 2
-    sdt <- (max_size - min_size) * 1 / 4
+      avg <- (min_size + max_size) / 2
+      sdt <- (max_size - min_size) * 1 / 4
 
-    lot <- truncdist::rtrunc(n = nb, spec = "norm", a = min_size, b = max_size,
-      mean = avg, sd = sdt)
-    stopifnot(length(lot) == nb)
+      lot <- truncdist::rtrunc(n = nb, spec = "norm", a = min_size, b = max_size,
+	mean = avg, sd = sdt)
+      stopifnot(length(lot) == nb)
     }
   } else if (type == "S/L") {
     #Get size:
@@ -146,9 +154,9 @@ gen_fish_from_lot <- function (
     size <- na.omit(size)
     stopifnot(is.na(size) | nrow(size) == 0)
     # Sanity check:
-    if (length(size) < 30) {
+    if (length(size) < 20) {
       warning_msg <- paste(
-      "# of obs is inferior to 30 (actual size is,",length(size),
+      "# of obs is inferior to 20 (actual # is,", length(size),
       ") in Lot type S/L number ", id,".\n", "Lot put as NA\n", sep = "")
       warning(warning_msg)
       lot <- NA
@@ -177,3 +185,76 @@ gen_fish_from_lot <- function (
   # Round to milimeters:
   round(lot)
 }
+
+#' Fish lot checker (AFB) 
+#'
+#' Check the quality of the lot 
+#'
+#' @inheritParams gen_fish_from_lot
+#'
+#' @details The function check if there are missing datas that can make the lot
+#' invalid. The check are specific of each lot type. For lot "G", we check if
+#' min or max size are missing, if min >= max size and the number of fish in the
+#' lot is superior or equal to 10. For lot "S/L", we check if the number of measured
+#' fishes is superior to 20 (standard protocol propose 30 be measured). In lot
+#' "I", we check that the number of measured fishes correspond to the number of
+#' fish recorded in the lot. For lot "N", we check if the number of measured
+#' fish is equal to one.    
+#' 
+#' @return a list. Each element of the list correspond to a lot of a fishing
+#' operation. If there is no problem in the lot, it returns NA. In the opposite
+#' case, the function returns a character containing the type of error.
+#' @export
+check_lot <- function (
+  id = NULL, type = NULL,  min_size = NULL, max_size = NULL, nb = NULL,
+  ind_measure = NULL, ind_id = NULL, ind_size = NULL, ...) {
+
+  # Promise:
+  ind_id <- rlang::enquo(ind_id)
+  ind_size <- rlang::enquo(ind_size)
+
+  # Build by lot
+  if (type == "G") {
+    if (any(is.na(c(min_size, max_size)))) {
+      status <- paste("min_size or/and max_size is NA")
+    } else if (min_size >= max_size) {
+      status <- paste("min_size >= max_size")
+    } else if (nb < 10) {
+      status <- paste("# < 10")
+    } else {
+      status <- "good"
+    }
+  } else if (type == "S/L") {
+    #Get size:
+    mask <- which(ind_measure[[rlang::quo_name(ind_id)]] == id)
+    size <- ind_measure[mask, ][[rlang::quo_name(ind_size)]]
+    size <- na.omit(size)
+    stopifnot(is.na(size) | nrow(size) == 0)
+    # Sanity check:
+    if (length(size) < 20) {
+      status <- paste("# < 20 (excluding NA)")
+    } else {
+      status <- "good"
+    }
+  } else if (type == "I") {
+    # All individuals have been measured:
+    mask <- which(ind_measure[[rlang::quo_name(ind_id)]] == id)
+    lot <- ind_measure[mask, ][[rlang::quo_name(ind_size)]]
+    if (length(lot) == nb) {
+      status <- "good"
+    } else {
+      status <- "# of measured fish do not match sample size"
+    }
+  } else if (type == "N") {
+    # One big individual:
+    mask <- which(ind_measure[[rlang::quo_name(ind_id)]] == id)
+    lot <- ind_measure[mask, ][[rlang::quo_name(ind_size)]]
+    if (length(lot) == nb) {
+      status <- "good"
+    } else {
+      status <- "# of measured fish do not match sample size"
+    }
+  }
+  status 
+}
+

@@ -18,6 +18,7 @@ mypath <- rprojroot::find_package_root_file
 max_size_future_gb <- 2
 options('future.globals.maxSize' = (max_size_future_gb*10^3)*1024^2)
 options('future.globals.maxSize')
+options(nwarnings = 100000)
 
 library(magrittr)
 library(future)
@@ -49,6 +50,7 @@ fish_length <-
     measure_id_var = mei_lop_id,
     size_var = mei_taille)
 toc()
+#sequential: 37k sec and 47k sec if the gen_fish_from_lot is not compiled.
 
 save(fish_length, file = mypath("data-raw", "fishing_op_build", "fish_length.rda"))
 cat("Done!")
