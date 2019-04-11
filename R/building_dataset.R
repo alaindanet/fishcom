@@ -80,10 +80,16 @@ get_size_from_lot <- function(
     max_size = !!max_var,
     nb = !!nb_var
         ),
-      gen_fish_from_lot,
-      ind_measure = measure,
-      ind_size = !!size_var,
-      ind_id = !!measure_id_var
+      ~gen_fish_from_lot(
+    id = ..1,
+    type = ..2,
+    min_size = ..3,
+    max_size = ..4,
+    nb = ..5,
+    ind_measure = measure,
+    ind_size = !!size_var,
+    ind_id = !!measure_id_var
+    ),
     )
       ) %>%
   dplyr::select(!!id_var, !!species, fish) %>%
@@ -184,6 +190,78 @@ gen_fish_from_lot <- function (
   }
   # Round to milimeters:
   round(lot)
+}
+
+#' Main function for lot check
+#'
+#' return a data.frame with lot id, species and the  
+#'
+#' @export
+get_check_lot <- function(
+  lot = NULL, id_var = NULL, type_var = NULL, nb_var = NULL,
+  min_var = NULL, max_var = NULL, species = NULL,
+  measure = NULL, measure_id_var = NULL, size_var = NULL,
+  future_enabled = FALSE, ...){
+
+  id_var <- rlang::enquo(id_var)
+  id_var_chr <- rlang::quo_name(id_var)
+  type_var <- rlang::enquo(type_var)
+  type_var_chr <- rlang::quo_name(type_var)
+  nb_var <- rlang::enquo(nb_var)
+  nb_var_chr <- rlang::quo_name(nb_var)
+  species <- rlang::enquo(species)
+  max_var <- rlang::enquo(max_var)
+  min_var <- rlang::enquo(min_var)
+
+  measure_id_var <- rlang::enquo(measure_id_var)
+  measure_id_var_chr <- rlang::quo_name(measure_id_var)
+  size_var <- rlang::enquo(size_var)
+
+  # Filter surnumerous variable:
+  lot %<>%
+    dplyr::select(!!id_var, !!type_var, !!nb_var, !!species, !!min_var, !!max_var)
+  measure %<>%
+    dplyr::select(!!measure_id_var, !!size_var)
+
+  # Filter surnumerous id in measure:
+  if (any(! measure[[measure_id_var_chr]] %in% lot[[id_var_chr]])) {
+    measure %<>%
+      dplyr::filter(!!measure_id_var %in% lot[[id_var_chr]])
+    message("surnumerous lot in measure were removed")
+  }
+
+  if (future_enabled) {
+    loop <- furrr::future_pmap
+  } else {
+    loop <- purrr::pmap
+    check_lot <- compiler::cmpfun(check_lot)
+  }
+  output <- lot %>%
+    dplyr::mutate(
+      check =
+    loop(list(
+    id = !!id_var,
+    type = !!type_var,
+    min_size = !!min_var,
+    max_size = !!max_var,
+    nb = !!nb_var
+        ),
+      ~check_lot(
+    id = ..1,
+    type = ..2,
+    min_size = ..3,
+    max_size = ..4,
+    nb = ..5,
+    ind_measure = measure,
+    ind_size = !!size_var,
+    ind_id = !!measure_id_var
+    ),
+    )
+      ) %>%
+  dplyr::select(!!id_var, !!species, !!type_var, check) %>%
+  tidyr::unnest(check)
+
+  output
 }
 
 #' Fish lot checker (AFB) 
