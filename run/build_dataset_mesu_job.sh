@@ -46,10 +46,12 @@ wait
 wait
 ./02_build_fish_lot.R "PBS"
 wait
+./02bis_check_fish_lot.R "PBS"
 
 # Copyfile
 cd $PBS_O_WORKDIR
 cp -p  $SCRATCH/$PROJECT/$DATADIR/fish_length.rda ../$DATADIR || exit 1
+cp -p  $SCRATCH/$PROJECT/$DATADIR/fish_lot_check.rda ../$DATADIR || exit 1
 
 #clean the temporary directory
 rm -rf "$SCRATCH/$PROJECT"/*
