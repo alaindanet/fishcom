@@ -165,7 +165,6 @@ network_analysis %>%
   unnest(composition) %>%
   filter(opcod == 25770)
 
-network_analysis %<>% dplyr::select(-composition)
 devtools::use_data(network_analysis, overwrite = TRUE)
 
 #####################
@@ -192,6 +191,7 @@ if (!is.null(options("network.type")) & options("network.type") == "species") {
 	  ) %>%
 	distinct(from, to)
 	  }))
+  devtools::use_data(network_analysis, overwrite = TRUE)
 }
 # Transform network to adjacency matrix and compute generic indices: 
 network_analysis %<>%

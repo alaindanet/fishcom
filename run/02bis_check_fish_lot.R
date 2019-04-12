@@ -33,11 +33,11 @@ load(mypath("data-raw", "fishing_op_build", "fish_lot.rda"))
 # For future:
 source(mypath("R", "building_dataset.R"))
 ## Compile function:
-gen_fish_from_lot <- compiler::cmpfun(gen_fish_from_lot)
+check_lot <- compiler::cmpfun(check_lot)
 #source(mypath("analysis", "misc", "parallel_setup.R"))
 
 tic()
-fish_length <-
+fish_lot_check <-
   get_size_from_lot(
     lot = fish_lot,
     id_var = lop_id,
@@ -52,5 +52,5 @@ fish_length <-
 toc()
 #sequential: 37k sec and 47k sec if the gen_fish_from_lot is not compiled.
 
-save(fish_length, file = mypath("data-raw", "fishing_op_build", "fish_length.rda"))
+save(fish_lot_check, file = mypath("data-raw", "fishing_op_build", "fish_lot_check.rda"))
 cat("Done!")

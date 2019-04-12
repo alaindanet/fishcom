@@ -44,7 +44,7 @@ con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "afb_fish", port = 5434)
 ```
 
 
-## Fishing operation 
+# Fishing operation 
 
 ```{r fish operation dataset}
 db_op <- tbl(con, in_schema("aspe", "operation"))
@@ -53,7 +53,7 @@ db_op %<>%
 ```
 
 
-### Fishing objectives 
+## Fishing objectives 
 
 In the fishing operation objectives, we can find the following:
 ```{r}
@@ -97,7 +97,7 @@ objective_op_id <- tbl(con, in_schema("aspe", "operation_objectif")) %>%
 ```
 
 
-### Levels of qualification 
+## Levels of qualification 
 
 There are different levels of qualification in the database.  
 Those levels allow to filter and correct bugs (I guess). For example, if you enter the bad
@@ -119,10 +119,12 @@ qualif_time <- collect(db_op) %>%
   group_by(year, niq_libelle) %>%
   summarise(n = n())
 ggplot(qualif_time, aes(x = year, y = n)) +
-  geom_line(aes(color = niq_libelle))
+  geom_line(aes(color = niq_libelle)) +
+  labs(color = "Qualification level",
+  x = "Year", y = "# of fishing operations")
 ```
 
-We keep everything because a huge part of the operations has not a good
+We keep everything because a huge part of the operations has an incorrect 
 qualification level, which is strange.
 
 ```{r}
@@ -134,7 +136,7 @@ qualif_kept <- qualif_lvl %>%
 qualif_kept$niq_libelle
 ```
 
-### Protocol
+## Fishing protocol
 
 There are seven fish protocols:
 
@@ -169,14 +171,19 @@ protocol_to_keep <- "complète|partielle"
 protocol_kept <- protocols %>%
   collect() %>%
   filter(str_detect(pro_libelle, protocol_to_keep))
-protocol_kept$pro_libelle
+protocol_replacement <- c(
+"Pêche complète à un ou plusieurs passages" = "complete",
+"Pêche partielle par points \\(grand milieu\\)" = "partial_by_point",
+"Pêche partielle sur berge" = "partial_over_bank"
+)
+protocol_kept$pro_libelle %<>% str_replace_all(., protocol_replacement)
 ```
 
-### Build the dataset
+## Build the dataset
 
 ```{r}
 # Selected ids 
-col_to_keep <- c("id", "date", "pro_id", "pente_ligne_eau", "section_mouillee",
+col_to_keep <- c("id", "date", "pop_id", "pro_id", "pente_ligne_eau", "section_mouillee",
   "durete_totale", "temp_max_moyenne_eau", "temp_air_bassin_versant",
   "precipitation_bassin_versant", "amplitude_thermique_air_station",
   "temperature_air_station", "surface_calculee", "espece_ciblee", "niq_id",
@@ -191,10 +198,22 @@ op <- db_op %>%
   filter(pro_id %in% protocol_kept$pro_id) %>% #operation prospection methods 
   filter(date > lubridate::ymd("1995-01-01")) %>% # Because it is the time of protocol standardization
   arrange(date)
-arrange(op, desc(date))
+
 ```
 
-### Description of the fishing conditions
+## Get names instead of id
+
+```{r}
+protocol_kept %<>%
+  rename(protocol = pro_libelle) %>%
+  select(pro_id, protocol)
+# TODO: same with qualif, objective, prospection method 
+op %<>%
+  left_join(., protocol_kept) %>% select(-pro_id)
+
+```
+
+# Description of the fishing conditions
 
 ```{r}
 # Collect débit, largeur, longueur, etc
@@ -243,7 +262,7 @@ desc_col_replacement <- c(
 colnames(op_desc) <- str_replace_all(colnames(op_desc), desc_col_replacement)
 ```
 
-#### Replace ids by strings 
+## Replace ids by strings 
 
 ```{r}
 ref_method <- tbl(con, in_schema("aspe", "ref_moyen_prospection")) %>%
@@ -366,7 +385,7 @@ op_desc %<>%
 save(op_desc, file = mypath("data-raw", "fishing_op_build", "op_desc.rda"))
 ```
 
-### Environmental data of the operation
+# Environmental data of the fishing operation
 
 ```{r}
 op_env <- tbl(con, in_schema("aspe", "operation_donnees_environnementales")) %>%
@@ -512,9 +531,6 @@ colnames(op_env) %<>% str_replace_all(., replacement_env_op_col)
 save(op_env, file = mypath("data-raw", "fishing_op_build", "op_env.rda"))
 ```
 
-
-
-
 ```{r}
 env_op_col <- c("id", "pente_ligne_eau", "section_mouillee",
   "durete_totale", "temp_max_moyenne_eau", "temp_air_bassin_versant",
@@ -524,16 +540,197 @@ op_env <- select(op, env_op_col)
 save(op_env, file = mypath("data-raw", "fishing_op_build", "op_env.rda"))
 ```
 
-### op
+# Station
+
+## Sampling point 
 
 ```{r}
-op <- select(op, -env_op_col)
-filter(op, espece_ciblee == TRUE) 
-#save(op, file = #HERE)
+sampling_point <- tbl(con, in_schema("aspe", "point_prelevement")) %>%
+  filter(pop_id %in% op$pop_id) %>%
+  collect()
+sampling_point %<>% rename_all(
+  list(~ gsub("pop_", "", make.names(colnames(sampling_point)))))
+sampling_point_col <- c(
+  "id", "sta_id", "code_sandre",
+  "geometrie", "typ_id", "coordonnees_x", "coordonnees_y",
+  "lieu_dit", "localisation_precise", "distance_mer",
+  "distance_maree_dynamique", "nom_bassin", "fog_id",
+  "ocs_id", "zoh_id", "cap_id", "largeur_lit_mineur",
+  "unh_id", "distance_source", "altitude", "pente_ign_cours_eau",
+  "surface_bassin_versant_amont", "temperature_moyenne_janvier",
+  "temperature_moyenne_juillet") 
+sampling_point %<>% select(sampling_point_col)
+```
+
+### NA station
+
+```{r}
+filter(sampling_point, is.na(sta_id) & is.na(code_sandre)) 
 ```
 
 
-### Exploration
+## Station
+
+```{r}
+station <- tbl(con, in_schema("aspe", "station")) %>%
+  collect()
+station %<>% rename_all(
+  list(~ gsub("sta_", "", make.names(colnames(station)))))
+replacement_station_col <- c( 
+"code_sandre" = "sandre_code",
+"com_code_insee" = "insee_town_code",
+"point_km_aval" = "down_km_point",
+"localisation_precise" = "precise_location",
+"code_national_masse_eau"= "body_water_code",
+"geometrie" = "postgis",
+"coordonnees_x" = "x",
+"coordonnees_y" = "y"
+)
+colnames(station) %<>% str_replace_all(., replacement_station_col)
+
+
+```
+
+### References projection type
+
+```{r}
+ref_type_proj <- tbl(con, in_schema("aspe", "ref_type_projection")) %>%
+  collect()
+ref_type_proj %<>%
+  select(typ_id, typ_libelle) %>%
+  rename(proj_type = typ_libelle)
+```
+```{r}
+station %<>%
+  left_join(., ref_type_proj) %>%
+  select(-typ_id)
+unique(station$proj_type)
+
+```
+
+### NA station
+
+Some `sampling_point` does not have a station id (`sta_id`), sandre code
+(`code_sandre`). We cannot retrieve the station directly without one or the
+other information.
+
+```{r}
+na_station <- filter(sampling_point,
+  is.na(sta_id))
+# But 6000 operations do not have station ids...
+filter(sampling_point, is.na(sta_id) & is.na(code_sandre)) 
+# 4000 have no sandre code and no station id
+
+## How many op in them:
+filter(op, pop_id %in% na_station$id) %>% nrow
+filter(op, pop_id %in% na_station$id) %>% nrow / nrow(op) * 100
+### 20 %
+```
+
+There are no stations where the stations have no id but a sandre code: 
+
+```{r}
+filter(sampling_point, is.na(sta_id) & !is.na(code_sandre)) 
+```
+
+
+### Projection
+
+```{r}
+library(sf)
+unique(station$proj_type)
+EPSG <- rgdal::make_EPSG()
+EPSG[grep("RGF93 / Lambert-93", EPSG$note), 1:2]
+EPSG[grep("RGFG95 / UTM zone 22", EPSG$note), 1:2]
+EPSG[grep("RGR92 / UTM zone 40", EPSG$note), 1:2]
+EPSG[grep("RRAF 1991 / UTM zone 20", EPSG$note), 1:2]
+EPSG[grep("RGM04 / UTM zone 38", EPSG$note), 1:2]
+```
+
+```{r}
+crs_correspondance <- c(
+  "RGF93 / Lambert 93" = "2154",
+  "RGFG95 / UTM 22" = "2972",
+  "RGR92 / UTM 40" = "2975",
+  "RRAF 91 \\(WGS84\\) / UTM 20" = "4559",
+  "RGM04 / UTM 38" = "4471" 
+)
+station %<>%
+  mutate(crs = str_replace_all(proj_type, crs_correspondance),
+    crs = as.integer(crs))
+station %<>%
+  group_by(crs) %>%
+  nest() %>%
+  mutate(data = map2(data, crs,
+      function (df, crs) {
+	temp <- st_as_sf(df, crs = crs, coords = c("x", "y")) 
+	st_transform(temp, crs = 4326)
+      }
+      ))
+
+station <- do.call(rbind, station$data)
+mapview::mapview(station)@map
+```
+
+Many station are outside metropolitan France. For the moment, we will suppress
+them.
+
+```{r}
+load(mypath("data", "region_polygon.rda"))
+plot(st_geometry(region_polygon))
+plot(st_geometry(station["id"]), add = TRUE)
+
+# Buffer in dec degree: 0.1° = 11km
+region_buffer <- st_buffer(region_polygon, dist = .05)
+station_in_metro <- st_within(station, region_buffer)
+test <- purrr::map(station_in_metro, function(x) {
+  if (length(x) == 0) { FALSE } else { TRUE }
+    })
+station_in_metro <- slice(station, which(test == TRUE)) 
+
+plot(st_geometry(region_polygon))
+plot(st_geometry(station), add = TRUE)
+plot(st_geometry(station_in_metro), col = "red", add = TRUE)
+
+station <- station_in_metro
+save(station, file = mypath("data-raw", "fishing_op_build", "station.rda"))
+```
+
+## Add station id to fishing operation 
+
+Let first take only the sampling points that have a station id
+
+```{r}
+sampling_point %<>%
+  filter(sta_id %in% station$id)
+```
+
+
+```{r}
+if (any(colnames(op) %in% "station")) {
+  op %<>% select(-station)
+}
+station_id <- select(sampling_point, id, sta_id) %>%
+  rename(pop_id = id, station = sta_id)
+op %<>%
+  left_join(., station_id)
+
+op %<>% select(id, date, station, protocol, everything())
+```
+
+### Filter op over station
+
+Some op does not have identified stations. We have to filter them
+
+```{r}
+before_nrow <- nrow(op)
+op %<>% filter(!is.na(station))
+cat(round((before_nrow - nrow(op)) / before_nrow * 100),
+  "% of the operations do not have identified stations.\n")
+save(op, file = mypath("data-raw", "fishing_op_build", "op.rda"))
+```
+
+# Exploration
 
 Let's check the number of operation by year: 
 ```{r}
@@ -614,7 +811,7 @@ point_group
 I am not sure about what is the meaning of the points. I guess that that it is
 the fishing protocol "partial by points". If I want to merge it with "partial
 over bank", I have to select standard points in which 100 points were done in
-bank.  
+bank.
 
 ```{r}
 point_group %<>%
@@ -732,7 +929,6 @@ rm(fish_lot)
 rm(lot_measure)
 ```
 
-
 ### Generate fish
 
 All the fishes are measured in lot "N" and "I", but not in the other 
@@ -741,37 +937,4 @@ All the fishes are measured in lot "N" and "I", but not in the other
 We have to build their size according to samples and assuming a normal
 distribution.
 
-It makes a very long time to run, so it is better to parallelize and to send to
-cluster.
-TODO: write the files as .rda, set up parallel, set script to run and send files to the cluster
-
-```{r, eval = FALSE}
-lot_poissons %<>%
-  collect() %>%
-  mutate(
-      fish = purrr::pmap(
-	list(
-	  id = lop_id,
-	  type = type_lot,
-	  min_size = lop_longueur_specimens_taille_mini,
-	  max_size = lop_longueur_specimens_taille_maxi,
-	  nb = lop_effectif
-	  ),
-	gen_fish_from_lot, # Arguments from ind_measure:
-	ind_measure = collect(ind_measure),
-	ind_size = mei_taille,
-	ind_id = mei_lop_id,
-	verbose = TRUE)
-      ) %>%
-  select(lop_id, lop_pre_id, species, fish)
-## HERE: Erreur : Evaluation error: argument a is greater than or equal to b.
-pb_id <- 518228
-filter(lot_poissons, lop_id == pb_id)
-filter(lot_poissons, type_lot == "S/L")
-filter(ind_measure, mei_lop_id == pb_id)
-lot <- ind_measure %>% dplyr::filter(mei_lop_id == pb_id) %>%
-  collect() %>%
-  dplyr::select(mei_taille) %>%
-  unlist(., use.names = FALSE)
-```
-
+Go to `../run/02_build_fish_lot.R` to generate the fish.

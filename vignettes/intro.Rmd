@@ -41,7 +41,7 @@ According to the postdoc advertisement:
 4. Effects of perturbation
    - Coreids project (cf Maud)
 
-## Immediate objectives (end of December)
+## Immediate objectives
 
 - [x] Re-run willem analysis
 - [x] network methods:
@@ -55,6 +55,7 @@ According to the postdoc advertisement:
       - [ ] compute betalink: [ingnacio bartomeus](https://github.com/ibartomeus/betalink/tree/new_features)
       - [ ] trophic group: [cf legendre website](https://www.biologie.ens.fr/~legendre/n_w/n_w.html) 
   - [ ] network analysis:
+    - [ ] Compute trophic level by network
     - [ ] compute above network indices
     - [ ] post-modularity values? @poisot_an_2013
     - [ ] null model for nestedness
@@ -65,8 +66,8 @@ According to the postdoc advertisement:
 - [x] Get bassin data (collab with Christophe Gireaud and Solène Thépaud):
 - [x] Cluster
 - [ ] Script organisation:
-  - [ ] All scripts to generate datasets are in data-raw
-  - [ ] Lightweight cleaned datasets are in data
+  - [x] All scripts to generate datasets are in data-raw
+  - [x] Lightweight cleaned datasets are in data
 - [ ] Fish datasets to generate:
   - [ ] `station`: station_id, dept, bassin, commune, loc
   - [ ] `fish_length`: op_id, species, length
