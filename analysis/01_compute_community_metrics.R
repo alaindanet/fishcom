@@ -19,14 +19,14 @@ source('../analysis/misc/parallel_setup.R')
 #  Compute biomass  #
 #####################
 
-wl <- read_delim("../data-raw/weight_length_coef.csv",
+wl <- read_delim(mypath("data-raw","weight_length_coef.csv"),
   delim = ";",
   local = locale(decimal_mark = "."),
   col_types = "cddc"
 )
 wl %<>% dplyr::select(species_code, a, b) %>%
   rename(species = species_code)
-data(length_analysis)
+myload(length_analysis, dir = data_common)
 
 weight_analysis <- length_analysis %>%
   left_join(., wl, by = "species") %>%
@@ -42,7 +42,7 @@ weight_analysis %<>%
   filter(!species %in% "OBL") %>%
   filter(!length < 1)
 
-devtools::use_data(weight_analysis, overwrite = TRUE)
+mysave(weight_analysis, dir = data_common, overwrite = TRUE)
 
 #########################################
 #  Compute richness and beta-diversity  #
@@ -52,8 +52,7 @@ devtools::use_data(weight_analysis, overwrite = TRUE)
 #
 
 # Get station and  
-data(length_analysis)
-data(op_analysis)
+myload(length_analysis, op_analysis, dir = data_common)
 op_analysis %<>%
   select(opcod, station, year)
 
@@ -63,7 +62,7 @@ com_analysis <- length_analysis %>%
   left_join(., op_analysis, by = "opcod")
 
 # Get biomass by species and by opcod and their average size
-data(weight_analysis)
+myload(weight_analysis, dir = data_common)
 weight_analysis %<>% group_by(opcod, species) %>%
   summarise(biomass = sum(weight), length = mean(length))
 ## The biomass and length are given by species
@@ -73,7 +72,8 @@ com_analysis %<>%
 
 # Save community_analysis
 community_analysis <- com_analysis
-devtools::use_data(community_analysis, overwrite = TRUE)
+
+mysave(community_analysis, dir = data_common, overwrite = TRUE)
 
 ###############################
 #  Compute community metrics  #
@@ -90,7 +90,7 @@ com <- community_analysis %>%
   )
 
 community_metrics <- com
-devtools::use_data(community_metrics, overwrite = TRUE)
+mysave(community_metrics, dir = data_common, overwrite = TRUE)
 
 ############################
 #  Compute beta-diversity  #
@@ -169,4 +169,4 @@ filter(community_analysis, opcod == 4223)
 # There was 57 ANG, and pretty big ones!
 
 temporal_community_metrics <- com
-devtools::use_data(temporal_community_metrics, overwrite = TRUE)
+mysave(temporal_community_metrics, dir = data_common, overwrite = TRUE)

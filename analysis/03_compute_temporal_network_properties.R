@@ -16,8 +16,8 @@ devtools::load_all()
 #  Temporal network characteristics  #
 ######################################
 
-data(network_metrics)
-data(op_analysis)
+myload(op_analysis, metaweb_analysis, dir = data_common)
+myload(network_metrics, metaweb_analysis, dir = dest_dir)
 op_analysis %<>%
   dplyr::select(opcod, station, year)
 to_be_summarized <- c("nestedness", "connectance", "connectance_corrected", "nbnode",
@@ -31,7 +31,7 @@ com <-
     funs(cv = sd(.) / mean(.), med = median))
 
 temporal_network_metrics <- com
-devtools::use_data(temporal_network_metrics, overwrite = TRUE)
+mysave(temporal_network_metrics, dir = dest_dir, overwrite = TRUE)
 rm(list = ls())
 
 ###############################################
@@ -40,8 +40,9 @@ rm(list = ls())
 cat("---------------------------------------------\n")
 cat("Temporal network biomass by trophic group\n")
 cat("---------------------------------------------\n")
-data(network_analysis)
-data(op_analysis)
+
+myload(op_analysis, metaweb_analysis, dir = data_common)
+myload(network_metrics, metaweb_analysis, dir = dest_dir)
 
 op <- op_analysis %>% dplyr::select(opcod, station, year)
 net <- left_join(network_analysis, op, by = "opcod") %>%
@@ -74,7 +75,7 @@ biomass_variation %<>%
   group_by(station) %>%
   nest(.key = "troph_group")
 
-data(temporal_network_metrics)
+myload(temporal_network_metrics, dir = dest_dir)
 ## Check if troph_group already exist:
 if ("troph_group" %in% colnames(temporal_network_metrics)) {
   temporal_network_metrics %<>% dplyr::select(-matches("troph_group"))
@@ -82,7 +83,7 @@ if ("troph_group" %in% colnames(temporal_network_metrics)) {
 temporal_network_metrics <-
   left_join(temporal_network_metrics, biomass_variation, by = "station")
 
-devtools::use_data(temporal_network_metrics, overwrite = TRUE)
+mysave(temporal_network_metrics, dir = dest_dir, overwrite = TRUE)
 rm(list = ls())
 
 ###################################################
@@ -93,8 +94,8 @@ cat("Compute temporal betadiversity of interaction\n")
 cat("---------------------------------------------\n")
 
 # Compute betalink
-data(network_analysis)
-data(op_analysis)
+myload(network_analysis, dir = dest_dir)
+myload(op_analysis, dir = data_common)
 
 net <- left_join(network_analysis, dplyr::select(op_analysis, opcod, station, year)) %>%
   ungroup()

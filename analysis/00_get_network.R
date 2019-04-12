@@ -13,10 +13,7 @@ devtools::load_all()
 #############
 # Load data
 cat("Load data\n")
-data(pred_win)
-data(diet_shift)
-data(resource_diet_shift)
-data(fish_length)
+myload(pred_win, diet_shift, resource_diet_shift, fish_length, dir = data_common)
 cat("Load data: done\n")
 
 # Build metaweb
@@ -39,7 +36,7 @@ metaweb_analysis <- build_metaweb(
   na.rm = TRUE,
   replace_min_by_one = FALSE)
 
-devtools::use_data(metaweb_analysis, overwrite = TRUE)
+mysave(metaweb_analysis, dir = data_common, overwrite = TRUE)
 rm(list = ls())
 
 cat("Metaweb: done\n")
@@ -49,15 +46,14 @@ cat("Metaweb: done\n")
 cat("Build local network\n")
 
 # Build local network
-data(length_analysis)
-data(op_analysis)
+
+myload(length_analysis, op_analysis, metaweb_analysis, dir = data_common)
 ## Get station id for the op
 op_analysis %<>% select(opcod, station)
 length_analysis %<>%
   left_join(., op_analysis, by = "opcod")
 rm(op_analysis)
 ##
-data(metaweb_analysis)
 ## Check if NA in the metaweb:
 if (any(is.na(metaweb_analysis$size_class))) {
   stop("NA in class id, something went wrong")
@@ -80,5 +76,5 @@ network_analysis %>% unnest(data) %>%
   filter(is.na(class_id))
 
 
-devtools::use_data(network_analysis, overwrite = TRUE)
+mysave(network_analysis, dir = dest_dir, overwrite = TRUE)
 cat("Local network: done\n")

@@ -26,9 +26,8 @@ cat("Add node biomass and node abundance\n")
 cat("-----------------------\n")
 
 # Load
-data(weight_analysis)
-data(metaweb_analysis)
-data(network_analysis)
+myload(weight_analysis, metaweb_analysis, dir = data_common)
+myload(network_analysis, dir = dest_dir)
 # compute weight by node and by opcod
 weight_analysis %<>% assign_size_class(., species, var = length,
   classes = metaweb_analysis$size_class) %>%
@@ -40,7 +39,7 @@ abundance <- weight_analysis %>%
   summarise(nind = n())
 
 # Get biomass by op
-data(op_analysis)
+myload(op_analysis, dir = data_common)
 st_timing <- op_analysis %>%
   dplyr::select(opcod, station, year, month) %>%
   unite(year_month, year, month, sep = "-") %>%
@@ -65,7 +64,7 @@ network_analysis <-
   left_join(network_analysis, network_composition, by = "opcod")
 
 
-devtools::use_data(network_analysis, overwrite = TRUE)
+mysave(network_analysis, dir = dest_dir, overwrite = TRUE)
 
 ######################################
 #  Network biomass by trophic group  #
@@ -92,6 +91,7 @@ summary(trophic_level)
 trophic_class <- split_in_classes(trophic_level$troph_level, class_method = "percentile",
   nb_class = 3, round_limits = FALSE)
 devtools::use_data(trophic_class, overwrite = TRUE)
+mysave(trophic_class, dir = dest_dir, overwrite = TRUE)
 
 ## Assign trophic group to each node  
 trophic_level %<>%
@@ -165,7 +165,7 @@ network_analysis %>%
   unnest(composition) %>%
   filter(opcod == 25770)
 
-devtools::use_data(network_analysis, overwrite = TRUE)
+mysave(network_analysis, dir = dest_dir, overwrite = TRUE)
 
 #####################
 #  Network metrics  #
@@ -191,7 +191,7 @@ if (!is.null(options("network.type")) & options("network.type") == "species") {
 	  ) %>%
 	distinct(from, to)
 	  }))
-  devtools::use_data(network_analysis, overwrite = TRUE)
+  mysave(network_analysis, dir = dest_dir, overwrite = TRUE)
 }
 # Transform network to adjacency matrix and compute generic indices: 
 network_analysis %<>%
@@ -244,7 +244,7 @@ network_analysis %<>%
 
 network_metrics <- network_analysis %>%
   dplyr::select(-network, -metrics, -troph_level)
-devtools::use_data(network_metrics, overwrite = TRUE)
+mysave(network_metrics, dir = dest_dir, overwrite = TRUE)
 rm(list = ls())
 
 ##############################
@@ -269,7 +269,7 @@ c_richness_mod <- lm(connectance ~ nbnode, network_metrics)
 # Take residuals as Morris et al. (2014)
 network_metrics$connectance_corrected <- residuals(c_richness_mod)
 
-devtools::use_data(network_metrics, overwrite = TRUE)
+mysave(network_metrics, dir = dest_dir, overwrite = TRUE)
 rm(list = ls())
 
 ################################
