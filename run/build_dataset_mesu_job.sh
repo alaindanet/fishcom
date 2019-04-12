@@ -20,7 +20,7 @@ export R_LIBS_USER
 
 # Define scratch space scratch alpha for UV scratchbeta for ICE
 SCRATCH=/scratchbeta/$USER/my_scratch_space
-PROJECT=fishcom2
+PROJECT=fishcom
 DATADIR=data-raw/fishing_op_build
 PARALLEL=analysis/misc/parallel_setup.R
 mkdir $SCRATCH
@@ -49,7 +49,7 @@ wait
 
 # Copyfile
 cd $PBS_O_WORKDIR
-cp -p  $SCRATCH/$PROJECT/$DATADIR/fish_length_test.rda ../$DATADIR || exit 1
+cp -p  $SCRATCH/$PROJECT/$DATADIR/fish_length.rda ../$DATADIR || exit 1
 
 #clean the temporary directory
-rm -rf "$SCRATCH/$PROJECT”/*
+rm -rf "$SCRATCH/$PROJECT"/*
