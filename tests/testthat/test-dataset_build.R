@@ -299,7 +299,7 @@ test_that("test for NA or non standard type", {
     type = c(rep("G", 4)),
     min = c(1, 1, 0, 1),
     max = c(3, 2, 2, 2),
-    nb = c(5, 1, 50, 10)
+    nb = c(20, 15, 50, 10)
   )
   lot$type[1] <- NA
 
@@ -314,8 +314,22 @@ test_that("test for NA or non standard type", {
       species = species,
       measure = measure_test,
       measure_id_var = mei_lop_id,
-      size_var = mei_taille),
-    "data.frame"
+      size_var = mei_taille)
+    , "data.frame"
+  )
+
+  one <- lot[2,]
+  expect_is(
+    output <- gen_fish_from_lot(
+      id = one[["id"]],
+      type = one[["type"]],
+      min_size = one[["min"]],
+      max_size = one[["max"]],
+      nb = one[["nb"]],
+      ind_measure = NULL,
+      ind_id = NULL,
+      ind_size = NULL)
+    , "numeric"
   )
 
   lot$type[1] <- "grrr"
@@ -345,7 +359,7 @@ test_that("test for NA or non standard nb", {
     type = c(rep("G", 4)),
     min = c(1, 1, 0, 1),
     max = c(3, 2, 2, 2),
-    nb = c(5, 1, 50, 10)
+    nb = c(10, 15, 50, 10)
   )
   lot$nb[1] <- NA
 
@@ -387,7 +401,7 @@ test_that("test for  type G", {
     type = c(rep("G", 4)),
     min = c(NA,1, 2, 1),
     max = c(3, 2, 2, 2),
-    nb = c(5, 1, 50, 10)
+    nb = c(50, 10, 50, 10)
   )
 
   expect_message(

@@ -118,8 +118,6 @@ gen_fish_from_lot <- function (
   id = NULL, type = NULL,  min_size = NULL, max_size = NULL, nb = NULL,
   ind_measure = NULL, ind_id = NULL, ind_size = NULL, ...) {
 
-  # check:
-
   # Promise:
   ind_id <- rlang::enquo(ind_id)
   ind_size <- rlang::enquo(ind_size)
@@ -141,7 +139,7 @@ gen_fish_from_lot <- function (
       lot <- NA
     } else if (nb < 10) {
       warning_msg <- paste(
-      "# of obs is inferior to 10 (actual # is,", length(size),
+      "# of obs is inferior to 10 (actual # is,", length(nb),
       ") in Lot type G number", id,".\n", "Lot put as NA\n", sep = "")
       warning(warning_msg)
       lot <- NA
