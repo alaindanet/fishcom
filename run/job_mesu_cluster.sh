@@ -32,8 +32,10 @@ export R_LIBS_USER
 wait
 ./01_install_packages.sh
 wait
-./02_build_fish_lot.R "PBS"
-#./02_run_analysis.R "PBS"
+# Build network species
+./02_run_analysis.R "PBS" "species"
 wait
+# Build network classes
+./02_run_analysis.R "PBS" "classes"
 
 echo "Is it working ?"

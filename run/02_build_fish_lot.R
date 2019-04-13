@@ -52,5 +52,5 @@ fish_length <-
 toc()
 #sequential: 37k sec and 47k sec if the gen_fish_from_lot is not compiled.
 
-save(fish_length, file = mypath("data-raw", "fishing_op_build", "fish_length.rda"))
+save(fish_length, file = mypath("data", "fish_length.rda"))
 cat("Done!")
