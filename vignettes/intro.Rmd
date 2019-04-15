@@ -70,13 +70,15 @@ According to the postdoc advertisement:
   - [x] Lightweight cleaned datasets are in data
 - [ ] Fish datasets to generate:
   - [ ] `station`: station_id, dept, bassin, commune, loc
-  - [ ] `fish_length`: op_id, species, length
-  - [ ] `op`: op_id, station_id, date, method, surface, length, richness, nb_ind
+  - [x] `fish_length`: op_id, species, length
+  - [x] `op`: op_id, station_id, date, method, surface, length, richness, nb_ind
+    - [ ] Add sampled surface
   - [ ] `op_env`: op_id, slope, prof, temp, etc..., fishing, water activities,
     op_commentary
+    - [ ] fix op_env (clash in vignette_aspe)
 - [ ] Assess quality of the dataset:
-  - [ ] When new data, cf Edeline filtering methods
-  - [ ] Add `point_big_mil` and `partial_over_be`
+  - [x] When new data, cf Edeline filtering methods
+  - [x] Add `point_big_mil` and `partial_over_be`
 - [ ] Assess availability of environmental data
   - [ ] Temperature data
   - [ ] temporal pollution data (cf Colin, FIRE meeting)

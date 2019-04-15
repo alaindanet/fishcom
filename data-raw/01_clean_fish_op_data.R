@@ -7,6 +7,7 @@
 
 library(tidyverse)
 library(magrittr)
+devtools::load_all()
 mypath <- rprojroot::find_package_root_file
 mydir <- mypath("data-raw", "fishing_op_build")
 
@@ -81,8 +82,34 @@ fish_length %<>%
     species = str_replace_all(species, sp_to_replace)
   )
 
-devtools::use_data(fish_length)
-rm(fish_length)
+##################
+#  Obtain opcod  #
+##################
+
+myload(lot_id_opcod, dir = mypath("data-raw","fishing_op_build"))
+
+fish_length %<>%
+  left_join(lot_id_opcod) %>%
+  rename(length = fish) %>%
+  select(opcod, species, length)
+
+
+devtools::use_data(fish_length, overwrite = TRUE)
+rm(lot_id_opcod)
+
+########################################
+#  Extract nb species and individuals  #
+########################################
+
+op_sp_ind <- fish_length %>%
+  group_by(opcod, species) %>%
+  summarise(nind = n()) %>%
+  group_by(opcod) %>%
+  summarise(
+    nb_sp  = n(),
+    nb_ind = sum(nind)
+    )
+devtools::use_data(op_sp_ind, overwrite = TRUE)
 
 ################################################################################
 #                                Operation data                                #
@@ -99,24 +126,14 @@ op %>%
 # I guess that those data were not measured:
 op %<>% mutate(temp_max_moyenne_eau = ifelse(temp_max_moyenne_eau <= 0, NA, temp_max_moyenne_eau))
 
-op %>%
-  filter(
-  surface_calculee <= 0
-  ) %>%
+op %<>%
   select(id, date, station, protocol, surface_calculee)
 # Computed surface has not been filled
 op %<>% mutate(surface_calculee = ifelse(surface_calculee <= 0, NA, surface_calculee))
 op
 
-op %>%
-  filter(
-  amplitude_thermique_air_station <= 0 |
-  temperature_air_station <= 0 |
-  precipitation_bassin_versant <= 0 |
-  pente_ligne_eau < 0
-  )
 #Ok
-save(op, file = mypath("data", "op.rda"))
+mysave(op, dir = mypath("data-raw"), overwrite = TRUE)
 
 ################################################################################
 #                            Operation description                             #
@@ -125,24 +142,50 @@ save(op, file = mypath("data", "op.rda"))
 load(mypath("data-raw", "fishing_op_build", "op_desc.rda"))
 op_desc
 # Look ok
-op_desc %<>%
-  filter(ope_id %in% op$id)
 
-save(mypath("data", "op_desc.rda"))
+mysave(op_desc, dir = mypath("data-raw"))
 ################################################################################
 #                         Operation environmental data                         #
 ################################################################################
 
 load(mypath("data-raw", "fishing_op_build", "op_env.rda"))
 op_env
+colnames(op_env)
+
+op_env %>%
+  filter(
+  amplitude_thermique_air_station <= 0 |
+  temperature_air_station <= 0 |
+  precipitation_bassin_versant <= 0 |
+  pente_ligne_eau < 0
+  )
 # Convert columns in english
+col_replacement <- c(
+"pente_ligne_eau" = "slope",
+"section_mouillee" = "width",
+"durete_totale" = "water_hardness",
+"temp_max_moyenne_eau" = "water_avg_30d_max_temp",
+"temp_air_bassin_versant" = "air_avg_temp_basin",
+"precipitation_bassin_versant" = "avg_rainfall_basin",
+"amplitude_thermique_air_station" = "air_thermal_amplitude",
+"temperature_air_station" = "air_avg_temp",
+"commentaire" = "comment"
+)
+colnames(op_env) %<>% str_replace_all(., col_replacement)
+
+mysave(op_env, dir = mypath("data-raw"))
 
 ################################################################################
 #                                   Station                                    #
 ################################################################################
 
 load(mypath("data-raw", "fishing_op_build", "station.rda"))
-station %>%
-  select(id, precise_location, x, y)
-HERE
+library('sf')
+station <- sfc_as_cols(station, names = c("lon", "lat"))
+st_geometry(station) <- NULL
 
+station %<>%
+  rename(precise_location = localisation_precise) %>%
+  select(id, precise_location, com_code_insee, lon, lat)
+
+mysave(station, dir = mypath("data-raw"))

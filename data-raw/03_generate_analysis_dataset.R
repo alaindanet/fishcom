@@ -12,10 +12,11 @@ library(lubridate)
 devtools::load_all()
 theme_set(theme_alain())
 
+mypath <- rprojroot::find_package_root_file
+mydir <- mypath("data-raw", "fishing_op_build")
 
-data(operation_data)
-op <- dplyr::select(operation_data, opcod:year, count)
-rm(operation_data)
+myload(op, dir = mypath("data-raw"))
+op
 
 # Summary of op 
 op_stat <- op %>%

@@ -29,6 +29,7 @@ library(magrittr)
 library(dbplyr)
 library(lubridate)
 library(ggplot2)
+devtools::load_all()
 ```
 
 
@@ -536,7 +537,7 @@ env_op_col <- c("id", "pente_ligne_eau", "section_mouillee",
   "durete_totale", "temp_max_moyenne_eau", "temp_air_bassin_versant",
   "precipitation_bassin_versant", "amplitude_thermique_air_station",
   "temperature_air_station", "commentaire")
-op_env <- select(op, env_op_col)
+op_ <- select(op, env_op_col)
 save(op_env, file = mypath("data-raw", "fishing_op_build", "op_env.rda"))
 ```
 
@@ -715,7 +716,8 @@ station_id <- select(sampling_point, id, sta_id) %>%
 op %<>%
   left_join(., station_id)
 
-op %<>% select(id, date, station, protocol, everything())
+op %<>% select(id, date, station, protocol, everything()) %>%
+
 ```
 
 ### Filter op over station
@@ -863,6 +865,8 @@ lot_poissons <- left_join(lot_poissons, ref_type_lot) %>%
 lot_poissons
 ```
 
+
+
 ```{r, echo = FALSE, include = FALSE}
 lot_testing <- purrr::map(collect(ref_type_lot)$type_lot, function (lot, data) {
   temp <- filter(data, type_lot == lot)
@@ -910,15 +914,30 @@ the operation that we select above.
 # All the relevant prelevement which are in the selected op:
 pre_id_ok <- pre_ele %>%
   filter(pre_ope_id %in% op$id) %>%
-  select(pre_id) %>%
-  collect() %>% unlist
+  collect()
 # filter: 
 fish_lot <- lot_poissons %>%
-  filter(lop_pre_id %in% pre_id_ok) %>%
+  filter(lop_pre_id %in% pre_id_ok$pre_id) %>%
   collect()
-
 save(fish_lot, file = mypath("data-raw","fishing_op_build", "fish_lot.rda"))
+```
 
+```{r add opcod to lot_poissons}
+lot_opcod <- pre_id_ok %>%
+  rename(lop_pre_id = pre_id, opcod = pre_ope_id) %>%
+  select(lop_pre_id, opcod)
+
+lot_id_opcod <- fish_lot %>%
+  select(lop_id, lop_pre_id) %>%
+  left_join(., lot_opcod) %>%
+  select(lop_id, opcod)
+
+mysave(lot_id_opcod, dir = mypath("data-raw","fishing_op_build"), overwrite =
+  TRUE)
+
+```
+
+```{r select measurement}
 # The measurement that are in the relevant lot:
 lot_measure <- ind_measure %>%
   filter(mei_lop_id %in% fish_lot$lop_id) %>%
