@@ -334,3 +334,41 @@ check_lot <- function (
   status 
 }
 
+##################################
+#  Filter double fish operation  #
+##################################
+
+
+del_dbl_op <- function (point, tot, ...) {
+  # The targeted op have likely less species
+  point_to_select <- tot$point %in% c(point, point - 1)
+  to_compare <- tot[point_to_select, ]
+  kept_station <- arrange(to_compare, desc(nb_sp), desc(nb_ind)) %>%
+    slice(1)
+  kept_station
+}
+keep_most_complete_sampling <- function (station, threshold = 270) {
+  ##Any double fishing within two month
+  dbl_op <- filter(station, sample_sep < threshold)
+  # if it is ok:
+  if (nrow(dbl_op) == 0) {
+    return(station)
+  }
+  #For the op that have short time_sep:
+  low_row <- FALSE
+  while (nrow(dbl_op) != 0 & !low_row) {
+
+    temp_pt <- dbl_op$point[1]
+    selected_op <- del_dbl_op(temp_pt, tot = station)
+    removed_dbl <- station[!station$point %in% c(temp_pt, temp_pt - 1),]
+
+    station <- bind_rows(removed_dbl, selected_op) %>%
+    arrange(times) %>%
+    mutate(
+      point = seq(1, n()),
+      sample_sep = c(NA, times[-1] - times[-n()])
+      )
+    dbl_op <- filter(station, sample_sep < threshold)
+  }
+ station 
+}

@@ -37,6 +37,10 @@ export_raw_data:
 	rsync -e ssh -r -avz $(DEST)/data-raw/* danet@mesu.dsi.upmc.fr:$(RUN_DIR)/data-raw/
 	# Replace with rsync
 
+export_data:
+	rsync -e ssh -r -avz $(DEST)/data/* danet@mesu.dsi.upmc.fr:$(RUN_DIR)/data/
+	# Replace with rsync
+
 git_update:
 	ssh mesu "cd $(RUN_DIR) &&\
 	    git checkout master && git pull origin master &&\

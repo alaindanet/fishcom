@@ -537,7 +537,23 @@ env_op_col <- c("id", "pente_ligne_eau", "section_mouillee",
   "durete_totale", "temp_max_moyenne_eau", "temp_air_bassin_versant",
   "precipitation_bassin_versant", "amplitude_thermique_air_station",
   "temperature_air_station", "commentaire")
-op_ <- select(op, env_op_col)
+op_env2 <- select(op, env_op_col)
+op_env2 %>%
+  filter(temp_max_moyenne_eau <= 0) %>%
+  select(temperature_air_station, temp_max_moyenne_eau, amplitude_thermique_air_station)
+# A lot of 0 in temp_max_moyenne_eau, looks very strange
+# 9720 op over 26800: 36% des op 
+# I guess that those data were not measured:
+op_env2 %<>% mutate(temp_max_moyenne_eau = ifelse(temp_max_moyenne_eau <= 0, NA, temp_max_moyenne_eau))
+
+op_env2 %<>% mutate(surface_calculee = ifelse(surface_calculee <= 0, NA, surface_calculee))
+op_env2
+
+HERE
+#TODO: complete op_env2 with op_env
+# Change colnames of op_env2
+
+
 save(op_env, file = mypath("data-raw", "fishing_op_build", "op_env.rda"))
 ```
 
@@ -717,6 +733,7 @@ op %<>%
   left_join(., station_id)
 
 op %<>% select(id, date, station, protocol, everything()) %>%
+  rename(opcod = id, surface = surface_calculee)
 
 ```
 

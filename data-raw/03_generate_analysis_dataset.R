@@ -16,26 +16,15 @@ mypath <- rprojroot::find_package_root_file
 mydir <- mypath("data-raw", "fishing_op_build")
 
 myload(op, dir = mypath("data-raw"))
-op
 
-# Summary of op 
-op_stat <- op %>%
-  group_by(opcod, station, year, month) %>%
-  summarise(
-    nb_ind = sum(count),
-    nb_sp  = n()
-    )
+#op_sp_ind Summary of op 
+myload(op_sp_ind, dir = mypath("data"))
+op_sp_ind
 
-# Add details about the op 
-data(operation_data)
-op_method <- operation_data %>%
-  distinct(opcod, .keep_all = TRUE) %>%
-  select(opcod, nbpass:strategy)
-op <- left_join(op_stat, op_method, by = "opcod")
+op %<>% left_join(op_sp_ind, by = "opcod")
 
 op %<>% filter(
-  nbpass == 2, #Rm complete that has only 1 passage
-  method == "complete"#Rm other method
+  protocol == "complete"#Rm other method
 )
 
 ######################################
@@ -45,60 +34,45 @@ op %<>% filter(
 # Get the time between each sampling event
 int_op <- op %>%
   ungroup() %>%
-  unite(year_month, year, month, sep = "-") %>%
-  mutate(times = ymd(paste0(year_month, "-01"))) %>%
-  select(-year_month) %>%
   group_by(station) %>%
-  arrange(times) %>%
-  mutate(
-    point = seq(1, length(station)),
-    sample_sep = c(NA, times[-1] - times[-length(station)])
-  )
-
-## double_station 
-low_int <- filter(int_op, sample_sep < 60) %>%
-  ungroup() %>%
-  arrange(station)
-filter(int_op, station == 1474)
-
-## filter double sampling, surely doubled 
-keep_most_complete_sampling <- function (station) {
-  ##Any double fishing within two month (1day - 60days):
-  dbl_op <- filter(station, sample_sep < 60)
-  if (nrow(dbl_op) == 0) {
-    return(station)
-  }
-  pmap_dfr(dbl_op, function (point, tot, ...) {
-    # Avoid argument equal var name:
-    x <- point;rm(point)
-    # The targeted op have likely less species
-    to_compare <- filter(tot, point %in% c(x, x - 1))
-    kept_station <- arrange(to_compare, desc(nb_sp), desc(nb_ind)) %>%
-      slice(1)
-    bind_rows(
-      filter(tot, !(point %in% c(x, x - 1))),
-      kept_station
-    )
-}
-    , tot = station)
-}
-clean_dbl <- group_by(int_op, station) %>% nest() %>%
-  mutate(data = map(data, keep_most_complete_sampling)) %>%
-  unnest()
-
-# Check new time separation between 2 consecutive ops  
-clean_dbl %<>%
-  group_by(station) %>%
+  mutate(times = date(date)) %>%
   arrange(times) %>%
   mutate(
     point = seq(1, length(station)),
     sample_sep = c(NA, times[-1] - times[-length(station)])
   ) %>%
   arrange(station)
+
+## double_station 
+low_int <- filter(int_op, sample_sep < 60) %>%
+  ungroup() %>%
+  arrange(station)
+filter(int_op, station == 657)
+
+## filter double sampling, surely doubled 
+clean_dbl <- group_by(int_op, station) %>%
+  nest() %>%
+  mutate(data = map(data, keep_most_complete_sampling)) %>%
+  unnest()
+
+
+# Check new time separation between 2 consecutive ops  
+clean_dbl %<>%
+  group_by(station) %>%
+  arrange(date) %>%
+  mutate(
+    point = seq(1, length(station)),
+    sample_sep = c(NA, date[-1] - date[-length(station)])
+  ) %>%
+  arrange(station)
 qplot(sample_sep, data = filter(clean_dbl, sample_sep < 2000)) +
   labs(x = "Number of days between two fishing operation",
-    y = "Frequency")
+    y = "Frequency") +
+  xlim(c(0, 2000))
 filter(clean_dbl, sample_sep < 160)
+filter(int_op, station == 709)
+filter(int_op, station == 657)
+
 
 # Numbering the sampling events by station
 op_hist <- clean_dbl %>%
@@ -123,10 +97,11 @@ devtools::use_data(op_analysis, overwrite = TRUE)
 
 good_opcod_id <- select(ungroup(op_analysis), opcod) %>% unlist
 
-data(environmental_data)
-env_analysis <- filter(environmental_data, opcod %in% good_opcod_id)
-devtools::use_data(env_analysis, overwrite = TRUE)
-rm(environmental_data, env_analysis)
+HERE:
+#data(environmental_data)
+#env_analysis <- filter(environmental_data, opcod %in% good_opcod_id)
+#devtools::use_data(env_analysis, overwrite = TRUE)
+#rm(environmental_data, env_analysis)
 
 data(fish_length)
 length_analysis <- filter(fish_length, opcod %in% good_opcod_id)
@@ -138,20 +113,12 @@ rm(fish_length, length_analysis)
 ##################
 
 # get their localisation
-station <- read_delim("fishing_station_localisation_wsg84.csv",
-  delim = ";", locale = locale("fr", decimal_mark = "."),
-  col_types = cols(ST_CODECSP = col_character()))
-xy_station <- dplyr::select(station, XCOORD, YCOORD)
-station <- SpatialPointsDataFrame(coords = xy_station, data = station,
-  proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
+myload(station, dir = mypath("data-raw"))
+station_analysis <- station %>% filter(id %in% op_analysis$station)
 # get the map
-station <- st_as_sf(station)
-loc_good_station <- dplyr::filter(station, ST_ID %in% good_station_id)
-region_fr <- raster::shapefile("france_region_shp/regions-20180101.shp")
-region_fr <- st_as_sf(region_fr) #easier to manipulate
-region_to_filter <- c("La Réunion", "Martinique", "Guadeloupe", "Mayotte",
-  "Guyane", "Corse")
-region_fr <- filter(region_fr, !(nom %in% region_to_filter))
-region_fr <- region_fr[, c("nom", "geometry")]
-plot(st_geometry(region_fr), lwd = 1.5, col = "grey85")
-plot(loc_good_station, pch = 20, col = "red", add = T)
+station_analysis %<>% st_as_sf(coords = c("lon", "lat"), crs = 4326)
+myload(region_polygon, dir = mypath("data"))
+plot(st_geometry(region_polygon), lwd = 1.5, col = "grey85")
+plot(st_geometry(station_analysis), pch = 20, col = "red", add = T)
+
+mysave(station_analysis, dir = mypath("data"), overwrite = TRUE)

@@ -43,7 +43,6 @@ According to the postdoc advertisement:
 
 ## Immediate objectives
 
-- [x] Re-run willem analysis
 - [x] network methods:
   - [x] connectance, average trophic level, richness
     - [ ] beautiful plots
@@ -76,6 +75,7 @@ According to the postdoc advertisement:
   - [ ] `op_env`: op_id, slope, prof, temp, etc..., fishing, water activities,
     op_commentary
     - [ ] fix op_env (clash in vignette_aspe)
+    - [ ] mv op_env naming to 
 - [ ] Assess quality of the dataset:
   - [x] When new data, cf Edeline filtering methods
   - [x] Add `point_big_mil` and `partial_over_be`

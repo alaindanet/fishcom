@@ -118,19 +118,6 @@ devtools::use_data(op_sp_ind, overwrite = TRUE)
 load(mypath("data-raw", "fishing_op_build", "op.rda"))
 
 op %>% filter(is.na(date))
-op %>%
-  filter(temp_max_moyenne_eau <= 0) %>%
-  select(temperature_air_station, temp_max_moyenne_eau, amplitude_thermique_air_station)
-# A lot of 0 in temp_max_moyenne_eau, looks very strange
-# 9720 op over 26800: 36% des op 
-# I guess that those data were not measured:
-op %<>% mutate(temp_max_moyenne_eau = ifelse(temp_max_moyenne_eau <= 0, NA, temp_max_moyenne_eau))
-
-op %<>%
-  select(id, date, station, protocol, surface_calculee)
-# Computed surface has not been filled
-op %<>% mutate(surface_calculee = ifelse(surface_calculee <= 0, NA, surface_calculee))
-op
 
 #Ok
 mysave(op, dir = mypath("data-raw"), overwrite = TRUE)
