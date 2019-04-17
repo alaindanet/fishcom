@@ -36,6 +36,7 @@ if (!is.null(options("network.type")) & options("network.type") == "species") {
     dir.create(dest_dir)
   }
 }
+
 data_common <- mypath("data")
 
 cat("Working directory:\n")

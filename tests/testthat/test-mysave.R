@@ -4,9 +4,11 @@ mypath <- rprojroot::find_package_root_file
 library('datasets')
 data(cars)
 
+data_dir <- mypath("data")
+
 test_that("mysave works", {
   expect_message(
-    mysave(cars, dir = mypath("data"))
+    mysave(cars, dir = data_dir)
   )
   temp <- mypath("data", "cars.rda")
   expect_equal(
@@ -14,11 +16,13 @@ test_that("mysave works", {
   )
 
   expect_error(
-    mysave(cars, dir = mypath("data"))
+    mysave(cars, dir = data_dir)
   )
   expect_message(
-    mysave(cars, dir = mypath("data"), overwrite = TRUE)
+    mysave(cars, dir = data_dir, overwrite = TRUE)
   )
+
+  myload(cars, dir = data_dir)
 
   if (file.exists(temp)) {
     file.remove(temp)

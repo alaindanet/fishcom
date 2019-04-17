@@ -538,21 +538,36 @@ env_op_col <- c("id", "pente_ligne_eau", "section_mouillee",
   "precipitation_bassin_versant", "amplitude_thermique_air_station",
   "temperature_air_station", "commentaire")
 op_env2 <- select(op, env_op_col)
+# Convert columns in english
+col_replacement <- c(
+"pente_ligne_eau" = "slope",
+"section_mouillee" = "width",
+"durete_totale" = "water_hardness",
+"temp_max_moyenne_eau" = "water_avg_30d_max_temp",
+"temp_air_bassin_versant" = "air_avg_temp_basin",
+"precipitation_bassin_versant" = "avg_rainfall_basin",
+"amplitude_thermique_air_station" = "air_thermal_amplitude",
+"temperature_air_station" = "air_avg_temp",
+"commentaire" = "comment"
+)
+colnames(op_env2) %<>% str_replace_all(., col_replacement)
+```
+
+```{r}
 op_env2 %>%
-  filter(temp_max_moyenne_eau <= 0) %>%
-  select(temperature_air_station, temp_max_moyenne_eau, amplitude_thermique_air_station)
+  filter(water_avg_30d_max_temp <= 0) %>%
+  select(id, air_avg_temp, water_avg_30d_max_temp, air_thermal_amplitude)
 # A lot of 0 in temp_max_moyenne_eau, looks very strange
 # 9720 op over 26800: 36% des op 
 # I guess that those data were not measured:
-op_env2 %<>% mutate(temp_max_moyenne_eau = ifelse(temp_max_moyenne_eau <= 0, NA, temp_max_moyenne_eau))
+op_env2 %<>%
+  mutate(water_avg_30d_max_temp = ifelse(water_avg_30d_max_temp <= 0, NA, water_avg_30d_max_temp)) %>%
+  rename(opcod = id)
 
-op_env2 %<>% mutate(surface_calculee = ifelse(surface_calculee <= 0, NA, surface_calculee))
-op_env2
+op_env %<>%
+  rename(opcod = ope_id)
 
-HERE
-#TODO: complete op_env2 with op_env
-# Change colnames of op_env2
-
+op_env %<>% left_join(op_env2, by = "opcod")
 
 save(op_env, file = mypath("data-raw", "fishing_op_build", "op_env.rda"))
 ```

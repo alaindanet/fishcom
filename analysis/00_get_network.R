@@ -37,7 +37,6 @@ metaweb_analysis <- build_metaweb(
   replace_min_by_one = FALSE)
 
 mysave(metaweb_analysis, dir = data_common, overwrite = TRUE)
-rm(list = ls())
 
 cat("Metaweb: done\n")
 ###################
