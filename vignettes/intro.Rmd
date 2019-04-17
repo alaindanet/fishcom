@@ -62,23 +62,14 @@ According to the postdoc advertisement:
     - [ ] null models everywhere ?
   - [ ] community methods:
     - [ ] compute turnover, rank shift, rate of change
-- [x] Get bassin data (collab with Christophe Gireaud and Solène Thépaud):
-- [x] Cluster
-- [ ] Script organisation:
-  - [x] All scripts to generate datasets are in data-raw
-  - [x] Lightweight cleaned datasets are in data
 - [ ] Fish datasets to generate:
   - [ ] `station`: station_id, dept, bassin, commune, loc
   - [x] `fish_length`: op_id, species, length
   - [x] `op`: op_id, station_id, date, method, surface, length, richness, nb_ind
-    - [ ] Add sampled surface
-  - [ ] `op_env`: op_id, slope, prof, temp, etc..., fishing, water activities,
+    - [x] Add sampled surface
+  - [x] `op_env`: op_id, slope, prof, temp, etc..., fishing, water activities,
     op_commentary
-    - [ ] fix op_env (clash in vignette_aspe)
-    - [ ] mv op_env naming to 
 - [ ] Assess quality of the dataset:
-  - [x] When new data, cf Edeline filtering methods
-  - [x] Add `point_big_mil` and `partial_over_be`
 - [ ] Assess availability of environmental data
   - [ ] Temperature data
   - [ ] temporal pollution data (cf Colin, FIRE meeting)

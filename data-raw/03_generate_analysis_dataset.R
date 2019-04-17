@@ -122,3 +122,8 @@ plot(st_geometry(region_polygon), lwd = 1.5, col = "grey85")
 plot(st_geometry(station_analysis), pch = 20, col = "red", add = T)
 
 mysave(station_analysis, dir = mypath("data"), overwrite = TRUE)
+
+########################
+#  Environmental data  #
+########################
+

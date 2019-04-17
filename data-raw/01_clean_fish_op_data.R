@@ -139,26 +139,6 @@ load(mypath("data-raw", "fishing_op_build", "op_env.rda"))
 op_env
 colnames(op_env)
 
-op_env %>%
-  filter(
-  amplitude_thermique_air_station <= 0 |
-  temperature_air_station <= 0 |
-  precipitation_bassin_versant <= 0 |
-  pente_ligne_eau < 0
-  )
-# Convert columns in english
-col_replacement <- c(
-"pente_ligne_eau" = "slope",
-"section_mouillee" = "width",
-"durete_totale" = "water_hardness",
-"temp_max_moyenne_eau" = "water_avg_30d_max_temp",
-"temp_air_bassin_versant" = "air_avg_temp_basin",
-"precipitation_bassin_versant" = "avg_rainfall_basin",
-"amplitude_thermique_air_station" = "air_thermal_amplitude",
-"temperature_air_station" = "air_avg_temp",
-"commentaire" = "comment"
-)
-colnames(op_env) %<>% str_replace_all(., col_replacement)
 
 mysave(op_env, dir = mypath("data-raw"))
 
