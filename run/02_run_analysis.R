@@ -24,7 +24,7 @@ options(echo = TRUE)
 
 # Path to save network analysis:
 mypath <- rprojroot::find_package_root_file
-if (!is.null(options("network.type") & options("network.type") = "species") {
+if (!is.null(options("network.type")) & options("network.type") == "species") {
   dest_dir <- mypath("data", "species")
   if (!dir.exists(dest_dir)) {
     dir.create(dest_dir)
