@@ -245,7 +245,6 @@ network_analysis %<>%
 network_metrics <- network_analysis %>%
   dplyr::select(-network, -metrics, -troph_level)
 mysave(network_metrics, dir = dest_dir, overwrite = TRUE)
-rm(list = ls())
 
 ##############################
 #  Standardized connectance  #
@@ -270,7 +269,6 @@ c_richness_mod <- lm(connectance ~ nbnode, network_metrics)
 network_metrics$connectance_corrected <- residuals(c_richness_mod)
 
 mysave(network_metrics, dir = dest_dir, overwrite = TRUE)
-rm(list = ls())
 
 ################################
 #  Compute motif distribution  #

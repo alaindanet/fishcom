@@ -32,7 +32,6 @@ com <-
 
 temporal_network_metrics <- com
 mysave(temporal_network_metrics, dir = dest_dir, overwrite = TRUE)
-rm(list = ls())
 
 ###############################################
 #  Temporal network biomass by trophic group  #
@@ -84,7 +83,6 @@ temporal_network_metrics <-
   left_join(temporal_network_metrics, biomass_variation, by = "station")
 
 mysave(temporal_network_metrics, dir = dest_dir, overwrite = TRUE)
-rm(list = ls())
 
 ###################################################
 #  Compute temporal betadiversity of interaction  #
