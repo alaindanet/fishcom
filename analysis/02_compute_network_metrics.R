@@ -42,7 +42,7 @@ abundance <- weight_analysis %>%
 myload(op_analysis, dir = data_common)
 st_timing <- op_analysis %>%
   dplyr::select(opcod, station, year) %>%
-  mutate(times = year) %>%
+  mutate(times = year)
 rm(op_analysis)
 
 # Sum biomass by op
@@ -71,9 +71,6 @@ cat("-----------------------\n")
 cat("Network biomass by trophic group\n")
 cat("-----------------------\n")
 
-data(network_analysis)
-data(metaweb_analysis)
-
 # Get biomass by trophic level
 ## Compute trophic level by node
 g <- igraph::graph_from_adjacency_matrix(metaweb_analysis$metaweb,
@@ -88,7 +85,6 @@ summary(trophic_level)
 ## Split trophic level in three classes:
 trophic_class <- split_in_classes(trophic_level$troph_level, class_method = "percentile",
   nb_class = 3, round_limits = FALSE)
-devtools::use_data(trophic_class, overwrite = TRUE)
 mysave(trophic_class, dir = dest_dir, overwrite = TRUE)
 
 ## Assign trophic group to each node  
