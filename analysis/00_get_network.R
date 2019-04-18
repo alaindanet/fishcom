@@ -13,7 +13,7 @@ devtools::load_all()
 #############
 # Load data
 cat("Load data\n")
-myload(pred_win, diet_shift, resource_diet_shift, fish_length, dir = data_common)
+myload(pred_win, diet_shift, resource_diet_shift, length_analysis, dir = data_common)
 cat("Load data: done\n")
 
 # Build metaweb
@@ -62,6 +62,9 @@ qplot(x = length, data = filter(length_analysis, species == "TRF"), geom = "hist
 filter(length_analysis, species == "TRF") %>% map(., summary)
 filter(length_analysis, species == "TRF", is.na(length))
 filter(metaweb_analysis$size_class, species == "TRF")
+filter(metaweb_analysis$size_class, species == "IDE")
+filter(length_analysis, species == "IDE")
+
 network_analysis <- build_local_network(
   data = length_analysis,
   species = species,

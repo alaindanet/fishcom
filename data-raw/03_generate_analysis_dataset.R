@@ -103,8 +103,34 @@ HERE:
 #devtools::use_data(env_analysis, overwrite = TRUE)
 #rm(environmental_data, env_analysis)
 
-data(fish_length)
-length_analysis <- filter(fish_length, opcod %in% good_opcod_id)
+#######################
+#  Clean fish length  #
+#######################
+
+myload(fish_length, dir = mypath("data"))
+
+# Select good op
+fish_length %<>% filter(opcod %in% good_opcod_id)
+summary(fish_length)
+
+# Remove accidental species
+nb_ind_sp <- fish_length %>%
+  group_by(species) %>%
+  summarise(nind = n())
+low_nb_ind <- filter(nb_ind_sp, nind <= 100)
+fish_length %<>% filter(!species %in% low_nb_ind$species)
+
+# Remove crazy length
+filter(fish_length, length > 1000)
+## TRF distri 
+filter(fish_length, species == "TRF") %>%
+  summary()
+# Remove it
+fish_length %<>%
+  filter(!length > 10000) # Also drop NA 
+
+length_analysis <- fish_length
+
 devtools::use_data(length_analysis, overwrite = TRUE)
 rm(fish_length, length_analysis)
 

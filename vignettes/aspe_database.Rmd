@@ -30,6 +30,7 @@ library(dbplyr)
 library(lubridate)
 library(ggplot2)
 devtools::load_all()
+theme_set(theme_alain())
 ```
 
 
@@ -623,8 +624,6 @@ replacement_station_col <- c(
 "coordonnees_y" = "y"
 )
 colnames(station) %<>% str_replace_all(., replacement_station_col)
-
-
 ```
 
 ### References projection type
@@ -643,6 +642,38 @@ station %<>%
 unique(station$proj_type)
 
 ```
+
+### Departement and town 
+
+```{r}
+dept <- tbl(con, in_schema("aspe", "departement")) %>%
+  collect() %>%
+  rename(com_dep_code_insee = dep_code_insee, department = dep_libelle) %>%
+  select(com_dep_code_insee, department)
+```
+
+```{r}
+town <- tbl(con, in_schema("aspe", "commune")) %>%
+  collect() %>%
+  rename(town = com_libelle, insee_town_code = com_code_insee)
+
+town %<>%  
+  left_join(dept) %>%
+  select(-com_dep_code_insee)
+```
+
+```{r}
+station %<>%
+  left_join(town) %>%
+  select(- insee_town_code)
+```
+
+```{r}
+HERE
+# Add region and bassin
+
+```
+
 
 ### NA station
 

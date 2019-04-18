@@ -16,11 +16,18 @@ build_local_network <- function (data, species, var, group_var, metaweb, classes
 
   species <- rlang::enquo(species)
   var <- rlang::enquo(var)
+  var_chr <- rlang::quo_name(var)
   group_var <- rlang::enquo(group_var)
 
   if (is.null(classes)) {
     stopifnot("size_class" %in% names(metaweb))
     classes <- metaweb$size_class
+  }
+  if (any(is.na(data[[var_chr]]))) {
+    msg <- paste0(length(which(is.na(data[[var_chr]]))), " NA in ", var_chr, "\n",
+    "They have removed by na.omit")
+    message(msg)
+    data %<>% na.omit
   }
   # Compute the class_id
   classes_assigned <- assign_size_class(data, !!species, !!var, classes)
@@ -119,7 +126,7 @@ extract_network <- function (data, species, var, metaweb, classes = NULL, link =
 #' @return data.frame containing class_id for each indivual.
 #' @export
 assign_size_class <- function (data, species, var, classes) {
-  
+
   species <- rlang::enquo(species)
   var <- rlang::enquo(var)
 
@@ -177,6 +184,7 @@ get_size_class <- function (data, species_name, var, classes) {
     } else {
       int
     }
-    }
-    ) %>% unlist(.)
+      }
+    ) %>%
+  unlist(.)
 }
