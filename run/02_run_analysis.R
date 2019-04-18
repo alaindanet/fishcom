@@ -20,10 +20,10 @@ if (!is.null(args) & length(args) == 2) {
     On the cluster, it should be 'PBS'.")
 }
 options(echo = TRUE)
-# Make network of species:
 
 # Path to save network analysis:
 mypath <- rprojroot::find_package_root_file
+# Make network of species:
 if (!is.null(options("network.type")) & options("network.type") == "species") {
   dest_dir <- mypath("data", "species")
   if (!dir.exists(dest_dir)) {

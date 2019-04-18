@@ -60,6 +60,8 @@ wait
 # Build network classes
 ./02_run_analysis.R "PBS" "classes"
 wait
+# Build network classes
+./02_run_analysis.R "PBS" "classes"
 
 echo "Is it working ?"
 
