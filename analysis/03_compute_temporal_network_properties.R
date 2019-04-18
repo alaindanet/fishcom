@@ -17,7 +17,7 @@ devtools::load_all()
 ######################################
 
 myload(op_analysis, metaweb_analysis, dir = data_common)
-myload(network_metrics, metaweb_analysis, dir = dest_dir)
+myload(network_metrics, dir = dest_dir)
 op_analysis %<>%
   dplyr::select(opcod, station, year)
 to_be_summarized <- c("nestedness", "connectance", "connectance_corrected", "nbnode",
@@ -41,7 +41,7 @@ cat("Temporal network biomass by trophic group\n")
 cat("---------------------------------------------\n")
 
 myload(op_analysis, metaweb_analysis, dir = data_common)
-myload(network_metrics, metaweb_analysis, dir = dest_dir)
+myload(network_metrics, dir = dest_dir)
 
 op <- op_analysis %>% dplyr::select(opcod, station, year)
 net <- left_join(network_analysis, op, by = "opcod") %>%
