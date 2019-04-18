@@ -102,12 +102,17 @@ data(op_analysis)
 ## Get date
 ### There are no multiple sampling by year:
 test <- op_analysis %>%
-  group_by(opcod, station, year) %>%
-  summarise(nb = n()) %>%
-  ungroup %>%
-  select(nb) %>%
-  unlist
-which(test > 1)
+  group_by(station) %>%
+  summarise(nb = n(), uni = length(unique(year))) %>%
+  ungroup
+test <- test$n - test$uni
+  
+if (any(test > 0)) {
+  id <- which(test > 0)
+  message(
+    paste0("There is ", length(id), " station that have multiple year sampling")
+  )
+}
 
 op_analysis %<>%
   select(opcod, station, year)

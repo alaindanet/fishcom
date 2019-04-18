@@ -41,10 +41,8 @@ abundance <- weight_analysis %>%
 # Get biomass by op
 myload(op_analysis, dir = data_common)
 st_timing <- op_analysis %>%
-  dplyr::select(opcod, station, year, month) %>%
-  unite(year_month, year, month, sep = "-") %>%
-  mutate(times = lubridate::ymd(paste0(year_month, "-01"))) %>%
-  dplyr::select(-year_month)
+  dplyr::select(opcod, station, year) %>%
+  mutate(times = year) %>%
 rm(op_analysis)
 
 # Sum biomass by op
