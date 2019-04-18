@@ -35,11 +35,10 @@ op %<>% filter(
 int_op <- op %>%
   ungroup() %>%
   group_by(station) %>%
-  mutate(times = date(date)) %>%
-  arrange(times) %>%
+  arrange(date) %>%
   mutate(
     point = seq(1, length(station)),
-    sample_sep = c(NA, times[-1] - times[-length(station)])
+    sample_sep = c(NA, date[-1] - date[-length(station)])
   ) %>%
   arrange(station)
 
@@ -91,7 +90,8 @@ qplot(x = freq, data = good_station, geom = "histogram")
 
 # For temporal analysis, we keep station followed more than 10 times
 op <- filter(op, station %in% good_station_id)
-
+op %<>%
+  mutate(year = year(date))
 op_analysis <- op
 devtools::use_data(op_analysis, overwrite = TRUE)
 
