@@ -643,13 +643,23 @@ unique(station$proj_type)
 
 ```
 
-### Departement and town 
+### Region, departement and town 
+
+
+```{r}
+region <- tbl(con, in_schema("aspe", "region")) %>%
+  collect() %>%
+  rename(region = reg_libelle, dep_reg_code_insee = reg_code_insee) %>%
+  select(-reg_ordre_affichage)
+```
+
 
 ```{r}
 dept <- tbl(con, in_schema("aspe", "departement")) %>%
   collect() %>%
   rename(com_dep_code_insee = dep_code_insee, department = dep_libelle) %>%
-  select(com_dep_code_insee, department)
+  left_join(region) %>%
+  select(com_dep_code_insee, department, region)
 ```
 
 ```{r}
@@ -668,10 +678,16 @@ station %<>%
   select(- insee_town_code)
 ```
 
-```{r}
-HERE
-# Add region and bassin
 
+```{r}
+hydro_type <- tbl(con, in_schema("aspe", "ref_entite_hydrographique")) %>%
+  collect() %>%
+  select(enh_id, enh_libelle) %>%
+  rename(hydrographic_entity = enh_libelle)
+
+station %<>%
+  left_join(hydro_type) %>%
+  select(-enh_id)
 ```
 
 
@@ -687,11 +703,6 @@ na_station <- filter(sampling_point,
 # But 6000 operations do not have station ids...
 filter(sampling_point, is.na(sta_id) & is.na(code_sandre)) 
 # 4000 have no sandre code and no station id
-
-## How many op in them:
-filter(op, pop_id %in% na_station$id) %>% nrow
-filter(op, pop_id %in% na_station$id) %>% nrow / nrow(op) * 100
-### 20 %
 ```
 
 There are no stations where the stations have no id but a sandre code: 
@@ -796,7 +807,7 @@ before_nrow <- nrow(op)
 op %<>% filter(!is.na(station))
 cat(round((before_nrow - nrow(op)) / before_nrow * 100),
   "% of the operations do not have identified stations.\n")
-save(op, file = mypath("data-raw", "fishing_op_build", "op.rda"))
+mysave(op, dir = mypath("data-raw", "fishing_op_build"), overwrite = TRUE)
 ```
 
 # Exploration

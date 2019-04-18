@@ -65,9 +65,6 @@ According to the postdoc advertisement:
 - [ ] Fish datasets to generate:
   - [ ] `station`: station_id, dept, bassin, commune, loc
   - [x] `fish_length`: op_id, species, length
-  - [x] `op`: op_id, station_id, date, method, surface, length, richness, nb_ind
-    - [x] Add sampled surface
-  - [x] `op_env`: op_id, slope, prof, temp, etc..., fishing, water activities,
     op_commentary
 - [ ] Assess quality of the dataset:
 - [ ] Assess availability of environmental data
