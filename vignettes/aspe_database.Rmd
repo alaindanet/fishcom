@@ -75,6 +75,10 @@ obj_time <- tbl(con, in_schema("aspe", "operation_objectif")) %>%
   group_by(year, obj_libelle) %>%
   summarise(n = n())
 obj_time
+```
+
+Wahhh, a lot of objectives are NAs? Let's check:
+```{r}
 ggplot(obj_time, aes(x = year, y = n)) +
   geom_line(aes(color = obj_libelle))
 ```
@@ -184,7 +188,7 @@ protocol_kept$pro_libelle %<>% str_replace_all(., protocol_replacement)
 
 ```{r}
 # Selected ids 
-col_to_keep <- c("id", "date", "pop_id", "pro_id", "pente_ligne_eau", "section_mouillee",
+col_to_keep <- c("id", "date", "pro_id", "pente_ligne_eau", "section_mouillee",
   "durete_totale", "temp_max_moyenne_eau", "temp_air_bassin_versant",
   "precipitation_bassin_versant", "amplitude_thermique_air_station",
   "temperature_air_station", "surface_calculee", "espece_ciblee", "niq_id",
@@ -966,7 +970,6 @@ lot_id_opcod <- fish_lot %>%
 
 mysave(lot_id_opcod, dir = mypath("data-raw","fishing_op_build"), overwrite =
   TRUE)
-
 ```
 
 ```{r select measurement}
@@ -988,4 +991,36 @@ All the fishes are measured in lot "N" and "I", but not in the other
 We have to build their size according to samples and assuming a normal
 distribution.
 
-Go to `../run/02_build_fish_lot.R` to generate the fish.
+It makes a very long time to run, so it is better to parallelize and to send to
+cluster.
+TODO: write the files as .rda, set up parallel, set script to run and send files to the cluster
+
+```{r, eval = FALSE}
+lot_poissons %<>%
+  collect() %>%
+  mutate(
+      fish = purrr::pmap(
+	list(
+	  id = lop_id,
+	  type = type_lot,
+	  min_size = lop_longueur_specimens_taille_mini,
+	  max_size = lop_longueur_specimens_taille_maxi,
+	  nb = lop_effectif
+	  ),
+	gen_fish_from_lot, # Arguments from ind_measure:
+	ind_measure = collect(ind_measure),
+	ind_size = mei_taille,
+	ind_id = mei_lop_id,
+	verbose = TRUE)
+      ) %>%
+  select(lop_id, lop_pre_id, species, fish)
+## HERE: Erreur : Evaluation error: argument a is greater than or equal to b.
+pb_id <- 518228
+filter(lot_poissons, lop_id == pb_id)
+filter(lot_poissons, type_lot == "S/L")
+filter(ind_measure, mei_lop_id == pb_id)
+lot <- ind_measure %>% dplyr::filter(mei_lop_id == pb_id) %>%
+  collect() %>%
+  dplyr::select(mei_taille) %>%
+  unlist(., use.names = FALSE)
+```
