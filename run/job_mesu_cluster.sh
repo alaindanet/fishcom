@@ -42,6 +42,7 @@ mkdir $SCRATCH/$PROJECT/analysis/misc
 # copy some input files to  $SCRATCH directory
 cp -rp ../$DATADIR/* $SCRATCH/$PROJECT/$DATADIR
 cp -rp ../$RAWDIR/fishing_op_build/* $SCRATCH/$PROJECT/$RAWDIR/fishing_op_build
+cp -rp ../$RAWDIR/weight_length_coef.csv $SCRATCH/$PROJECT/$RAWDIR
 cp -rp ../R/* $SCRATCH/$PROJECT/R
 cp -rp ../$ANALYSIS/* $SCRATCH/$PROJECT/$ANALYSIS
 cp -rp ../run/* $SCRATCH/$PROJECT/run
