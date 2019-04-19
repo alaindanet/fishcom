@@ -212,3 +212,15 @@ test_that("Metabuild returns a correct matrix",{
   expect_is(metaweb$metaweb, "matrix")
 
     })
+
+test_that("Sanitize fish_length works", {
+  fake_onto_diet_shift %<>%
+    filter(species != "Pikachu")
+  expect_message(
+    fake <- sanatize_metaweb(data = fake, species = species, fish_diet_shift = fake_onto_diet_shift, nb_class = 9)
+    ,
+    "For the following species, the life stage are not found in fish_diet_shift are absent: Pikachu, "
+ )
+  expect_equal(unique(fake$species), "Salameche")
+    
+    })

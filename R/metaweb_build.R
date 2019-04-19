@@ -28,8 +28,11 @@
 #'
 #' @return matrix 
 #'
-build_metaweb <- function(data, species, size, pred_win, beta_min, beta_max, fish_diet_shift, low_bound, upper_bound, fish, resource_diet_shift, class_method = "quantile",
-  nb_class = 9, pred_win_method = "midpoint", na.rm = FALSE, replace_min_by_one = FALSE, fish_resource_method = "overlap") {
+build_metaweb <- function(data, species, size, pred_win, beta_min, beta_max,
+  fish_diet_shift, low_bound, upper_bound, fish,
+  resource_diet_shift, class_method = "quantile",
+  nb_class = 9, pred_win_method = "midpoint", na.rm = FALSE,
+  replace_min_by_one = FALSE, fish_resource_method = "overlap") {
 
   #Capture var:
   species <- rlang::enquo(species)
@@ -41,6 +44,8 @@ build_metaweb <- function(data, species, size, pred_win, beta_min, beta_max, fis
   beta_max <- rlang::enquo(beta_max)
 
   # Check
+  data <- sanatize_metaweb(data = data,
+    species = !!species, fish_diet_shift = fish_diet_shift, nb_class = nb_class)
   # TODO: Check concordance of column names between datasets
   ## eg. species, (life_stage), low_bound, upper_bound, fish
 
@@ -137,32 +142,32 @@ compute_links <- function (size_class, th_prey_size, piscivory_index,
   # Set method of resource assignement 
     if (fish_resource_method == "midpoint") {
       condition <- rlang::quo(
-	#size class midpoint in stage interval
-	midpoint >= !!low_bound & midpoint <= !!upper_bound
+    #size class midpoint in stage interval
+    midpoint >= !!low_bound & midpoint <= !!upper_bound
       )
     } else if (fish_resource_method == "willem") {
       condition <- rlang::quo(
-	# min stage in size class: ]min_pred;max_pred]
-	(min_pred < !!low_bound & !!low_bound < max_pred) |#<-diff with overlap
-	  # max stage in size class:]min_pred;max_pred]
-	(min_pred < !!upper_bound & !!upper_bound <= max_pred) |
-	#stage class strictly around size class:]min_pred;max_pred]
-	## stage class
-	(!!low_bound < min_pred & max_pred <= !!upper_bound) |#<-diff with overlap
-	#size class strictly in stage class:]low_bound;upper_bound]
-	(!!low_bound > min_pred & max_pred >= !!upper_bound)
+    # min stage in size class: ]min_pred;max_pred]
+    (min_pred < !!low_bound & !!low_bound < max_pred) |#<-diff with overlap
+      # max stage in size class:]min_pred;max_pred]
+    (min_pred < !!upper_bound & !!upper_bound <= max_pred) |
+    #stage class strictly around size class:]min_pred;max_pred]
+    ## stage class
+    (!!low_bound < min_pred & max_pred <= !!upper_bound) |#<-diff with overlap
+    #size class strictly in stage class:]low_bound;upper_bound]
+    (!!low_bound > min_pred & max_pred >= !!upper_bound)
       )
     } else {
      condition <- rlang::quo(
-	# min stage in size class: ]min_pred;max_pred]
-	(min_pred < !!low_bound & !!low_bound <= max_pred) |
-	  # max stage in size class:]min_pred;max_pred]
-	(min_pred < !!upper_bound & !!upper_bound <= max_pred) |
-	#stage class strictly around size class:]min_pred;max_pred]
-	## stage class
-	(!!low_bound <= min_pred & max_pred < !!upper_bound) |
-	#size class strictly in stage class:]low_bound;upper_bound]
-	(!!low_bound > min_pred & max_pred >= !!upper_bound)
+    # min stage in size class: ]min_pred;max_pred]
+    (min_pred < !!low_bound & !!low_bound <= max_pred) |
+      # max stage in size class:]min_pred;max_pred]
+    (min_pred < !!upper_bound & !!upper_bound <= max_pred) |
+    #stage class strictly around size class:]min_pred;max_pred]
+    ## stage class
+    (!!low_bound <= min_pred & max_pred < !!upper_bound) |
+    #size class strictly in stage class:]low_bound;upper_bound]
+    (!!low_bound > min_pred & max_pred >= !!upper_bound)
       )
     }
 
@@ -189,14 +194,14 @@ compute_links <- function (size_class, th_prey_size, piscivory_index,
       ## Check if the middle of the prey size class is in the range of prey of the predator
       if (pred_win_method == "midpoint") {
       troph_link <- dplyr::mutate(prey_data,
-	prey_mid = (lower + upper) / 2,
-	troph_link = (min_prey <= prey_mid & max_prey  >= prey_mid) * pisc_index)
+    prey_mid = (lower + upper) / 2,
+    troph_link = (min_prey <= prey_mid & max_prey  >= prey_mid) * pisc_index)
       } else {
-	stop("pred_win_method is different from midpoint. Other methods are not yet implemented")
+    stop("pred_win_method is different from midpoint. Other methods are not yet implemented")
       }
 
       fish_int_values <- troph_link %>%
-	dplyr::select(troph_link) %>% unlist
+    dplyr::select(troph_link) %>% unlist
       fish_fish_int[, j] <- fish_int_values
     }
 
@@ -220,12 +225,12 @@ compute_links <- function (size_class, th_prey_size, piscivory_index,
       resource_int_values <- rep(0, length(resource_list))
     } else {
       resource_int_values <- pred_diet_class_match %>%
-	dplyr::select(!! resource_list) %>%
-	tidyr::gather(resource, troph_index) %>%
-	dplyr::group_by(resource) %>%
-	dplyr::summarise(troph_index = (sum(troph_index) > 0) * 1) %>%
-	tidyr::spread(resource, troph_index) %>%
-	unlist
+    dplyr::select(!! resource_list) %>%
+    tidyr::gather(resource, troph_index) %>%
+    dplyr::group_by(resource) %>%
+    dplyr::summarise(troph_index = (sum(troph_index) > 0) * 1) %>%
+    tidyr::spread(resource, troph_index) %>%
+    unlist
       good_order <- match(names(resource_int_values), resource_list)
       resource_int_values <- resource_int_values[good_order]
     }
@@ -397,7 +402,7 @@ compute_classes <- function(size, group_var, var, class_method = "quantile",
   nested_size %<>%
     dplyr::mutate(
       classes = purrr::map(data, split_in_classes, nb_class = nb_class,
-	class_method = class_method)
+    class_method = class_method)
       ) %>%
     dplyr::select(-data)
 
@@ -441,13 +446,13 @@ split_in_classes <- function (to_class, class_method = "quantile",
       class_id = seq(1, nb_class),
       lower = classified[-length(classified)],
       upper = classified[-1]
-	)
+    )
   }
 
 #' Sanatize fish length for metaweb
 #'
 #'
-sanatize_metaweb <- function(data = NULL, species = NULL, fish_diet_shift = NULL, ...) {
+sanatize_metaweb <- function(data = NULL, species = NULL, fish_diet_shift = NULL, nb_class = NULL) {
 
   #Capture var:
   species <- rlang::enquo(species)
@@ -456,13 +461,37 @@ sanatize_metaweb <- function(data = NULL, species = NULL, fish_diet_shift = NULL
   data_sp <- unique(data[[sp_chr]])
   onto_sp <- unique(fish_diet_shift[[sp_chr]])
 
+  ## Del species for which life traits are not filled
   sp_missing <- data_sp[!data_sp %in% onto_sp]
   if (length(sp_missing) != 0) {
-    msg <- paste0("The following species are absent: ", cat(sp_missing))
+    msg <- c(
+      "For the following species, ",
+      "the life stage are not found in fish_diet_shift are absent: ",
+      paste(sp_missing, "\n", sep = ", "),
+    "They have been removed from data")
     message(msg)
-    #TODO: filter data
-    
+
+    data %<>% dplyr::filter(!(!!species %in% sp_missing))
   }
 
+  # Del species for which the number of individuals is inferior to the number of
+  # classes:
+  nb_ind_sp <- data %>%
+    dplyr::group_by(!!species) %>%
+    dplyr::summarise(nind = dplyr::n())
 
+  species_chr <- rlang::quo_name(species)
+  mask <- nb_ind_sp$nind <= nb_class
+  sp_to_low <- nb_ind_sp[mask, ][[species_chr]]
+  if (length(sp_to_low) != 0) {
+    msg <- c(
+      "For the following species, ",
+      "# obs is not superior to nb_class of the metaweb: ",
+      paste(sp_to_low, "\n", sep = ", "),
+    "They have been removed from data")
+    message(msg)
+
+    data %<>% dplyr::filter(!(!!species %in% sp_to_low))
+  }
+  data
 }
