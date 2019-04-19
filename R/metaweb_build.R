@@ -443,3 +443,26 @@ split_in_classes <- function (to_class, class_method = "quantile",
       upper = classified[-1]
 	)
   }
+
+#' Sanatize fish length for metaweb
+#'
+#'
+sanatize_metaweb <- function(data = NULL, species = NULL, fish_diet_shift = NULL, ...) {
+
+  #Capture var:
+  species <- rlang::enquo(species)
+  sp_chr <- rlang::quo_name(species)
+  
+  data_sp <- unique(data[[sp_chr]])
+  onto_sp <- unique(fish_diet_shift[[sp_chr]])
+
+  sp_missing <- data_sp[!data_sp %in% onto_sp]
+  if (length(sp_missing) != 0) {
+    msg <- paste0("The following species are absent: ", cat(sp_missing))
+    message(msg)
+    #TODO: filter data
+    
+  }
+
+
+}

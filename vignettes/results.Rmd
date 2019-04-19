@@ -9,6 +9,13 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r}
+mypath <- rprojroot::find_package_root_file
+data_common <- mypath("data")
+dest_dir <- mypath("data", "species")
+```
+
+
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -35,7 +42,7 @@ theme_set(theme_alain())
 ## Metaweb
 
 ```{r}
-data(metaweb_analysis)
+myload(metaweb_analysis, dir = data_common)
 meta <- metaweb_analysis; rm(metaweb_analysis)
 
 g <- igraph::graph_from_adjacency_matrix(meta$metaweb, mode = "directed")
@@ -54,7 +61,7 @@ plot.igraph(g,layout=lay,vertex.label=NA,vertex.size=2,edge.arrow.size=.5,edge.w
 ## Local network
 
 ```{r}
-data(network_analysis)
+myload(network_analysis, dir = dest_dir)
 net <- network_analysis %>%
   dplyr::select(opcod, network) %>%
   unnest() %>%
@@ -94,8 +101,9 @@ species_colour_legend)
 
 ```{r}
 # Get network metrics
-data(temporal_network_metrics)
-data(temporal_community_metrics)
+myload(temporal_network_metrics, dir = dest_dir)
+myload(temporal_community_metrics, dir = data_common)
+
 cor_avg <- temporal_network_metrics %>%
   select_at(vars(matches("med"))) %>%
   cor()

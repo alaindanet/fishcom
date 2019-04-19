@@ -170,7 +170,7 @@ cat("-----------------------\n")
 
 library(NetIndices)
 
-data(network_analysis)
+myload(network_analysis, dir = dest_dir)
 
 source('../analysis/misc/parallel_setup.R')
 cat("Convert graph to matrix:\n")
@@ -247,7 +247,7 @@ cat("-----------------------\n")
 cat("Standardize connectance\n")
 cat("-----------------------\n")
 
-data(network_metrics)
+myload(network_metrics, dir = dest_dir)
 
 c_richness_mod <- lm(connectance ~ nbnode, network_metrics)
 #summary(c_richness_mod)

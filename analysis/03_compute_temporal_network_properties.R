@@ -22,8 +22,7 @@ op_analysis %<>%
   dplyr::select(opcod, station, year)
 to_be_summarized <- c("nestedness", "connectance", "connectance_corrected", "nbnode",
   "mean_troph_level", "max_troph_level", "modularity")
-com <-
-    left_join(network_metrics, op_analysis, by = "opcod") %>%
+com <- left_join(network_metrics, op_analysis, by = "opcod") %>%
   group_by(station) %>%
   rename(mean_troph_level = troph_level_avg,
     max_troph_level = troph_length) %>%
