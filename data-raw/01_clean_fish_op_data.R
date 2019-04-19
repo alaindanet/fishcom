@@ -111,6 +111,15 @@ op_sp_ind <- fish_length %>%
     )
 devtools::use_data(op_sp_ind, overwrite = TRUE)
 
+#######################
+#  Nb ind by species  #
+#######################
+
+nb_ind_sp <- fish_length %>%
+  group_by(species) %>%
+  summarise(nind = n())
+devtools::use_data(nb_ind_sp, overwrite = TRUE)
+
 ################################################################################
 #                                Operation data                                #
 ################################################################################

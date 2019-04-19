@@ -43,6 +43,10 @@ According to the postdoc advertisement:
 
 ## Immediate objectives
 
+- [ ] Make scripts more modular:
+  - [ ] network_analysis become network_composition after adding node   
+  - [ ] 02_run_analysis.R:
+    - [ ] separate build_network from metrics computation
 - [x] network methods:
   - [x] connectance, average trophic level, richness
     - [ ] beautiful plots
@@ -62,10 +66,7 @@ According to the postdoc advertisement:
     - [ ] null models everywhere ?
   - [ ] community methods:
     - [ ] compute turnover, rank shift, rate of change
-- [ ] Fish datasets to generate:
-  - [ ] `station`: station_id, dept, bassin, commune, loc
-  - [x] `fish_length`: op_id, species, length
-    op_commentary
+- [x] Fish datasets to generate:
 - [ ] Assess quality of the dataset:
 - [ ] Assess availability of environmental data
   - [ ] Temperature data

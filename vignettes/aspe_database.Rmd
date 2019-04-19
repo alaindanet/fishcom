@@ -912,6 +912,23 @@ pre_ele %<>%
 
 ```{r}
 ref_espece <- tbl(con, in_schema("aspe", "ref_espece"))
+```
+
+```{r save species name}
+species <- ref_espece %>%
+  collect() %>%
+  rename_all(list(~ gsub("esp_", "", make.names(colnames(ref_espece))))) %>%
+  rename(
+    code = code_alternatif,
+    common_name = nom_commun,
+    latin_name = nom_latin,
+    max_size = taille_maximale) %>%
+  select(code, common_name, latin_name, max_size)
+mysave(species, dir = mypath("data"), overwrite = TRUE)
+```
+
+
+```{r}
 ref_espece %<>%
   rename(lop_esp_id = esp_id, species = esp_code_alternatif) %>%
   select(lop_esp_id, species)

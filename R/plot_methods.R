@@ -226,8 +226,8 @@ mylabel <- function() {
     modularity = "Modularity",
     nestedness = "Nestedness",
     nbnode = "Number of nodes",
-    richness_cv = "CV",
-    richness_avg = "Average",
+    richness_cv = "richness CV",
+    richness_avg = "Average richness",
     richness_med = "Median richness",
     betadiv = "Beta-diversity"
     #betadiv = expression(bold(paste(beta, "-diversity", sep = "")))
