@@ -18,7 +18,7 @@ cat("Load data: done\n")
 
 # Build metaweb
 metaweb_analysis <- build_metaweb(
-  data = fish_length,
+  data = length_analysis,
   species = species,
   size = length,
   pred_win = pred_win,

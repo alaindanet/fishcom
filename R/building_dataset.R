@@ -363,12 +363,12 @@ keep_most_complete_sampling <- function (station, threshold = 270) {
     removed_dbl <- station[!station$point %in% c(temp_pt, temp_pt - 1),]
 
     station <- bind_rows(removed_dbl, selected_op) %>%
-    arrange(times) %>%
+    arrange(date) %>%
     mutate(
       point = seq(1, n()),
-      sample_sep = c(NA, times[-1] - times[-n()])
+      sample_sep = c(NA, date[-1] - date[-n()])
       )
     dbl_op <- filter(station, sample_sep < threshold)
   }
- station 
+ station
 }

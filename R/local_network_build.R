@@ -29,6 +29,12 @@ build_local_network <- function (data, species, var, group_var, metaweb, classes
     message(msg)
     data %<>% na.omit
   }
+
+  data <- sanatize_metaweb(data = data,
+    species = !!species, fish_diet_shift = classes,
+    nb_class = max(unique(classes$class_id))
+  )
+
   # Compute the class_id
   classes_assigned <- assign_size_class(data, !!species, !!var, classes)
   #Subset the matrix
