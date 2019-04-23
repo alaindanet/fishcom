@@ -28,6 +28,15 @@ cat("-----------------------\n")
 # Load
 myload(weight_analysis, metaweb_analysis, dir = data_common)
 myload(network_analysis, dir = dest_dir)
+
+# Filter data according to the metaweb
+weight_analysis <- sanatize_metaweb(
+  data = weight_analysis,
+  species = species,
+  fish_diet_shift = metaweb_analysis$size_class,
+  nb_class = max(unique(metaweb_analysis$size_class$class_id))
+  )
+
 # compute weight by node and by opcod
 weight_analysis %<>% assign_size_class(., species, var = length,
   classes = metaweb_analysis$size_class) %>%

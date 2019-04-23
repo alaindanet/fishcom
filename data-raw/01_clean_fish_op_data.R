@@ -147,9 +147,7 @@ mysave(op_desc, dir = mypath("data-raw"))
 load(mypath("data-raw", "fishing_op_build", "op_env.rda"))
 op_env
 colnames(op_env)
-
-
-mysave(op_env, dir = mypath("data-raw"))
+mysave(op_env, dir = mypath("data-raw"), overwrite = TRUE)
 
 ################################################################################
 #                                   Station                                    #
