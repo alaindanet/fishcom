@@ -104,6 +104,7 @@ good_opcod_id <- select(ungroup(op_analysis), opcod) %>% unlist
 myload(op_env, dir = mypath("data-raw"))
 myload(op_desc, dir = mypath("data-raw"))
 myload(op_analysis, dir = mypath("data"))
+myload(op_hab, dir = mypath("data-raw"))
 good_opcod_id <- select(ungroup(op_analysis), opcod) %>% unlist
 
 op_desc %<>%
@@ -113,12 +114,18 @@ op_env %<>%
   filter(opcod %in% good_opcod_id) %>%
   left_join(select(op_analysis, opcod, station)) %>%
   left_join(op_desc)
-
 summary(op_env)
 
 env_analysis <- op_env
 devtools::use_data(env_analysis, overwrite = TRUE)
 rm(env_analysis, op_env, op_desc)
+
+op_hab %<>%
+  filter(opcod %in% good_opcod_id)
+
+hab_analysis <- op_hab
+devtools::use_data(hab_analysis, overwrite = TRUE)
+rm(hab_analysis, op_hab)
 
 #######################
 #  Clean fish length  #

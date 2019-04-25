@@ -319,7 +319,7 @@ ref_isolation <- tbl(con, in_schema("aspe", "ref_isolement")) %>%
 isolation_replacement <- c(
  "Pas d’isolement"                   = "no",
  "Seuil partiellement franchissable" = "partly_crossable",
- "Obstacle infranchissable"          = "obstable_uncrossable",
+ "Obstacle infranchissable"          = "obstacle_uncrossable",
  "Filet"                             = "net",
  "Barrage électrique"                = "electric_dam",
  "Autres"                            = "others"
@@ -575,6 +575,121 @@ op_env %<>%
 op_env %<>% left_join(op_env2, by = "opcod")
 
 save(op_env, file = mypath("data-raw", "fishing_op_build", "op_env.rda"))
+```
+
+# Habitat
+
+```{r}
+op_hab <- tbl(con, in_schema("aspe", "habitat")) %>%
+  filter(hab_id %in% op_env$habitat_id) %>%
+  collect()
+colnames(op_hab)
+```
+
+## Collect references 
+
+```{r}
+replace_abundance <- c(
+  "Présence non caractérisée" = "NA",
+  "Indéterminable" = "NA",
+  "Nulle" = "null",
+  "Faible" = "weak",
+  "Moyenne" = "medium",
+  "Importante" = "high",
+  "Très importante" = "very_high")
+ref_abun_saumon <- tbl(con, in_schema("aspe", "ref_type_abondance_saumon")) %>%
+  collect() %>%
+  select(tys_id, tys_libelle) %>%
+  rename(abundance = tys_libelle) %>%
+  mutate(abundance = str_replace_all(abundance, replace_abundance))
+```
+
+```{r}
+ref_abun <- tbl(con, in_schema("aspe", "ref_type_abondance")) %>%
+  collect() %>%
+  select(tya_id, tya_libelle) %>%
+  rename(abundance = tya_libelle) %>%
+  mutate(abundance = str_replace_all(abundance, replace_abundance))
+```
+
+```{r}
+replace_shade <- c(
+  "Rivière ou ambiance couverte \\(>90% d'ombrage\\)" = "covered",
+  "Rivière ou ambiance assez couverte \\(50-90% d'ombrage\\)" = "quite_covered",
+  "Rivière ou ambiance assez dégagée \\(10-50% d'ombrage\\)" = "quite_clear",
+  "Rivière ou ambiance dégagée" = "clear"
+)
+ref_shade <- tbl(con, in_schema("aspe", "ref_ombrage_riviere")) %>%
+  collect() %>%
+  select(omr_id, omr_libelle) %>%
+  rename(shade = omr_libelle, hab_omr_id = omr_id) %>%
+  mutate(shade = str_replace_all(shade, replace_shade))
+```
+
+```{r}
+replace_sinuosite <- c(
+  "Cours d'eau rectiligne" = "straight",
+  "Cours d'eau sinueux" = "sinuous", 
+  "Cours d'eau très sinueux" = "very_sinuous",
+  "Cours d'eau méandriforme" = "meandering"
+)
+ref_sinuosite <- tbl(con, in_schema("aspe", "ref_sinuosite")) %>%
+  collect() %>%
+  select(sin_id, sin_libelle) %>%
+  rename(sinuosite = sin_libelle, hab_sin_id = sin_id) %>%
+  mutate(sinuosite = str_replace_all(sinuosite, replace_sinuosite))
+```
+
+
+```{r}
+op_hab %<>%
+  left_join(ref_shade, by = "hab_omr_id") %>%
+  left_join(ref_sinuosite, by = "hab_sin_id") %>%
+  left_join(
+    rename(ref_abun, hab_tya_id_trous_fosses = tya_id, hole_pit = abundance),
+    by = "hab_tya_id_trous_fosses") %>%
+  left_join(
+    rename(ref_abun, hab_tya_id_sous_berges = tya_id, under_bank = abundance),
+    by = "hab_tya_id_sous_berges") %>%
+  left_join(
+    rename(ref_abun, hab_tya_id_abris_rocheux = tya_id, rock_shelter = abundance),
+    by = "hab_tya_id_abris_rocheux") %>%
+  left_join(
+    rename(ref_abun, hab_tya_id_embacles_souches = tya_id, logjam_stumps = abundance),
+    by = "hab_tya_id_embacles_souches") %>%
+  left_join(
+    rename(ref_abun, hab_tya_id_abri_vegetal_aquatique = tya_id, aqua_vg_shelter = abundance),
+    by = "hab_tya_id_abri_vegetal_aquatique") %>%
+  left_join(
+    rename(ref_abun, hab_tya_id_vegetation_bordure = tya_id, edge_vg = abundance),
+    by = "hab_tya_id_vegetation_bordure") %>%
+  left_join(
+    rename(ref_abun_saumon, hab_tys_id_vegetation_aquatique = tys_id, aqua_vg = abundance),
+    by = "hab_tys_id_vegetation_aquatique") %>%
+  select(
+    -hab_omr_id,
+    -hab_sin_id,
+    -hab_tya_id_trous_fosses,
+    -hab_tya_id_abris_rocheux,
+    -hab_tya_id_sous_berges,
+    -hab_tya_id_embacles_souches,
+    -hab_tya_id_abri_vegetal_aquatique,
+    -hab_tya_id_vegetation_bordure,
+    -hab_tys_id_vegetation_aquatique
+  )
+```
+
+## Add operation code 
+
+```{r}
+op_hab %<>%
+  rename(habitat_id = hab_id) %>%
+  left_join(select(op_env, opcod, habitat_id),
+    by = "habitat_id") %>%
+  select(-habitat_id) %>%
+  select(opcod, everything())
+
+mysave(op_hab, dir = mypath("data-raw"))
 ```
 
 # Station
@@ -1052,34 +1167,3 @@ distribution.
 
 It makes a very long time to run, so it is better to parallelize and to send to
 cluster.
-TODO: write the files as .rda, set up parallel, set script to run and send files to the cluster
-
-```{r, eval = FALSE}
-lot_poissons %<>%
-  collect() %>%
-  mutate(
-      fish = purrr::pmap(
-	list(
-	  id = lop_id,
-	  type = type_lot,
-	  min_size = lop_longueur_specimens_taille_mini,
-	  max_size = lop_longueur_specimens_taille_maxi,
-	  nb = lop_effectif
-	  ),
-	gen_fish_from_lot, # Arguments from ind_measure:
-	ind_measure = collect(ind_measure),
-	ind_size = mei_taille,
-	ind_id = mei_lop_id,
-	verbose = TRUE)
-      ) %>%
-  select(lop_id, lop_pre_id, species, fish)
-## HERE: Erreur : Evaluation error: argument a is greater than or equal to b.
-pb_id <- 518228
-filter(lot_poissons, lop_id == pb_id)
-filter(lot_poissons, type_lot == "S/L")
-filter(ind_measure, mei_lop_id == pb_id)
-lot <- ind_measure %>% dplyr::filter(mei_lop_id == pb_id) %>%
-  collect() %>%
-  dplyr::select(mei_taille) %>%
-  unlist(., use.names = FALSE)
-```

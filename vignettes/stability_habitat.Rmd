@@ -1,0 +1,93 @@
+---
+title: "Link stability to habitat"
+author: "Vignette Author"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+mypath <- rprojroot::find_package_root_file
+data_common <- mypath("data")
+dest_dir <- mypath("data", "species")
+```
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.dim = c(7, 7),
+  echo = FALSE
+)
+library(tidyverse)
+library(ggpmisc)
+library(cowplot)
+library(kableExtra)
+library(magrittr)
+library(igraph)
+library(NetIndices)
+library(tidygraph)
+library(ggraph)
+library(lubridate)
+devtools::load_all()
+theme_set(theme_alain())
+```
+
+# Link stability to station characteristics
+
+```{r}
+myload(temporal_network_metrics, dir = dest_dir)
+myload(temporal_community_metrics, dir = data_common)
+myload(temporal_station_desc, dir = data_common)
+```
+
+## Morphology
+
+```{r}
+station_com <- left_join(
+  select(temporal_community_metrics, station, biomass_stab),
+  temporal_station_desc)
+stab_station <- station_com %>%
+  gather(carac, value, slope_mean,
+   width_river_mean, avg_depth_station_mean)
+formula <- y ~ x #needed for stat_poly_eq
+qplot(value, biomass_stab, data =  stab_station, geom = "point") +
+  facet_grid(cols = vars(carac), scales = "free_x") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(y = "biomass_stab") +
+  xlab("River morpho-charasteristics")
+```
+
+## Isolation, artificial modification  
+
+```{r}
+stab_station <- station_com %>%
+  gather(carac, value, isolation_down, isolation_up, instream_flow,
+    artificial_flow_variation, replenishment_flow)
+formula <- y ~ x #needed for stat_poly_eq
+qplot(value, biomass_stab, data =  stab_station, geom = "boxplot") +
+  facet_grid(cols = vars(carac), scales = "free_x") +
+  xylabs(y = "biomass_stab") +
+  xlab("Isolation, artificial modification")
+```
+
+## Usage
+
+```{r}
+stab_station <- station_com %>%
+  gather(carac, value, channelled, resettlement,   
+  sailed_station, nautical_sports, dredging)
+formula <- y ~ x #needed for stat_poly_eq
+qplot(value, biomass_stab, data =  stab_station, geom = "boxplot") +
+  facet_grid(cols = vars(carac), scales = "free_x") +
+  xylabs(y = "biomass_stab") +
+  xlab("Usage")
+```

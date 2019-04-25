@@ -43,6 +43,24 @@ According to the postdoc advertisement:
 
 ## Immediate objectives
 
+- [ ] Environmental data
+  - [ ] temporal flow and enrichment (Marie Silvestre): 
+    - [ ] Return interesting stations
+      - [ ] Buffer method around station
+    - [ ] Interpolation toward the station:
+      - [ ] Use RHT https://www.irstea.fr/fr/rht
+  - [ ] How to analyze qualitave data:
+    - [ ] Habitat
+  - [ ] Pressure data (Olivier Dezerald & Philippe Usseglio-Polatera):
+  - [ ] Temperature data?
+    - [ ] https://hubeau.eaufrance.fr/page/api-temperature-continu
+  - [x] ONDE for etiage: from 2012 to 2018 
+  - [x] ROE for obstacle:
+    - [ ] To explore
+  - [x] ADES for map of rock types
+    - http://www.ades.eaufrance.fr/
+    - [x] professional access
+    - [ ] Map of water quality and level 
 - [ ] Make scripts more modular:
   - [ ] network_analysis become network_composition after adding node   
   - [ ] 02_run_analysis.R:
@@ -66,18 +84,8 @@ According to the postdoc advertisement:
     - [ ] null models everywhere ?
   - [ ] community methods:
     - [ ] compute turnover, rank shift, rate of change
-- [x] Fish datasets to generate:
+- [x] Fish datasets to generate
 - [ ] Assess quality of the dataset:
-- [ ] Assess availability of environmental data
-  - [ ] Temperature data
-  - [ ] temporal pollution data (cf Colin, FIRE meeting)
-  - [x] ONDE for etiage: from 2012 to 2018 
-  - [x] ROE for obstacle:
-    - [ ] To explore
-  - [x] ADES for map of rock types
-    - http://www.ades.eaufrance.fr/
-    - [x] professional access
-    - [ ] Map of water quality and level 
 
 
 # Temporal stability and diversity 
