@@ -23,9 +23,6 @@ op_sp_ind
 
 op %<>% left_join(op_sp_ind, by = "opcod")
 
-op %<>% filter(
-  protocol == "complete"#Rm other method
-)
 
 ######################################
 #  Remove doubled fishing operation  #
@@ -92,6 +89,11 @@ qplot(x = freq, data = good_station, geom = "histogram")
 op <- filter(op, station %in% good_station_id)
 op %<>%
   mutate(year = year(date))
+
+op_analysis_complete_partial <- op
+devtools::use_data(op_analysis_complete_partial, overwrite = TRUE)
+
+op %<>% filter( protocol == "complete")
 op_analysis <- op
 devtools::use_data(op_analysis, overwrite = TRUE)
 

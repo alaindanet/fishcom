@@ -213,7 +213,6 @@ op <- db_op %>%
 protocol_kept %<>%
   rename(protocol = pro_libelle) %>%
   select(pro_id, protocol)
-# TODO: same with qualif, objective, prospection method 
 op %<>%
   left_join(., protocol_kept) %>% select(-pro_id)
 
