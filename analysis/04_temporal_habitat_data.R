@@ -1,6 +1,8 @@
 ####################################
 #  Build temporal habitat dataset  #
 ####################################
+library('tidyverse')
+library('magrittr')
 
 myload(env_analysis, dir = data_common)
 colnames(env_analysis)
@@ -95,3 +97,83 @@ temporal_station_desc <- left_join(isolation, flow, by = "station") %>%
   left_join(river_morpho, by = "station")
 
 mysave(temporal_station_desc, dir = data_common, overwrite = TRUE)
+
+#############
+#  Habitat  #
+#############
+library("ade4")
+library("adegraphics")
+
+myload(hab_analysis, dir = data_common)
+
+habitat <- hab_analysis %>%
+  mutate_all(list(as.factor)) %>%
+  select(-opcod, -station, -aqua_vg)
+
+mca <- dudi.acm(as.data.frame(habitat), scannf = FALSE, nf = 5)
+
+screeplot(mca)
+summary(mca)
+scatter(mca)
+
+# Try to average station values with median  
+unique(hab_analysis$hole_pit)
+unique(hab_analysis$shade)
+unique(hab_analysis$sinuosite)
+lvl <- c("null", "weak", "medium", "high")
+lvl_sinuosite <- c("straight", "sinuous", "very_sinuous", "meandering")
+lvl_shade <- c("clear", "quite_clear", "quite_covered", "covered")
+
+habitat_station <- hab_analysis %>%
+  select(-opcod, -aqua_vg, - shade, - sinuosite) %>%
+  mutate_if(is.character, list(~factor(., levels = lvl, ordered = TRUE))) %>%
+  left_join(select(hab_analysis, station, shade, sinuosite)) %>%
+  mutate(
+    shade = factor(shade, levels = lvl_shade, ordered = TRUE),
+    sinuosite = factor(sinuosite, levels = lvl_sinuosite, ordered = TRUE)) %>%
+  group_by(station) %>%
+  summarise_all(list(med = ~median(as.numeric(.), na.rm = TRUE)))
+
+
+## Join habitat with shade and sinuosite 
+pca <- dudi.pca(as.data.frame(select(habitat_station, -station)), scannf = FALSE, nf = 2, center = TRUE, scale = TRUE)
+
+screeplot(pca)
+summary(pca)
+scatter(pca, posieig = "none")
+s.corcircle(pca$co)
+biplot(pca)
+pca$li
+pca$tab
+pca
+
+## Habitat and stability
+myload(temporal_community_metrics, dir = data_common) 
+stab <- temporal_community_metrics %>%
+  select(station, biomass_stab)
+
+hab_stab <- left_join(habitat_station, stab)
+qplot(x = biomass_stab, data = hab_stab, geom = "histogram")
+
+all(hab_stab$station == habitat_station$station)
+hab_stab %<>%
+  mutate(axis1 = pca$li[[1]], axis2 = pca$li[[2]])
+
+### variable 
+var_pca <- tibble(
+  variable = rownames(pca$co),
+  comp1 = 5 * pca$co[[1]],
+  comp2 = 5 * pca$co[[2]])
+
+p <- ggplot(data = hab_stab, aes(x = axis1, y = axis2, size = biomass_stab)) +
+  geom_point() +
+  geom_text(data = var_pca, aes(x = comp1, y = comp2, label = variable), inherit.aes = FALSE, size = 6)
+myscree(pca1$eig / sum(pca1$eig))
+
+
+model <- lm(biomass_stab ~ hole_pit_med + under_bank_med + rock_shelter_med +
+  logjam_stumps_med + aqua_vg_shelter_med + edge_vg_med + shade_med +
+  sinuosite_med, data = hab_stab)
+
+model_pca <- lm(hab_stab$biomass_stab ~ )
+plot(model_pca)

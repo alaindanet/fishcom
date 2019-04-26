@@ -23,6 +23,7 @@ options(echo = TRUE)
 
 # Path to save network analysis:
 mypath <- rprojroot::find_package_root_file
+data_common <- mypath("data")
 # Make network of species:
 if (!is.null(options("network.type")) & options("network.type") == "species") {
   dest_dir <- mypath("data", "species")
@@ -37,7 +38,6 @@ if (!is.null(options("network.type")) & options("network.type") == "species") {
   }
 }
 
-data_common <- mypath("data")
 
 cat("Working directory:\n")
 cat(getwd(), "\n")

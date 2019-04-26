@@ -121,7 +121,8 @@ devtools::use_data(env_analysis, overwrite = TRUE)
 rm(env_analysis, op_env, op_desc)
 
 op_hab %<>%
-  filter(opcod %in% good_opcod_id)
+  filter(opcod %in% good_opcod_id) %>%
+  left_join(select(op_analysis, opcod, station))
 
 hab_analysis <- op_hab
 devtools::use_data(hab_analysis, overwrite = TRUE)
