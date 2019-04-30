@@ -252,6 +252,7 @@ network_analysis %<>%
 
 network_metrics <- network_analysis %>%
   dplyr::select(-network, -metrics, -troph_level)
+mysave(network_analysis, dir = dest_dir, overwrite = TRUE)
 mysave(network_metrics, dir = dest_dir, overwrite = TRUE)
 
 ##############################

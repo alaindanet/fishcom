@@ -107,17 +107,25 @@ net %<>%
 }
 ))
 ## betalink:
-net %<>%
+net %>%
+  select(network, station) %>%
   group_by(station) %>%
   nest() %>%
-  mutate(betal = furrr::future_map2(data, station,
-      function (data, station) {
-      message(sprintf("Station %s", station))
-      betalink::network_betadiversity(data$network)
+  mutate(betalink = furrr::future_map2(data, station,
+      function (x, y) {
+      message(sprintf("Station %s", y))
+      betalink::network_betadiversity(x$network)
       }
       )
-  )
-# Merge with network_metrics 
+  ) %>%
+  select(-data)
+
+# Merge with temporal_network_metrics 
+myload(temporal_network_metrics, dir = dest_dir)
+temporal_network_metrics %<>%
+  left_join(net, by = "station")
+
+mysave(temporal_network_metrics, dir = dest_dir, overwrite = TRUE)
 
 cat("-----------------------------------\n")
 cat("End of temporal metrics computation\n")
