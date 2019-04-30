@@ -14,7 +14,7 @@ average_species_overlap <- function(mat) {
     byrow = FALSE
   )
   colnames(no_diag) <- colnames(mat)
-  colSums(no_diag)
+  colMeans(no_diag)
 }
 #' Diet overlap between consumers
 #'

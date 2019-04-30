@@ -49,6 +49,6 @@ test_that("We can get average overlap", {
   )
   colnames(newres) <- colnames(res)
 
-  expect_equal(colSums(newres), average_species_overlap(res))
+  expect_equal(colMeans(newres), average_species_overlap(res))
 
 })
