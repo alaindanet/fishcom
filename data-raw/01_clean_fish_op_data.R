@@ -18,7 +18,6 @@ mydir <- mypath("data-raw", "fishing_op_build")
 
 load(mypath("data-raw", "fishing_op_build", "fish_length.rda"))
 
-
 ##############################
 #  Remove migratory species  #
 ##############################

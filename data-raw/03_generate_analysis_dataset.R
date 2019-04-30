@@ -23,6 +23,15 @@ op_sp_ind
 
 op %<>% left_join(op_sp_ind, by = "opcod")
 
+##############################################
+#  Distribution of fishing operation timing  #
+##############################################
+
+
+qplot(month, data = mutate(op, month = month(date))) +
+  labs(x = "Date",
+    y = "Frequency")
+
 
 ######################################
 #  Remove doubled fishing operation  #
@@ -66,9 +75,8 @@ qplot(sample_sep, data = filter(clean_dbl, sample_sep < 2000)) +
     y = "Frequency") +
   xlim(c(0, 2000))
 filter(clean_dbl, sample_sep < 160)
-filter(int_op, station == 709)
-filter(int_op, station == 657)
-
+filter(clean_dbl, station == 709)
+filter(clean_dbl, station == 657)
 
 # Numbering the sampling events by station
 op_hist <- clean_dbl %>%
@@ -85,6 +93,21 @@ good_station_id <- good_station %>%
 length(good_station_id)
 qplot(x = freq, data = good_station, geom = "histogram")
 
+# Test fish month distribution 
+op_test <- filter(op, station %in% good_station_id) %>%
+  mutate(month = month(date))
+qplot(month, data = op_test) +
+  labs(x = "Date",
+    y = "Frequency")
+## By station
+op_test_station  <- op_test %>%
+  group_by(station) %>%
+  summarise(avg = mean(month), sdt = sd(month))
+qplot(sdt, data = op_test_station) +
+  labs(x = "Date",
+    y = "Frequency")
+
+
 # For temporal analysis, we keep station followed more than 10 times
 op <- filter(op, station %in% good_station_id)
 op %<>%
@@ -99,19 +122,49 @@ devtools::use_data(op_analysis, overwrite = TRUE)
 
 good_opcod_id <- select(ungroup(op_analysis), opcod) %>% unlist
 
+################################
+#  Test for the length fished  #
+################################
+
+# Test for the length fished
+myload(op_desc, dir = mypath("data-raw"))
+myload(op_analysis, dir = mypath("data"))
+op_desc %<>%
+  rename(opcod = ope_id) %>%
+  filter(opcod %in% good_opcod_id)
+op_analysis %<>%
+  left_join(select(op_desc, opcod, length_sourced)) %>%
+  arrange(station)
+
+op_cv_length <- op_analysis %>%
+  group_by(station) %>%
+  summarise(
+    mean = mean(length_sourced),
+    median = median(length_sourced),
+    cv = mean / sd(length_sourced),
+    cv = replace(cv, cv == Inf, 0)
+  )
+test_too_different <- op_analysis %>%
+  left_join(op_cv_length, by = "station") %>%
+  mutate(out = ifelse(length_sourced > median + .3 * median, TRUE, FALSE))
+filter(test_too_different, out == TRUE) %>%
+  arrange(station)
+
+filter(op_analysis, station == 203)
+
+op_analysis %<>% filter(opcod %in% filter(test_too_different, out == FALSE)$opcod)
+
+mysave(op_analysis, dir = mypath("data"), overwrite = TRUE)
+
 ########################
 #  Environmental data  #
 ########################
 
 myload(op_env, dir = mypath("data-raw"))
-myload(op_desc, dir = mypath("data-raw"))
 myload(op_analysis, dir = mypath("data"))
 myload(op_hab, dir = mypath("data-raw"))
 good_opcod_id <- select(ungroup(op_analysis), opcod) %>% unlist
 
-op_desc %<>%
-  rename(opcod = ope_id) %>%
-  filter(opcod %in% good_opcod_id)
 op_env %<>%
   filter(opcod %in% good_opcod_id) %>%
   left_join(select(op_analysis, opcod, station)) %>%
@@ -129,6 +182,7 @@ op_hab %<>%
 hab_analysis <- op_hab
 devtools::use_data(hab_analysis, overwrite = TRUE)
 rm(hab_analysis, op_hab)
+
 
 #######################
 #  Clean fish length  #
