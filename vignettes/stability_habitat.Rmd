@@ -40,8 +40,7 @@ theme_set(theme_alain())
 
 ```{r}
 myload(temporal_network_metrics, dir = dest_dir)
-myload(temporal_community_metrics, dir = data_common)
-myload(temporal_station_desc, dir = data_common)
+myload(temporal_community_metrics, temporal_station_desc, dir = data_common)
 ```
 
 ## Morphology
@@ -51,7 +50,7 @@ station_com <- left_join(
   select(temporal_community_metrics, station, biomass_stab),
   temporal_station_desc)
 stab_station <- station_com %>%
-  gather(carac, value, slope_mean,
+  gather(carac, value,
    width_river_mean, avg_depth_station_mean)
 formula <- y ~ x #needed for stat_poly_eq
 qplot(value, biomass_stab, data =  stab_station, geom = "point") +
@@ -70,10 +69,10 @@ qplot(value, biomass_stab, data =  stab_station, geom = "point") +
 
 ```{r}
 stab_station <- station_com %>%
-  gather(carac, value, isolation_down, isolation_up, instream_flow,
+  gather(carac, value, instream_flow,
     artificial_flow_variation, replenishment_flow)
 formula <- y ~ x #needed for stat_poly_eq
-qplot(value, biomass_stab, data =  stab_station, geom = "boxplot") +
+qplot(value, biomass_stab, data =  stab_station, geom = "point") +
   facet_grid(cols = vars(carac), scales = "free_x") +
   xylabs(y = "biomass_stab") +
   xlab("Isolation, artificial modification")
@@ -86,8 +85,8 @@ stab_station <- station_com %>%
   gather(carac, value, channelled, resettlement,   
   sailed_station, nautical_sports, dredging)
 formula <- y ~ x #needed for stat_poly_eq
-qplot(value, biomass_stab, data =  stab_station, geom = "boxplot") +
+qplot(value, biomass_stab, data =  stab_station, geom = "point") +
   facet_grid(cols = vars(carac), scales = "free_x") +
   xylabs(y = "biomass_stab") +
-  xlab("Usage")
+  xlab("Usage (nb occurence by year)")
 ```

@@ -688,7 +688,7 @@ op_hab %<>%
   select(-habitat_id) %>%
   select(opcod, everything())
 
-mysave(op_hab, dir = mypath("data-raw"))
+mysave(op_hab, dir = mypath("data-raw"), overwrite = TRUE)
 ```
 
 # Station
@@ -697,7 +697,7 @@ mysave(op_hab, dir = mypath("data-raw"))
 
 ```{r}
 sampling_point <- tbl(con, in_schema("aspe", "point_prelevement")) %>%
-  filter(pop_id %in% op$pop_id) %>%
+  filter(pop_id %in% op$id) %>%
   collect()
 sampling_point %<>% rename_all(
   list(~ gsub("pop_", "", make.names(colnames(sampling_point)))))
@@ -712,6 +712,15 @@ sampling_point_col <- c(
   "temperature_moyenne_juillet") 
 sampling_point %<>% select(sampling_point_col)
 ```
+Almost all the informations are not filled, e.g. altitude, `distance_source`,
+geological type, land use,...
+
+```{r}
+sampling_point %>%
+  select(distance_mer:temperature_moyenne_juillet) %>%
+  summarise_all(list(~sum(is.na(.))))
+```
+
 
 ### NA station
 

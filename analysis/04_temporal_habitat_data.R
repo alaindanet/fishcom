@@ -23,6 +23,7 @@ hydro %>%
   unnest()
 
 ## Number of times by station where isolation has been reported:
+### But what is exactly isolation?
 isolation <- hydro %>%
   select(station, isolation_down, isolation_up) %>%
   mutate_at(vars(matches("isolation")), list(~ifelse(. == "no", "no", "yes"))) %>%
@@ -40,8 +41,9 @@ sum(hydro$avg_daily_flow == 0, na.rm = TRUE) / nrow(hydro)
 flow_col <- c("instream_flow", "artificial_flow_variation", "replenishment_flow")
 flow <- env_analysis %>%
   select(station, flow_col) %>%
+  mutate_all(list(~replace(., . %in% c("NA"), NA))) %>%
   group_by(station) %>%
-  summarise_all(list(~paste(ifelse(any(. == "yes"), "yes", "no"))))
+  summarise_all(list(~sum(. == "yes", na.rm = TRUE) / length(na.omit(.))))
 
 #############################
 #  Morphology of the river  #
@@ -52,7 +54,7 @@ sum(hydro$slope == 0, na.rm = TRUE) / nrow(hydro)
 # We have no slope
 
 river_morpho <- hydro %>%
-  select(station, slope, width_river, avg_depth_station) %>%
+  select(station, width_river, avg_depth_station) %>%
   group_by(station) %>%
   summarise_all(list(mean = ~mean(., na.rm = TRUE), cv = ~sd(., na.rm = TRUE)/ mean(., na.rm = TRUE)))
 
@@ -65,9 +67,9 @@ hydro %>%
 channel <- hydro %>%
   select(station, chanelled_station) %>%
   rename(channelled = chanelled_station) %>%
-  mutate(channelled = replace(channelled, channelled == "unknown", NA)) %>%
+  mutate(channelled = replace(channelled, channelled %in% c("NA", "unknown"), NA)) %>%
   group_by(station) %>%
-  summarise_all(list(~paste(ifelse(any(. == "yes"), "yes", "no"))))
+  summarise_all(list(~sum(. == "yes", na.rm = TRUE) / length(na.omit(.))))
 
 ###########
 #  Usage  #
@@ -79,8 +81,9 @@ col_usage <- c("resettlement", "resettlement_observations",
 usage <- env_analysis %>%
   select(station, col_usage) %>%
   select(-resettlement_observations) %>%
+  mutate_all(list(~replace(., . %in% c("not_available", "unknown"), NA))) %>%
   group_by(station) %>%
-  summarise_all(list(~paste(ifelse(any(. == "yes"), "yes", "no"))))
+  summarise_all(list(~sum(. == "yes", na.rm = TRUE) / length(na.omit(.))))
 
 # Good to see resettlement_observations, very informative
 # Would be nice to find a way to extract those informations
@@ -90,9 +93,8 @@ env_analysis %>%
 ###############
 #  Merge all  #
 ###############
-
-temporal_station_desc <- left_join(isolation, flow, by = "station") %>%
-  left_join(channel, by = "station") %>%
+#isolation,
+temporal_station_desc <- left_join(flow, channel, by = "station") %>%
   left_join(usage, by = "station") %>%
   left_join(river_morpho, by = "station")
 
@@ -132,20 +134,16 @@ habitat_station <- hab_analysis %>%
     shade = factor(shade, levels = lvl_shade, ordered = TRUE),
     sinuosite = factor(sinuosite, levels = lvl_sinuosite, ordered = TRUE)) %>%
   group_by(station) %>%
-  summarise_all(list(med = ~median(as.numeric(.), na.rm = TRUE)))
+  summarise_all(list(med = ~median(as.numeric(.), na.rm = TRUE))) %>%
+  left_join(select(temporal_station_desc, station, width_river_mean, avg_depth_station_mean))
 
-
-## Join habitat with shade and sinuosite 
+# PCA
 pca <- dudi.pca(as.data.frame(select(habitat_station, -station)), scannf = FALSE, nf = 2, center = TRUE, scale = TRUE)
 
 screeplot(pca)
 summary(pca)
 scatter(pca, posieig = "none")
 s.corcircle(pca$co)
-biplot(pca)
-pca$li
-pca$tab
-pca
 
 ## Habitat and stability
 myload(temporal_community_metrics, dir = data_common) 
@@ -167,13 +165,14 @@ var_pca <- tibble(
 
 p <- ggplot(data = hab_stab, aes(x = axis1, y = axis2, size = biomass_stab)) +
   geom_point() +
-  geom_text(data = var_pca, aes(x = comp1, y = comp2, label = variable), inherit.aes = FALSE, size = 6)
-myscree(pca1$eig / sum(pca1$eig))
+  geom_text(data = var_pca, aes(x = comp1, y = comp2, label = variable), inherit.aes = FALSE, size = 6) +
+  labs(x = "Complexity", y = "Shadeness")
+
 
 
 model <- lm(biomass_stab ~ hole_pit_med + under_bank_med + rock_shelter_med +
   logjam_stumps_med + aqua_vg_shelter_med + edge_vg_med + shade_med +
   sinuosite_med, data = hab_stab)
 
-model_pca <- lm(hab_stab$biomass_stab ~ )
+model_pca <- lm(biomass_stab ~ axis1 + axis2, hab_stab)
 plot(model_pca)

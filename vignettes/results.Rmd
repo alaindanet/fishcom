@@ -145,7 +145,7 @@ as.data.frame(round(cor_med,2)) %>%
 
 # Classic biomass and community
 
-```{r}
+```{r, fig.dim = c(10, 7)}
 biomass_com <- temporal_community_metrics %>%
   select(biomass_stab, richness_cv, richness_med, betadiv) %>%
   gather(type, diversity, richness_med, richness_cv, betadiv)
@@ -441,61 +441,18 @@ net_ex <- filter(net, station == station_high_low_nestedness["low"])
 plot_temporal_network(net_ex, lay = NULL)
 ```
 
-# Fine analysis
-
-## Composition of the lowest trophic group  
+# Map Stability 
 
 ```{r}
-myload(network_analysis, dir = dest_dir)
-low_troph_group <- network_analysis %>%
-  unnest(composition) %>%
-  filter(troph_group == 1)
+myload(station_analysis, dir = data_common)
+myload(region_polygon, dir = data_common)
+station_stab <- left_join(station_analysis, rename(stab, id = station)) %>%
+  filter(!is.na(biomass_stab))
+ggplot(data = region_polygon) +
+    geom_sf() +
+    geom_sf(data = station_stab, aes(color = biomass_stab), size = 4) +
+    scale_color_gradient(low = "red", high = "green")
 ```
-
-```{r species low trophic group}
-sp_low_troph_group <- low_troph_group %>%
-  select(species) %>%
-  unlist %>%
-  unique()
-```
-
-```{r}
-myload(species, dir = mypath("data"))
-sp_low_troph_group <- species %>%
-  filter(code %in% sp_low_troph_group)
-kable(sp_low_troph_group)
-```
-
-```{r}
-myload(nb_ind_sp, dir = mypath("data"))
-filter(nb_ind_sp, species %in% sp_low_troph_group$code) %>%
-  rename(`Number of individuals` = nind) %>%
-  kable
-```
-
-```{r}
-myload(diet_shift, dir = mypath("data"))
-diet <- filter(diet_shift, species %in% sp_low_troph_group$code)
-nrow(diet)
-# All the species that are in low trop group do not have life traits.
-```
-
-## What does eat little Trutta
-
-```{r}
-# little TRF 
-filter(diet_shift, species == "TRF") %>%
-  select(-ref_diet, -ref_ods, -hypoth_ods, -remark) %>%
-  kable()
-```
-
-```{r}
-myload(metaweb_analysis, dir = mypath("data"))
-metaweb_analysis$size_class %>%
-  filter(species == "TRF", class_id %in% c(1, 2)) %>%
-  kable()
-```
-
 
 
 

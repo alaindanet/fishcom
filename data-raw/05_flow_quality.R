@@ -65,3 +65,8 @@ which(donuts_final == TRUE) %>% length
 
 donuts_analysis  <- slice(donuts, which(donuts_final == TRUE))
 mysave(donuts_analysis, dir = mypath("data"))
+
+# Check
+myload(donuts_analysis, dir = mypath("data"))
+write_sf(donuts_analysis, mypath("data-raw", "flow_quality", "donuts_analysis.shp"))
+#zip(mypath("data-raw", "flow_quality", "donuts_analysis"), files = )
