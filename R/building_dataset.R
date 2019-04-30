@@ -130,7 +130,7 @@ gen_fish_from_lot <- function (
 	", lot put as NA\n", sep = ""
       )
       warning(warning_msg)
-      lot <- NA
+      lot <- rep(NA, nb)
     } else if (min_size >= max_size) {
       warning_msg <- paste(
     "min_size >= max_size in lot of type G number ",id,", lot put as NA\n",
@@ -142,7 +142,7 @@ gen_fish_from_lot <- function (
       "# of obs is inferior to 10 (actual # is,", length(nb),
       ") in Lot type G number", id,".\n", "Lot put as NA\n", sep = "")
       warning(warning_msg)
-      lot <- NA
+      lot <- rep(NA, nb)
     } else {
       avg <- (min_size + max_size) / 2
       sdt <- (max_size - min_size) * 1 / 4
@@ -163,7 +163,7 @@ gen_fish_from_lot <- function (
       "# of obs is inferior to 20 (actual # is,", length(size),
       ") in Lot type S/L number ", id,".\n", "Lot put as NA\n", sep = "")
       warning(warning_msg)
-      lot <- NA
+      lot <- rep(NA, nb)
     } else {
     #Distribution parameters:
     avg <- mean(size)
