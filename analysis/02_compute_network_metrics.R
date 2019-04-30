@@ -196,11 +196,15 @@ if (!is.null(options("network.type")) & options("network.type") == "species") {
 	  }))
   mysave(network_analysis, dir = dest_dir, overwrite = TRUE)
 }
-# Transform network to adjacency matrix and compute generic indices: 
+# Transform network to adjacency matrix: 
 network_analysis %<>%
   mutate(
     network = future_map(network, igraph::graph_from_data_frame, directed = TRUE),
-    network = future_map(network, igraph::as_adjacency_matrix, sparse = FALSE),
+    network = future_map(network, igraph::as_adjacency_matrix, sparse = FALSE)
+    )
+# Compute generic indices:
+network_analysis %<>%
+  mutate(
     metrics = future_map(network, NetIndices::GenInd)
     )
 toc()
@@ -221,7 +225,8 @@ cat("Compute species diet overlap:\n")
 network_analysis %<>%
   mutate(
   diet_overlap = future_map(network, compute_diet_overlap),
-  diet_overlap = future_map(diet_overlap, average_species_overlap)
+  diet_overlap = future_map(diet_overlap, average_species_overlap),
+  avg_diet_overlap = future_map_dbl(diet_overlap, mean)
   )
 
 source('../analysis/misc/parallel_setup.R')
