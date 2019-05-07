@@ -160,11 +160,11 @@ set_layout_graph <- function (net = NULL, glay = NULL, x = NULL, y = NULL, title
 
   if (!is.null(y)) {
     stopifnot(all(names(y) %in% llay$name))
-    llay$y <- y[llay$name]
+    llay$y <- y[as.character(llay$name)]
   }
   if (!is.null(x)) {
     stopifnot(all(names(x) %in% llay$name))
-    llay$x <- x[llay$name]
+    llay$x <- x[as.character(llay$name)]
   }
   p <- ggraph::ggraph(llay) +
     ggraph::geom_edge_fan(aes(alpha = ..index..), show.legend = FALSE)
@@ -175,10 +175,6 @@ set_layout_graph <- function (net = NULL, glay = NULL, x = NULL, y = NULL, title
     stopifnot(all(names(biomass) %in% llay$name))
     dataset <- p$data
     dataset$biomass <- biomass[llay$name]
-    p <- p +
-      ggraph::geom_node_point(data = dataset,
-	aes(x = x, y = y, size = biomass, color = species)) +
-      scale_color_manual(values = color_scale, limits = names(color_scale))
   }
 
 
@@ -191,9 +187,22 @@ set_layout_graph <- function (net = NULL, glay = NULL, x = NULL, y = NULL, title
     base_family    = "sans",
     background     = NA
   )
-  if (!is.null(color_scale)) {
-    p <- p
-      #ggraph::geom_node_point(aes(color = species, size = biomass)) +
+  if (!is.null(color_scale) & !is.null(biomass)) {
+    p <- p +
+      ggraph::geom_node_point(data = dataset, aes(x = x, y = y, size = biomass,
+	  color = species)) + scale_color_manual(values = color_scale, limits =
+	names(color_scale))
+  } else if (!is.null(color_scale) & is.null(biomass)) {
+    p <- p +
+      ggraph::geom_node_point(aes(color = species)) +
+      scale_color_manual(values = color_scale, limits = names(color_scale))
+  } else if (is.null(color_scale) & is.null(biomass)) {
+    p <- p +
+      ggraph::geom_node_point()
+  } else if (is.null(color_scale) & !is.null(biomass)) {
+    p <- p +
+      ggraph::geom_node_point(data = dataset,
+	aes(x = x, y = y, size = biomass))
   }
   p
 
