@@ -65,36 +65,55 @@ myload(network_analysis, dir = dest_dir)
 net <- network_analysis %>%
   dplyr::select(opcod, network) %>%
   unnest() %>%
-  left_join(., dplyr::select(op_analysis, opcod, station, year)) %>%
- dplyr::select(from, to, everything())
+  left_join(., dplyr::select(op_analysis, opcod, station, date)) 
 
-# Get a station
 net_ex <- filter(net, station == unique(net$station) %>% sample(., 1))
-## Graph -------------------------
-net_graph <- graph_from_data_frame(net_ex, directed = TRUE)
- 
-## Layout --------------------------------
-lay <- create_layout(graph_from_adjacency_matrix(meta$metaweb, mode = "directed"), layout = "kk")
-node_pos <- TrophInd(meta$metaweb,
-  Dead = dead_material)$TL - 1
-lay$y <- node_pos
-lay$species <- get_species(lay$name)
 
-net_graph <- select(net_ex, from, to, year) %>%
-  arrange(year) %>%
-  group_by(year) %>%
+net_list <- net_ex %>%
+  select(date, from, to) %>%
+  arrange(date) %>%
+  group_by(date) %>%
+  nest(.key = "network")
+
+size_analysis <- network_analysis %>%
+  select(opcod, composition) %>%
+  filter(opcod %in% net_ex$opcod) %>%
+  unnest() %>%
+  left_join(select(net_ex, date, opcod) %>% distinct(opcod, date)) %>%
+  select(date, biomass, species) %>%
+  arrange(date) %>%
+  group_by(date) %>%
   nest() %>%
-  mutate(
-    net_graph = pmap(list(net = data, title = year), 
-    set_layout_graph, glay = NULL, color_scale = set_color_species(lay))
-  )
-## Get legend
-species_colour_legend <- get_legend(net_graph[1,]$net_graph[[1]])
-## Remove legend in the other plots
-net_graph %<>%
-  mutate(net_graph = map(net_graph, function(x) x + theme(legend.position = "none")))
-plot_grid(plotlist = net_graph[1:4,]$net_graph,
-species_colour_legend)
+  mutate(biomass = map(data, function(x){
+      val <- x$biomass
+      names(val) <- x$species 
+      val
+  }))
+
+net_list %<>%
+  left_join(select(size_analysis, date, biomass))
+#Node position:
+node <- net_list$network %>% unlist(., use.names = FALSE) %>% unique
+test <- graph_from_adjacency_matrix(meta$metaweb) %>% as_data_frame %>%
+  mutate_all(list(~str_extract_all(., "[a-zA-Z]+", simplify = TRUE))) %>%
+  distinct(from, to)
+node_position <- create_layout(graph_from_data_frame(test), layout = "kk")$x
+names(node_position) <- create_layout(graph_from_data_frame(test), layout = "kk")$name
+#color:
+color <- set_color_species(node_list = node, species_list = NULL,
+  resource_list = NULL,
+  col_resource = NULL)
+
+## Graph -------------------------
+plot_temporal_network(
+  data = net_list,
+  net_var = network,
+  date = date,
+  x = node_position,
+  y = net_list[["y"]],
+  size = net_list[["biomass"]]
+)
+
 ```
 
 # Correlation between network indices
@@ -179,7 +198,7 @@ stab_biomass_net_avg <- left_join(avg_network, biomass_stab_station) %>%
 formula <- y ~ x #needed for stat_poly_eq
 p <- ggplot(stab_biomass_net_avg, aes(y = biomass_stab, x = values)) +
   geom_point() +
-  facet_grid(cols = vars(metrics), labeller = mylabel(), scales = "free_x") +
+  facet_wrap(~ metrics, labeller = mylabel(), scales = "free_x") +
   geom_smooth(method = 'lm') +
   stat_poly_eq(
     formula = formula,
@@ -227,9 +246,8 @@ p
 # Compartimentalization
 
 ```{r, fig.dim = c(20, 4)}
-troph_group_labeller()
 net_troph_group <- temporal_network_metrics %>% 
-  unnest() %>%
+  unnest(troph_group) %>%
   mutate(troph_group = as.factor(troph_group))
 net_troph_group %<>%
   select_at(vars(matches("_med|stab|station|troph_group"))) %>%
@@ -289,7 +307,6 @@ community.
 ### Richness by trophic level 
 
 ```{r}
-
 net_troph_group <- temporal_network_metrics %>% 
   select(station, troph_group) %>%
   unnest() %>%
@@ -368,7 +385,7 @@ plot_stab_biomass_net_avg
 
 ## By trophic level 
 
-```{r, fig.cap="Biomass production and stability by trophic level", , fig.dim = c(10, 7)}
+```{r, fig.cap="Biomass production and stability by trophic level", fig.dim = c(10, 7)}
 plot_prod_richness_troph_group <-
   ggplot(net_troph_group, aes(y = biomass_avg, x = richness_avg)) +
   geom_point() +
@@ -411,12 +428,15 @@ names(station_high_low_modularity) <- c("high", "low")
 ```{r}
 # High modularity
 net_ex <- filter(net, station == station_high_low_modularity["high"])
-plot_temporal_network(net_ex, lay = lay)
+
+my_crap_temporal_network(net = net_ex, metaweb = meta$metaweb, network_data
+  = network_analysis)
 ```
 ```{r}
 # Low modularity
 net_ex <- filter(net, station == station_high_low_modularity["low"])
-plot_temporal_network(net_ex, lay = lay)
+my_crap_temporal_network(net = net_ex, metaweb = meta$metaweb, network_data
+  = network_analysis)
 ```
 
 ## Nestedness
@@ -432,28 +452,182 @@ names(station_high_low_nestedness) <- c("high", "low")
 ```{r}
 # high nestedness
 net_ex <- filter(net, station == station_high_low_nestedness["high"])
-plot_temporal_network(net = net_ex, lay = NULL)
+my_crap_temporal_network(net = net_ex, metaweb = meta$metaweb, network_data
+  = network_analysis)
 ```
 
 ```{r}
 # low nestedness
 net_ex <- filter(net, station == station_high_low_nestedness["low"])
-plot_temporal_network(net_ex, lay = NULL)
+my_crap_temporal_network(net = net_ex, metaweb = meta$metaweb, network_data
+  = network_analysis)
 ```
+
+# Temporal series
+
+## Stability
+
+```{r}
+myload(community_metrics, dir = data_common)
+community_metrics %<>% left_join(select(op_analysis, opcod, station, date))
+station_high_low_stab <- temporal_community_metrics %>%
+  arrange(desc(biomass_stab)) %>%
+  slice(c(1:5, (n() - 4):(n() - 0))) %>%
+  select(station) %>%
+  unlist
+names(station_high_low_stab) <- rep(c("high", "low"), each = 5) 
+```
+
+```{r, fig.dim = c(10, 7)}
+temporal_biomass <- community_metrics %>%
+  filter(station %in% station_high_low_stab) %>%
+  mutate(stab_status = ifelse(
+      station %in% station_high_low_stab[names(station_high_low_stab) == "low"],
+      "low", "high")) %>%
+  group_by(stab_status, station) %>%
+  nest() %>%
+  group_by(stab_status) %>%
+  mutate(id_stab = seq_along(station)) %>%
+  unnest()
+ggplot(temporal_biomass, aes(y = biomass, x = date)) +
+  geom_line() +
+  geom_point() +
+  facet_grid(id_stab ~ stab_status, scales = "free_y") + 
+  labs(title = "The five lowest and highest biomass stability",
+  y = "Biomass (g)", x = "Date")
+```
+
+
+## Highest diversity
+
+```{r}
+high_div_station <- temporal_community_metrics %>%
+  arrange(desc(richness_med)) %>%
+  slice(1: 5) %>%
+  select(station) %>%
+  unlist
+```
+
+```{r, fig.dim = c(10, 7)}
+label_stab <- filter(temporal_community_metrics,
+  station %in% high_div_station) %>%
+mutate(x_pos = ymd_hms("2015-01-01T15:00:00"), y_pos = 5000,
+text = paste0("Stability: ", round(biomass_stab,2))) 
+ggplot(filter(community_metrics, station %in% high_div_station),
+  aes(y = biomass, x = date)) +
+  geom_line() +
+  geom_point() +
+  geom_text(data = label_stab, aes(x = x_pos, y = y_pos, label =
+      text), size = 6) +
+  facet_wrap( ~ station) + 
+  labs(title = "The five highest rich community",
+  y = "Biomass (g)", x = "Date")
+```
+
+```{r}
+myload(network_analysis, network_metrics, dir = dest_dir)
+high_div_troph_group <- network_metrics %>%
+  select(opcod, troph_group) %>%
+  unnest() %>%
+  mutate(troph_group = as.factor(troph_group)) %>%
+  left_join(select(op_analysis, opcod, station, date)) %>%
+  filter(station %in% high_div_station)
+```
+
+```{r, fig.dim = c(10, 7)}
+ggplot(high_div_troph_group,
+  aes(y = nbnode, x = date, color = troph_group)) +
+  geom_line() +
+  geom_point() +
+  geom_text(data = label_stab,
+    x = ymd_hms("2015-01-01T15:00:00"),
+    y = 3, aes(label =
+      text), size = 6, inherit.aes = FALSE) +
+  facet_wrap( ~ station) + 
+  labs(title = "The five richest station",
+  y = "Fish species richness", x = "Date")
+```
+
+```{r}
+highest_div_grp_3_station <- temporal_network_metrics %>%
+  select(station, troph_group) %>%
+  unnest(troph_group) %>%
+  filter(troph_group == 3) %>%
+  arrange(desc(richness_avg)) %>%
+  slice(1:12) %>%
+  select(station) %>%
+  unlist()
+high_div_troph_group_3 <- network_metrics %>%
+  select(opcod, troph_group) %>%
+  unnest() %>%
+  mutate(troph_group = as.factor(troph_group)) %>%
+  left_join(select(op_analysis, opcod, station, date)) %>%
+  filter(station %in% highest_div_grp_3_station)
+```
+
+```{r, fig.dim = c(10, 7)}
+ggplot(high_div_troph_group_3,
+  aes(y = biomass, x = date, color = troph_group)) +
+  geom_line() +
+  geom_point() +
+  geom_text(data = filter(temporal_community_metrics, station %in% highest_div_grp_3_station),
+    x = ymd_hms("2015-01-01T15:00:00"),
+    y = 3, aes(label = paste0("Stability: ", round(biomass_stab, 2))),
+    size = 6, inherit.aes = FALSE) +
+  facet_wrap( ~ station) + 
+  labs(title = "The twelve richest station of superior predator",
+  y = "Fish species richness", x = "Date")
+
+filter(high_div_troph_group_3, station == 1823) 
+```
+
+###
+
 
 # Map Stability 
 
 ```{r}
 myload(station_analysis, dir = data_common)
 myload(region_polygon, dir = data_common)
+stab <- temporal_community_metrics %>% 
+  select(station, biomass_stab)
 station_stab <- left_join(station_analysis, rename(stab, id = station)) %>%
   filter(!is.na(biomass_stab))
 ggplot(data = region_polygon) +
     geom_sf() +
     geom_sf(data = station_stab, aes(color = biomass_stab), size = 4) +
     scale_color_gradient(low = "red", high = "green")
+
 ```
 
+# Persistence of the community
 
+## Betadiv (abundance) and network properties
 
+```{r}
+betadiv <- temporal_community_metrics %>%
+  select_at(vars(matches("station|betadiv")))
+stab_com_net <- left_join(avg_network, betadiv) %>%
+  gather(metrics, values, colnames(select_at(., vars((matches("med")))))) %>%
+  gather(betadiv, betadiv_val, colnames(select_at(., vars((matches("betadiv")))))) %>%
+  mutate(metrics = str_replace(metrics, "_med", "")) %>%
+  filter(metrics != "nbnode")
+```
+
+```{r, fig.dim = c(14, 10)}
+p <- ggplot(stab_com_net, aes(y = 1 - betadiv_val, x = values)) +
+  geom_point() +
+  facet_grid(betadiv~ metrics, scales = "free") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(
+    x = "Median of the network indices",
+    y = "Persistence (1 - betadiv)"
+  )
+p
+```
 
