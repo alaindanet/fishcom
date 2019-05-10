@@ -70,3 +70,14 @@ mysave(donuts_analysis, dir = mypath("data"))
 myload(donuts_analysis, dir = mypath("data"))
 write_sf(donuts_analysis, mypath("data-raw", "flow_quality", "donuts_analysis.shp"))
 #zip(mypath("data-raw", "flow_quality", "donuts_analysis"), files = )
+
+
+###################
+#  Get flow data  #
+###################
+
+library('dbplyr')
+con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "flow_fire", port = 5434)
+DBI::dbListTables(con)
+
+name_col <- tbl(con, in_schema("public", "data_debit_danet"))
