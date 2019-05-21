@@ -1,0 +1,118 @@
+---
+title: "Stability and pressure"
+author: "Alain Danet"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Stability and pressure}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+mypath <- rprojroot::find_package_root_file
+data_common <- mypath("data")
+dest_dir <- mypath("data", "species")
+```
+
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.dim = c(7, 7),
+  echo = FALSE
+)
+library(tidyverse)
+library(ggpmisc)
+library(cowplot)
+library(kableExtra)
+library(magrittr)
+library(igraph)
+library(NetIndices)
+library(tidygraph)
+library(ggraph)
+library(lubridate)
+devtools::load_all()
+theme_set(theme_alain())
+```
+
+```{r load dataset, include = FALSE}
+myload(temporal_press_analysis, temporal_community_metrics,
+  dir = mypath("data"))
+```
+
+```{r}
+biomass_com <- temporal_community_metrics %>%
+  select(station, biomass_stab, richness_med, betadiv)
+press <- temporal_press_analysis %>%
+  select(station, pressure, prob) %>%
+  left_join(select(biomass_com, station, biomass_stab))
+```
+
+```{r}
+p1 <- ggplot(press, aes(x = prob, y = biomass_stab)) +
+  geom_point() +
+  facet_wrap(~ pressure) +
+  labs(x = "Average probability to impact", y = "Biomass stability")
+p1
+```
+
+## Crap statistical model
+
+```{r}
+press_4_mod <- press %>%
+  spread(pressure, prob) %>%
+  select(-station)
+mod <- lm(biomass_stab ~ ., press_4_mod)
+p2 <- jtools::plot_summs(mod)
+p2
+```
+
+## PCA
+
+```{r}
+library(ade4)
+press_4_pca  <- select(press_4_mod, -biomass_stab) %>%
+  na.omit
+pca <- ade4::dudi.pca(as.data.frame(press_4_pca), scannf = FALSE, nf = 2, center = TRUE, scale = TRUE)
+
+screeplot(pca)
+summary(pca)
+scatter(pca, posieig = "none")
+s.corcircle(pca$co)
+
+```
+
+```{r}
+stab <- temporal_community_metrics %>%
+  select(station, biomass_stab)
+
+press_spread <- press %>%
+  spread(pressure, prob) %>%
+  filter(!is.na(chem.3_pcb))
+press_spread %<>%
+  mutate(axis1 = pca$li[[1]], axis2 = pca$li[[2]])
+
+### variable 
+var_pca <- tibble(
+  variable = rownames(pca$co),
+  comp1 = 5 * pca$co[[1]],
+  comp2 = 5 * pca$co[[2]]
+)
+
+p1 <- ggplot(data = press_spread, aes(x = axis1, y = axis2, color = biomass_stab, size = biomass_stab)) +
+  geom_point() +
+  geom_text(data = var_pca, aes(x = comp1, y = comp2, label = variable), inherit.aes = FALSE, size = 6) +
+  labs(x = "Hydromorpho", y = "Pollution")
+p1
+```
+
+```{r}
+model_pca <- lm(biomass_stab ~ axis1 + axis2, press_spread)
+plot(model_pca)
+#TODO: add network network metric
+```
+
+
+
