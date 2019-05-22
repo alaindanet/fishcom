@@ -9,6 +9,7 @@ library(sf)
 library(lwgeom)
 library(rmapshaper)
 devtools::load_all()
+mypath <- rprojroot::find_package_root_file
 
 #######################
 #  France and region  #
@@ -56,6 +57,7 @@ data(op_analysis)
 good_station_id <- op_analysis$station %>% unique
 station_analysis <- filter(station, ST_ID %in% good_station_id)
 devtools::use_data(station_analysis, overwrite = TRUE)
+	
 
 ############
 #  Stream  #
@@ -73,6 +75,8 @@ simplestream <- rmapshaper::ms_simplify(input = sample_n(stream ,100), keep = .0
 rm(stream)
 object.size(simplestream)
 plot(simplestream[, "gid"])
+
+
 
 ##########
 #  DEM   #

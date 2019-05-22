@@ -43,15 +43,16 @@ According to the postdoc advertisement:
 
 ## Immediate objectives
 
+- [ ] map station and pressure to RHT:
+  - [ ] Station
+  - [ ] Water quality
 - [ ] Environmental data
   - [ ] temporal flow and enrichment (Marie Silvestre): 
-    - [ ] Return interesting stations
-      - [ ] Buffer method around station
     - [ ] Interpolation toward the station:
       - [ ] Use RHT https://www.irstea.fr/fr/rht
   - [ ] How to analyze qualitave data:
-    - [ ] Habitat
-  - [ ] Pressure data (Olivier Dezerald & Philippe Usseglio-Polatera):
+    - [x] Habitat
+  - [x] Pressure data (Olivier Dezerald & Philippe Usseglio-Polatera):
   - [ ] Temperature data?
     - [ ] https://hubeau.eaufrance.fr/page/api-temperature-continu
   - [x] ONDE for etiage: from 2012 to 2018 
@@ -87,6 +88,20 @@ According to the postdoc advertisement:
 - [x] Fish datasets to generate
 - [ ] Assess quality of the dataset:
 
+## Analysis road map
+
+### Characterize pressures and pulse 
+
+The idea is to characterize pressure by the average of quantitative pressures
+such as water quality, polluants and landscape constraints (nb of obstacles,
+concentration of agriculture). The pulse can be characterize by the 10th or 90th
+percentile of the distribution of the quantitative perturbations.  
+
+### Get perturbation data 
+
+We need to map of the perturbation to a common spatial dataset together with
+the sampled station. We will map all the data to the RHT (Réseau Hydrologique
+théorique).
 
 # Temporal stability and diversity 
 
