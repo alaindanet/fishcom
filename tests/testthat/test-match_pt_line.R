@@ -23,7 +23,7 @@ st_cast(.,"LINESTRING")
 pol <- st_sf(id = 1:4, st_sfc(pol))
 plot(st_geometry(pts))
 plot(st_geometry(pol), add = T)
-pts_buffer <- st_buffer(pts, .1)
+pts_buffer <- st_buffer(pts, .2)
 plot(st_geometry(pts_buffer), add = TRUE)
 
 test_that("match works", {

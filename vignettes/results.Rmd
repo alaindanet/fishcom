@@ -587,8 +587,7 @@ filter(high_div_troph_group_3, station == 1823)
 # Map Stability 
 
 ```{r}
-myload(station_analysis, dir = data_common)
-myload(region_polygon, dir = data_common)
+myload(station_analysis, region_polygon, dir = data_common)
 stab <- temporal_community_metrics %>% 
   select(station, biomass_stab)
 station_stab <- left_join(station_analysis, rename(stab, id = station)) %>%

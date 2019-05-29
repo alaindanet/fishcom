@@ -88,21 +88,27 @@ library(raster)
 library(gdalUtils)
 
 #get MNT
-file_mnt <- "BDALTIV2/1_DONNEES_LIVRAISON_2018-01-00246/BDALTIV2_MNT_250M_ASC_LAMB93_IGN69_FRANCE/BDALTIV2_250M_FXX_0098_7150_MNT_LAMB93_IGN69.asc"
+file_mnt <- mypath(
+  "data-raw",
+  "BDALTIV2",
+  "1_DONNEES_LIVRAISON_2018-01-00246",
+  "BDALTIV2_MNT_250M_ASC_LAMB93_IGN69_FRANCE",
+  "BDALTIV2_250M_FXX_0098_7150_MNT_LAMB93_IGN69.asc") 
+  
 mnt <- raster::raster(file_mnt)
 # Lambert 93: http://spatialreference.org/ref/epsg/rgf93-lambert-93/ 
-crs(mnt) <-  CRS('+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
+crs(mnt) <-  '+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs'
 # Write temp correct DEM with CRS specification 
-writeRaster(mnt, "temp_dem_250m_lambert_93.tif")
+writeRaster(mnt, mypath("data-raw", "dem_250m_lambert_93.tif"), overwrite = TRUE)
 
 # Convert dem with gdal wrapper
 ## Spec files and crs:
-in_mnt <- "temp_dem_250m_lambert_93.tif"
-out_mnt <- "DEM_230m_wgs84.tif"
+in_mnt <- mypath("data-raw", "dem_250m_lambert_93.tif")
+out_mnt <- mypath("data-raw", "dem_250m_wgs84.tif")
 ##http://www.spatialreference.org/ref/epsg/4326/proj4/
 crs_4326 <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 ## Change projection:
-gdalwarp(
+gdalUtils::gdalwarp(
   srcfile       = in_mnt,
   dstfile       = out_mnt,
   t_srs         = crs_4326,
@@ -113,8 +119,8 @@ gdalwarp(
   r             = "bilinear",
   verbose       = TRUE
 )
-file.remove("temp_dem_250m_lambert_93.tif")
 
+mnt <- raster::raster(mypath("data-raw", "dem_250m_wgs84.tif"))
 ################
 #  SSN object  #
 ################

@@ -6,7 +6,7 @@ library('tidyverse')
 library('magrittr')
 library('sf')
 library('rgeos')
-devtools::load_all()
+#devtools::load_all()
 mypath <- rprojroot::find_package_root_file
 mydir <- mypath("data-raw", "flow_quality")
 
@@ -71,6 +71,22 @@ myload(donuts_analysis, dir = mypath("data"))
 write_sf(donuts_analysis, mypath("data-raw", "flow_quality", "donuts_analysis.shp"))
 #zip(mypath("data-raw", "flow_quality", "donuts_analysis"), files = )
 
+###########################
+#  Inspect flow metadata  #
+###########################
+
+stat_flow <- read_delim(mypath("data-raw", "flow_quality", "var_stat_FR_river_donuts.csv"), delim = ";")
+var_flow <- read_delim(mypath("data-raw", "flow_quality", "var_donuts.csv"), delim = ";")
+# We want by variables:
+## the water column measurements
+## the most events of measurements 
+var_to_keep <- stat_flow %>%
+  filter(com_code %in% "waterco") %>%
+  group_by(var_code) %>%
+  filter(nb_measures == max(nb_measures))
+var_to_keep %<>%
+  left_join(select(var_flow, var_code, fra_code, com_code, units))
+
 
 ###################
 #  Get flow data  #
@@ -80,4 +96,28 @@ library('dbplyr')
 con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "flow_fire", port = 5434)
 DBI::dbListTables(con)
 
-name_col <- tbl(con, in_schema("public", "data_debit_danet"))
+flow_data_db <- tbl(con, in_schema("public", "data_debit_danet"))
+# Filter with donuts station in same river than station analysis: 
+myload(station_analysis, donuts_analysis, dir = mypath("data"))
+
+donuts <- donuts_analysis %>%
+  filter(rht_name %in% station_analysis$rht_name)
+station_analysis %>%
+  select()
+
+# Get the good flow data
+flow_data <- flow_data_db %>%
+  filter(id %in% donuts$id) %>%
+  collect()
+# Keep only those in donut stations that match fish station  
+
+mysave(flow_data, dir = mypath("data-raw"))
+
+##################
+#  Quality data  #
+##################
+
+con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "water_quality_fire", port = 5434)
+DBI::dbListTables(con)
+
+quality_data <- tbl(con, in_schema("public", "data_qualite_danet"))

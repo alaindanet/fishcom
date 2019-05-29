@@ -26,13 +26,17 @@ library(ggraph)
 library(lubridate)
 devtools::load_all()
 theme_set(theme_alain())
+
+mypath <- rprojroot::find_package_root_file
+data_common <- mypath("data")
+dest_dir <- mypath("data", "species")
 ```
 
 ```{r load data}
 data(metaweb_analysis)
-data(network_analysis)
+data(op_analysis)
+myload(network_analysis, temporal_network_metrics, dir = dest_dir)
 data(temporal_community_metrics)
-data(temporal_network_metrics)
 ```
 
 ## Ontogenic shift data
@@ -46,7 +50,7 @@ diet_tex <- xtable::xtable(
 )
 print(
   diet_tex,
-  file = "~/Documents/thesis/talks/afb/fig/diet_shift.tex",
+  file = "~/Documents/thesis/talks/fishcom_fig/diet_shift.tex",
   compress = FALSE,
   include.rownames = getOption("xtable.include.rownames", FALSE))
 #?print.xtable
@@ -56,8 +60,6 @@ print(
 ## Temporal network 
 
 ```{r}
-data(metaweb_analysis)
-data(network_analysis)
 meta <- metaweb_analysis; rm(metaweb_analysis)
 dead_material <- c("det", "biof")
 ```
@@ -66,36 +68,33 @@ dead_material <- c("det", "biof")
 net <- network_analysis %>%
   dplyr::select(opcod, network) %>%
   unnest() %>%
-  left_join(., dplyr::select(op_analysis, opcod, station, year)) %>%
+  left_join(dplyr::select(op_analysis, opcod, station, date)) %>%
  dplyr::select(from, to, everything())
 
+meta <- metaweb_analysis
 # Get a station
-net_ex <- filter(net, station == unique(net$station) %>% sample(., 1))
-net_ex <- filter(net, station == 6040)
+#7800
+#6966
+net_ex <- filter(net, station == unique(net$station) %>% sample(., 1)) %>%
+  mutate(date = year(date))
 
+net_ex <- filter(net, station == 6966) %>%
+  mutate(date = year(date)) %>%
+  filter(! date %in% c(2015, 2016))
 
-## Graph -------------------------
-net_graph <- graph_from_data_frame(net_ex, directed = TRUE)
- 
-## Layout --------------------------------
-lay <- create_layout(graph_from_adjacency_matrix(meta$metaweb, mode = "directed"), layout = "kk")
-node_pos <- TrophInd(meta$metaweb,
-  Dead = dead_material)$TL - 1
-lay$y <- node_pos
-lay$species <- stringr::str_extract_all(lay$name,
-    "[A-Za-z]+", simplify = TRUE) %>%
-  as.vector
-
-temporal <- plot_temporal_network(net_ex, lay = lay)
-save_plot("~/Documents/thesis/talks/afb/fig/temporal_network.pdf", temporal, base_height = 10, bg = "transparent")
+p2 <- my_crap_temporal_network(net = net_ex, metaweb = meta$metaweb, network_data
+  = network_analysis)
+save_plot("~/Documents/thesis/talks/fishcom_fig/temporal_colors.pdf",
+  p2, base_height = 8, base_width = 12, bg = "transparent")
 ```
 
 ```{r station_loc}
 station <- sf::read_sf("../data-raw/station_wgs84.shp")
-espalion <- dplyr::filter(station, ST_ID== 6040) %>%
+espalion <- dplyr::filter(station) %>%
   dplyr::select(UH_NOM, ST_LOCA)
 mapview::mapview(espalion)@map
 ```
+
 ```{r species}
 species <- read_delim("../bonnafe_work/data/raw_data/Code_sp.txt", delim = "\t")
 filter(diet_shift, species %in% c("VAI", "TRF", "CHA")) %>%
@@ -109,9 +108,11 @@ filter(diet_shift, species %in% c("VAI", "TRF", "CHA")) %>%
 ## Stability & diversity 
 
 ```{r}
+myload(temporal_network_metrics, dir = mypath("data", "species") )
 biomass_com <- temporal_community_metrics %>%
-  select(biomass_stab, richness_med, betadiv) %>%
-  gather(type, diversity, richness_med, betadiv)
+  select(station, biomass_stab) %>%
+  left_join(select(temporal_network_metrics, station, mean_troph_level_med, nbnode_med))%>%
+  gather(type, diversity, mean_troph_level_med, nbnode_med)
 formula <- y ~ x #needed for stat_poly_eq
 p2 <- qplot(diversity, biomass_stab, data =  biomass_com, geom = "point") +
   facet_grid(cols = vars(type), labeller = mylabel(), scales = "free_x") +
@@ -121,9 +122,10 @@ p2 <- qplot(diversity, biomass_stab, data =  biomass_com, geom = "point") +
     eq.with.lhs = "italic(hat(y))~`=`~",
     aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
     parse = TRUE) +
-  xylabs(x = "diversity", y = "biomass_stab")
+  xylabs(y = "biomass_stab") +
+  xlab("Median network descriptors")
 p2
-save_plot("~/Documents/thesis/talks/afb/fig/biomass_diversity.pdf", p2, base_height = 3, bg = "transparent", ncol = 2)
+save_plot("~/Documents/thesis/talks/fishcom_fig/biomass_diversity2.pdf", p2, base_height = 3, bg = "transparent", ncol = 2)
 ```
 
 ## Stability & diversity by trophic group

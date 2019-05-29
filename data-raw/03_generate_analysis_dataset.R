@@ -229,8 +229,49 @@ plot(st_geometry(region_polygon), lwd = 1.5, col = "grey85")
 plot(st_geometry(station_analysis), pch = 20, col = "red", add = T)
 
 mysave(station_analysis, dir = mypath("data"), overwrite = TRUE)
+write_sf(station_analysis,mypath("data-raw", "station", "station_analysis_wgs84.shp"))
 
-########################
-#  Environmental data  #
-########################
+###################
+#  Pressure data  #
+###################
 
+myload(press_prob_avg, press_cat_med, dir = mypath("data-raw"))
+myload(op_analysis, dir = mypath("data"))
+
+press_prob_avg %<>%
+  filter(station %in% op_analysis$station)
+press_cat_med %<>%
+  filter(station %in% op_analysis$station)
+temporal_press_prob_analysis <- press_prob_avg
+temporal_press_cat_analysis <- press_cat_med
+mysave(temporal_press_prob_analysis, temporal_press_cat_analysis,
+  dir = mypath("data"), overwrite = TRUE)
+
+###############
+#  Flow data  #
+###############
+
+myload(station_analysis, donuts_analysis, dir = mypath("data"))
+myload(flow_data, dir = mypath("data-raw"))
+
+station_id <- station_analysis %>%
+  as_tibble() %>%
+  rename(station = id) %>%
+  select(station, rht_name) %>%
+  filter(!is.na(rht_name))
+donuts_id <- donuts_analysis %>%
+  as_tibble() %>%
+  select(id, rht_name) %>%
+  mutate(id = as.integer(id)) %>%
+  left_join(station_id) %>%
+  filter(!is.na(station)) %>%
+  arrange(station)
+
+
+test <- flow_data %>%
+  mutate(id = as.integer(id)) %>%
+  filter(id %in% donuts_id$id) %>%
+  left_join(select(donuts_id, station, id))
+# By the nrow increases with the join?
+# Suppress aberrant values
+# Select on date
