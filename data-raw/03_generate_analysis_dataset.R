@@ -9,11 +9,13 @@ library(ggpmisc)
 library(sf)
 library(rgdal)
 library(lubridate)
-devtools::load_all()
-theme_set(theme_alain())
-
+#devtools::load_all()
 mypath <- rprojroot::find_package_root_file
 mydir <- mypath("data-raw", "fishing_op_build")
+source(mypath("R", "plot_methods.R"))
+source(mypath("R", "misc.R"))
+theme_set(theme_alain())
+
 
 myload(op, dir = mypath("data-raw"))
 
@@ -247,31 +249,3 @@ temporal_press_cat_analysis <- press_cat_med
 mysave(temporal_press_prob_analysis, temporal_press_cat_analysis,
   dir = mypath("data"), overwrite = TRUE)
 
-###############
-#  Flow data  #
-###############
-
-myload(station_analysis, donuts_analysis, dir = mypath("data"))
-myload(flow_data, dir = mypath("data-raw"))
-
-station_id <- station_analysis %>%
-  as_tibble() %>%
-  rename(station = id) %>%
-  select(station, rht_name) %>%
-  filter(!is.na(rht_name))
-donuts_id <- donuts_analysis %>%
-  as_tibble() %>%
-  select(id, rht_name) %>%
-  mutate(id = as.integer(id)) %>%
-  left_join(station_id) %>%
-  filter(!is.na(station)) %>%
-  arrange(station)
-
-
-test <- flow_data %>%
-  mutate(id = as.integer(id)) %>%
-  filter(id %in% donuts_id$id) %>%
-  left_join(select(donuts_id, station, id))
-# By the nrow increases with the join?
-# Suppress aberrant values
-# Select on date
