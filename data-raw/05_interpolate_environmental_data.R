@@ -11,6 +11,7 @@
 
 library(raster)
 library(tidyverse)
+library('lubridate')
 library(magrittr)
 library(sf)
 library(rgeos)
@@ -48,22 +49,44 @@ rht %<>%
 rht_sein <- rht %>%
   filter(region_csp == "Sein")
 donuts_sein <- donuts_analysis %>%
+  mutate(id = as.character(id)) %>%
   filter(drain_id %in% rht_sein$id_drain)
 station_sein <- station_analysis %>%
   filter(drain_id %in% rht_sein$id_drain)
 
+debug(prepare_pulse_interpolation)
+flow_pulse_complete <- prepare_pulse_interpolation(data = flow_data,
+  date = meas_date, var = value, donuts = donuts_sein, id = id)
+filter(flow_pulse_complete, !is.na(low_pulse))
+flow_pulse_complete %<>%
+  mutate(low_pulse = as.numeric(low_pulse),
+    high_pulse = as.numeric(high_pulse)
+  )
+summary(flow_pulse_complete)
+
+binSp$ssn.object@data %>%
+  as_tibble()
+mf04p
+test <- getSSNdata.frame(mf04p, Name = "Obs")
+names(test)
+str(test[, "MaxOver20"])
+binSp <- glmssn(MaxOver20 ~ ELEV_DEM + SLOPE, mf04p,
+       CorModels = c("Mariah.tailup", "Spherical.taildown"),
+       family = "binomial", addfunccol = "afvArea")
+undebug(compute_glmssn)
+predict.glmssn
+
+test <- interpolate_ssn(formula = low_pulse ~ avSloA,
+  ssn = seine_ssn, data = filter(flow_pulse_complete, year == 1998),
+  family = "binomial", group = year, var = low_pulse)
+unnest(test, prediction)
 # Get flow avg by donuts station:
 myload(flow_data, dir = mypath("data-raw"))
-flow_avg <- flow_data %>%
-  filter(id %in% donuts_sein$id) %>%
-  group_by(id) %>%
-  summarise(flow = mean(value, na.rm = TRUE))
+flow_avg_complete <- prepare_data_interpolation(data = flow_data,
+  date = meas_date, var = value, donuts = donuts_sein, id = id)
 # Put it to donuts:
 donuts_sein %<>%
-  mutate(id = as.character(id)) %>%
-  left_join(flow_avg, by = "id") %>%
-  filter(!is.na(flow))
-
+  left_join(filter(flow_avg_complete, year == 1998), by = "id")
 
 # Load the dem: 
 file_mnt <- mypath(
@@ -96,7 +119,7 @@ setup_grass_environment(dem = file_mnt)
 import_data(dem = file_mnt,
   sites = donuts_sein,
   streams = rht_sein,
-  pred_sites = file_pred 
+  pred_sites = file_pred
 )
 derive_streams()
 
@@ -163,7 +186,7 @@ createDistMat(seine_ssn,
   predpts = "station_sein", o.write = TRUE, amongpreds = TRUE)
 
 # Semi-variogram for flow:
-flow_vario <- Torgegram(seine_ssn, "flow", nlag = 20)
+flow_vario <- Torgegram(seine_ssn, "avg_flow", nlag = 20)
 plot(flow_vario)
 
 mod0 <- glmssn(flow ~ upDist, seine_ssn,
@@ -175,8 +198,8 @@ mod_sp0 <- glmssn(flow ~ upDist, seine_ssn,
  CorModels = c("Exponential.Euclid"), use.nugget = TRUE)
 CrossValidationStatsSSN(mod_sp0)
 
-mod_sp <- glmssn(flow ~ upDist + avSloA, seine_ssn,
- CorModels = c("Exponential.tailup", "Exponential.taildown",
+mod_sp <- glmssn(avg_flow ~ avSloA, seine_ssn,
+ CorModels = c("LinearSill.tailup", "Mariah.taildown",
  "Exponential.Euclid"), addfunccol = "afv_area")
 summary(mod_sp)
 CrossValidationStatsSSN(mod_sp)
@@ -198,25 +221,25 @@ plot(na.omit(getSSNdata.frame(seine_ssn)[, "flow"]), cv.out[, "cv.se"],
 pch = 19, xlab = "Observed Data", ylab = "LOOCV Prediction SE")
 
 # Compare AIC:
-mod_sp1 <- glmssn(flow ~ upDist + avSloA, seine_ssn,
+mod_sp1 <- glmssn(avg_flow ~ upDist + avSloA, seine_ssn,
  CorModels = c("Exponential.tailup", "Exponential.taildown"),
  addfunccol = "afv_area")
-mod_sp2 <- glmssn(flow ~ upDist + avSloA, seine_ssn,
+mod_sp2 <- glmssn(avg_avg_flow ~ upDist + avSloA, seine_ssn,
  CorModels = c("LinearSill.tailup", "Mariah.taildown"),
  addfunccol = "afv_area")
-mod_sp3 <- glmssn(flow ~ upDist + avSloA, seine_ssn,
+mod_sp3 <- glmssn(avg_flow ~ upDist + avSloA, seine_ssn,
  CorModels = c("LinearSill.tailup", "LinearSill.taildown"),
  addfunccol = "afv_area")
-mod_sp4 <- glmssn(flow ~ upDist + avSloA, seine_ssn,
+mod_sp4 <- glmssn(avg_flow ~ upDist + avSloA, seine_ssn,
  CorModels = c("Mariah.tailup", "LinearSill.taildown"),
  addfunccol = "afv_area")
-mod_sp5 <- glmssn(flow ~ upDist + avSloA, seine_ssn,
+mod_sp5 <- glmssn(avg_flow ~ upDist + avSloA, seine_ssn,
  CorModels = c("Mariah.tailup", "Mariah.taildown"),
  addfunccol = "afv_area")
-mod_sp6 <- glmssn(flow ~ upDist + avSloA, seine_ssn,
+mod_sp6 <- glmssn(avg_flow ~ upDist + avSloA, seine_ssn,
  CorModels = c("Spherical.tailup", "Spherical.taildown"),
  addfunccol = "afv_area")
-mod_sp7 <- glmssn(flow ~ upDist + avSloA, seine_ssn,
+mod_sp7 <- glmssn(avg_flow ~ upDist + avSloA, seine_ssn,
  CorModels = "Exponential.Euclid",
  addfunccol = "afv_area")
 
@@ -224,10 +247,5 @@ InfoCritCompare(list(mod_sp1, mod_sp2, mod_sp3,
  mod_sp4, mod_sp5, mod_sp6, mod_sp7))
 
 # The best correlation structure is: LinearSill.tailup + Mariah.taildown
+test <- interpolate_ssn(ssn = seine_ssn, data = flow_avg_complete, group = year, var = avg_flow)
 
-## Use this method to change the variable at each iteration:
-### Take all the stations even if there are NAs bc as this the donuts station
-###will be the same at each iteration.
-seine_ssn@obspoints@SSNPoints[[1]]@point.data$flow
-
-flow_data

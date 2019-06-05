@@ -47,3 +47,224 @@ match_pt_line <- function(point = NULL, line = NULL, start_buffer = 0, inc_buffe
   }
   line_id
 }
+
+#' Interpolate variable by date over stream network
+#'
+#' The function uses SSN package to perform interpolation through grouping date.
+#' It return a data.frame with the id of the station, value interpolation as
+#' well of the results of cross-validation.
+#'
+#' @param ssn a ssn object.
+#' @param data data.frame containing the data  
+#' @param group the grouping date variable
+#' @param var variable to interpolate
+#' @param formula formula for the spatial model, see glmssn
+#' @param corModel character vector. see corModels argument in glmssn
+interpolate_ssn <- function(ssn = NULL, data = NULL, group = NULL, var = NULL,
+  formula = NULL, family = NULL, corModel = NULL, pred_name = "station_sein") {
+
+  group <- rlang::enquo(group)
+  var <- rlang::enquo(var)
+  var_chr <- rlang::quo_name(var)
+
+  # Check:
+  stopifnot(var_chr %in% colnames(data))
+
+  #Get data:
+  data %<>% dplyr::group_by(!!group) %>%
+    tidyr::nest()
+
+  # Model, cross-validation and prediction
+  data %<>%
+    mutate(
+      model = purrr::map(data, compute_glmssn, var = var, ssn = ssn, formula =
+	formula, family = family, corModel = corModel),
+      cross_v = purrr::map(model, function(x) {
+	out <- SSN::CrossValidationStatsSSN(x)
+	unlist(out)
+	}),
+      prediction = purrr::map(model, function(m){
+	pred <- predict(m, pred_name)
+	pred$ssn.object@predpoints@SSNPoints[[1]]@point.data[, c("id",var_chr, paste0(var_chr, ".predSE"))]
+	})
+    )
+  data
+}
+
+#' Compute glmss model
+#'
+#' To feed in interpolate_ssn 
+compute_glmssn <- function(data = NULL, var = NULL,
+  ssn = NULL, formula = NULL, family = NULL, corModel = NULL, ...) {
+
+  var_chr <- rlang::quo_name(var)
+
+  # get ssn dataset to fill it
+  data_id_var <- data %>%
+    dplyr::select(id, !!var)
+  ssn_data <- ssn@obspoints@SSNPoints[[1]]@point.data
+
+  # Suppress var if present
+  if (var_chr %in% colnames(ssn_data)) {
+    ssn_data %<>% dplyr::select(-!!var)
+  }
+  # Fill ssn with new data:
+  stopifnot(nrow(ssn_data) == nrow(data_id_var))
+  ssn_data %<>%
+    dplyr::left_join(data_id_var, by = "id")
+  ssn@obspoints@SSNPoints[[1]]@point.data <- ssn_data
+
+  # temporary hack:
+  if (is.null(formula)) {
+    formula <-  avg_flow ~ avSloA
+  }
+  if (is.null(corModel)) {
+    corModel <- c("LinearSill.tailup", "Mariah.taildown",
+      "Exponential.Euclid")
+  }
+  if (is.null(family)) {
+    family <- "Gaussian"
+  }
+
+  mod_sp <- SSN::glmssn(formula, ssn, family = family,
+    CorModels = corModel, addfunccol = "afv_area")
+  mod_sp
+}
+
+#' Prepare data for interpolation procedure
+#'
+#' The goal is to prepare the data to be feed by interpolate_ssn  
+#' It summarises data by month and year while keeping the ones that have been
+#' enough sampled. 
+#'
+#' @param data a data.frame  
+#' @param date date variable 
+#' @param var variable to summarise
+#' @param donuts data.frame with id of the obs station and coordinates of
+#' station location
+#' @param id variable containing unique identifier of the stataion
+prepare_data_interpolation <- function(data = NULL, date = NULL, var = NULL,
+  donuts = NULL, id = NULL) {
+
+  date <- rlang::enquo(date)
+  var <- rlang::enquo(var)
+  id <- rlang::enquo(id)
+  id_chr <- rlang::quo_name(id)
+
+  #1. Filter data that are in the obs station
+  data %<>%
+    dplyr::filter(!!id %in% donuts[[id_chr]])
+
+  #2. Average data by Month:
+  data_avg <- data %>%
+    dplyr::mutate(
+      year = lubridate::year(!!date) %>% as.integer(),
+      month = lubridate::month(!!date) %>% as.integer(),
+      nb_d_month = lubridate::days_in_month(!!date) %>% as.integer()
+      ) %>%
+  dplyr::group_by(id, year, month) %>%
+  dplyr::summarise(data = mean(!!var, na.rm = TRUE), nobs = sum(!is.na(!!var)),
+    pc_obs = nobs / unique(nb_d_month)) #here
+  # Filrer month that have enough record
+  # + keep year that have one month recorded in each season:
+  data_avg_cleaned <- data_avg %>%
+    dplyr::mutate(
+      data = replace(data, pc_obs < .5, NA),
+      year_mon = lubridate::ymd(paste0(year, "-", month, "-", "01")),
+      season = lubridate::quarter(year_mon)
+      ) %>%
+  dplyr::group_by(id, year) %>%
+  dplyr::summarise(avg_data = mean(data, na.rm = TRUE),
+    is_ok = ifelse(
+      sum(!is.na(data)) >= 4 &# at least 4 months of registration
+	length(unique(season[!is.na(data)])) == 4# at least 4 season 
+      , TRUE, FALSE
+    )
+  )
+  # Keep years that have been enough sampled:
+  data_avg_cleaned %<>%
+    dplyr::mutate(avg_data = replace(avg_data, is_ok != TRUE, NA))
+
+  # 4. Complete the dataset with missing year:
+  #For each id station, replace missing year by NA:
+  test <- list(
+    year = unique(data_avg_cleaned$year),
+    id = unique(as.data.frame(donuts)[, id_chr])
+  )
+  comb_year_id <- expand.grid(test) %>%
+    as_tibble
+  data_avg_complete <- comb_year_id %>%
+    dplyr::left_join(dplyr::select(data_avg_cleaned, -is_ok))
+
+  data_avg_complete
+}
+
+#' Prepare pulse for interpolation procedure
+#'
+#' The goal is to prepare the data to be feed by interpolate_ssn  
+#' It summarises data by month and find if it is a pulse or not 
+#'
+#' @param data a data.frame  
+#' @param date date variable 
+#' @param var variable to summarise
+#' @param donuts data.frame with id of the obs station and coordinates of
+#' station location
+#' @param id variable containing unique identifier of the stataion
+prepare_pulse_interpolation <- function(data = NULL, date = NULL, var = NULL,
+  donuts = NULL, id = NULL, low_threshold = .1, high_threshold = .9) {
+
+  date <- rlang::enquo(date)
+  var <- rlang::enquo(var)
+  id <- rlang::enquo(id)
+  id_chr <- rlang::quo_name(id)
+
+  #1. Filter data that are in the obs station
+  data %<>%
+    dplyr::filter(!!id %in% donuts[[id_chr]])
+
+  #2. Average data by Month:
+  data_avg <- data %>%
+    dplyr::mutate(
+      year = lubridate::year(!!date) %>% as.integer(),
+      month = lubridate::month(!!date) %>% as.integer(),
+      nb_d_month = lubridate::days_in_month(!!date) %>% as.integer()
+      ) %>%
+  dplyr::group_by(id, year, month) %>%
+  dplyr::summarise(data = mean(!!var, na.rm = TRUE), nobs = sum(!is.na(!!var)),
+    pc_obs = nobs / unique(nb_d_month)) #here
+  # Filrer month that have enough record
+  data_avg_cleaned <- data_avg %>%
+    dplyr::mutate(
+      data = replace(data, pc_obs < .5, NA),
+      year_mon = lubridate::ymd(paste0(year, "-", month, "-", "01"))
+      )
+  # Identify pulse:
+  pulse <- data_avg_cleaned %>%
+    dplyr::group_by(!!id) %>%
+    dplyr::summarise(p10 = quantile(data, low_threshold, na.rm = TRUE),
+      p90 = quantile(data, high_threshold, na.rm = TRUE)
+    )
+  data_avg_cleaned %<>%
+    dplyr::left_join(pulse, by = id_chr) %>%
+    dplyr::mutate(
+      low_pulse = ifelse(data < low_threshold, TRUE, FALSE),
+      high_pulse = ifelse(data > high_threshold, TRUE, FALSE)
+    ) %>%
+    dplyr::group_by(id, year) %>%
+    dplyr::summarise(
+      low_pulse = ifelse(any(low_pulse), TRUE, FALSE),
+      high_pulse = ifelse(any(high_pulse), TRUE, FALSE)
+    )
+  # 4. Complete the dataset with missing year:
+  #For each id station, replace missing year by NA:
+  test <- list(
+    year = unique(data_avg_cleaned$year),
+    id = unique(as.data.frame(donuts)[, id_chr])
+  )
+  comb_year_id <- expand.grid(test) %>%
+    tibble::as_tibble()
+  data_avg_complete <- comb_year_id %>%
+    dplyr::left_join(data_avg_cleaned)
+
+  data_avg_complete
+}
