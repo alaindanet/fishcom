@@ -116,7 +116,7 @@ compute_glmssn <- function(data = NULL, var = NULL,
 
   # temporary hack:
   if (is.null(formula)) {
-    formula <-  avg_flow ~ avSloA
+    formula <-  as.formula(paste0(var_chr," ~ 1"))
   }
   if (is.null(corModel)) {
     corModel <- c("LinearSill.tailup", "Mariah.taildown",

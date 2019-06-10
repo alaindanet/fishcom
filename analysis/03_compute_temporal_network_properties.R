@@ -95,7 +95,8 @@ myload(network_analysis, dir = dest_dir)
 myload(op_analysis, dir = data_common)
 
 net <- left_join(network_analysis, dplyr::select(op_analysis, opcod, station, year)) %>%
-  ungroup()
+  ungroup() %>%
+  filter(!is.na(station))
 
 source('../analysis/misc/parallel_setup.R')
 ## Get network as matrices
@@ -107,11 +108,11 @@ net %<>%
 }
 ))
 ## betalink:
-net %>%
+net %<>%
   select(network, station) %>%
   group_by(station) %>%
   nest() %>%
-  mutate(betalink = furrr::future_map2(data, station,
+  mutate(betalink = map2(data, station,
       function (x, y) {
       message(sprintf("Station %s", y))
       betalink::network_betadiversity(x$network)

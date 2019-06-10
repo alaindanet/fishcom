@@ -27,8 +27,9 @@ According to the postdoc advertisement:
 
 ## Priority
 
-1. Obtain networks and indicators
-2. Pulses identification (ex. extreme summer of 2003) 
+1. Obtain networks and indicators DONE!
+2. Perturbation identification
+3. Pulses identification (ex. extreme summer of 2003) 
 3. Traits and phylogeny
    - See `fish_trait` zotero collection 
    - See those authors (from Maud):
@@ -47,10 +48,11 @@ According to the postdoc advertisement:
   - [ ] Station
   - [ ] Water quality
 - [ ] Environmental data
-  - [ ] temporal flow and enrichment (Marie Silvestre): 
+  - [ ] temporal flow and quality (Marie Silvestre): 
     - [ ] Interpolation toward the station:
       - [ ] Use RHT https://www.irstea.fr/fr/rht
-  - [ ] How to analyze qualitave data:
+      - [ ] Test openSSR
+  - [ ] How to analyze qualitative data:
     - [x] Habitat
   - [x] Pressure data (Olivier Dezerald & Philippe Usseglio-Polatera):
   - [ ] Temperature data?

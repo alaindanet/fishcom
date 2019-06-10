@@ -372,12 +372,15 @@ xylabs <- function (...) {
 mylabel <- function() {
   ggplot2::as_labeller(c(
     connectance = "Connectance",
+    connectance_corrected_med = "Median connectance",
     richness = "Number of nodes",
     max_troph_level = "Highest trophic level",
     mean_troph_level = "Average trophic level",
+    mean_troph_level_med = "Median average trophic level",
     modularity = "Modularity",
     nestedness = "Nestedness",
     nbnode = "Number of nodes",
+    nbnode_med = "Median number of nodes",
     richness_cv = "richness CV",
     richness_avg = "Average richness",
     richness_med = "Median richness",

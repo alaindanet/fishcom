@@ -55,7 +55,7 @@ mysave(weight_analysis, dir = data_common, overwrite = TRUE)
 # Get station and  
 myload(length_analysis, op_analysis, dir = data_common)
 op_analysis %<>%
-  select(opcod, station, year)
+  select(opcod, station, date)
 
 com_analysis <- length_analysis %>%
   group_by(opcod, species) %>%
@@ -64,7 +64,8 @@ com_analysis <- length_analysis %>%
 
 # Get biomass by species and by opcod and their average size
 myload(weight_analysis, dir = data_common)
-weight_analysis %<>% group_by(opcod, species) %>%
+weight_analysis %<>%
+  group_by(opcod, species) %>%
   summarise(biomass = sum(weight), length = mean(length))
 ## The biomass and length are given by species
 com_analysis %<>%
@@ -99,56 +100,60 @@ mysave(community_metrics, dir = data_common, overwrite = TRUE)
 data(community_analysis)
 data(op_analysis)
 
-#join op and community and get date!
-## Get date
-### There are no multiple sampling by year:
-test <- op_analysis %>%
-  group_by(station) %>%
-  summarise(nb = n(), uni = length(unique(year))) %>%
-  ungroup
-test <- test$n - test$uni
-  
-if (any(test > 0)) {
-  id <- which(test > 0)
-  message(
-    paste0("There is ", length(id), " station that have multiple year sampling")
-  )
-}
-
-op_analysis %<>%
-  select(opcod, station, year)
-
 # Compute beta-diversity 
-com <- left_join(community_analysis, op_analysis, by = "opcod") %>%
-  select(-length) %>%
+com <- left_join(ungroup(community_analysis),
+  select(op_analysis, opcod, station, date), by = "opcod") %>%
+  filter(!is.na(station)) %>%
+  select(station, date, species, nind) %>%
+  group_by(station, date, species) %>%
+  summarise(nind = sum(nind)) %>%
   group_by(station) %>%
   nest()
-
+filter(com, station == 8442) %>%
+  unnest() %>%
+  group_by(species, date) %>%
+  summarise(n = n()) %>%
+  filter(n != 1)
 ## build community matrices
 com %<>%
   mutate(
     com = furrr::future_map2(data, station, function(x, y) {
       message(sprintf('Station %s', y))
-      com_matrix <- x %>%
-    rowid_to_column() %>%
-    spread(species, nind) %>%
-    select(-rowid) %>%
-    group_by(year) %>%
-    summarise_all(funs(sum(., na.rm =TRUE))) %>%
-    ungroup() %>%
-    select(-year) %>%
-    as.matrix()
-  com_matrix
+
+      x %<>% spread(species, nind) %>%
+	mutate_if(is.integer, list(~replace(.,is.na(.), as.integer(0)))) %>%
+	arrange(date) %>%
+	select(-date)
+      if (binary) {
+	x %<>%
+	  mutate_all(list(~replace(., .!= 0, as.integer(1))))
+      }
+      x
 }
     )
   )
+#
+compute_betadiv <- function(com, binary = FALSE, time_to_time = FALSE) {
+  if (binary) {
+    com %<>% replace(., . != 0, 1)
+  }
+
+  dist_mat <- vegan::vegdist(com, method = "bray", binary = binary)
+
+  if (time_to_time) {
+    dist_mat <- diag(dist_mat)
+  }
+
+  mean(dist_mat)
+}
 # Here I take the overall mean of differences between years but could be an idea
 # to consider the mean of dissimilarity year to year (i.e. the diagonal values)
 betadiv <- com %>%
   mutate(
-    betadiv = furrr::future_map_dbl(com, function(com){
-      vegan::vegdist(com, method = "bray", binary = FALSE) %>% mean
-    })
+    betadiv = furrr::future_map_dbl(com, compute_betadiv),
+    betadiv_bin = furrr::future_map_dbl(com, compute_betadiv, binary = TRUE),
+    betadiv_diag = furrr::future_map_dbl(com, compute_betadiv, time_to_time = TRUE),
+    betadiv_bin_diag = furrr::future_map_dbl(com, compute_betadiv, binary = TRUE, time_to_time = TRUE)
   )
 
 
@@ -165,7 +170,7 @@ com <- left_join(community_metrics, op_analysis, by = c("opcod")) %>%
   summarise_at(c("richness", "nind", "biomass"),
     funs(avg = mean, cv = sd(.) / mean(.), med = median, stab = mean(.) / sd(.)))
 
-com <- left_join(com, select(betadiv, station, betadiv), by = "station")
+com <- left_join(com, select(betadiv, -data, -com), by = "station")
 
 # Strange biomass cv: 
 filter(com, biomass_cv > 1.2)
