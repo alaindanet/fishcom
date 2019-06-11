@@ -61,7 +61,7 @@ match_pt_line <- function(point = NULL, line = NULL, start_buffer = 0, inc_buffe
 #' @param formula formula for the spatial model, see glmssn
 #' @param corModel character vector. see corModels argument in glmssn
 interpolate_ssn <- function(ssn = NULL, data = NULL, group = NULL, var = NULL,
-  formula = NULL, family = NULL, corModel = NULL, pred_name = "station_sein") {
+  formula = NULL, family = NULL, corModel = NULL, pred_name = "station") {
 
   group <- rlang::enquo(group)
   var <- rlang::enquo(var)
