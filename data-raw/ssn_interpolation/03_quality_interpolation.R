@@ -9,6 +9,8 @@ source(mypath("R", "misc.R"))
 source(mypath("R", "geo_methods.R"))
 source(mypath("R", "plot_methods.R"))
 library(SSN)
+library(tidyverse)
+library(magrittr)
 
 ssn_dir <- mypath("data-raw", "ssn_interpolation", "donuts_station.ssn")
 ssn <- importSSN(ssn_dir, predpts = "station", o.write = TRUE)
@@ -24,7 +26,8 @@ createDistMat(ssn,
 
 # Get quality yearly avg by donuts station:
 myload(quality_data, dir = mypath("data-raw"))
-unique(quality_data$var_code)
+myload(donuts_analysis, dir = mypath("data"))
+donuts <- donuts_analysis
 
 # Begin with nitrogen and phosphorus
 quality_data %<>%
@@ -36,18 +39,28 @@ quality_data %<>%
 
 # Enable parallel computation:
 source(mypath("analysis", "misc", "parallel_setup.R"))
+library(furrr)
 
+plan(multisession)
 donuts %<>%
   mutate(id = as.character(id))
 quality_data %<>%
-  mutate(data = furrr::future_map2(data, var_code,
-      ~prepare_data_interpolation(data = .x, date = meas_date, var = .y,
+  mutate(interp_data = furrr::future_map(data,
+      ~prepare_data_interpolation(data = .x, date = meas_date, var = value,
 	donuts = donuts, id = id)))
+prepare_data_interpolation(data = quality_data$data[[1]], date = meas_date, var = value,
+	donuts = donuts, id = id)
+#debug à /home/alain/fishcom/R/geo_methods.R#170
+# Produce NaN
+quality_data %>%
+  slice(1) %>%
+  unnest(interp_data) %>%
+  filter(!is.na(avg_data))
 quality_prediction <- quality_data %>%
   group_by(var_code) %>%
-  mutate(data = furrr::future_map2(data, var_code,
-      ~interpolate_ssn(data = .x, ssn = ssn, var = .y,
-	donuts = donuts, group = year)))
+  mutate(data = furrr::future_map(data,
+      ~interpolate_ssn(data = .x, ssn = ssn, var = avg_data,
+	group = year)))
 
 quality_prediction %<>%
   select(var_code, cross_v, prediction)
