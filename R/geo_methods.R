@@ -144,7 +144,7 @@ compute_glmssn <- function(data = NULL, var = NULL,
 #' station location
 #' @param id variable containing unique identifier of the stataion
 prepare_data_interpolation <- function(data = NULL, date = NULL, var = NULL,
-  donuts = NULL, id = NULL) {
+  donuts = NULL, id = NULL, cutoff_day = .5) {
 
   date <- rlang::enquo(date)
   var <- rlang::enquo(var)
@@ -167,9 +167,16 @@ prepare_data_interpolation <- function(data = NULL, date = NULL, var = NULL,
     pc_obs = nobs / unique(nb_d_month)) #here
   # Filrer month that have enough record
   # + keep year that have one month recorded in each season:
+  if (!is.null(cutoff_day)) {
   data_avg_cleaned <- data_avg %>%
     dplyr::mutate(
-      data = replace(data, pc_obs < .5, NA),
+      data = replace(data, pc_obs < .5, NA)
+      )
+  } else{
+   data_avg_cleaned <- data_avg
+  }
+  data_avg_cleaned %<>%
+    dplyr::mutate(
       year_mon = lubridate::ymd(paste0(year, "-", month, "-", "01")),
       season = lubridate::quarter(year_mon)
       ) %>%
@@ -195,6 +202,9 @@ prepare_data_interpolation <- function(data = NULL, date = NULL, var = NULL,
     as_tibble
   data_avg_complete <- comb_year_id %>%
     dplyr::left_join(dplyr::select(data_avg_cleaned, -is_ok))
+  if (sum(is.na(data_avg_complete[[var_chr]])) == nrow(data_avg_complete)) {
+   message("Only NA in the dataset.")
+  }
 
   data_avg_complete
 }

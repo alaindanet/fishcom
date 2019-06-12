@@ -39,17 +39,18 @@ quality_data %<>%
 
 # Enable parallel computation:
 source(mypath("analysis", "misc", "parallel_setup.R"))
-library(furrr)
 
-plan(multisession)
 donuts %<>%
   mutate(id = as.character(id))
 quality_data %<>%
   mutate(interp_data = furrr::future_map(data,
       ~prepare_data_interpolation(data = .x, date = meas_date, var = value,
-	donuts = donuts, id = id)))
-prepare_data_interpolation(data = quality_data$data[[1]], date = meas_date, var = value,
+	donuts = donuts, id = id, cutoff_day = NULL)))
+test <- prepare_data_interpolation(data = quality_data$data[[1]], date = meas_date, var = value,
 	donuts = donuts, id = id)
+test %>%
+filter(!is.na(avg_data)) %>%
+arrange(id)
 #debug à /home/alain/fishcom/R/geo_methods.R#170
 # Produce NaN
 quality_data %>%
