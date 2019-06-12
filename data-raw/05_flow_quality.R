@@ -6,13 +6,13 @@ library('tidyverse')
 library('magrittr')
 library('sf')
 library('rgeos')
+library('dbplyr')
 #devtools::load_all()
 mypath <- rprojroot::find_package_root_file
 mydir <- mypath("data-raw", "flow_quality")
 source(mypath("R", "misc.R"))
 source(mypath("R", "geo_methods.R"))
 
-myload(stations_FR_river_donuts)
 donuts <- read_sf(paste0(mydir, "/stations_FR_river_donuts.shp"))
 donuts <- st_transform(donuts, crs = 4326)
 st_crs(donuts)
@@ -119,72 +119,6 @@ flow_data %<>%
 
 mysave(flow_data, dir = mypath("data-raw"), overwrite = TRUE)
 
-#########################
-#  Get flow by station  #
-#########################
-# Problem is that flow station are not the same than quality station and match
-# very little with fishing station. May be that we have to interpolate them
-# with openSTARS.
-
-myload(station_analysis, donuts_analysis, dir = mypath("data"))
-
-# Match the station and donuts which are on the same drain_id 
-station_id <- station_analysis %>%
-  as_tibble() %>%
-  rename(station = id) %>%
-  mutate(
-    drain_id = as.character(drain_id),
-    trhyd_id = as.character(trhyd_id)
-    ) %>%
-  select(station, drain_id, trhyd_id)
-donuts_id <- donuts_analysis %>%
-  as_tibble() %>%
-  select(id, drain_id, trhyd_id, rht_name) %>%
-  mutate(
-    drain_id = as.character(drain_id),
-    id = as.character(id),
-    trhyd_id = as.character(trhyd_id)
-    )
-
-mask_trhyd_donuts_in_station <- which(donuts_id$trhyd_id %in% station_analysis$trhyd_id)
-which(donuts_id[mask_trhyd_donuts_in_station, ]$trhyd_id %in%
-flow_data$trhyd_id) %>%
-length()
-length(which(donuts_id$trhyd_id %in% flow_data$trhyd_id))
-
-donuts_station <- donuts_id %>%
-  left_join(select(station_id, station, trhyd_id), by = "trhyd_id") %>%
-  filter(!is.na(station))
-
-myload(flow_data, dir = mypath("data-raw"))
-
-flow_data %<>%
-  mutate(id = as.character(id)) %>%
-  left_join(donuts_station) %>%
-  filter(!is.na(station))
-length(unique(donuts_id$drain_id))
-length(unique(flow_data$drain_id))
-flow_stat <- flow_data %>%
-  group_by(station) %>%
-  summarise(nobs = n(), date_min = min(meas_date), date_max = max(meas_date))
-qplot(x = nobs, data = flow_stat, geom = "histogram")
-arrange(flow_stat, desc(nobs))
-
-# Suppress aberrant values
-flow_data %<>%
-  mutate(value = replace(value, value < 0, 0))
-
-# Put station:  
-
-
-# Select on date
-flow_day <- flow_data %>%
-  group_by(trhyd_id, meas_date) %>%
-  summarise(avg = mean(value))
-filter(flow_day, is.na(avg))
-
-#  
-
 ##################
 #  Quality data  #
 ##################
@@ -194,70 +128,33 @@ DBI::dbListTables(con)
 
 quality_data <- tbl(con, in_schema("public", "data_qualite_danet"))
 
-donuts_station <- donuts_id %>%
-  left_join(select(station_id, station, trhyd_id), by = "trhyd_id") %>%
-  filter(!is.na(station))
-quality_data %<>%
-  filter(id %in% donuts_station$id) %>%
-  collect()
 library('bit64')
 quality_data %<>%
-  mutate(id = as.character(id)) %>%
-  left_join(select(donuts_station, id, station), by = "id")
+  mutate(id = as.character(id))
+raw_filtered_water <- quality_data %>%
+  group_by(var_code, fraction) %>%
+  summarise(frac = n()) %>%
+  collect() %>%
+  mutate(frac = as.numeric(frac))
+arrange(raw_filtered_water, var_code, fraction, desc(frac))
+qplot(x = log10(frac), data = raw_filtered_water, geom = "histogram")
 
-quality_stat <- quality_data %>%
-  group_by(station, var_code) %>%
-  summarise(nobs = n(), date_min = min(meas_date), date_max = max(meas_date))
-qplot(x = nobs, data = quality_stat, geom = "histogram")
+# To keep:
+var_to_keep <- raw_filtered_water %>%
+  filter(frac > 1000) %>%
+  group_by(var_code) %>%
+  arrange(desc(frac)) %>%
+  slice(1) %>%
+  ungroup()
 
-# Timing avg between measurements: 
-timing_bw_meas <- quality_data %>%
-  group_by(station, var_code) %>%
-  mutate(
-    point = seq(1, length(var_code)),
-    sample_sep = c(NA, meas_date[-1] - meas_date[-length(var_code)])
-  ) %>%
-  summarise(avg_sep = mean(sample_sep, na.rm = TRUE))
-qplot(x = avg_sep, data = timing_bw_meas, geom = "histogram")
+quality_var <- quality_data %>%
+  collect() %>%
+  left_join(var_to_keep) %>%
+  filter(!is.na(frac))
 
+# Keep station that are in donuts
+quality_var %<>%
+  filter(id %in% donuts$id)
 
-year_quality <- quality_data %>%
-  mutate(year = lubridate::year(meas_date)) %>%
-  group_by(station, year, var_code) %>%
-  summarise(avg = mean(value))
-
-# Select years corresponding to op extent by station:  
-test <- year_quality %>%
-  group_by(station) %>%
-  summarise(date_min = min(year), date_max = max(year)) %>%
-  list(
-    qplot(x = date_min, data = ., geom = "histogram", main = "starting date"),
-    qplot(x = date_max, data = ., geom = "histogram", main = "ending date")
-  )
-cowplot::plot_grid(test[[2]], test[[3]])
-## get the op:
-myload(op_analysis, dir = mypath("data"))
-### Get the min and max date:
-op_analysis %>%
-  group_by(station) %>%
-  summarise(start_date = min(date), end_date = max(date))
-
-filter(op_analysis, station == 262)
-#strange
-
-# look for pulse:
-## by station, found extrem values and get their number 
-quantile_quality <- quality_data %>%
-  mutate(year = lubridate::year(meas_date)) %>%
-  group_by(station, var_code) %>%
-  summarise(q10 = quantile(value, probs = .1), q90 = quantile(value, probs = .9))
-
-## join pulse to station and compute the number of pulse:
-pulse_data <- quality_data %>%
-  left_join(quantile_quality, by = c("var_code", "station")) %>%
-  group_by(station, var_code) %>%
-  summarise(q10 = sum(value <= q10), q90 = sum(value >= q90)) %>%
-  gather(pulse_type, nb, q10, q90)
-
-pulse_data %>%
-  filter(var_code == "BOD")
+quality_data <- quality_var
+mysave(quality_data, dir = mypath("data-raw"))
