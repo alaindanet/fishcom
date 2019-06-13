@@ -53,14 +53,9 @@ quality_data %<>%
 # Interpolate
 quality_prediction <- quality_data %>%
   group_by(var_code) %>%
-  mutate(interp_data = furrr::future_map(interp_data,
+  mutate(interp_data = purrr::map(interp_data,
       ~interpolate_ssn(data = .x, ssn = ssn, var = avg_data,
 	group = year)))
-
-debug(interpolate_ssn)
-undebug(interpolate_ssn)
-interpolate_ssn(data = quality_data$interp_data[[1]], ssn = ssn, var = avg_data,
-	group = year)
 
 quality_prediction %<>%
   select(var_code, cross_v, prediction)
