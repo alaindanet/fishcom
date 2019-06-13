@@ -148,6 +148,7 @@ prepare_data_interpolation <- function(data = NULL, date = NULL, var = NULL,
 
   date <- rlang::enquo(date)
   var <- rlang::enquo(var)
+  var_chr <- rlang::quo_name(var)
   id <- rlang::enquo(id)
   id_chr <- rlang::quo_name(id)
 
