@@ -69,6 +69,7 @@ interpolate_ssn <- function(ssn = NULL, data = NULL, group = NULL, var = NULL,
 
   # Check:
   stopifnot(var_chr %in% colnames(data))
+  stopifnot(pred_name %in% names(ssn))
 
   #Get data:
   data %<>% dplyr::group_by(!!group) %>%
