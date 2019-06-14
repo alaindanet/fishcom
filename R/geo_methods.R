@@ -69,10 +69,11 @@ interpolate_ssn <- function(ssn = NULL, data = NULL, group = NULL, var = NULL,
 
   # Check:
   stopifnot(var_chr %in% colnames(data))
-  stopifnot(pred_name %in% names(ssn))
+  stopifnot(pred_name %in% names(names(ssn)))
 
   #Get data:
-  data %<>% dplyr::group_by(!!group) %>%
+  data %<>%
+    dplyr::group_by(!!group) %>%
     tidyr::nest()
 
   # Model, cross-validation and prediction
@@ -112,6 +113,7 @@ compute_glmssn <- function(data = NULL, var = NULL,
   # Fill ssn with new data:
   stopifnot(nrow(ssn_data) == nrow(data_id_var))
   ssn_data %<>%
+    dplyr::mutate(id = as.character(id)) %>%
     dplyr::left_join(data_id_var, by = "id")
   ssn@obspoints@SSNPoints[[1]]@point.data <- ssn_data
 
@@ -279,4 +281,179 @@ prepare_pulse_interpolation <- function(data = NULL, date = NULL, var = NULL,
     dplyr::left_join(data_avg_cleaned)
 
   data_avg_complete
+}
+
+#' Prepare ssn object
+#'
+#' Routine for openSTARS to create SSN object
+#'  
+#' @param mnt_path path to the mnt
+#' @param pred_path path to the prediction sites
+#' @param pred_name chr name of the prediction object
+#' @param sites sf object or path to the obs sites
+#' @param streams sf object or path to the hydrologic network 
+#' @param ssn_path path to write the ssn folder
+#' @param slope logical compute the slope attribute for pred and obs sites   
+prepare_ssn <- function (grass_path = "/usr/lib/grass72/", mnt_path = NULL,
+  pred_path = NULL, pred_name = NULL, sites = NULL, streams = NULL,
+  ssn_path = NULL, slope = FALSE) {
+
+  rgrass7::initGRASS(gisBase = grass_path,
+    home = tempdir(),
+    override = TRUE)
+  openSTARS::setup_grass_environment(dem = mnt_path)
+  openSTARS::import_data(dem = mnt_path,
+    sites = sites,
+    streams = streams,
+    pred_sites = pred_path
+  )
+  openSTARS::derive_streams()
+  openSTARS::correct_compl_junctions()
+  openSTARS::calc_edges()
+
+  # Compute slope from dem:
+  if (slope) {
+    openSTARS::execGRASS("r.slope.aspect", flags = c("overwrite","quiet"),
+      parameters = list(
+	elevation = "dem",
+	slope = "slope"
+	))
+    openSTARS::calc_attributes_edges(input_raster = c("slope", "dem"),
+      stat_rast = rep("mean", 2),
+      attr_name_rast = c("avSlo", "avAlt")
+    )
+    openSTARS::calc_sites(pred_sites = paste0(pred_name, "_o"))
+    openSTARS::calc_attributes_sites_approx(sites_map = "sites",
+      input_attr_name = c("avSlo", "avAlt"),
+      output_attr_name = c("avSloA", "avAltA"),
+      stat = rep("mean", 2))
+    openSTARS::calc_attributes_sites_approx(sites_map = pred_name,
+      input_attr_name = c("avSlo", "avAlt"),
+      output_attr_name = c("avSloA", "avAltA"),
+      stat = rep("mean", 2))
+  } else {
+    openSTARS::calc_sites(pred_sites = paste0(pred_name, "_o"))
+  }
+
+  openSTARS::export_ssn(ssn_path, predictions = pred_name, delete_directory = TRUE)
+  rgrass7::unlink_.gislock()
+}
+
+#' Prepare basin data 
+#'
+#' @param
+prepare_basin_data <- function (basin = NULL, group_var = NULL, streams = NULL,
+  dem = NULL, obs_sites = NULL, pred_sites = NULL, crs = 2154, save_path = mypath("data-raw", "ssn_interpolation")) {
+
+  group_var <- rlang::enquo(group_var)
+
+  streams %<>% sf::st_transform(crs = crs)
+  obs_sites %<>% sf::st_transform(crs = crs)
+  pred_sites %<>% sf::st_transform(crs = crs)
+
+  basin %<>%
+    dplyr::group_by(!!group_var) %>%
+    tidyr::nest()
+
+  write_basin_data <- function(name, data) {
+    # crop streams, obs sites, pred sites
+    croped_streams <- sf::st_crop(streams, data)
+    croped_obs <- sf::st_crop(obs_sites, data)
+    croped_pred <- sf::st_crop(pred_sites, data)
+    sp_data  <- as(data, "Spatial")
+    croped_dem <- raster::crop(dem, sp_data)
+
+    # Save
+    basin_dir <- paste0(save_path, "/", name)
+    if (!dir.exists(basin_dir)) {
+      dir.create(basin_dir)
+    }
+    raster::writeRaster(dem,
+      filename = paste0(basin_dir, "/", "dem.tif"),
+      format="GTiff", overwrite=TRUE)
+    sf::write_sf(croped_pred, paste0(basin_dir, "/", paste0(name, "_pred_sites.shp")))
+    assign(paste0(name, "_streams"), croped_streams, envir = .GlobalEnv)
+    assign(paste0(name, "_obs"), croped_obs, envir = .GlobalEnv)
+    to_save <- c(paste0(name, "_streams"), paste0(name, "_obs"))
+    mapply(save, list = to_save, file = paste0(basin_dir, "/", to_save, ".rda"), MoreArgs =
+      list(
+	compress = "bzip2"))
+    invisible()
+  }
+  basin %>%
+    dplyr::mutate(test = purrr::map2(!!group_var, data, write_basin_data))
+
+}
+
+#' Interpolate by basin
+#' 
+#' Interpolate data by basin
+#' 
+#' @param ssn_dir path to SSN
+#' @param site_dir path to data 
+#' @param data
+interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
+  basin_name = "nord", quality_data = NULL, var = c("NH4", "NO2", "NO3", "PO4")) {
+
+  pred_name <- paste0(basin_name, "_pred_sites")
+
+  ssn_obj_path <- paste0(ssn_dir, "/", basin_name, ".ssn")
+  ssn <- importSSN(ssn_obj_path, predpts = pred_name, o.write = TRUE)
+  message(paste0("Importation of ", basin_name, ".ssn is done"))
+  
+  print(pred_name %in% names(names(ssn)))
+
+# Compute the weight of each streams lines when they merged:
+  ssn <- additive.function(ssn, "H2OArea",
+    "afv_area")
+
+# create distance matrix between pred and obs:
+  createDistMat(ssn,
+    predpts = pred_name, o.write = TRUE, amongpreds = TRUE)
+
+  # Get quality yearly avg by donuts station:
+  obs_data <- paste0(ssn_dir, "/", basin_name, "/", basin_name, "_obs.rda")
+  load(obs_data)
+  donuts <- get(paste0(basin_name, "_obs"))
+
+  # Begin with nitrogen and phosphorus
+  quality_data %<>%
+    filter(var_code %in% var)
+
+  # Prepare data
+  donuts %<>%
+    mutate(id = as.character(id))
+  quality_data %<>%
+    mutate(id = as.character(id)) %>%
+    group_by(var_code) %>%
+    nest()
+
+  # Enable parallel computation:
+  #source(mypath("analysis", "misc", "parallel_setup.R"))
+  message(paste0("Data are ready to be summarise over years for ", cat(var), " variables."))
+  quality_data %<>%
+    mutate(interp_data = furrr::future_map(data,
+	~prepare_data_interpolation(data = .x, date = meas_date, var = value,
+	  donuts = donuts, id = id, cutoff_day = NULL)))
+  # Filter data
+  quality_data %<>%
+    select(var_code, interp_data)
+  message(paste0("Data summarised."))
+  # Interpolate
+
+  message(paste0("Interpolation begins:"))
+  tictoc::tic()
+  quality_prediction <- quality_data %>%
+    group_by(var_code) %>%
+    mutate(interp_data = purrr::map(interp_data,
+	~interpolate_ssn(data = .x, ssn = ssn, var = avg_data,
+	  group = year, pred_name = pred_name)))
+  res_time <- tictoc::toc()
+  res_rime <- res_time$toc - res_time$tic
+  message(paste0("Interpolations took ", res_rime, " sec."))
+
+  quality_prediction %<>%
+    select(var_code, cross_v, prediction)
+
+  mysave(quality_prediction, dir = paste0(ssn_dir, "/", basin_name))
 }
