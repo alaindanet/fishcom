@@ -452,8 +452,11 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
   res_rime <- res_time$toc - res_time$tic
   message(paste0("Interpolations took ", res_rime, " sec."))
 
+  try(
   quality_prediction %<>%
+    unnest(interp_data) %>%
     select(var_code, cross_v, prediction)
+  )
 
   mysave(quality_prediction, dir = paste0(ssn_dir, "/", basin_name))
 }
