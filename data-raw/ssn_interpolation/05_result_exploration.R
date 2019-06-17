@@ -12,9 +12,27 @@ source(mypath("R", "geo_methods.R"))
 source(mypath("R", "plot_methods.R"))
 
 # Load fish and environmental station
-myload(quality_prediction, dir = mypath("data-raw", "ssn_interpolation", "nord"))
 
-cross_val <- quality_prediction %>%
-  select(var_code, cross_v)
-cross_val$cross_v[[1]]
+res <- sapply(c("nord", "sud", "est"), function (basin) {
+  myload(quality_prediction, dir = mypath("data-raw", "ssn_interpolation", basin))
+  quality_prediction
+})
+quality <- do.call(rbind, res)
 
+cross_val <- quality %>%
+  select(-prediction) %>%
+  mutate(cross_v = map(cross_v, enframe)) %>%
+  unnest()
+
+# Prediction:
+press <- test %>%
+  select(-cross_v) %>%
+  unnest(prediction) %>%
+  group_by(id, var_code) %>%
+  summarise(press = mean(avg_data))
+
+ggplot(press, aes(x = press) ) +
+  geom_histogram() +
+  facet_wrap(~ var_code)
+
+mysave(press, dir = mypath("data-raw", "ssn_interpolation"))
