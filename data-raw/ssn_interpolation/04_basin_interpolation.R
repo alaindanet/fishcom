@@ -10,10 +10,10 @@ source(mypath("R", "plot_methods.R"))
 #  Interpolation
 myload(quality_data, dir = mypath("data-raw"))
 library('SSN')
-
-basin <- c("ouest", "sud", "est") #"nord"
-
-sapply(basin, function (x) {
+library(parallel)
+basin <- c("ouest", "sud", "est", "nord") #"nord"
+options(mc.cores = 4)
+mclapply(basin, function (x) {
   interpolate_basin(ssn_dir = mypath("data-raw", "ssn_interpolation"),
     basin_name = x, quality_data = quality_data, var = c("NH4", "NO2", "NO3", "PO4"))
 })

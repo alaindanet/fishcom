@@ -432,7 +432,7 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
   #source(mypath("analysis", "misc", "parallel_setup.R"))
   message(paste0("Data are ready to be summarise over years for ", cat(var), " variables."))
   quality_data %<>%
-    mutate(interp_data = furrr::future_map(data,
+    mutate(interp_data = purrr::map(data,
 	~prepare_data_interpolation(data = .x, date = meas_date, var = value,
 	  donuts = donuts, id = id, cutoff_day = NULL)))
   # Filter data
@@ -455,7 +455,7 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
   try(
   quality_prediction %<>%
     unnest(interp_data) %>%
-    select(var_code, cross_v, prediction)
+    select(-model, -data)
   )
 
   mysave(quality_prediction, dir = paste0(ssn_dir, "/", basin_name))
