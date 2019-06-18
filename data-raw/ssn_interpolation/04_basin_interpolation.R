@@ -8,7 +8,6 @@ source(mypath("R", "geo_methods.R"))
 source(mypath("R", "plot_methods.R"))
 
 #  Interpolation
-myload(quality_data, dir = mypath("data-raw"))
 library('SSN')
 library(parallel)
 basin <- c("ouest", "sud", "est", "nord") #"nord"

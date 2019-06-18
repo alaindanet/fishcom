@@ -76,8 +76,6 @@ rm(stream)
 object.size(simplestream)
 plot(simplestream[, "gid"])
 
-
-
 ##########
 #  DEM   #
 ##########

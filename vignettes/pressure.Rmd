@@ -44,13 +44,59 @@ myload(temporal_press_prob_analysis, temporal_press_cat_analysis,
   temporal_community_metrics,
   dir = mypath("data"))
 myload(op_ODP, dir = mypath("data-raw", "fish_pressures"))
+myload(press, dir = mypath("data-raw", "ssn_interpolation"))
+
 ```
+
+# Interpolation
+
+```{r}
+press
+biomass_com <- temporal_community_metrics %>%
+  select(station, biomass_stab, richness_med, betadiv)
+press %<>% mutate(station = id) %>%
+  left_join(biomass_com, by = "station")
+```
+
+```{r}
+press_scale <- press %>%
+  group_by(var_code) %>%
+  mutate(press_scale = scale(press))
+p1 <- ggplot(press_scale, aes(x = press_scale, y = biomass_stab)) +
+  geom_point() +
+  facet_wrap(~ var_code) +
+  labs(x = "Scaled press", y = "Biomass stability")
+p1
+```
+
+```{r}
+p2 <- ggplot(press_scale, aes(x = press, y = biomass_stab)) +
+  geom_point() +
+  facet_wrap(~ var_code, scales = "free_x") +
+  labs(x = "Scaled press", y = "Biomass stability")
+p2
+```
+
+## Correlation between variables
+
+```{r}
+M <- cor(
+  select(press, var_code, press) %>%
+    spread(var_code, press) %>%
+    ungroup() %>%
+    select(-id)
+)
+corrplot::corrplot(M, method = "circle")
+```
+
+
+# Olivier
 
 ```{r signification variable}
 kable(op_AUC)
 ```
 
-# Probability
+## Probability
 
 ```{r}
 biomass_com <- temporal_community_metrics %>%
