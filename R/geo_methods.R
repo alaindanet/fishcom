@@ -351,17 +351,31 @@ prepare_basin_data <- function (basin = NULL, group_var = NULL, streams = NULL,
   obs_sites %<>% sf::st_transform(crs = crs)
   pred_sites %<>% sf::st_transform(crs = crs)
 
+  #basin
+  basin <- rmapshaper::ms_simplify(input = basin, keep = .01) %>% 
+    st_as_sf()
+  basin <- st_buffer(basin, dist = 20*10^3)
   basin %<>%
     dplyr::group_by(!!group_var) %>%
     tidyr::nest()
 
   write_basin_data <- function(name, data) {
     # crop streams, obs sites, pred sites
-    croped_streams <- sf::st_crop(streams, data)
-    croped_obs <- sf::st_crop(obs_sites, data)
-    croped_pred <- sf::st_crop(pred_sites, data)
+    int_streams <- sf::st_intersects(streams, data)
+    streams_mask <- map_lgl(int_streams, function(x) ifelse(length(x) > 0, TRUE, FALSE))
+    croped_streams <- streams[streams_mask, ]
+
+    int_obs <- sf::st_intersects(obs_sites, data)
+    obs_mask <- map_lgl(int_obs, function(x) ifelse(length(x) > 0, TRUE, FALSE))
+    croped_obs <- obs_sites[obs_mask, ]
+
+    int_pred <- sf::st_intersects(pred_sites, data)
+    pred_mask <- map_lgl(int_pred, function(x) ifelse(length(x) > 0, TRUE, FALSE))
+    croped_pred <- pred_sites[pred_mask, ]
+
     sp_data  <- as(data, "Spatial")
     croped_dem <- raster::crop(dem, sp_data)
+    croped_dem <- raster::mask(dem, sp_data)
 
     # Save
     basin_dir <- paste0(save_path, "/", name)
@@ -393,7 +407,7 @@ prepare_basin_data <- function (basin = NULL, group_var = NULL, streams = NULL,
 #' @param site_dir path to data 
 #' @param data
 interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
-  basin_name = "nord", quality_data = NULL, var = c("NH4", "NO2", "NO3", "PO4")) {
+  basin_name = "nord", quality_data = NULL, var = c("NH4", "NO2", "NO3", "PO4"), cutoff_day = NULL) {
 
   pred_name <- paste0(basin_name, "_pred_sites")
 
@@ -434,7 +448,7 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
   quality_data %<>%
     mutate(interp_data = purrr::map(data,
 	~prepare_data_interpolation(data = .x, date = meas_date, var = value,
-	  donuts = donuts, id = id, cutoff_day = NULL)))
+	  donuts = donuts, id = id, cutoff_day = cutoff_day)))
   # Filter data
   quality_data %<>%
     select(var_code, interp_data)
@@ -458,5 +472,5 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
     select(-model, -data)
   )
 
-  mysave(quality_prediction, dir = paste0(ssn_dir, "/", basin_name))
+  mysave(quality_prediction, dir = paste0(ssn_dir, "/", basin_name), overwrite = TRUE)
 }
