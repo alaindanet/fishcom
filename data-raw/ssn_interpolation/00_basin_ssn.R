@@ -56,6 +56,7 @@ prepare_basin_data(basin = my_hydro_basin, group_var = basin_name, streams = rht
   dem = dem, obs_sites = donuts_analysis, pred_sites = station_analysis,
   crs = 2154, save_path = mypath("data-raw", "ssn_interpolation"))
 
+#options(mc.cores = 2)
 sapply(my_hydro_basin$basin_name, function (basin) {
   # Prepare path:
   mnt_path <- mypath("data-raw", "ssn_interpolation", basin, "dem.tif") 
@@ -79,5 +80,4 @@ sapply(my_hydro_basin$basin_name, function (basin) {
     ssn_path = mypath("data-raw", "ssn_interpolation", paste0(basin, ".ssn")),
     slope = FALSE)
   })
-
 

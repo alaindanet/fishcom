@@ -7,6 +7,7 @@ RUN=analysis
 EXEC=my_job
 RUN_DIR:=~/fishcom
 DEST:=/home/alain/Documents/post-these/mnhn/fishcom
+RSYNC_OPT=--exclude={'*.R','*.Rmd'}
 
 all: $(RUN)
 
@@ -29,16 +30,16 @@ clean:
 	rm $(DEST)/run/temporal_networks.*
 
 import_data:
-	rsync -e ssh -r -avz $(CLUSTER):$(RUN_DIR)/data/* $(DEST)/data/
+	rsync -e ssh -r -avz $(RSYNC_OPT) $(CLUSTER):$(RUN_DIR)/data/* $(DEST)/data/
 
 import_raw_data:
-	rsync -e ssh -r -avz $(CLUSTER):$(RUN_DIR)/data-raw/* $(DEST)/data-raw/
+	rsync -e ssh -r -avz $(RSYNC_OPT) $(CLUSTER):$(RUN_DIR)/data-raw/* $(DEST)/data-raw/
 
 export_raw_data:
-	rsync -e ssh -r -avz $(DEST)/data-raw/* $(CLUSTER):$(RUN_DIR)/data-raw/
+	rsync -e ssh -r -avz $(RSYNC_OPT) $(DEST)/data-raw/* $(CLUSTER):$(RUN_DIR)/data-raw/
 
 export_data:
-	rsync -e ssh -r -avz $(DEST)/data/* $(CLUSTER):$(RUN_DIR)/data/
+	rsync -e ssh -r -avz $(RSYNC_OPT) $(DEST)/data/* $(CLUSTER):$(RUN_DIR)/data/
 
 git_update:
 	ssh $(CLUSTER) "cd $(RUN_DIR) &&\

@@ -308,7 +308,12 @@ prepare_ssn <- function (grass_path = "/usr/lib/grass72/", mnt_path = NULL,
     pred_sites = pred_path
   )
   openSTARS::derive_streams()
-  openSTARS::correct_compl_confluences()
+
+  cj <- openSTARS::check_compl_confluences()
+  if(cj){
+    openSTARS::correct_compl_confluences()
+  }
+
   openSTARS::calc_edges()
 
   # Compute slope from dem:
