@@ -361,9 +361,9 @@ prepare_basin_data <- function (basin = NULL, group_var = NULL, streams = NULL,
 
   write_basin_data <- function(name, data) {
     # crop streams, obs sites, pred sites
-    int_streams <- sf::st_intersects(streams, data)
-    streams_mask <- map_lgl(int_streams, function(x) ifelse(length(x) > 0, TRUE, FALSE))
-    croped_streams <- streams[streams_mask, ]
+    #int_streams <- sf::st_intersects(streams, data)
+    #streams_mask <- map_lgl(int_streams, function(x) ifelse(length(x) > 0, TRUE, FALSE))
+    croped_streams <- sf::st_crop(streams, data)
 
     int_obs <- sf::st_intersects(obs_sites, data)
     obs_mask <- map_lgl(int_obs, function(x) ifelse(length(x) > 0, TRUE, FALSE))
@@ -375,7 +375,7 @@ prepare_basin_data <- function (basin = NULL, group_var = NULL, streams = NULL,
 
     sp_data  <- as(data, "Spatial")
     croped_dem <- raster::crop(dem, sp_data)
-    croped_dem <- raster::mask(dem, sp_data)
+    #croped_dem <- raster::mask(dem, sp_data)
 
     # Save
     basin_dir <- paste0(save_path, "/", name)
