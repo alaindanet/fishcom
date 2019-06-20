@@ -343,7 +343,7 @@ prepare_ssn <- function (grass_path = "/usr/lib/grass72/", mnt_path = NULL,
 #'
 #' @param
 prepare_basin_data <- function (basin = NULL, group_var = NULL, streams = NULL,
-  dem = NULL, obs_sites = NULL, pred_sites = NULL, crs = 2154, save_path = mypath("data-raw", "ssn_interpolation")) {
+  dem = NULL, obs_sites = NULL, pred_sites = NULL, crop_method = "crop", crs = 2154, save_path = mypath("data-raw", "ssn_interpolation")) {
 
   group_var <- rlang::enquo(group_var)
 
@@ -364,18 +364,20 @@ prepare_basin_data <- function (basin = NULL, group_var = NULL, streams = NULL,
     #int_streams <- sf::st_intersects(streams, data)
     #streams_mask <- map_lgl(int_streams, function(x) ifelse(length(x) > 0, TRUE, FALSE))
     croped_streams <- sf::st_crop(streams, data)
-
-    int_obs <- sf::st_intersects(obs_sites, data)
-    obs_mask <- map_lgl(int_obs, function(x) ifelse(length(x) > 0, TRUE, FALSE))
-    croped_obs <- obs_sites[obs_mask, ]
-
-    int_pred <- sf::st_intersects(pred_sites, data)
-    pred_mask <- map_lgl(int_pred, function(x) ifelse(length(x) > 0, TRUE, FALSE))
-    croped_pred <- pred_sites[pred_mask, ]
-
     sp_data  <- as(data, "Spatial")
     croped_dem <- raster::crop(dem, sp_data)
-    #croped_dem <- raster::mask(dem, sp_data)
+
+    if (crop_method == "crop") {
+      croped_obs <- sf::st_crop(obs_sites, data)
+      croped_pred <- sf::st_crop(pred_sites, data)
+    } else if (crop_method == "mask") {
+      int_obs <- sf::st_intersects(obs_sites, data)
+      obs_mask <- purrr::map_lgl(int_obs, function(x) ifelse(length(x) > 0, TRUE, FALSE))
+      croped_obs <- obs_sites[obs_mask, ]
+      int_pred <- sf::st_intersects(pred_sites, data)
+      pred_mask <- purrr::map_lgl(int_pred, function(x) ifelse(length(x) > 0, TRUE, FALSE))
+      croped_pred <- pred_sites[pred_mask, ]
+    }
 
     # Save
     basin_dir <- paste0(save_path, "/", name)
@@ -390,13 +392,11 @@ prepare_basin_data <- function (basin = NULL, group_var = NULL, streams = NULL,
     assign(paste0(name, "_obs"), croped_obs, envir = .GlobalEnv)
     to_save <- c(paste0(name, "_streams"), paste0(name, "_obs"))
     mapply(save, list = to_save, file = paste0(basin_dir, "/", to_save, ".rda"), MoreArgs =
-      list(
-	compress = "bzip2"))
+      list(compress = "bzip2"))
     invisible()
   }
   basin %>%
     dplyr::mutate(test = purrr::map2(!!group_var, data, write_basin_data))
-
 }
 
 #' Interpolate by basin
@@ -412,17 +412,17 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
   pred_name <- paste0(basin_name, "_pred_sites")
 
   ssn_obj_path <- paste0(ssn_dir, "/", basin_name, ".ssn")
-  ssn <- importSSN(ssn_obj_path, predpts = pred_name, o.write = TRUE)
+  ssn <- SSN::importSSN(ssn_obj_path, predpts = pred_name, o.write = TRUE)
   message(paste0("Importation of ", basin_name, ".ssn is done"))
   
   print(pred_name %in% names(names(ssn)))
 
 # Compute the weight of each streams lines when they merged:
-  ssn <- additive.function(ssn, "H2OArea",
+  ssn <- SSN::additive.function(ssn, "H2OArea",
     "afv_area")
 
 # create distance matrix between pred and obs:
-  createDistMat(ssn,
+  SSN::createDistMat(ssn,
     predpts = pred_name, o.write = TRUE, amongpreds = TRUE)
 
   # Get quality yearly avg by donuts station:
@@ -432,34 +432,34 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
 
   # Begin with nitrogen and phosphorus
   quality_data %<>%
-    filter(var_code %in% var)
+    dplyr::filter(var_code %in% var)
 
   # Prepare data
   donuts %<>%
-    mutate(id = as.character(id))
+    dplyr::mutate(id = as.character(id))
   quality_data %<>%
-    mutate(id = as.character(id)) %>%
-    group_by(var_code) %>%
-    nest()
+    dplyr::mutate(id = as.character(id)) %>%
+    dplyr::group_by(var_code) %>%
+    tidyr::nest()
 
   # Enable parallel computation:
   #source(mypath("analysis", "misc", "parallel_setup.R"))
   message(paste0("Data are ready to be summarise over years for ", cat(var), " variables."))
   quality_data %<>%
-    mutate(interp_data = purrr::map(data,
+   dplyr::mutate(interp_data = purrr::map(data,
 	~prepare_data_interpolation(data = .x, date = meas_date, var = value,
 	  donuts = donuts, id = id, cutoff_day = cutoff_day)))
   # Filter data
   quality_data %<>%
-    select(var_code, interp_data)
+    dplyr::select(var_code, interp_data)
   message(paste0("Data summarised."))
   # Interpolate
 
   message(paste0("Interpolation begins:"))
   tictoc::tic()
   quality_prediction <- quality_data %>%
-    group_by(var_code) %>%
-    mutate(interp_data = purrr::map(interp_data,
+    dplyr::group_by(var_code) %>%
+    dplyr::mutate(interp_data = purrr::map(interp_data,
 	~interpolate_ssn(data = .x, ssn = ssn, var = avg_data,
 	  group = year, pred_name = pred_name)))
   res_time <- tictoc::toc()
@@ -468,8 +468,8 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
 
   try(
   quality_prediction %<>%
-    unnest(interp_data) %>%
-    select(-model, -data)
+    tidyr::unnest(interp_data) %>%
+    dplyr::select(-model, -data)
   )
 
   mysave(quality_prediction, dir = paste0(ssn_dir, "/", basin_name), overwrite = TRUE)
