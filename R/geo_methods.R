@@ -343,7 +343,8 @@ prepare_ssn <- function (grass_path = "/usr/lib/grass72/", mnt_path = NULL,
 #'
 #' @param
 prepare_basin_data <- function (basin = NULL, group_var = NULL, streams = NULL,
-  dem = NULL, obs_sites = NULL, pred_sites = NULL, crop_method = "crop", crs = 2154, save_path = mypath("data-raw", "ssn_interpolation")) {
+  dem = NULL, obs_sites = NULL, pred_sites = NULL, crop_method = "crop",
+  crs = 2154, save_path = mypath("data-raw", "ssn_interpolation"), buffer = FALSE, buf_size = 20000) {
 
   group_var <- rlang::enquo(group_var)
 
@@ -352,9 +353,11 @@ prepare_basin_data <- function (basin = NULL, group_var = NULL, streams = NULL,
   pred_sites %<>% sf::st_transform(crs = crs)
 
   #basin
-  basin <- rmapshaper::ms_simplify(input = basin, keep = .01) %>% 
-    st_as_sf()
-  basin <- st_buffer(basin, dist = 20*10^3)
+  if (buffer) {
+    basin <- rmapshaper::ms_simplify(input = basin, keep = .01) %>% 
+      sf::st_as_sf()
+  basin <- sf::st_buffer(basin, dist = buf_size)
+  }
   basin %<>%
     dplyr::group_by(!!group_var) %>%
     tidyr::nest()
@@ -407,7 +410,7 @@ prepare_basin_data <- function (basin = NULL, group_var = NULL, streams = NULL,
 #' @param site_dir path to data 
 #' @param data
 interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
-  basin_name = "nord", quality_data = NULL, var = c("NH4", "NO2", "NO3", "PO4"), cutoff_day = NULL) {
+  basin_name = "nord", quality_data = NULL, var = c("NH4", "NO2", "NO3", "PO4"), cutoff_day = NULL, complete_prev_interp = FALSE) {
 
   pred_name <- paste0(basin_name, "_pred_sites")
 
@@ -429,6 +432,21 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
   obs_data <- paste0(ssn_dir, "/", basin_name, "/", basin_name, "_obs.rda")
   load(obs_data)
   donuts <- get(paste0(basin_name, "_obs"))
+
+  if (complete_prev_interp) {
+    myload(quality_prediction, dir = paste0(ssn_dir, "/", basin_name))
+    prev_interp <- quality_prediction
+    prev_interp_var <- unique(prev_interp$var_code)
+    var <- var[!var %in% prev_interp_var]
+    if (length(var) == 0) {
+      message("Var specified already interpolated, nothing to do here.")
+      return(NULL)
+    } else {
+      message(paste0("Var ", prev_interp_var, "have been already interpolated."))
+      message(paste0("Interpolate ", var, "."))
+    }
+    
+  }
 
   # Begin with nitrogen and phosphorus
   quality_data %<>%
