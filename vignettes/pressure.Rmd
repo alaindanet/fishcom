@@ -48,6 +48,106 @@ myload(press, dir = mypath("data-raw", "ssn_interpolation"))
 
 ```
 
+# Raw data
+
+```{r}
+myload(quality_data, dir = mypath("data-raw"))
+```
+```{r}
+# Number of variables: 
+length(unique(quality_data$var_code))
+# Keep interesting ones:
+var_to_keep <- c(
+"CONDUCTY", "DOC", "pH", "temp",
+"TURB_NEPHEL", "NH4", "NO2",
+"NO3", "PO4", "SO4", "D_OXY", "OXY_SAT",
+"PHY_CHLA", "PHY_CHLB", "PHY_CHLC","SiO3"
+)
+quality_data %<>%
+  filter(var_code %in% var_to_keep) %>%
+  mutate(year_month = paste0(year(meas_date), "-", month(meas_date)))
+  
+```
+
+```{r}
+var_table <- read_csv2(mypath("data-raw", "flow_quality", "var_donuts.csv")) %>%
+  filter(fra_code %in% c("water_raw", "water_filtrated", "water_unknown")) %>%
+  distinct(var_code, var_name, units)
+kable(var_table)
+```
+
+
+## Correlation between variables
+
+```{r}
+var_values <- select(quality_data, id, meas_date, fraction, var_code, value) %>%
+  tibble::rowid_to_column("ID") %>%
+  spread(var_code, value) %>%
+  mutate(
+    year_month = myd(paste0(month(meas_date),"-", year(meas_date)), truncated = 1),
+    year = year(meas_date)) %>%
+  group_by(id, year) %>%
+  summarise_if(is.double, ~ mean(., na.rm = TRUE))
+
+var_enough_sampled <- ungroup(var_values) %>%
+  summarise_if(is.double, ~sum(is.na(.))/n()) %>%
+  unlist()
+var_enough_sampled <- var_enough_sampled[var_enough_sampled < .5]
+
+m <- cor(na.omit(select(var_values[, names(var_enough_sampled)], - meas_date,
+      -year, -year_month)))
+
+as.data.frame(round(m, 2)) %>%
+  mutate_all(list(~cell_spec(., "html", color = ifelse(abs(.) > .65 & . != 1, "red",
+	  "black")))) %>%
+  mutate(variable = colnames(.)) %>%
+  select(variable, everything()) %>%
+  kable(format = "html", escape = F)
+```
+
+## Temporal dynamics
+
+```{r}
+station_best_sampled <- var_values %>%
+  group_by(id) %>%
+  summarise_if(is.double, ~sum(is.na(.))/n()) %>%
+  arrange(NO3, NH4, PO4) %>%
+  sample_n(5, weigth = 1/(SO4 +1))
+```
+
+```{r}
+best_sta_data <- quality_data %>%
+  filter(id %in% station_best_sampled$id[1:5])
+
+ggplot(best_sta_data, aes(x = meas_date, y = value)) +
+  geom_line(aes(color = id)) +
+  facet_wrap(~var_code, scale = "free_y")
+```
+
+
+## Sampling assessment
+
+```{r}
+test <- list(
+  year_month = unique(quality_data$year_month),
+  id = unique(quality_data$id),
+  var_code = unique(quality_data$var_code)
+)
+comb_year_id <- expand.grid(test) %>%
+  as_tibble
+quality_data_complete <- comb_year_id %>%
+  dplyr::left_join(dplyr::select(quality_data, id, var_code, value, year_month))
+
+sampling <- quality_data_complete %>%
+  group_by(var_code, id) %>%
+  summarise(nb_obs = sum(!is.na(value)) / n()) %>%
+  group_by(var_code) %>%
+  summarise(nb_obs = mean(nb_obs, na.rm = TRUE)) %>%
+  arrange(desc(nb_obs))
+
+kable(sampling)
+```
+
 # Interpolation
 
 ```{r}
