@@ -82,12 +82,20 @@ interpolate_ssn <- function(ssn = NULL, data = NULL, group = NULL, var = NULL,
       model = purrr::map(data, compute_glmssn, var = var, ssn = ssn, formula =
 	formula, family = family, corModel = corModel),
       cross_v = purrr::map(model, function(x) {
+	if (!is.na(x)) {
 	out <- SSN::CrossValidationStatsSSN(x)
 	unlist(out)
+	} else {
+	  NA
+	}
 	}),
       prediction = purrr::map(model, function(m){
-	pred <- predict(m, pred_name)
-	pred$ssn.object@predpoints@SSNPoints[[1]]@point.data[, c("id",var_chr, paste0(var_chr, ".predSE"))]
+	if (!is.na(m)) {
+	  pred <- predict(m, pred_name)
+	  pred$ssn.object@predpoints@SSNPoints[[1]]@point.data[, c("id",var_chr, paste0(var_chr, ".predSE"))]
+	} else {
+	  NA
+	}
 	})
     )
   data
@@ -129,8 +137,11 @@ compute_glmssn <- function(data = NULL, var = NULL,
     family <- "Gaussian"
   }
 
-  mod_sp <- SSN::glmssn(formula, ssn, family = family,
-    CorModels = corModel, addfunccol = "afv_area")
+  mod_sp <- tryCatch(
+    SSN::glmssn(formula, ssn, family = family, CorModels = corModel, addfunccol
+      = "afv_area"),
+  warning = function (w) {print("FAIL!"); return(NA)}
+  )
   mod_sp
 }
 
@@ -308,7 +319,12 @@ prepare_ssn <- function (grass_path = "/usr/lib/grass72/", mnt_path = NULL,
     pred_sites = pred_path
   )
   openSTARS::derive_streams()
-  openSTARS::correct_compl_confluences()
+
+  cj <- openSTARS::check_compl_confluences()
+  if(cj){
+    openSTARS::correct_compl_confluences()
+  }
+
   openSTARS::calc_edges()
 
   # Compute slope from dem:
@@ -410,7 +426,7 @@ prepare_basin_data <- function (basin = NULL, group_var = NULL, streams = NULL,
 #' @param site_dir path to data 
 #' @param data
 interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
-  basin_name = "nord", quality_data = NULL, var = c("NH4", "NO2", "NO3", "PO4"), cutoff_day = NULL, complete_prev_interp = FALSE) {
+  basin_name = "nord", quality_data = NULL, var = c("TN", "TP"), cutoff_day = NULL, complete = TRUE) {
 
   pred_name <- paste0(basin_name, "_pred_sites")
 
@@ -460,6 +476,27 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
     dplyr::group_by(var_code) %>%
     tidyr::nest()
 
+  # Complete already existing dataset: 
+  prediction_file <- paste0(ssn_dir, "/", basin_name, "/",
+    "quality_prediction.rda")
+  if (complete & file.exists(prediction_file)) {
+    myload(quality_prediction, dir = paste0(ssn_dir, "/", basin_name))
+
+    var_interpolated <- var[var %in% quality_prediction[[var_code]]] 
+    quality_data %<>%
+      filter(!var_code %in% var_interpolated)
+    message(
+      paste0(cat(var_interpolated), " have been already interpolated. Please use complete = FALSE to override existing interpolation.")
+    )
+    if (nrow(quality_data) == 0) {
+      message("All the requested variables have been already interpolated.")
+      return(NULL)
+    }
+    # To bind to the new later: 
+    old_quality_prediction <- quality_prediction
+    rm(quality_prediction)# To avoid strange behavior if interpolation fails later  
+  }
+
   # Enable parallel computation:
   #source(mypath("analysis", "misc", "parallel_setup.R"))
   message(paste0("Data are ready to be summarise over years for ", cat(var), " variables."))
@@ -484,11 +521,13 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
   res_rime <- res_time$toc - res_time$tic
   message(paste0("Interpolations took ", res_rime, " sec."))
 
-  try(
   quality_prediction %<>%
     tidyr::unnest(interp_data) %>%
     dplyr::select(-model, -data)
-  )
 
+  if (complete & exists("old_quality_prediction")) {
+    quality_prediction <- rbind(old_quality_prediction, quality_prediction)
+  }
+  
   mysave(quality_prediction, dir = paste0(ssn_dir, "/", basin_name), overwrite = TRUE)
 }
