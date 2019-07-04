@@ -449,21 +449,6 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
   load(obs_data)
   donuts <- get(paste0(basin_name, "_obs"))
 
-  if (complete_prev_interp) {
-    myload(quality_prediction, dir = paste0(ssn_dir, "/", basin_name))
-    prev_interp <- quality_prediction
-    prev_interp_var <- unique(prev_interp$var_code)
-    var <- var[!var %in% prev_interp_var]
-    if (length(var) == 0) {
-      message("Var specified already interpolated, nothing to do here.")
-      return(NULL)
-    } else {
-      message(paste0("Var ", prev_interp_var, "have been already interpolated."))
-      message(paste0("Interpolate ", var, "."))
-    }
-    
-  }
-
   # Begin with nitrogen and phosphorus
   quality_data %<>%
     dplyr::filter(var_code %in% var)
