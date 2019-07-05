@@ -50,6 +50,7 @@ mysave(my_hydro_basin, dir = mypath("data-raw", "ssn_interpolation"),
 file_mnt <- mypath( "data-raw", "dem_250m_lambert_93.tif")
 dem <- raster::raster(file_mnt)
 
+
 myload(my_hydro_basin, dir = mypath("data-raw", "ssn_interpolation"))
 # Create folder with appropriate data by basin
 prepare_basin_data(basin = my_hydro_basin, group_var = basin_name, streams = rht,
@@ -72,7 +73,7 @@ sapply(my_hydro_basin$basin_name, function (basin) {
   assign("sites", get(paste0(basin, "_obs")))
 
   # Create appropriate ssn object
-  prepare_ssn(grass_path = "/usr/lib/grass72/",
+  prepare_ssn(grass_path = "/usr/lib/grass76/",
     mnt_path = mnt_path,
     pred_path = pred_path,
     pred_name = paste0(basin, "_pred_sites"),
@@ -80,4 +81,3 @@ sapply(my_hydro_basin$basin_name, function (basin) {
     ssn_path = mypath("data-raw", "ssn_interpolation", paste0(basin, ".ssn")),
     slope = FALSE)
   })
-

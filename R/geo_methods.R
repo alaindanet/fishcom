@@ -467,12 +467,11 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
   if (complete & file.exists(prediction_file)) {
     myload(quality_prediction, dir = paste0(ssn_dir, "/", basin_name))
 
-    var_interpolated <- var[var %in% quality_prediction[[var_code]]] 
+    var_interpolated <- var[var %in% quality_prediction$var_code] 
     quality_data %<>%
       filter(!var_code %in% var_interpolated)
-    message(
-      paste0(cat(var_interpolated), " have been already interpolated. Please use complete = FALSE to override existing interpolation.")
-    )
+    message(paste0(cat(var_interpolated), " have been already interpolated.
+	Please use complete = FALSE to override existing interpolation."))
     if (nrow(quality_data) == 0) {
       message("All the requested variables have been already interpolated.")
       return(NULL)
@@ -484,7 +483,9 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
 
   # Enable parallel computation:
   #source(mypath("analysis", "misc", "parallel_setup.R"))
-  message(paste0("Data are ready to be summarise over years for ", cat(var), " variables."))
+  message(paste0("Data are ready to be summarise over years for ",
+      cat(var[var %in% quality_prediction$var_code]),
+      " variables."))
   quality_data %<>%
    dplyr::mutate(interp_data = purrr::map(data,
 	~prepare_data_interpolation(data = .x, date = meas_date, var = value,
