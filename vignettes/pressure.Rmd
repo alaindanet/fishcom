@@ -61,7 +61,7 @@ var_to_keep <- c(
 "CONDUCTY", "DOC", "pH", "temp",
 "TURB_NEPHEL", "NH4", "NO2",
 "NO3", "PO4", "SO4", "D_OXY", "OXY_SAT",
-"PHY_CHLA", "PHY_CHLB", "PHY_CHLC","SiO3"
+"PHY_CHLA", "PHY_CHLB", "PHY_CHLC","SiO3", "TKN", "TP"
 )
 quality_data %<>%
   filter(var_code %in% var_to_keep) %>%
@@ -115,7 +115,7 @@ station_best_sampled <- var_values %>%
   sample_n(5, weigth = 1/(SO4 +1))
 ```
 
-```{r}
+```{r, fig.dim = c(14, 14)}
 best_sta_data <- quality_data %>%
   filter(id %in% station_best_sampled$id[1:5])
 
@@ -150,6 +150,31 @@ kable(sampling)
 
 # Interpolation
 
+## Map press
+
+```{r}
+myload(station_analysis, region_polygon, dir = mypath("data"))
+station <- select(station_analysis, id)
+station_press <- left_join(station, press)
+
+g <- purrr::map(unique(station_press$var_code),
+           function(x) {
+	     ggplot(data = region_polygon) +
+	       geom_sf() +
+	       geom_sf(data = filter(station_press, var_code == x),
+		 aes(color = press), size = 4) +
+	       scale_color_gradient(low = "green", high = "red") +
+	       ggtitle(x)
+	   }
+)
+
+g2 <- cowplot::plot_grid(plotlist = g)
+g2
+```
+
+
+## Press and stability
+
 ```{r}
 press
 biomass_com <- temporal_community_metrics %>%
@@ -176,6 +201,19 @@ p2 <- ggplot(press_scale, aes(x = press, y = biomass_stab)) +
   labs(x = "Scaled press", y = "Biomass stability")
 p2
 ```
+
+### Model
+
+```{r}
+mod_press_data <- press_scale %>%
+  select(station, var_code, press, biomass_stab, betadiv) %>%
+  spread(var_code, press)
+
+model <- lm(biomass_stab ~ CONDUCTY + D_OXY + PHY_CHLA + temp + TKN + TP,
+  mod_press_data) 
+summary(model)
+```
+
 
 ## Correlation between variables
 

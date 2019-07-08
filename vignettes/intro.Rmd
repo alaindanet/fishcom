@@ -48,10 +48,8 @@ According to the postdoc advertisement:
   - [ ] Station
   - [ ] Water quality
 - [ ] Environmental data
-  - [ ] temporal flow and quality (Marie Silvestre): 
-    - [ ] Interpolation toward the station:
-      - [ ] Use RHT https://www.irstea.fr/fr/rht
-      - [ ] Test openSSR
+  - [ ] temporal flow and quality (Marie Silvestre):
+    - [x] Interpolate flow and quality
   - [ ] How to analyze qualitative data:
     - [x] Habitat
   - [x] Pressure data (Olivier Dezerald & Philippe Usseglio-Polatera):
