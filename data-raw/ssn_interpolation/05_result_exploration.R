@@ -13,7 +13,7 @@ source(mypath("R", "plot_methods.R"))
 
 # Load fish and environmental station
 
-res <- sapply(c("ouest", "nord", "sud", "est"), function (basin) {
+res <- lapply(c("ouest", "nord", "sud", "est"), function (basin) {
   myload(quality_prediction, dir = mypath("data-raw", "ssn_interpolation", basin))
   quality_prediction
 })
@@ -24,12 +24,11 @@ cross_val <- quality %>%
   mutate(cross_v = map(cross_v, enframe)) %>%
   unnest()
 
-filter(cross_val, is.na(year))
-for nord, look at data
 # Prediction:
-press <- quality %>%
+prediction <- quality %>%
   select(-cross_v) %>%
-  unnest(prediction) %>%
+  unnest(prediction)
+press <- prediction %>%
   group_by(id, var_code) %>%
   summarise(press = mean(avg_data))
 
@@ -38,3 +37,4 @@ ggplot(press, aes(x = press) ) +
   facet_wrap(~ var_code)
 
 mysave(press, dir = mypath("data-raw", "ssn_interpolation"), overwrite = TRUE)
+

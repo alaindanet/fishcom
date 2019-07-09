@@ -16,7 +16,7 @@ options(mc.cores = 5)
 mclapply(basin, function (x) {
   interpolate_basin(ssn_dir = mypath("data-raw", "ssn_interpolation"),
     basin_name = x, quality_data = quality_data,
-    var = c("TN", "TP", "CONDUCTY", "SO4", "temp", "PHY_CHLA", "D_OXY"),
+    var = c("pH"),
     complete = TRUE
   )
 })

@@ -15,7 +15,6 @@ data_common <- mypath("data")
 dest_dir <- mypath("data", "species")
 ```
 
-
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -209,7 +208,7 @@ mod_press_data <- press_scale %>%
   select(station, var_code, press, biomass_stab, betadiv) %>%
   spread(var_code, press)
 
-model <- lm(biomass_stab ~ CONDUCTY + D_OXY + PHY_CHLA + temp + TKN + TP,
+model <- lm(biomass_stab ~ CONDUCTY + NO2 + NO3 + D_OXY + PHY_CHLA + temp + TKN + TP,
   mod_press_data) 
 summary(model)
 ```
@@ -233,6 +232,11 @@ corrplot::corrplot(M, method = "circle")
 ```{r signification variable}
 kable(op_AUC)
 ```
+```{r}
+
+```
+
+
 
 ## Probability
 
@@ -341,6 +345,7 @@ p1 <- ggplot(press_cat, aes(x = category, y = biomass_stab)) +
   facet_wrap(~pressure) +
   labs(x = "Severity of the pressure", y = "Stability of the biomass")
 p1
+dev.off()
 ```
 
 ```{r}
