@@ -36,5 +36,4 @@ ggplot(press, aes(x = press) ) +
   geom_histogram() +
   facet_wrap(~ var_code)
 
-mysave(press, dir = mypath("data-raw", "ssn_interpolation"), overwrite = TRUE)
-
+mysave(cross_val, prediction, press, dir = mypath("data-raw", "ssn_interpolation"), overwrite = TRUE)
