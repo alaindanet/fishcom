@@ -380,8 +380,6 @@ prepare_basin_data <- function (basin = NULL, group_var = NULL, streams = NULL,
 
   write_basin_data <- function(name, data) {
     # crop streams, obs sites, pred sites
-    #int_streams <- sf::st_intersects(streams, data)
-    #streams_mask <- map_lgl(int_streams, function(x) ifelse(length(x) > 0, TRUE, FALSE))
     croped_streams <- sf::st_crop(streams, data)
     sp_data  <- as(data, "Spatial")
     croped_dem <- raster::crop(dem, sp_data)

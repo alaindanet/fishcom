@@ -1,0 +1,85 @@
+---
+title: "pressure_processing"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{pressure_processing}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(tidyverse)
+library(magrittr)
+mypath <- rprojroot::find_package_root_file
+source(mypath("R", "misc.R"))
+```
+
+# Pressure data
+
+- Contact data: Marie Sylvestre (FIRE, Paris) and Olivier Dezerald (ESE, Rennes)
+
+The pressure data are coming from FIRE and [Naiaides](
+http://www.naiades.eaufrance.fr/).
+
+We have selected all the variables that have been used for the DCE (Directive
+Cadre de l'Eau) which is a European policy. 
+
+I am tented to use Naiaides more than FIRE data because I have choose FIRE
+stations that were close to the fishing stations but looking at the raw data for
+the nitrates in particular, Naiades data have a far more range.
+
+- The scripts: `~/fishcom/data-raw/polluants/`
+- The data: `~/fishcom/data-raw/polluants/naiades-data/`
+
+There are several cleaning procedures for the data following Olivier's work
+which include:
+- Analyses should have date
+- Analyses should have been performed on water 
+- Qualification should be not "Incorrect"  
+
+Some datas have values corresponding to the threshold of quantification and the
+value can be high. Olivier was removing those datas if their values divided by
+two were superior to the threshold good/moderate states.
+
+For now I decide to not do this because I am not interested in quantifying
+states but rather to explore variation in raw values. It could be a problem if
+the methods vary a lot across labs and that this threshold of quantification
+could lead to spurious trends. **To be discussed**
+
+## Trends
+
+The problem with temporal data is that they often have periodic trends. They are
+often constraints by season in ecological data but it might not be the case for
+some chemicals and their period could be different.
+For exemple, temperature is highly seasonal but pesticides are applied at period
+that correspond to each crop.
+
+A method to detect the periodicity of temporal datas is the fourier
+transformation. For each variable, we can detect the periodicity.
+The periodicity can be used to compute a moving window averaging. The size of
+the window correspond to the periodicity of the variable. The removal of
+periodicity allows to see the trends.
+
+- Two links to do that in R:
+  - [Find periodicity](https://anomaly.io/detect-seasonality-using-fourier-transform-r/)
+  - [Extract trends](https://anomaly.io/seasonal-trend-decomposition-in-r/)
+
+We characterized the periodicity of each variable at the entire dataset (without
+looking at the station).
+
+```{r}
+myload(fourier, dir = mypath("data-raw", "polluants"))
+kable(filter(fourier, period_month < 14))
+```
+
+Most of the variables have a yearly period, we can detrend time series with
+moving window of 12 months.
+
+The moving window interpolation has been done in `03_moving_windows.R`
