@@ -45,4 +45,5 @@ yearly_avg_polluants <- prep_data %>%
   group_by(id, parameter, year) %>%
   summarise(value = mean(value, na.rm = TRUE)) %>%
   ungroup()
-mysave(monthly_avg_polluants, yearly_avg_polluants, dir = mypath("data-raw", "polluants"))
+mysave(monthly_avg_polluants, yearly_avg_polluants,
+  dir = mypath("data-raw", "polluants"), overwrite = TRUE)

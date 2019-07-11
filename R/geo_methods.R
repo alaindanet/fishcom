@@ -515,3 +515,50 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
   
   mysave(quality_prediction, dir = paste0(ssn_dir, "/", basin_name), overwrite = TRUE)
 }
+
+interpolate_naiades <- function(basin, year, parameter, ssn_dir, data_dir) {
+
+  pred_name <- paste0(basin, "_pred_sites")
+
+  ssn_obj_path <- paste0(ssn_dir, "/", basin, ".ssn")
+  ssn <- SSN::importSSN(ssn_obj_path, predpts = pred_name, o.write = TRUE)
+  message(paste0("Importation of ", basin, ".ssn is done"))
+  
+  print(pred_name %in% names(names(ssn)))
+
+# Compute the weight of each streams lines when they merged:
+  ssn <- SSN::additive.function(ssn, "H2OArea",
+    "afv_area")
+
+# create distance matrix between pred and obs:
+  SSN::createDistMat(ssn,
+    predpts = pred_name, o.write = TRUE, amongpreds = TRUE)
+
+  obs_data <- paste0(data_dir, "/", parameter, ".rda")
+  load(obs_data) #name of the object is data
+  message(paste0("Importation of data is done"))
+
+  ## Prepare interpolation data
+  # Filter year:
+  data %<>%
+    dplyr::filter(year == year)
+  # Filter stations:
+  station_file <- paste0(ssn_dir, "/", basin, "/", paste0(basin, "_obs"), ".rda")
+  load(station_file) #name: `basin`_obs
+  assign("station",get(paste0(basin, "_obs")))
+  data %<>%
+    filter(id %in% station$id)
+  rm(station)
+
+  # data in SSN
+
+  # Model
+  model <- compute_glmssn(data = data, var = value,
+  ssn = ssn, formula = NULL, family = NULL, corModel = NULL)
+  cross_v <- SSN::CrossValidationStatsSSN(model)
+  pred <- predict(m, pred_name)
+  prediction <- pred$ssn.object@predpoints@SSNPoints[[1]]@point.data[, c("id", "value", paste0("value", ".predSE"))]
+  # Save
+  return(list(cross_v = cross_v, prediction = prediction))
+  message(paste("Interpolation done for:", basin, parameter, year, sep = " "))
+}
