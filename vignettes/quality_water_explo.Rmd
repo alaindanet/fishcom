@@ -63,6 +63,13 @@ resume[resume$var_code %in% "PO4", ][["resume"]]
 
 ```{r}
 myload(station_naiades, dir = mypath("data-raw"))
+region_polygon %<>% st_transform(crs = 2154)
+station_naiades %<>%
+  select(id)
+plot(st_geometry(station_naiades), add = TRUE)
+plot(st_geometry(region_polygon))
+plot(st_geometry(station_analysis), pch = 16, col = "red", add = TRUE)
 
+mapview::mapview(station_naiades)
 ```
 
