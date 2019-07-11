@@ -58,3 +58,11 @@ resume[resume$var_code %in% "NO3", ][["resume"]]
 resume[resume$var_code %in% "NO2", ][["resume"]]
 resume[resume$var_code %in% "PO4", ][["resume"]]
 ```
+
+# Naiades
+
+```{r}
+myload(station_naiades, dir = mypath("data-raw"))
+
+```
+
