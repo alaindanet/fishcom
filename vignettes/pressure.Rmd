@@ -207,10 +207,43 @@ p2
 mod_press_data <- press_scale %>%
   select(station, var_code, press, biomass_stab, betadiv) %>%
   spread(var_code, press)
+mod_press_data %>%
+  summarise_all(~sum(is.na(.)))
 
-model <- lm(biomass_stab ~ CONDUCTY + NO2 + NO3 + D_OXY + PHY_CHLA + temp + TKN + TP,
+model <- lm(biomass_stab ~ CONDUCTY + NO2 + NO3 + D_OXY + PHY_CHLA + temp + TKN + TP + pH,
   mod_press_data) 
 summary(model)
+```
+
+### Model by hydrographic region
+
+```{r}
+myload(my_hydro_basin, dir = mypath("data-raw", "ssn_interpolation"))
+mask <- sf::st_intersects(station, my_hydro_basin)
+
+station$basin <- purrr::map_chr(mask, function (x){
+  if (length(x) == 0) {
+    return(as.integer(NA))
+  } else {
+    return(my_hydro_basin[["basin_name"]][[x]])
+  }
+  })
+```
+```{r}
+mod_press_data %<>%
+  left_join(rename(station, station = id), by = "station") %>%
+  select(-geometry)
+
+model <- lm(biomass_stab ~ basin:(CONDUCTY + NO2 + NO3 + D_OXY + PHY_CHLA + temp + TKN + TP + pH) ,
+  mod_press_data) 
+summary(model)
+```
+
+```{r}
+model <- lm(betadiv ~ basin:(CONDUCTY + NO2 + NO3 + D_OXY + PHY_CHLA + temp + TKN + TP + pH),
+  mod_press_data) 
+summary(model)
+plot(model)
 ```
 
 
@@ -220,14 +253,46 @@ summary(model)
 M <- cor(
   select(press, var_code, press) %>%
     spread(var_code, press) %>%
+    select(-DOC, - TOC) %>%
     ungroup() %>%
     select(-id)
-)
+, method = "spearman")
 corrplot::corrplot(M, method = "circle")
 ```
 
+```{r}
+library(ade4)
+press_4_pca  <- select(mod_press_data,
+  -biomass_stab, - betadiv, -station, -basin, -DOC, -TOC, -PHY_CHLA) %>%
+  na.omit
+pca <- ade4::dudi.pca(as.data.frame(press_4_pca), scannf = FALSE, nf = 3, center = TRUE, scale = TRUE)
 
-# Olivier
+screeplot(pca)
+summary(pca)
+scatter(pca, posieig = "none")
+par(mfrow = c(2,2))
+s.corcircle(pca$co, xax = 1, yax = 2)
+title("Axis x = Comp1", "Axis y = Comp2")
+s.corcircle(pca$co, xax = 3, yax = 2)
+title("Axis x = Comp3", "Axis y = Comp2")
+s.corcircle(pca$co, xax = 1, yax = 3)
+title("Axis x = Comp1", "Axis y = Comp3")
+dev.off()
+
+```
+
+```{r}
+mod_press_data %<>%
+  mutate(axis1 = pca$li[[1]], axis2 = pca$li[[2]])
+model <- lm(betadiv ~ basin:(axis1 + axis2),
+  mod_press_data) 
+summary(model)
+plot(model)
+```
+
+
+
+# Olivier datas
 
 ```{r signification variable}
 kable(op_AUC)
