@@ -107,19 +107,20 @@ interpolate_ssn <- function(ssn = NULL, data = NULL, group = NULL, var = NULL,
 compute_glmssn <- function(data = NULL, var = NULL,
   ssn = NULL, formula = NULL, family = NULL, corModel = NULL, enquo_var = FALSE, ...) {
 
-  if (enquo_var) {
+  if (!is.character(var)) {
+    if (enquo_var) {
     var <- rlang::enquo(var)
+    }
+    var <- rlang::quo_name(var)
   }
-  var_chr <- rlang::quo_name(var)
 
   # get ssn dataset to fill it
-  data_id_var <- data %>%
-    dplyr::select(id, !!var)
+  data_id_var <- data[, c("id", var)]
   ssn_data <- ssn@obspoints@SSNPoints[[1]]@point.data
 
   # Suppress var if present
-  if (var_chr %in% colnames(ssn_data)) {
-    ssn_data %<>% dplyr::select(-!!var)
+  if (var %in% colnames(ssn_data)) {
+    ssn_data <- ssn_data[, ! names(ssn_data) %in% var, drop = F]
   }
   # Fill ssn with new data:
   #stopifnot(nrow(ssn_data) == nrow(data_id_var))
@@ -130,7 +131,7 @@ compute_glmssn <- function(data = NULL, var = NULL,
 
   # temporary hack:
   if (is.null(formula)) {
-    formula <-  as.formula(paste0(var_chr," ~ 1"))
+    formula <-  as.formula(paste0(var," ~ 1"))
   }
   if (is.null(corModel)) {
     corModel <- c("LinearSill.tailup", "Mariah.taildown",
@@ -141,9 +142,12 @@ compute_glmssn <- function(data = NULL, var = NULL,
   }
 
   mod_sp <- tryCatch(
-    SSN::glmssn(formula, ssn, family = family, CorModels = corModel, addfunccol
-      = "afv_area"),
-  warning = function (w) {print("FAIL!"); return(NA)}
+    {
+    model <- SSN::glmssn(formula, ssn, family = family, CorModels = corModel,
+      addfunccol = "afv_area")
+    return(model)
+  },
+  error = function (w) {message(w); return(NULL)}
   )
   mod_sp
 }
@@ -521,14 +525,21 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
 
 interpolate_naiades <- function(ssn = NULL, data = NULL, basin = NULL, var = NULL, formula = NULL, family = NULL, corModel = NULL, enquo_var = TRUE) {
   # Model
-  model <- compute_glmssn(data = data, var = value,
-  ssn = ssn, formula = NULL, family = NULL, corModel = NULL, enquo_var = TRUE)
+  
+  model <- tryCatch({
+    out <- compute_glmssn(data = data, var = var,
+      ssn = ssn, formula = NULL, family = NULL, corModel = NULL, enquo_var = TRUE)
+    return(out)
+  }, error = function(e) message(e))
 
-  cross_v <- SSN::CrossValidationStatsSSN(model)
-
-  pred_name <- paste0(basin, "_pred_sites")
-  pred <- predict(model, pred_name)
-  prediction <- pred$ssn.object@predpoints@SSNPoints[[1]]@point.data[, c("id", "value", paste0("value", ".predSE"))]
-  # Save
-  return(list(cross_v = cross_v, prediction = prediction))
+  if (is.null(model)) {
+    return(NULL) 
+  } else {
+    cross_v <- SSN::CrossValidationStatsSSN(model)
+    pred_name <- paste0(basin, "_pred_sites")
+    pred <- predict(model, pred_name)
+    prediction <- pred$ssn.object@predpoints@SSNPoints[[1]]@point.data[, c("id", "value", paste0("value", ".predSE"))]
+    # Save
+    return(list(cross_v = cross_v, prediction = prediction))
+  }
 }
