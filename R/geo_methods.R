@@ -526,19 +526,16 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
 interpolate_naiades <- function(ssn = NULL, data = NULL, basin = NULL, var = NULL, formula = NULL, family = NULL, corModel = NULL, enquo_var = TRUE) {
   # Model
   
-  model <- tryCatch({
-    out <- compute_glmssn(data = data, var = var,
+  model <- compute_glmssn(data = data, var = var,
       ssn = ssn, formula = NULL, family = NULL, corModel = NULL, enquo_var = TRUE)
-    return(out)
-  }, error = function(e) message(e))
 
-  if (is.null(model)) {
-    return(NULL) 
+  if (class(model) != "glmssn") {
+    return(model)
   } else {
     cross_v <- SSN::CrossValidationStatsSSN(model)
     pred_name <- paste0(basin, "_pred_sites")
     pred <- predict(model, pred_name)
-    prediction <- pred$ssn.object@predpoints@SSNPoints[[1]]@point.data[, c("id", "value", paste0("value", ".predSE"))]
+    prediction <- pred$ssn.object@predpoints@SSNPoints[[1]]@point.data[, c("id", var, paste0(var, ".predSE"))]
     # Save
     return(list(cross_v = cross_v, prediction = prediction))
   }

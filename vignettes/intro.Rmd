@@ -69,8 +69,6 @@ According to the postdoc advertisement:
 - [x] network methods:
   - [x] connectance, average trophic level, richness
     - [ ] beautiful plots
-      - [ ] node size according to biomass 
-        - [ ] connect biomass to graph plot
       - [ ] plot "tableau de bord"
         - [ ] réseau + some information
     - [/] nestedness, trophic length, modularity, trophic group:
@@ -84,7 +82,7 @@ According to the postdoc advertisement:
     - [ ] null model for connectance
     - [ ] null models everywhere ?
   - [ ] community methods:
-    - [ ] compute turnover, rank shift, rate of change
+    - [ ] compute population stability and synchrony
 - [x] Fish datasets to generate
 - [ ] Assess quality of the dataset:
 

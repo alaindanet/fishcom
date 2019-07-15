@@ -7,3 +7,5 @@ source(mypath("R", "geo_methods.R"))
 source(mypath("R", "plot_methods.R"))
 
 myload(press_interpolation, dir = mypath("data-raw", "polluants"))
+unique(press_interpolation$result)
+filter(press_interpolation, basin == "ouest")

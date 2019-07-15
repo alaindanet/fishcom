@@ -28,8 +28,8 @@ ssn <- mclapply(basin, function(basin) {
   ssn <- SSN::additive.function(ssn, "H2OArea",
     "afv_area")
 # create distance matrix between pred and obs:
-  SSN::createDistMat(ssn,
-    predpts = pred_name, o.write = TRUE, amongpreds = TRUE)
+  SSN::createDistMat(ssn, predpts = pred_name, o.write = TRUE,
+    amongpreds = TRUE)
   ssn
 })
 names(ssn) <- basin 
@@ -62,6 +62,14 @@ MoreArgs = list(data_dir = mypath("data-raw", "polluants",
   ssn_dir = mypath("data-raw", "naiades_ssn"))
 )
 
+# Put variables in the good format:
+combin %<>%
+  mutate(
+    basin = as.character(basin),
+    year = as.integer(year),
+    parameter = as.character(parameter)
+  )
+
 #####################
 #  Interpolate SSN  #
 #####################
@@ -82,3 +90,25 @@ combin %<>%
 
 press_interpolation <- combin
 mysave(press_interpolation, dir = mypath("data-raw", "polluants"), overwrite = TRUE)
+
+
+ids <- 1
+undebug(interpolate_naiades)
+undebug(compute_glmssn)
+interpolate_naiades(
+  ssn = combin[["ssn"]][[ids]],
+  data = combin[["data"]][[ids]],
+  basin = combin[["basin"]][[ids]],
+  var = "value"
+)
+
+options(mc.cores = 10)
+combin_test <- combin[1:10,]
+combin_test$result <- mcMap(interpolate_naiades,
+  ssn = combin_test[["ssn"]],
+  data = combin_test[["data"]],
+  basin = combin_test[["basin"]],
+  MoreArgs = list(
+ var = "value"
+  )
+)

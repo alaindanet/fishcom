@@ -8,12 +8,14 @@ library(magrittr)
 library(lubridate)
 library(furrr)
 library(vegan)
-devtools::load_all()
+mypath <- rprojroot::find_package_root_file
+source(mypath("R", "misc.R"))
+#devtools::load_all()
 
 # Cores
 cat("Working directory:\n")
 cat(getwd(), "\n")
-source('../analysis/misc/parallel_setup.R')
+source(mypath("analysis", "misc","parallel_setup.R"))
 
 #####################
 #  Compute biomass  #
@@ -81,7 +83,7 @@ mysave(community_analysis, dir = data_common, overwrite = TRUE)
 #  Compute community metrics  #
 ###############################
 # Summary information by fishing operation such as richness, biomass
-data(community_analysis)
+myload(community_analysis, dir = mypath("data"))
 
 com <- community_analysis %>%
   group_by(opcod) %>%
@@ -97,8 +99,7 @@ mysave(community_metrics, dir = data_common, overwrite = TRUE)
 ############################
 #  Compute beta-diversity  #
 ############################
-data(community_analysis)
-data(op_analysis)
+myload(community_analysis, op_analysis, dir = mypath("data"))
 
 # Compute beta-diversity 
 com <- left_join(ungroup(community_analysis),
@@ -161,8 +162,7 @@ betadiv <- com %>%
 #  Compute temporal community description  #
 ############################################
 # Compute mean and cv of richness
-data(community_metrics)
-data(op_analysis)
+myload(community_metrics, op_analysis, dir = mypath("data"))
 
 com <- left_join(community_metrics, op_analysis, by = c("opcod")) %>%
   group_by(station) %>%

@@ -39,7 +39,7 @@ cat("---------------------------------------------\n")
 cat("Temporal network biomass by trophic group\n")
 cat("---------------------------------------------\n")
 
-myload(op_analysis, metaweb_analysis, dir = data_common)
+myload(op_analysis, metaweb_analysis, network_analysis, dir = data_common)
 myload(network_metrics, dir = dest_dir)
 
 op <- op_analysis %>% dplyr::select(opcod, station, year)
@@ -131,3 +131,37 @@ mysave(temporal_network_metrics, dir = dest_dir, overwrite = TRUE)
 cat("-----------------------------------\n")
 cat("End of temporal metrics computation\n")
 cat("-----------------------------------\n")
+
+################################################################
+#  Compute temporal correlation between biomass trophic level  #
+################################################################
+cat("----------------------------------------------------------\n")
+cat("Compute temporal correlation between biomass trophic level\n")
+cat("----------------------------------------------------------\n")
+myload(op_analysis, metaweb_analysis, network_analysis, dir = data_common)
+myload(network_metrics, dir = dest_dir)
+
+op <- op_analysis %>% dplyr::select(opcod, station, year)
+net <- left_join(network_metrics, op, by = "opcod") %>%
+  ungroup()
+rm(op_analysis, network_analysis)
+troph_group_biomass <- net %>%
+  unnest(composition) %>%
+  group_by(station, troph_group, year) %>%
+  summarise(biomass = mean(biomass)) %>%
+  ungroup() %>%
+  spread(troph_group, biomass) 
+
+cor_troph_group <- troph_group_biomass %>%
+  rename(low = `2`, high = `3`) %>%
+  select(station, year, low, high) %>%
+  group_by(station) %>%
+  arrange(year) %>%
+  summarise(n_obs = n(),
+    cor_troph = cor(low, high, use = "pairwise.complete.obs",method = "spearman"))
+mysave(cor_troph_group, dir = mypath("data"))
+
+cat("-----------------------------------\n")
+cat("End of temporal metrics computation\n")
+cat("-----------------------------------\n")
+
