@@ -26,7 +26,40 @@ station_naiades %<>%
 
 myload(yearly_avg_polluants, dir = mypath("data-raw", "polluants"))
 unique(yearly_avg_polluants$id)
+nobs_station <- yearly_avg_polluants %>%
+  group_by(id, parameter) %>%
+  summarise(nobs = n()) %>%
+  group_by(id) %>%
+  summarise(nobs = mean(nobs))
 
+arrange(nobs_station, desc(nobs)) %>%
+  filter(nobs >= 10)
+
+# Basin_data
+myload(my_hydro_basin, dir = mypath("data-raw", "fire_ssn"))
+naiades_basin <- st_intersects(station_naiades, my_hydro_basin)
+station_naiades$basin <- purrr::map_chr(naiades_basin, function(x){
+  if (length(x) == 0) {
+   return(NA) 
+  }
+  my_hydro_basin[["basin_name"]][x]
+})
+# Filter NA
+station_naiades %<>%
+  filter(!is.na(basin))
+# Get basin to obs data:
+nobs_station %<>%
+  left_join(as.data.frame(station_naiades)) %>%
+  select(-geometry)
+# Keep by basin the 2000 station the most sampled:
+station_to_keep <- nobs_station %>%
+  filter(!is.na(basin)) %>%
+  group_by(basin) %>%
+  arrange(desc(nobs)) %>%
+  slice(1:2000) %>%
+  ungroup
+station_naiades %<>%
+  filter(id %in% station_to_keep$id)
 
 # Sites to be predicted:
 myload(station, dir = mypath("data-raw"))
@@ -44,8 +77,6 @@ station_analysis %<>%
 file_mnt <- mypath( "data-raw", "dem_250m_lambert_93.tif")
 dem <- raster::raster(file_mnt)
 
-
-myload(my_hydro_basin, dir = mypath("data-raw", "ssn_interpolation"))
 # Create folder with appropriate data by basin
 prepare_basin_data(basin = my_hydro_basin, group_var = basin_name, streams = rht,
   dem = dem, obs_sites = station_naiades, pred_sites = station_analysis,
