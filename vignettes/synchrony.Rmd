@@ -1,0 +1,81 @@
+---
+title: "Synchrony"
+author: "Alain Danet"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Synchrony}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+mypath <- rprojroot::find_package_root_file
+data_common <- mypath("data")
+dest_dir <- mypath("data", "species")
+```
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.dim = c(10, 10),
+  echo = FALSE
+)
+library(tidyverse)
+library(ggpmisc)
+library(cowplot)
+library(kableExtra)
+library(magrittr)
+source(mypath("R", "misc.R"))
+source(mypath("R", "plot_methods.R"))
+#devtools::load_all()
+theme_set(theme_alain())
+```
+
+```{r load dataset, include = FALSE}
+myload(synchrony, temporal_community_metrics, dir = mypath("data"))
+```
+```{r compare both stability measure}
+synchrony %<>%
+  mutate(stab_com = 1 / cv_com)
+compare_stab <- synchrony %>%
+  select(station, stab_com) %>%
+  left_join(select(temporal_community_metrics, station, biomass_stab), by =
+    "station")
+ggplot(compare_stab, aes(x = stab_com, y = biomass_stab)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1) +
+  labs(x = "Thibault & Connelly",
+    y = "Classic measure",
+  title = "Compare the two stability measurement: 1/CV")
+```
+
+```{r compare distributions of the stability measurements}
+compare_stab2 <- compare_stab %>%
+  gather(stab, value, stab_com, biomass_stab)
+
+ggplot(compare_stab2, aes(x = value)) +
+  geom_histogram() +
+  facet_wrap(~ stab)
+```
+
+```{r richness_med versus stability}
+compare_stab_div <- compare_stab2 %>%
+  left_join(select(temporal_community_metrics, station, richness_med),
+    by = "station")
+formula <- y ~ x #needed for stat_poly_eq
+ggplot(compare_stab_div, aes(y = value, x = richness_med)) +
+  geom_point() +
+  facet_wrap(~ stab) +
+  geom_smooth(method = 'lm', formula = formula) +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(x = "diversity", y = "biomass_stab")
+
+```
+
+
