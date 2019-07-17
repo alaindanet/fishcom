@@ -138,28 +138,96 @@ cat("-----------------------------------\n")
 cat("----------------------------------------------------------\n")
 cat("Compute temporal correlation between biomass trophic level\n")
 cat("----------------------------------------------------------\n")
-myload(op_analysis, metaweb_analysis, network_analysis, dir = data_common)
+myload(op_analysis, network_analysis, dir = data_common)
 myload(network_metrics, dir = dest_dir)
 
-op <- op_analysis %>% dplyr::select(opcod, station, year)
+op <- op_analysis %>% dplyr::select(opcod, station, date)
 net <- left_join(network_metrics, op, by = "opcod") %>%
-  ungroup()
+  ungroup() %>%
+  filter(!is.na(station))
 rm(op_analysis, network_analysis)
 troph_group_biomass <- net %>%
   unnest(composition) %>%
-  group_by(station, troph_group, year) %>%
+  group_by(station, troph_group, date) %>%
   summarise(biomass = mean(biomass)) %>%
   ungroup() %>%
-  spread(troph_group, biomass) 
+  mutate(troph_group = ifelse(troph_group == 2, "low", "high"))
+  #spread(troph_group, biomass) %>%
 
-cor_troph_group <- troph_group_biomass %>%
-  rename(low = `2`, high = `3`) %>%
-  select(station, year, low, high) %>%
+complete_com <- troph_group_biomass %>%
   group_by(station) %>%
-  arrange(year) %>%
-  summarise(n_obs = n(),
-    cor_troph = cor(low, high, use = "pairwise.complete.obs",method = "spearman"))
-mysave(cor_troph_group, dir = mypath("data"))
+  summarise(
+    troph_group = list(unique(troph_group)),
+    date = list(unique(date))) %>%
+  mutate(comb = map2(troph_group, date, function(sp, date){
+    test <- expand.grid(troph_group = sp, date = date)
+    return(test)
+    })
+    ) %>%
+  unnest(comb)
+# Join and put biomass to 0 when no observed:
+complete_com %<>% left_join(troph_group_biomass, by = c("station", "troph_group", "date")) %>%
+  mutate(biomass = ifelse(is.na(biomass), 0, biomass))
+
+test <- complete_com %>%
+  group_by(station, troph_group, date) %>%
+  summarise(nobs = n())
+filter(test, nobs > 1)
+complete_com %<>%
+  group_by(station) %>%
+  nest()
+
+complete_com %<>%
+  mutate(
+    com_mat = purrr::map(data, function(x) spread(x, troph_group, biomass)),
+    com_mat = purrr::map(com_mat, function(x) select(x, -date))
+  )
+synchrony <- complete_com %>%
+  mutate(
+    avg_troph_group = purrr::map(com_mat, colMeans),
+    cov_mat = purrr::map(com_mat, cov),
+    var_troph_group = purrr::map(cov_mat, diag),
+    synchrony = purrr::map_dbl(cov_mat, function(x) {
+      com_var <- sum(x)
+      var_intra_sp <- sum(sqrt(diag(x)))
+      phi <- com_var / var_intra_sp^2 
+      return(phi)
+    }),
+  cv_troph_group = purrr::map2_dbl(avg_troph_group, var_troph_group, function(biomass, variance) {
+    #Check that the species are in the same order in the vector:
+    stopifnot(names(biomass) == names(variance))
+
+    rel_biomass <- biomass / sum(biomass)
+    rel_sdt <- sqrt(variance) / biomass
+
+    cv_avg <- sum(rel_biomass * rel_sdt)
+    return(cv_avg)
+    }),
+  cv_com = synchrony * cv_troph_group
+  )
+
+synchrony %<>%
+  select(station, synchrony, cv_troph_group, cv_com)
+troph_group_synchrony <- synchrony
+
+# ADD the diversity total and by troph_group
+div_troph_group <- net %>%
+  unnest(composition) %>%
+  select(station, species, troph_group, date) %>%
+  mutate(troph_group = ifelse(troph_group == 2, "low", "high")) %>%
+  group_by(station, troph_group, date) %>%
+  summarise(nbsp = n()) %>%
+  group_by(station, troph_group) %>%
+  summarise(med_nbsp = median(nbsp)) %>%
+  spread(troph_group, med_nbsp) %>%
+  mutate(low = ifelse(is.na(low), 0, low)) %>%
+  rename(med_nbsp_high_troph = high, med_nbsp_low_troph = low) %>%
+  mutate(med_nbsp_total = med_nbsp_high_troph + med_nbsp_low_troph)
+
+troph_group_synchrony %<>%
+  left_join(div_troph_group, by = c("station"))
+
+mysave(troph_group_synchrony, dir = mypath("data"), overwrite = TRUE)
 
 cat("-----------------------------------\n")
 cat("End of temporal metrics computation\n")

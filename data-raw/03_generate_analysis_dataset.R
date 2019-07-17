@@ -14,6 +14,7 @@ mypath <- rprojroot::find_package_root_file
 mydir <- mypath("data-raw", "fishing_op_build")
 source(mypath("R", "plot_methods.R"))
 source(mypath("R", "misc.R"))
+source(mypath("R", "building_dataset.R"))
 theme_set(theme_alain())
 
 
@@ -21,9 +22,20 @@ myload(op, dir = mypath("data-raw"))
 
 #op_sp_ind Summary of op 
 myload(op_sp_ind, dir = mypath("data"))
-op_sp_ind
+test_unique_op <- op_sp_ind %>%
+  group_by(opcod) %>%
+  summarise(nobs = n()) %>%
+  filter(nobs > 1)
+stopifnot(nrow(test_unique_op) == 0)
+
 
 op %<>% left_join(op_sp_ind, by = "opcod")
+test_unique_st_date  <- op %>%
+  group_by(station, date) %>%
+  summarise(nobs = n()) %>%
+  filter(nobs > 1) %>%
+  arrange(station)
+message(cat(test_unique_st_date$station), " stations have several op by date\n", "To be cleaned")
 
 ##############################################
 #  Distribution of fishing operation timing  #
@@ -55,7 +67,6 @@ low_int <- filter(int_op, sample_sep < 60) %>%
   ungroup() %>%
   arrange(station)
 filter(int_op, station == 657)
-
 ## filter double sampling, surely doubled 
 clean_dbl <- group_by(int_op, station) %>%
   nest() %>%
@@ -77,8 +88,12 @@ qplot(sample_sep, data = filter(clean_dbl, sample_sep < 2000)) +
     y = "Frequency") +
   xlim(c(0, 2000))
 filter(clean_dbl, sample_sep < 160)
-filter(clean_dbl, station == 709)
-filter(clean_dbl, station == 657)
+test_dbl_op  <- clean_dbl %>%
+  group_by(station, date) %>%
+  summarise(nobs = n()) %>%
+  filter(nobs > 1) %>%
+  arrange(station)
+stopifnot(nrow(test_dbl_op) == 0)
 
 # Numbering the sampling events by station
 op_hist <- clean_dbl %>%
@@ -111,9 +126,14 @@ qplot(sdt, data = op_test_station) +
 
 
 # For temporal analysis, we keep station followed more than 10 times
-op <- filter(op, station %in% good_station_id)
+op <- filter(op, station %in% good_station_id, opcod %in% clean_dbl$opcod)
 op %<>%
   mutate(year = year(date))
+test_dbl_op  <- op %>%
+  group_by(station, date) %>%
+  summarise(nobs = n()) %>%
+  filter(nobs > 1) %>%
+  arrange(station)
 
 op_analysis_complete_partial <- op
 devtools::use_data(op_analysis_complete_partial, overwrite = TRUE)

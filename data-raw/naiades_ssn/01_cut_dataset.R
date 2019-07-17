@@ -31,6 +31,13 @@ if (!dir.exists(saving_dir)) {
   dir.create(saving_dir)
 }
 
+# Filter data according to the station selected in 00_basin_ssn.R
+myload(station_to_keep, dir = mypath("data-raw", "naiades_ssn"))
+length(unique(yearly_avg_polluants$id))
+length(unique(station_to_keep$id))
+yearly_avg_polluants %<>%
+  filter(id %in% station_to_keep$id)
+
 yearly_avg_polluants %>%
   group_by(parameter) %>%
   nest() %>%

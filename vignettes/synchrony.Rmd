@@ -40,7 +40,6 @@ myload(synchrony, temporal_community_metrics, dir = mypath("data"))
 synchrony %<>%
   mutate(stab_com = 1 / cv_com)
 compare_stab <- synchrony %>%
-  select(station, stab_com) %>%
   left_join(select(temporal_community_metrics, station, biomass_stab), by =
     "station")
 ggplot(compare_stab, aes(x = stab_com, y = biomass_stab)) +
@@ -74,8 +73,148 @@ ggplot(compare_stab_div, aes(y = value, x = richness_med)) +
     eq.with.lhs = "italic(hat(y))~`=`~",
     aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
     parse = TRUE) +
-  labs(x = "diversity", y = "biomass_stab")
-
+  labs(x = "Median richness", y = "Biomass stability")
 ```
+
+
+
+```{r synchrony and diversity}
+sync <- synchrony %>% 
+  select(station, synchrony) %>%
+  left_join(select(temporal_community_metrics, station, richness_med),
+    by = "station")
+
+sync_plot <- ggplot(sync, aes(y = synchrony, x = richness_med)) +
+  geom_point() +
+  geom_smooth(method = 'lm', formula = formula) +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(x = "Median richness", y = "Synchrony")
+```
+
+```{r}
+cv <- synchrony %>% 
+  select(station, cv_sp, stab_com) %>%
+  left_join(select(temporal_community_metrics, station, richness_med,
+      biomass_stab),
+    by = "station") %>%
+  gather(cv, value, cv_sp, stab_com, biomass_stab)
+cv_plot <- ggplot(cv, aes(y = value, x = richness_med)) +
+  geom_point() +
+  facet_wrap(~ cv, scales = "free_y") +
+  geom_smooth(method = 'lm', formula = formula) +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(x = "Median richness", y = "Coefficient of Variation")
+```
+
+```{r}
+plot_grid(sync_plot, cv_plot, ncol = 1)
+```
+
+### Synchrony and richness by trophic groups
+
+```{r}
+myload(troph_group_synchrony, dir = mypath("data"))
+
+sync_troph <- synchrony %>% 
+  select(station, synchrony, cv_com, cv_sp) %>%
+  left_join(
+    select(troph_group_synchrony, station, med_nbsp_high_troph, med_nbsp_low_troph, med_nbsp_total),
+    by = "station") %>%
+  gather(troph, div, med_nbsp_high_troph, med_nbsp_low_troph,
+    med_nbsp_total) %>%
+  gather(stab, value, synchrony, cv_com, cv_sp)
+
+formula <- y ~ x + I(exp(-x)) #needed for stat_poly_eq
+sync_div_plot <- ggplot(sync_troph, aes(y = value, x = div)) +
+  geom_point() +
+  facet_grid(stab ~ troph, scales = "free_y") +
+  geom_smooth(method = 'lm', formula = formula) +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(x = "Median richness", y = "")
+sync_div_plot
+```
+
+
+## Synchrony by trophic groups
+
+```{r}
+troph_group_synchrony %<>%
+  mutate(stab_com = 1 / cv_com)
+```
+
+```{r synchrony and diversity 2}
+sync_div <- troph_group_synchrony %>%
+  select(station, synchrony, med_nbsp_high_troph, med_nbsp_low_troph,
+    med_nbsp_total) %>%
+  gather(troph, div, med_nbsp_high_troph, med_nbsp_low_troph,
+    med_nbsp_total)
+formula <- y ~ x #needed for stat_poly_eq
+sync_div_plot <- ggplot(sync_div, aes(y = synchrony, x = div)) +
+  geom_point() +
+  facet_wrap(~ troph, scales = "free_y") +
+  geom_smooth(method = 'lm', formula = formula) +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(x = "Median richness", y = "Synchrony")
+sync_div_plot
+```
+
+```{r Thibault & Connelly stability and diversity}
+stab_div <- troph_group_synchrony %>%
+  select(station, stab_com, med_nbsp_high_troph, med_nbsp_low_troph,
+    med_nbsp_total) %>%
+  gather(troph, div, med_nbsp_high_troph, med_nbsp_low_troph,
+    med_nbsp_total)
+formula <- y ~ x #needed for stat_poly_eq
+stab_div_plot <- ggplot(stab_div, aes(y = stab_com, x = div)) +
+  geom_point() +
+  facet_wrap(~ troph, scales = "free_y") +
+  geom_smooth(method = 'lm', formula = formula) +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(x = "Median richness", y = "Stability (1/cv_com)")
+```
+
+```{r Thibault & Connelly cv_com and diversity}
+cv_div <- troph_group_synchrony %>%
+  select(station, cv_com, med_nbsp_high_troph, med_nbsp_low_troph,
+    med_nbsp_total) %>%
+  gather(troph, div, med_nbsp_high_troph, med_nbsp_low_troph,
+    med_nbsp_total)
+formula <- y ~ x #needed for stat_poly_eq
+cv_div_plot <- ggplot(cv_div, aes(y = cv_com, x = div)) +
+  geom_point() +
+  facet_wrap(~ troph, scales = "free_y") +
+  geom_smooth(method = 'lm', formula = formula) +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(x = "Median richness", y = "cvility (1/cv_com)")
+cv_div_plot
+```
+```{r}
+plot_grid(stab_div_plot, cv_div_plot, ncol = 1)
+```
+
 
 

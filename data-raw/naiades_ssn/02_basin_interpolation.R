@@ -62,20 +62,21 @@ MoreArgs = list(data_dir = mypath("data-raw", "polluants",
   ssn_dir = mypath("data-raw", "naiades_ssn"))
 )
 
-# Put variables in the good format:
-combin %<>%
-  mutate(
-    basin = as.character(basin),
-    year = as.integer(year),
-    parameter = as.character(parameter)
-  )
 
 #####################
 #  Interpolate SSN  #
 #####################
 
+data_dir <- mypath("data-raw", "polluants")
+#if (file.exists(paste0(data_dir,"/", "press_interpolation.rda"))) {
+  #myload(press_interpolation, dir = data_dir)
+  #combin %<>% filter(!(parameter %in% press_interpolation$parameter &
+      #basin %in% press_interpolation$basin & year %in% press_interpolation$year))
+#}
+
 
 options(mc.cores = 10)
+combin <- combin[1:10,]
 combin$result <- mcMap(interpolate_naiades,
   ssn = combin[["ssn"]],
   data = combin[["data"]],
@@ -88,27 +89,23 @@ combin$result <- mcMap(interpolate_naiades,
 combin %<>%
   dplyr::select(-ssn, -data)
 
-press_interpolation <- combin
-mysave(press_interpolation, dir = mypath("data-raw", "polluants"), overwrite = TRUE)
+#if (file.exists(paste0(data_dir,"/", "press_interpolation.rda"))) {
+  #myload(press_interpolation, dir = data_dir)
 
+  #combin %<>% filter(!(parameter %in% press_interpolation$parameter &
+      #basin %in% press_interpolation$basin & year %in% press_interpolation$year))
+  #press_interpolation <- rbind(press_interpolation, combin)
+  #mysave(press_interpolation, dir = data_dir, overwrite = TRUE)
+#} else {
+  press_interpolation <- combin
+  mysave(press_interpolation, dir = data_dir, overwrite = TRUE)
+#}
 
-ids <- 1
-undebug(interpolate_naiades)
-undebug(compute_glmssn)
-interpolate_naiades(
-  ssn = combin[["ssn"]][[ids]],
-  data = combin[["data"]][[ids]],
-  basin = combin[["basin"]][[ids]],
-  var = "value"
-)
-
-options(mc.cores = 10)
-combin_test <- combin[1:10,]
-combin_test$result <- mcMap(interpolate_naiades,
-  ssn = combin_test[["ssn"]],
-  data = combin_test[["data"]],
-  basin = combin_test[["basin"]],
-  MoreArgs = list(
- var = "value"
-  )
-)
+#ids <- 1
+#debug(interpolate_naiades)
+#interpolate_naiades(
+  #ssn = combin[["ssn"]][[ids]],
+  #data = combin[["data"]][[ids]],
+  #basin = combin[["basin"]][[ids]],
+  #var = "value"
+#)

@@ -181,3 +181,73 @@ filter(community_analysis, opcod == 4223)
 
 temporal_community_metrics <- com
 mysave(temporal_community_metrics, dir = data_common, overwrite = TRUE)
+
+##################################
+#  Compute population synchrony  #
+##################################
+# Following Thibault & Collonny (2013). Ecolet
+
+myload(community_analysis, op_analysis, dir = mypath("data"))
+
+com <- ungroup(community_analysis) %>%
+  left_join(select(op_analysis, opcod, station, date), by = "opcod") %>%
+  filter(!is.na(station)) %>%
+  select(station, date, species, biomass)
+
+# Get 0 biomass when the species is absent of station
+# By station replicate complete species list observed:
+complete_com <- com %>%
+  group_by(station) %>%
+  summarise(
+    species = list(unique(species)),
+    date = list(unique(date))) %>%
+  mutate(comb = map2(species, date, function(sp, date){
+    test <- expand.grid(species = sp, date = date)
+    return(test)
+    })
+    ) %>%
+  unnest(comb)
+# Join and put biomass to 0 when no observed:
+complete_com %<>% left_join(com, by = c("station", "species", "date")) %>%
+  mutate(biomass = ifelse(is.na(biomass), 0, biomass))
+
+test <- complete_com %>%
+  group_by(station, species, date) %>%
+  summarise(nobs = n())
+filter(test, nobs > 1)
+complete_com %<>%
+  group_by(station) %>%
+  nest()
+
+complete_com %<>%
+  mutate(
+    com_mat = purrr::map(data, function(x) spread(x, species, biomass)),
+    com_mat = purrr::map(com_mat, function(x) select(x, -date))
+  )
+synchrony <- complete_com %>%
+  mutate(
+    avg_sp = purrr::map(com_mat, colMeans),
+    cov_mat = purrr::map(com_mat, cov),
+    var_sp = purrr::map(cov_mat, diag),
+    synchrony = purrr::map_dbl(cov_mat, function(x) {
+      com_var <- sum(x)
+      var_intra_sp <- sum(sqrt(diag(x)))
+      phi <- com_var / var_intra_sp^2 
+      return(phi)
+    }),
+  cv_sp = purrr::map2_dbl(avg_sp, var_sp, function(biomass, variance) {
+    #Check that the species are in the same order in the vector:
+    stopifnot(names(biomass) == names(variance))
+
+    rel_biomass <- biomass / sum(biomass)
+    rel_sdt <- sqrt(variance) / biomass
+
+    cv_avg <- sum(rel_biomass * rel_sdt)
+    return(cv_avg)
+    }),
+  cv_com = synchrony * cv_sp
+  )
+
+synchrony %<>%
+  select(station, synchrony, cv_sp, cv_com)
+mysave(synchrony, dir = mypath("data"), overwrite = TRUE)

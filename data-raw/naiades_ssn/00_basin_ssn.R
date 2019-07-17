@@ -60,6 +60,7 @@ station_to_keep <- nobs_station %>%
   ungroup
 station_naiades %<>%
   filter(id %in% station_to_keep$id)
+mysave(station_to_keep, dir = mypath("data-raw", "naiades_ssn"), overwrite = TRUE)
 
 # Sites to be predicted:
 myload(station, dir = mypath("data-raw"))
