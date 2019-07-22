@@ -40,9 +40,18 @@ myload(synchrony, temporal_community_metrics, dir = mypath("data"))
 synchrony %<>%
   mutate(stab_com = 1 / cv_com)
 compare_stab <- synchrony %>%
-  left_join(select(temporal_community_metrics, station, biomass_stab), by =
+  left_join(select(temporal_community_metrics, station, biomass_cv), by =
     "station")
-ggplot(compare_stab, aes(x = stab_com, y = biomass_stab)) +
+ggplot(compare_stab, aes(x = cv_com, y = biomass_cv)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1) +
+  labs(x = "Thibault & Connelly",
+    y = "Classic measure",
+  title = "Compare the two CV measurements")
+```
+
+```{r}
+ggplot(synchrony, aes(x = cv_classic, y = cv_com)) +
   geom_point() +
   geom_abline(intercept = 0, slope = 1) +
   labs(x = "Thibault & Connelly",
@@ -50,9 +59,10 @@ ggplot(compare_stab, aes(x = stab_com, y = biomass_stab)) +
   title = "Compare the two stability measurement: 1/CV")
 ```
 
+
 ```{r compare distributions of the stability measurements}
 compare_stab2 <- compare_stab %>%
-  gather(stab, value, stab_com, biomass_stab)
+  gather(stab, value, cv_com, biomass_cv)
 
 ggplot(compare_stab2, aes(x = value)) +
   geom_histogram() +
@@ -97,11 +107,11 @@ sync_plot <- ggplot(sync, aes(y = synchrony, x = richness_med)) +
 
 ```{r}
 cv <- synchrony %>% 
-  select(station, cv_sp, stab_com) %>%
+  select(station, cv_sp, cv_com) %>%
   left_join(select(temporal_community_metrics, station, richness_med,
-      biomass_stab),
+      biomass_cv),
     by = "station") %>%
-  gather(cv, value, cv_sp, stab_com, biomass_stab)
+  gather(cv, value, cv_sp, cv_com, biomass_cv)
 cv_plot <- ggplot(cv, aes(y = value, x = richness_med)) +
   geom_point() +
   facet_wrap(~ cv, scales = "free_y") +
@@ -215,43 +225,4 @@ cv_div_plot
 ```{r}
 plot_grid(stab_div_plot, cv_div_plot, ncol = 1)
 ```
-
-# Check community
-
-```{r}
-station_id <- sync_troph %>%
-  filter(troph == "med_nbsp_total", stab == "cv_com") %>%
-  arrange(desc(div)) %>%
-  slice(1:3)
-station_id <- station_id$station 
-```
-
-```{r}
-sync_temp <- sync_troph %>%
-  filter( troph == "med_nbsp_total") %>%
-  spread(stab, value)
-
-norm_temp <- temporal_community_metrics %>%
-  #filter(station %in% station_id) %>%
-  select(station, biomass_cv)
-comp_temp <- left_join(sync_temp, norm_temp) %>%
-  mutate(
-    sync1 = ifelse(synchrony > 0.99 | synchrony < 0.2 , TRUE, FALSE),
-    lowdiv = ifelse(div < 3, TRUE, FALSE)
-    ) %>%
-  gather(stab, value, cv_com, cv_sp)
-ggplot(comp_temp, aes(y = biomass_cv, x = value)) +
-  geom_point(aes(color = sync1)) +
-  geom_abline(intercept = 0, slope = 1) +
-  facet_grid(~stab)
-```
-
-```{r}
-ggplot(comp_temp, aes(y = biomass_cv, x = value)) +
-  geom_point(aes(color = lowdiv)) +
-  geom_abline(intercept = 0, slope = 1) +
-  facet_grid(~stab)
-```
-
-
 
