@@ -65,3 +65,32 @@ cv_press_interp <- interpolation %>%
 
 mysave(yearly_press_interp, cv_press_interp,
   dir = mypath("data-raw", "polluants"), overwrite = TRUE)
+
+# Filter param that have a lot of interpolation fails
+eff_interp <- yearly_press_interp %>%
+  group_by(parameter) %>%
+  summarise(frac_obs = sum(!is.na(value)) / n())
+yearly_press_interp %<>%
+  filter(!parameter %in% unique(eff_interp[which(eff_interp$frac_obs < .80), ]$parameter))
+
+myload(dist_yearly_avg_polluants, dir = data_common)
+
+# Filter abberant values:
+options(mc.cores = 20)
+yearly_press_interp$value_corrected <- mcMap(
+  function (param, x) {
+    mask <- which(dist_yearly_avg_polluants$parameter == param)
+    check <- dist_yearly_avg_polluants[mask, ] %>%
+      select(-parameter) %>%
+      unlist
+    extrem_check <- x > check["max"] | x < check["min"]
+    if(extrem_check | is.na(x)) {
+      return(NA)
+    } else {
+      return(x)
+    }
+  }, param = parameter, x = value
+  )
+
+mysave(yearly_press_interp,
+  dir = mypath("data-raw", "polluants"), overwrite = TRUE)

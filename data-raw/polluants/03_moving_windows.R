@@ -47,3 +47,21 @@ yearly_avg_polluants <- prep_data %>%
   ungroup()
 mysave(monthly_avg_polluants, yearly_avg_polluants,
   dir = mypath("data-raw", "polluants"), overwrite = TRUE)
+
+###################################
+#  Summary data to filter interp  #
+###################################
+
+myload(monthly_avg_polluants, yearly_avg_polluants,
+  dir = mypath("data-raw", "polluants"))
+
+dist_yearly_avg_polluants <- yearly_avg_polluants %>%
+  group_by(parameter) %>%
+  summarise(mean = mean(value), sd = sd(value), min = min(value), max = max(value))
+
+dist_monthly_avg_polluants <- monthly_avg_polluants %>%
+  group_by(parameter) %>%
+  summarise(mean = mean(value), sd = sd(value), min = min(value), max = max(value))
+
+mysave(dist_monthly_avg_polluants, dist_yearly_avg_polluants,
+  dir = mypath("data-raw", "polluants"), overwrite = TRUE)
