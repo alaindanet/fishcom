@@ -32,7 +32,8 @@ library(NetIndices)
 library(tidygraph)
 library(ggraph)
 library(lubridate)
-devtools::load_all()
+#devtools::load_all()
+source(mypath("R", "plot_methods.R"))
 theme_set(theme_alain())
 ```
 
@@ -41,6 +42,8 @@ theme_set(theme_alain())
 ```{r}
 myload(temporal_network_metrics, dir = dest_dir)
 myload(temporal_community_metrics, temporal_station_desc, dir = data_common)
+myload(temporal_habitat_station, dir = data_common)
+myload(synchrony, dir = data_common)
 ```
 
 ## Morphology
@@ -90,3 +93,45 @@ qplot(value, biomass_stab, data =  stab_station, geom = "point") +
   xylabs(y = "biomass_stab") +
   xlab("Usage (nb occurence by year)")
 ```
+
+# Test with synchrony
+
+```{r}
+station_com <- left_join(
+  select(synchrony, station, cv_com, synchrony, cv_sp),
+  temporal_station_desc)
+stab_station <- station_com %>%
+  gather(carac, value,
+   width_river_mean, avg_depth_station_mean)
+formula <- y ~ x #needed for stat_poly_eq
+qplot(value, cv_com, data =  stab_station, geom = "point") +
+  facet_grid(cols = vars(carac), scales = "free_x") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(y = "biomass_stab") +
+  xlab("River morpho-charasteristics")
+```
+
+## Vegetation 
+
+```{r}
+vegan_cv <- left_join(select(synchrony, station, cv_com, synchrony, cv_sp),
+  select(temporal_habitat_station, station, aqua_vg_shelter_med, edge_vg_med)) %>%
+  gather(veg, value, aqua_vg_shelter_med, edge_vg_med)
+
+qplot(value, cv_com, data =  vegan_cv, geom = "boxplot") +
+  facet_grid(~ veg, scales = "free_x") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(y = "biomass_stab") +
+  xlab("River morpho-charasteristics")
+```
+

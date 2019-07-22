@@ -448,3 +448,25 @@ s.corcircle(pca$co, xax = 1, yax = 3)
 title("Axis x = Comp1", "Axis y = Comp3")
 dev.off()
 ```
+
+# Synchrony
+
+```{r}
+station_sync <- left_join(station, rename(synchrony, id = station)) %>%
+  gather(var_code, value, synchrony, cv_sp, cv_com)
+
+g <- purrr::map(unique(station_sync$var_code),
+           function(x) {
+	     ggplot(data = region_polygon) +
+	       geom_sf() +
+	       geom_sf(data = filter(station_sync, var_code == x),
+		 aes(color = value), size = 2) +
+	       scale_color_gradient(low = "green", high = "red") +
+	       ggtitle(x)
+	   }
+)
+
+g2 <- cowplot::plot_grid(plotlist = g)
+g2
+```
+
