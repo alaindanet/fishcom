@@ -327,9 +327,11 @@ prepare_ssn <- function (grass_path = "/usr/lib/grass72/", mnt_path = NULL,
   )
   openSTARS::derive_streams()
 
-  cj <- openSTARS::check_compl_confluences()
+  cj <- openSTARS::check_compl_junctions()
+  #cj <- openSTARS::check_compl_confluences()
   if(cj){
-    openSTARS::correct_compl_confluences()
+    #openSTARS::correct_compl_confluences()
+    openSTARS::correct_compl_junctions()
   }
 
   openSTARS::calc_edges()
@@ -523,20 +525,50 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
   mysave(quality_prediction, dir = paste0(ssn_dir, "/", basin_name), overwrite = TRUE)
 }
 
-interpolate_naiades <- function(ssn = NULL, data = NULL, basin = NULL, var = NULL, formula = NULL, family = NULL, corModel = NULL, enquo_var = TRUE) {
-  # Model
-  
-  model <- compute_glmssn(data = data, var = var,
-      ssn = ssn, formula = NULL, family = NULL, corModel = NULL, enquo_var = TRUE)
-
-  if (class(model) != "glmssn") {
-    return(model)
-  } else {
-    cross_v <- SSN::CrossValidationStatsSSN(model)
+interpolate_naiades <- function(ssn, basin) {
+    # Model
+    model <- SSN::glmssn(
+      formula = as.formula("value ~ 1"),
+      ssn.object = ssn,
+      family = "Gaussian",
+      CorModels = c("LinearSill.tailup", "Mariah.taildown",
+	"Exponential.Euclid"),
+      addfunccol = "afv_area"
+    )
+    # Prediction
     pred_name <- paste0(basin, "_pred_sites")
     pred <- predict(model, pred_name)
-    prediction <- pred$ssn.object@predpoints@SSNPoints[[1]]@point.data[, c("id", var, paste0(var, ".predSE"))]
-    # Save
+    prediction <-
+      pred$ssn.object@predpoints@SSNPoints[[1]]@point.data[, c("id", "value", paste0("value", ".predSE"))]
+    # CV
+    cross_v <- SSN::CrossValidationStatsSSN(model)
+    # Result
     return(list(cross_v = cross_v, prediction = prediction))
   }
+fill_data_ssn <- function(ssn = NULL, data = NULL, var = NULL,
+   enquo_var = FALSE, ...) {
+
+  if (!is.character(var)) {
+    if (enquo_var) {
+    var <- rlang::enquo(var)
+    }
+    var <- rlang::quo_name(var)
+  }
+
+  # get ssn dataset to fill it
+  data_id_var <- data[, c("id", var)]
+  ssn_data <- ssn@obspoints@SSNPoints[[1]]@point.data
+
+  # Suppress var if present
+  if (var %in% colnames(ssn_data)) {
+    ssn_data <- ssn_data[, ! names(ssn_data) %in% var, drop = F]
+  }
+  # Fill ssn with new data:
+  #stopifnot(nrow(ssn_data) == nrow(data_id_var))
+  ssn_data %<>%
+    dplyr::mutate(id = as.character(id)) %>%
+    dplyr::left_join(data_id_var, by = "id")
+  ssn@obspoints@SSNPoints[[1]]@point.data <- ssn_data
+
+  return(ssn)
 }

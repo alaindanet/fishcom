@@ -18,23 +18,8 @@ combin <- expand.grid(list(basin = basin, year = year_span, parameter = paramete
   as_tibble() %>%
   arrange(desc(basin))
 
-options(mc.cores = 4)
-ssn <- mclapply(basin, function(basin) {
-  pred_name <- paste0(basin, "_pred_sites")
-  ssn_dir <- mypath("data-raw", "naiades_ssn")
-  ssn_obj_path <- paste0(ssn_dir, "/", basin, ".ssn")
-  ssn <- SSN::importSSN(ssn_obj_path, predpts = pred_name, o.write = TRUE)
-# Compute the weight of each streams lines when they merged:
-  ssn <- SSN::additive.function(ssn, "H2OArea",
-    "afv_area")
-# create distance matrix between pred and obs:
-  SSN::createDistMat(ssn, predpts = pred_name, o.write = TRUE,
-    amongpreds = TRUE)
-  ssn
-})
-names(ssn) <- basin 
-
 # Get ssn
+myload(ssn, dir = mypath("data-raw", "naiades_ssn"))
 combin$ssn <- sapply(combin$basin, function (basin){
   return(ssn[[as.character(basin)]])
 })
@@ -62,50 +47,62 @@ MoreArgs = list(data_dir = mypath("data-raw", "polluants",
   ssn_dir = mypath("data-raw", "naiades_ssn"))
 )
 
+# Get data in SSN
+options(mc.cores = 1)
+combin$ssn <- mcMap(fill_data_ssn,
+  ssn = combin$ssn , data = combin$data,
+  MoreArgs = list(var = "value",
+   enquo_var = FALSE)
+)
 
 #####################
 #  Interpolate SSN  #
 #####################
 
 data_dir <- mypath("data-raw", "polluants")
-#if (file.exists(paste0(data_dir,"/", "press_interpolation.rda"))) {
-  #myload(press_interpolation, dir = data_dir)
-  #combin %<>% filter(!(parameter %in% press_interpolation$parameter &
-      #basin %in% press_interpolation$basin & year %in% press_interpolation$year))
-#}
+options(mc.cores = 15)
+sapply(basin, function (basin) {
 
+  combin <- filter(combin, basin == basin) %>%
+    select(-data) %>%
+    filter(parameter %in% unique(parameter)[76:189])
 
-options(mc.cores = 10)
-combin <- combin[1:10,]
-combin$result <- mcMap(interpolate_naiades,
-  ssn = combin[["ssn"]],
-  data = combin[["data"]],
-  basin = combin[["basin"]],
-  MoreArgs = list(
- var = "value"
+  # if already data:
+  obj_name <- paste0(basin, "_interpolation")
+  obj_path <- mypath("data-raw", "polluants", paste0(obj_name,".rda"))
+  if (file.exists(obj_path)) {
+    # filter already done interpolation
+    load(obj_path)
+    assign("pre_data", get(paste0(obj_name)))
+     combin %<>% 
+       filter(
+	 !(year %in% pre_data$year &
+	   parameter %in% pre_data$parameter &
+	   basin %in% pre_data$basin)
+       )
+  }
+  # If all have been already interpolated:
+  if (nrow(combin) == 0) {
+    message("all have been already interpolated.")
+  
+    return(NULL)
+  }
+  combin$ssn <- mcMap(
+    interpolate_naiades,
+    ssn = combin[["ssn"]],
+    basin = combin[["basin"]],
+    mc.preschedule = FALSE 
   )
-)
 
-combin %<>%
-  dplyr::select(-ssn, -data)
+  if (file.exists(obj_path)) {
+    combin <- rbind(pre_data, combin)
+  }
+  
+  assign(paste0(obj_name), combin)
 
-#if (file.exists(paste0(data_dir,"/", "press_interpolation.rda"))) {
-  #myload(press_interpolation, dir = data_dir)
+  save(list = paste0(obj_name), file = obj_path)
+  message(paste0("Interpolation done for basin: ", basin))
 
-  #combin %<>% filter(!(parameter %in% press_interpolation$parameter &
-      #basin %in% press_interpolation$basin & year %in% press_interpolation$year))
-  #press_interpolation <- rbind(press_interpolation, combin)
-  #mysave(press_interpolation, dir = data_dir, overwrite = TRUE)
-#} else {
-  press_interpolation <- combin
-  mysave(press_interpolation, dir = data_dir, overwrite = TRUE)
-#}
-
-#ids <- 1
-#debug(interpolate_naiades)
-#interpolate_naiades(
-  #ssn = combin[["ssn"]][[ids]],
-  #data = combin[["data"]][[ids]],
-  #basin = combin[["basin"]][[ids]],
-  #var = "value"
-#)
+  gc()
+  return(NULL)
+})

@@ -56,7 +56,7 @@ station_to_keep <- nobs_station %>%
   filter(!is.na(basin)) %>%
   group_by(basin) %>%
   arrange(desc(nobs)) %>%
-  slice(1:2000) %>%
+  slice(1:500) %>%
   ungroup
 station_naiades %<>%
   filter(id %in% station_to_keep$id)
@@ -84,7 +84,7 @@ prepare_basin_data(basin = my_hydro_basin, group_var = basin_name, streams = rht
   crs = 2154, save_path = mypath("data-raw", "naiades_ssn"), crop_method = "mask")
 
 #options(mc.cores = 2)
-#basin <- "est"
+
 sapply(my_hydro_basin$basin_name, function (basin) {
   # Prepare path:
   mnt_path <- mypath("data-raw", "naiades_ssn", basin, "dem.tif") 
@@ -108,3 +108,5 @@ sapply(my_hydro_basin$basin_name, function (basin) {
     ssn_path = mypath("data-raw", "naiades_ssn", paste0(basin, ".ssn")),
     slope = FALSE)
   })
+
+#options(mc.cores = 4)
