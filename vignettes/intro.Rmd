@@ -48,8 +48,9 @@ According to the postdoc advertisement:
   - [ ] Station
   - [ ] Water quality
 - [ ] Environmental data
-  - [ ] temporal flow and quality (Marie Silvestre):
+  - [x] temporal flow and quality (Marie Silvestre):
     - [x] Interpolate flow and quality
+    - [ ] Re-run with moving avg
   - [ ] How to analyze qualitative data:
     - [x] Habitat
   - [x] Pressure data (Olivier Dezerald & Philippe Usseglio-Polatera):
