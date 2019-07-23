@@ -35,6 +35,7 @@ theme_set(theme_alain())
 
 ```{r load dataset, include = FALSE}
 myload(yearly_press_interp, dir = data_common)
+myload(synchrony, press_polluants, press_z_category, temporal_community_metrics, dir = mypath("data"))
 ```
 
 ```{r test for success by variable}
@@ -46,9 +47,6 @@ hist(eff_interp$frac_obs)
 
 ```{r which paramater has been badly interpolated}
 kable(filter(eff_interp, frac_obs < .80))
-# remove them:
-yearly_press_interp %<>%
-  filter(!parameter %in% unique(eff_interp[which(eff_interp$frac_obs < .80), ]$parameter))
 ```
 
 # Plot some series
@@ -56,62 +54,154 @@ yearly_press_interp %<>%
 ```{r}
 test <- yearly_press_interp %>%
   filter(id %in% sample(id, 5), parameter %in% sample(parameter, 12))
-ggplot(test, aes(x = year, y = value)) +
+ggplot(test, aes(x = year, y = value_corrected)) +
   geom_line(aes(color = as.factor(id))) +
   facet_wrap(~parameter, scales = "free_y")
 ```
 
-```{r}
-# Filter values < 0 expect temperature 
-# Filter saturation in 02 
-# Filter abberant values: filter according to min-max observed in data 
+# Plot some press
 
+```{r enrichment}
 
+myload(station_analysis, region_polygon, dir = mypath("data"))
+station <- select(station_analysis, id)
+station_press <- left_join(station, press_polluants)
+unique(press_polluants$parameter)
+parameter <- c("ammonium", "nitrates", "nitrites", "phosphore_total", "ph", "oxygene_dissous")
 
+g <- purrr::map(parameter,
+           function(x) {
+	     ggplot(data = region_polygon) +
+	       geom_sf() +
+	       geom_sf(data = filter(station_press, parameter == x),
+		 aes(color = press), size = 2) +
+	       scale_color_gradient(low = "green", high = "red") +
+	       ggtitle(x)
+	   }
+)
+
+g2 <- cowplot::plot_grid(plotlist = g)
+g2
 ```
 
 
 
 
-```{r synchrony and diversity}
-sync <- synchrony %>% 
-  select(station, synchrony) %>%
-  left_join(select(temporal_community_metrics, station, richness_med),
-    by = "station")
+```{r pesticides}
+parameter <- c("atrazine", "glyphosate", "atrazine_desethyl", "carbofuran",
+  "aldicarbe", "mancozebe", "fenpropimorphe"
+)
 
-sync_plot <- ggplot(sync, aes(y = synchrony, x = richness_med)) +
-  geom_point() +
+g <- purrr::map(parameter,
+           function(x) {
+	     ggplot(data = region_polygon) +
+	       geom_sf() +
+	       geom_sf(data = filter(station_press, parameter == x),
+		 aes(color = press), size = 2) +
+	       scale_color_gradient(low = "green", high = "red") +
+	       ggtitle(x)
+	   }
+)
+
+g2 <- cowplot::plot_grid(plotlist = g)
+g2
+
+```
+
+```{r vigne}
+
+
+parameter <- c("cymoxanil", "captane", "folpel", "diuron",
+  "aldicarbe", "mancozebe", "fenpropimorphe"
+)
+
+g <- purrr::map(parameter,
+           function(x) {
+	     ggplot(data = region_polygon) +
+	       geom_sf() +
+	       geom_sf(data = filter(station_press, parameter == x),
+		 aes(color = press), size = 2) +
+	       scale_color_gradient(low = "green", high = "red") +
+	       ggtitle(x)
+	   }
+)
+
+g2 <- cowplot::plot_grid(plotlist = g)
+g2
+```
+
+# Press category
+
+```{r}
+myload(press_z_category, dir = mypath("data"))
+```
+
+```{r}
+stab_cat_press <- synchrony %>%
+  left_join(rename(press_z_category, station = id))
+
+formula <- y ~ x #needed for stat_poly_eq
+ggplot(stab_cat_press, aes(x = z_sum, y = cv_com)) +
+  geom_point() + 
+  facet_wrap(~category, scales = "fixed") +
   geom_smooth(method = 'lm', formula = formula) +
   stat_poly_eq(
     formula = formula,
     eq.with.lhs = "italic(hat(y))~`=`~",
     aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
     parse = TRUE) +
-  labs(x = "Median richness", y = "Synchrony")
+  labs(x = "Z sum of pressure", y = "CV of the community")
+```
+```{r}
+stab_cat_press_model <- stab_cat_press %>%
+  select(-station, -synchrony, -cv_sp, -cv_classic) %>%
+  filter(!is.na(category)) %>%
+  spread(category, z_sum)
+na.omit(stab_cat_press_model)
+summary(lm(cv_com ~ ., stab_cat_press_model))
 ```
 
+```{r model with diversity}
+stab_cat_press_model <- stab_cat_press %>%
+  select(-synchrony, -cv_sp, -cv_classic) %>%
+  filter(!is.na(category)) %>%
+  spread(category, z_sum) %>%
+  left_join(select(temporal_community_metrics, station, richness_med)) %>%
+  select(-station)
+na.omit(stab_cat_press_model)
+summary(lm(cv_com ~ ., stab_cat_press_model))
+summary(lm(cv_com ~ richness_med, stab_cat_press_model))
+```
+
+# With press 1090
+
 ```{r}
-cv <- synchrony %>% 
-  select(station, cv_sp, stab_com) %>%
-  left_join(select(temporal_community_metrics, station, richness_med,
-      biomass_stab),
-    by = "station") %>%
-  gather(cv, value, cv_sp, stab_com, biomass_stab)
-cv_plot <- ggplot(cv, aes(y = value, x = richness_med)) +
-  geom_point() +
-  facet_wrap(~ cv, scales = "free_y") +
+myload(press1090_z_category, dir = mypath("data"))
+```
+```{r}
+stab_cat_press <- synchrony %>%
+  left_join(rename(press1090_z_category, station = id))
+
+formula <- y ~ x #needed for stat_poly_eq
+ggplot(stab_cat_press, aes(x = z_sum, y = cv_com)) +
+  geom_point() + 
+  facet_wrap(~category, scales = "fixed") +
   geom_smooth(method = 'lm', formula = formula) +
   stat_poly_eq(
     formula = formula,
     eq.with.lhs = "italic(hat(y))~`=`~",
     aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
     parse = TRUE) +
-  labs(x = "Median richness", y = "Coefficient of Variation")
+  labs(x = "Z sum of pressure", y = "CV of the community")
 ```
 
 ```{r}
-plot_grid(sync_plot, cv_plot, ncol = 1)
+stab_cat_press_model <- stab_cat_press %>%
+  select(-synchrony, -cv_sp, -cv_classic) %>%
+  filter(!is.na(category)) %>%
+  spread(category, z_sum) %>%
+  left_join(select(temporal_community_metrics, station, richness_med)) %>%
+  select(-station)
+summary(lm(cv_com ~ ., stab_cat_press_model))
 ```
-
-
 
