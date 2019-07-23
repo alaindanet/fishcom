@@ -11,7 +11,7 @@ mypath <- rprojroot::find_package_root_file
 source(mypath("R", "misc.R"))
 myload(analysis_total, dir = mypath("data-raw", "polluants", "naiades_data"))
 
-prep_data <- analysis_total %>% 
+prep_data <- analysis_total %>%
   mutate(
     value = as.numeric(value),
     year_month = ymd(paste0(year(date),"-", month(date), "-15"))
@@ -23,7 +23,7 @@ prep_data <- analysis_total %>%
 few_records <- prep_data %>%
   group_by(id, parameter) %>%
   summarise(nobs = n()) %>%
-  filter(nobs <24) 
+  filter(nobs < 24) 
 
 prep_data %<>%
   group_by(id, parameter) %>%
@@ -40,13 +40,19 @@ prep_data %<>%
 
 monthly_avg_polluants <- prep_data
 # Yearly avg
-yearly_avg_polluants <- prep_data %>%
+yearly_avg_polluants <- monthly_avg_polluants %>%
   mutate(year = year(year_month)) %>%
   group_by(id, parameter, year) %>%
-  summarise(value = mean(value, na.rm = TRUE)) %>%
+  summarise(value = mean(moving_avg, na.rm = TRUE)) %>%
   ungroup()
-mysave(monthly_avg_polluants, yearly_avg_polluants,
+
+# To play:
+sample_monthly_avg_polluants <- monthly_avg_polluants %>%
+  filter(id %in% sample(monthly_avg_polluants$id, 100))
+
+mysave(sample_monthly_avg_polluants, monthly_avg_polluants, yearly_avg_polluants,
   dir = mypath("data-raw", "polluants"), overwrite = TRUE)
+
 
 ###################################
 #  Summary data to filter interp  #
