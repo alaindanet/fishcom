@@ -81,7 +81,5 @@ mclapply(analysis_files, function (file_name) {
   invisible()
   })
 
-# Detect seasonnality for variable https://anomaly.io/detect-seasonality-using-fourier-transform-r/
-# Moving windows with size according to seasonnality https://anomaly.io/seasonal-trend-decomposition-in-r/
-
+myload(analyses_2016, dir = mypath("data-raw", "polluants", "naiades_data"))
 

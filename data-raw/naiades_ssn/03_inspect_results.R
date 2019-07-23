@@ -66,6 +66,8 @@ cv_press_interp <- interpolation %>%
 mysave(yearly_press_interp, cv_press_interp,
   dir = mypath("data-raw", "polluants"), overwrite = TRUE)
 
+myload(yearly_press_interp, dir = mypath("data-raw", "polluants"))
+
 # Filter param that have a lot of interpolation fails
 eff_interp <- yearly_press_interp %>%
   group_by(parameter) %>%
@@ -73,15 +75,15 @@ eff_interp <- yearly_press_interp %>%
 yearly_press_interp %<>%
   filter(!parameter %in% unique(eff_interp[which(eff_interp$frac_obs < .80), ]$parameter))
 
-myload(dist_yearly_avg_polluants, dir = data_common)
+myload(dist_yearly_avg_polluants, dir = mypath("data-raw", "polluants"))
 
 # Filter abberant values:
-options(mc.cores = 20)
+options(mc.cores = 30)
+library(parallel)
 yearly_press_interp$value_corrected <- mcMap(
-  function (param, x) {
-    mask <- which(dist_yearly_avg_polluants$parameter == param)
-    check <- dist_yearly_avg_polluants[mask, ] %>%
-      select(-parameter) %>%
+  function (param, x, distri) {
+    mask <- which(distri$parameter == param)
+    check <- distri[mask,!names(distri) %in% "parameter"] %>%
       unlist
     extrem_check <- x > check["max"] | x < check["min"]
     if(extrem_check | is.na(x)) {
@@ -89,8 +91,15 @@ yearly_press_interp$value_corrected <- mcMap(
     } else {
       return(x)
     }
-  }, param = parameter, x = value
+  },
+  param = yearly_press_interp$parameter,
+  x = yearly_press_interp$value,
+  MoreArgs = list(
+    distri = dist_yearly_avg_polluants 
   )
+  )
+yearly_press_interp$value_corrected <- 
+  sapply(yearly_press_interp$value_corrected, function(x) x[1])
 
 mysave(yearly_press_interp,
   dir = mypath("data-raw", "polluants"), overwrite = TRUE)
