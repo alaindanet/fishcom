@@ -53,6 +53,116 @@ sample_monthly_avg_polluants <- monthly_avg_polluants %>%
 mysave(sample_monthly_avg_polluants, monthly_avg_polluants, yearly_avg_polluants,
   dir = mypath("data-raw", "polluants"), overwrite = TRUE)
 
+################################################################################
+#                                Define pulses                                 #
+################################################################################
+
+
+myload(sample_monthly_avg_polluants,
+  press_cat, dir = mypath("data-raw", "polluants"))
+mpolluants <- monthly_avg_polluants
+replace_rules <- c(
+  "\\(" = "-",
+  "\\)" = "-",
+  "\\'" = ""
+)
+mpolluants %<>%
+  mutate(
+    parameter = stringi::stri_trans_general(parameter, "Latin-ASCII"),
+    parameter = tolower(parameter),
+    parameter = str_replace_all(parameter, " ", "_"),
+    parameter = str_replace_all(parameter, replace_rules)
+    )
+
+mpolluants %<>% left_join(press_cat, by = "parameter")
+missing_cat <- filter(mpolluants, is.na(category))
+unique(missing_cat$parameter)
+
+#################
+#  Local pulse  #
+#################
+# detrend data
+mpolluants %<>%
+  mutate(value = value - moving_avg)
+# define pulse by station
+
+treshold <- 1.96 #95%
+pulse <- mpolluants %>%
+  group_by(id, parameter) %>%
+  mutate(
+    z = scale(value),
+    pulse = map2_lgl(z, direction,
+      function (z, dire) {
+	if (is.na(z)) return(NA)
+
+	if (dire == "decreasing") {
+	  if (z < treshold * -1) {
+	    return(TRUE)
+	  } else {
+	    return(FALSE)
+	  }
+	} else{
+	  if (z > treshold) {
+	    return(TRUE)
+	  } else {
+	    return(FALSE)
+	  }
+	}
+      }
+    )
+  )
+yearly_pulse <- pulse %>%
+  mutate(year = year(year_month)) %>%
+  group_by(id, parameter, year) %>%
+  summarise(
+    nb_pulse = sum(pulse, na.rm = TRUE),
+    pulse = any(pulse, na.rm = TRUE)
+  )
+local_yearly_pulse_polluants <- yearly_pulse %>%
+  ungroup()
+
+mysave(local_yearly_pulse_polluants, dir = mypath("data-raw", "polluants"), overwrite = TRUE)
+
+####################
+#  National pulse  #
+####################
+
+treshold <- 1.96 #95%
+pulse <- mpolluants %>%
+  group_by(parameter) %>%
+  mutate(
+    z = scale(value),
+    pulse = map2_lgl(z, direction,
+      function (z, dire) {
+	if (is.na(z)) return(NA)
+
+	if (dire == "decreasing") {
+	  if (z < treshold * -1) {
+	    return(TRUE)
+	  } else {
+	    return(FALSE)
+	  }
+	} else{
+	  if (z > treshold) {
+	    return(TRUE)
+	  } else {
+	    return(FALSE)
+	  }
+	}
+      }
+    )
+  )
+yearly_pulse <- pulse %>%
+  mutate(year = year(year_month)) %>%
+  group_by(id, parameter, year) %>%
+  summarise(
+    nb_pulse = sum(pulse, na.rm = TRUE),
+    pulse = any(pulse, na.rm = TRUE)
+  )
+global_yearly_pulse_polluants <- yearly_pulse %>%
+  ungroup()
+
+mysave(global_yearly_pulse_polluants, dir = mypath("data-raw", "polluants"))
 
 ###################################
 #  Summary data to filter interp  #
