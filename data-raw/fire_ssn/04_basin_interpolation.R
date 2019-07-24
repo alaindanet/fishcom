@@ -1,3 +1,6 @@
+################################################################################
+#                            interpolation                                     #
+################################################################################
 
 library(tidyverse)
 library(magrittr)
@@ -20,3 +23,5 @@ mclapply(basin, function (x) {
     complete = TRUE
   )
 })
+
+mysave(cross_val, prediction, press, dir = mypath("data-raw", "ssn_interpolation"), overwrite = TRUE)
