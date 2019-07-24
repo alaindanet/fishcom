@@ -28,8 +28,10 @@ cross_val <- quality %>%
 prediction <- quality %>%
   select(-cross_v) %>%
   unnest(prediction)
-press <- prediction %>%
+fire_polluant_press <- prediction %>%
   group_by(id, var_code) %>%
+  filter(year >= 1994) %>%
   summarise(press = mean(avg_data))
 
-mysave(cross_val, prediction, press, dir = mypath("data-raw", "ssn_interpolation"), overwrite = TRUE)
+mysave(cross_val, prediction, dir = mypath("data-raw", "fire_ssn"), overwrite = TRUE)
+mysave(fire_polluant_press, dir = mypath("data"), overwrite = TRUE)

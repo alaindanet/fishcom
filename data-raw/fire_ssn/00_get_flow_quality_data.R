@@ -117,7 +117,10 @@ length(which(unique(flow_data$code) %in% donuts$code))
 flow_data %<>%
   filter(id %in% donuts$id)
 
-mysave(flow_data, dir = mypath("data-raw"), overwrite = TRUE)
+flow_data %<>%
+  select(id, code, meas_date, value)
+
+mysave(flow_data, dir = mypath("data-raw", "flow_quality"), overwrite = TRUE)
 
 ##################
 #  Quality data  #

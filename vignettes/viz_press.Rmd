@@ -1,10 +1,10 @@
 ---
-title: "Synchrony"
+title: "Pressure visualisation"
 author: "Alain Danet"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Synchrony}
+  %\VignetteIndexEntry{Pressure visualisation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -23,6 +23,7 @@ knitr::opts_chunk$set(
   echo = FALSE
 )
 library(tidyverse)
+library(sf)
 library(ggpmisc)
 library(cowplot)
 library(kableExtra)
