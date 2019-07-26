@@ -40,10 +40,12 @@ prep_data %<>%
 
 monthly_avg_polluants <- prep_data
 # Yearly avg
+mysave(monthly_avg_polluants, dir = mypath("data-raw", "polluants"))
+
 yearly_avg_polluants <- monthly_avg_polluants %>%
   mutate(year = year(year_month)) %>%
   group_by(id, parameter, year) %>%
-  summarise(value = mean(moving_avg, na.rm = TRUE)) %>%
+  summarise(value = mean(moving_avg, na.rm = TRUE), raw_value = mean(value, na.rm = TRUE)) %>%
   ungroup()
 
 # To play:
@@ -58,7 +60,7 @@ mysave(sample_monthly_avg_polluants, monthly_avg_polluants, yearly_avg_polluants
 ################################################################################
 
 
-myload(sample_monthly_avg_polluants,
+myload(monthly_avg_polluants,
   press_cat, dir = mypath("data-raw", "polluants"))
 mpolluants <- monthly_avg_polluants
 replace_rules <- c(
@@ -173,11 +175,19 @@ myload(monthly_avg_polluants, yearly_avg_polluants,
 
 dist_yearly_avg_polluants <- yearly_avg_polluants %>%
   group_by(parameter) %>%
-  summarise(mean = mean(value), sd = sd(value), min = min(value), max = max(value))
+  summarise(
+    mean = mean(value, na.rm = TRUE),
+    sd = sd(value, na.rm = TRUE),
+    min = min(value, na.rm = TRUE),
+    max = max(value, na.rm = TRUE))
 
 dist_monthly_avg_polluants <- monthly_avg_polluants %>%
   group_by(parameter) %>%
-  summarise(mean = mean(value), sd = sd(value), min = min(value), max = max(value))
+  summarise(
+    mean = mean(value, na.rm = TRUE),
+    sd = sd(value, na.rm = TRUE),
+    min = min(value, na.rm = TRUE),
+    max = max(value, na.rm = TRUE))
 
 mysave(dist_monthly_avg_polluants, dist_yearly_avg_polluants,
   dir = mypath("data-raw", "polluants"), overwrite = TRUE)

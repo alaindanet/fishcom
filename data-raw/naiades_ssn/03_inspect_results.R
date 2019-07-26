@@ -4,13 +4,12 @@ library(sf)
 mypath <- rprojroot::find_package_root_file
 source(mypath("R", "misc.R"))
 source(mypath("R", "geo_methods.R"))
-source(mypath("R", "plot_methods.R"))
 
 basin <- c("ouest", "sud", "est", "nord")
 
 # Load dataset:
 data_list <- lapply(basin, function (x) {
-  obj <- paste0(x, "_interpolation")
+  obj <- paste0(x, "_interp_mv_avg")
   load(mypath("data-raw", "polluants", paste0(obj, ".rda")))
   assign("data", get(obj))
   return(data)
@@ -55,51 +54,54 @@ interpolation %<>%
 })
   )
   
-yearly_press_interp <- interpolation %>%
+yearly_press_interp_mv_avg <- interpolation %>%
   unnest(prediction) %>%
   select(id, year, parameter, value, value.predSE)
 
-cv_press_interp <- interpolation %>%
+cv_press_interp_mv_avg <- interpolation %>%
   unnest(cross_v) %>%
   select(-ssn, -prediction)
 
-mysave(yearly_press_interp, cv_press_interp,
+mysave(yearly_press_interp_mv_avg, cv_press_interp_mv_avg,
   dir = mypath("data-raw", "polluants"), overwrite = TRUE)
 
-myload(yearly_press_interp, dir = mypath("data-raw", "polluants"))
+myload(yearly_press_interp_mv_avg, dir = mypath("data-raw", "polluants"))
 
 # Filter param that have a lot of interpolation fails
-eff_interp <- yearly_press_interp %>%
+eff_interp <- yearly_press_interp_mv_avg %>%
   group_by(parameter) %>%
   summarise(frac_obs = sum(!is.na(value)) / n())
-yearly_press_interp %<>%
+yearly_press_interp_mv_avg %<>%
   filter(!parameter %in% unique(eff_interp[which(eff_interp$frac_obs < .80), ]$parameter))
 
 myload(dist_yearly_avg_polluants, dir = mypath("data-raw", "polluants"))
 
 # Filter abberant values:
-options(mc.cores = 30)
+options(mc.cores = 15)
 library(parallel)
-yearly_press_interp$value_corrected <- mcMap(
+yearly_press_interp_mv_avg$value_corrected <- mcMap(
   function (param, x, distri) {
     mask <- which(distri$parameter == param)
     check <- distri[mask,!names(distri) %in% "parameter"] %>%
       unlist
-    extrem_check <- x > check["max"] | x < check["min"]
-    if(extrem_check | is.na(x)) {
+    if (is.na(x)) {
       return(NA)
+    } else if (x < check["min"]) {
+      return(check["min"])
+    } else if (x > check["max"]) {
+      return(check["max"])
     } else {
       return(x)
     }
   },
-  param = yearly_press_interp$parameter,
-  x = yearly_press_interp$value,
+  param = yearly_press_interp_mv_avg$parameter,
+  x = yearly_press_interp_mv_avg$value,
   MoreArgs = list(
     distri = dist_yearly_avg_polluants 
   )
-  )
-yearly_press_interp$value_corrected <- 
-  sapply(yearly_press_interp$value_corrected, function(x) x[1])
+)
+yearly_press_interp_mv_avg$value_corrected <- 
+  sapply(yearly_press_interp_mv_avg$value_corrected, function(x) x[1])
 
-mysave(yearly_press_interp,
+mysave(yearly_press_interp_mv_avg,
   dir = mypath("data-raw", "polluants"), overwrite = TRUE)

@@ -65,10 +65,10 @@ sapply(basin, function (basin) {
 
   combin <- filter(combin, basin == basin) %>%
     select(-data) %>%
-    filter(parameter %in% unique(parameter)[76:189])
+    filter(parameter %in% unique(parameter)[76:length(unique(parameter))])
 
   # if already data:
-  obj_name <- paste0(basin, "_interpolation")
+  obj_name <- paste0(basin, "_interp_mv_avg")
   obj_path <- mypath("data-raw", "polluants", paste0(obj_name,".rda"))
   if (file.exists(obj_path)) {
     # filter already done interpolation
