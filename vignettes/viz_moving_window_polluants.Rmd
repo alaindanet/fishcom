@@ -1,0 +1,72 @@
+---
+title: "Synchrony"
+author: "Alain Danet"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Synchrony}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+mypath <- rprojroot::find_package_root_file
+data_common <- mypath("data-raw", "polluants")
+dest_dir <- mypath("data", "species")
+```
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.dim = c(10, 10),
+  echo = FALSE
+)
+library(tidyverse)
+library(ggpmisc)
+library(cowplot)
+library(kableExtra)
+library(magrittr)
+source(mypath("R", "misc.R"))
+source(mypath("R", "plot_methods.R"))
+#devtools::load_all()
+theme_set(theme_alain())
+```
+
+```{r load dataset, include = FALSE}
+myload(sample_monthly_avg_polluants, dir = data_common)
+
+```
+```{r ammonium}
+test <- sample_monthly_avg_polluants %>%
+  filter(
+    id %in% sample(unique(sample_monthly_avg_polluants$id), 12),
+    parameter == "Ammonium"
+  ) %>% 
+  gather(method, value, value, moving_avg)
+ggplot(test, aes(x = year_month, y = value)) +
+  geom_line(aes(color = method)) +
+  facet_wrap(~ id, scales = "free_y")
+```
+
+```{r nitrates}
+test <- sample_monthly_avg_polluants %>%
+  filter(
+    id %in% sample(unique(sample_monthly_avg_polluants$id), 12),
+    parameter == "Nitrates"
+  ) %>% 
+  gather(method, value, value, moving_avg)
+ggplot(test, aes(x = year_month, y = value)) +
+  geom_line(aes(color = method)) +
+  facet_wrap(~ id, scales = "free_y")
+```
+
+```{r detrended nitrates}
+test %<>% 
+  spread(method, value) %>%
+  mutate(detrended = value - moving_avg)
+ggplot(test, aes(x = year_month, y = detrended)) +
+  geom_line() +
+  facet_wrap(~ id, scales = "free_y")
+```
+

@@ -164,7 +164,7 @@ troph_group_synchrony %<>%
   mutate(stab_com = 1 / cv_com)
 ```
 
-```{r synchrony and diversity 2}
+```{r synchrony and diversity 2, fig.dim = c(10, 7)}
 sync_div <- troph_group_synchrony %>%
   select(station, synchrony, med_nbsp_high_troph, med_nbsp_low_troph,
     med_nbsp_total) %>%
@@ -220,7 +220,6 @@ cv_div_plot <- ggplot(cv_div, aes(y = cv_com, x = div)) +
     aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
     parse = TRUE) +
   labs(x = "Median richness", y = "cvility (1/cv_com)")
-cv_div_plot
 ```
 ```{r}
 plot_grid(stab_div_plot, cv_div_plot, ncol = 1)

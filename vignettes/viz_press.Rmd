@@ -85,9 +85,6 @@ g2 <- cowplot::plot_grid(plotlist = g)
 g2
 ```
 
-
-
-
 ```{r pesticides}
 parameter <- c("atrazine", "glyphosate", "atrazine_desethyl", "carbofuran",
   "aldicarbe", "mancozebe", "fenpropimorphe"
@@ -159,7 +156,9 @@ stab_cat_press_model <- stab_cat_press %>%
   filter(!is.na(category)) %>%
   spread(category, z_sum)
 na.omit(stab_cat_press_model)
-summary(lm(cv_com ~ ., stab_cat_press_model))
+mod <- lm(cv_com ~ ., stab_cat_press_model)
+p2 <- jtools::plot_summs(mod)
+p2
 ```
 
 ```{r model with diversity}
@@ -170,8 +169,9 @@ stab_cat_press_model <- stab_cat_press %>%
   left_join(select(temporal_community_metrics, station, richness_med)) %>%
   select(-station)
 na.omit(stab_cat_press_model)
-summary(lm(cv_com ~ ., stab_cat_press_model))
-summary(lm(cv_com ~ richness_med, stab_cat_press_model))
+mod <- lm(cv_com ~ ., stab_cat_press_model)
+p2 <- jtools::plot_summs(mod)
+p2
 ```
 
 # With press 1090
@@ -203,6 +203,8 @@ stab_cat_press_model <- stab_cat_press %>%
   spread(category, z_sum) %>%
   left_join(select(temporal_community_metrics, station, richness_med)) %>%
   select(-station)
-summary(lm(cv_com ~ ., stab_cat_press_model))
+mod <- lm(cv_com ~ ., stab_cat_press_model)
+p2 <- jtools::plot_summs(mod)
+p2
 ```
 
