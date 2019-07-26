@@ -35,15 +35,14 @@ theme_set(theme_alain())
 ```
 
 ```{r load dataset, include = FALSE}
-myload(yearly_press_interp, dir = data_common)
+myload(yearly_press_interp_mv_avg, dir = data_common)
 myload(synchrony, press_polluants, press_z_category, temporal_community_metrics, dir = mypath("data"))
 ```
 
 ```{r test for success by variable}
-eff_interp <- yearly_press_interp %>%
+eff_interp <- yearly_press_interp_mv_avg %>%
   group_by(parameter) %>%
   summarise(frac_obs = sum(!is.na(value)) / n())
-hist(eff_interp$frac_obs)
 ```
 
 ```{r which paramater has been badly interpolated}
@@ -53,7 +52,7 @@ kable(filter(eff_interp, frac_obs < .80))
 # Plot some series
 
 ```{r}
-test <- yearly_press_interp %>%
+test <- yearly_press_interp_mv_avg %>%
   filter(id %in% sample(id, 5), parameter %in% sample(parameter, 12))
 ggplot(test, aes(x = year, y = value_corrected)) +
   geom_line(aes(color = as.factor(id))) +
@@ -63,7 +62,6 @@ ggplot(test, aes(x = year, y = value_corrected)) +
 # Plot some press
 
 ```{r enrichment}
-
 myload(station_analysis, region_polygon, dir = mypath("data"))
 station <- select(station_analysis, id)
 station_press <- left_join(station, press_polluants)
@@ -107,8 +105,6 @@ g2
 ```
 
 ```{r vigne}
-
-
 parameter <- c("cymoxanil", "captane", "folpel", "diuron",
   "aldicarbe", "mancozebe", "fenpropimorphe"
 )
