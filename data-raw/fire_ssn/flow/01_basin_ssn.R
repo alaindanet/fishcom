@@ -32,6 +32,21 @@ station_analysis %<>%
 myload(donuts_analysis, dir = mypath("data"))
 donuts_analysis %<>% st_transform(crs = 2154)
 
+##########################################
+#  Select environmental station to keep  #
+##########################################
+
+myload(yearly_avg_polluants, dir = mypath("data-raw", "polluants"))
+unique(yearly_avg_polluants$id)
+nobs_station <- yearly_avg_polluants %>%
+  group_by(id, parameter) %>%
+  summarise(nobs = n()) %>%
+  group_by(id) %>%
+  summarise(nobs = mean(nobs))
+
+arrange(nobs_station, desc(nobs)) %>%
+  filter(nobs >= 10)
+
 # basin
 basin <- read_sf(mypath("data-raw", "basin_dce", "BassinDCE.shp"))
 basin %<>% st_transform(crs = 2154)

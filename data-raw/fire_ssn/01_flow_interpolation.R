@@ -10,7 +10,7 @@ source(mypath("R", "geo_methods.R"))
 source(mypath("R", "plot_methods.R"))
 library(SSN)
 
-ssn_dir <- mypath("data-raw", "ssn_interpolation", "donuts_station.ssn")
+ssn_dir <- mypath("data-raw", "fire_ssn", "donuts_station.ssn")
 ssn <- importSSN(ssn_dir, predpts = "station", o.write = TRUE)
 names(ssn)
 
