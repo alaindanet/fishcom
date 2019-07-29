@@ -144,7 +144,6 @@ myload(daily_avg_flow, yearly_avg_flow,
   dir = mypath("data-raw", "flow"))
 
 dist_yearly_avg_flow <- yearly_avg_flow %>%
-  group_by(parameter) %>%
   summarise(
     mean = mean(value, na.rm = TRUE),
     sd = sd(value, na.rm = TRUE),
@@ -152,7 +151,6 @@ dist_yearly_avg_flow <- yearly_avg_flow %>%
     max = max(value, na.rm = TRUE))
 
 dist_daily_avg_flow <- daily_avg_flow %>%
-  group_by(parameter) %>%
   summarise(
     mean = mean(value, na.rm = TRUE),
     sd = sd(value, na.rm = TRUE),
