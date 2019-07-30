@@ -83,25 +83,3 @@ mclapply(analysis_files, function (file_name) {
 
 myload(analyses_2016, dir = mypath("data-raw", "polluants", "naiades_data"))
 
-#################
-#  Dangerosity  #
-#################
-
-myload(active_substances, dir = mypath("data-raw", "polluants"))
-myload(press_cat, dir = mypath("data-raw", "polluants"))
-
-parameter_in_sub <- press_cat %>%
-  filter(parameter %in% unique(active_substances$substance))
-
-
-parameter_in_sub_summary <- press_cat %>%
-  group_by(category) %>%
-  summarise(
-    npara = n(),
-    ndanger = sum(parameter %in% unique(active_substances$substance))
-  )
-unique(press_cat$category)
-filter(parameter_in_sub_summary, ndanger > 0)
-filter(press_cat, category %in% c("herbicides", "pcb", "fungicides", "insecticides", "hap", "micropolluants organiques"))
-
-

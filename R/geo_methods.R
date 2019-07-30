@@ -525,12 +525,12 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
   mysave(quality_prediction, dir = paste0(ssn_dir, "/", basin_name), overwrite = TRUE)
 }
 
-interpolate_naiades <- function(ssn, basin) {
+interpolate_naiades <- function(ssn = NULL, basin = NULL, family = "Gaussian", formula = "value ~ 1") {
     # Model
     model <- SSN::glmssn(
-      formula = as.formula("value ~ 1"),
+      formula = as.formula(formula),
       ssn.object = ssn,
-      family = "Gaussian",
+      family = family,
       CorModels = c("LinearSill.tailup", "Mariah.taildown",
 	"Exponential.Euclid"),
       addfunccol = "afv_area"

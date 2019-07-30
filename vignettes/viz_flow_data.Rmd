@@ -55,3 +55,35 @@ ggplot(test, aes(x = meas_date, y = value - moving_avg)) +
   facet_wrap(~code)
 ```
 
+```{r}
+ggplot(test, aes(x = meas_date, y = value - moving_avg)) +
+  geom_line() +
+  facet_wrap(~code, scales = "free_y")
+
+```
+
+
+## show quantiles
+
+```{r}
+ggplot(test, aes(sample = value - moving_avg)) +
+  stat_qq() +
+  facet_wrap(~code, scales = "free_y")
+```
+
+## Compute quantiles by station
+
+```{r}
+quant_seq <- c(0.01, 0.05, 0.95, 0.99)
+test <- sample_flow_data %>%
+  group_by(code) %>%
+  summarise(quant = list(quantile(value - moving_avg, probs = quant_seq, na.rm = TRUE))) %>%
+  mutate(quant = map(quant, function(x){
+      names(x) <- quant_seq
+      return(x)
+}))
+test %>%
+  unnest(quant)
+  filter(code %in% sample(unique(sample_flow_data$code), 12))
+```
+
