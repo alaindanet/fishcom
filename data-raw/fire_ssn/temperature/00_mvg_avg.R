@@ -66,8 +66,7 @@ mysave(sample_monthly_avg_temp, monthly_avg_temp, yearly_avg_temp,
 #TODO: define low and high pulse for temp data
 
 
-myload(monthly_avg_temp,
-  press_cat, dir = mypath("data-raw", "temp"))
+myload(monthly_avg_temp, dir = mypath("data-raw", "temp"))
 mtemp <- monthly_avg_temp
 
 #################
@@ -78,27 +77,43 @@ mtemp %<>%
   mutate(value = value - moving_avg)
 # define pulse by station
 
-treshold <- 1.96 #95%
-pulse <- mtemp %>%
-  group_by(id, parameter) %>%
-  mutate(
-    z = scale(value),
-    pulse = map_lgl(z,
-      function (z) {
-	if (is.na(z)) return(NA)
+treshold <- 0.01
+quant_station <- mtemp %>%
+  group_by(id) %>%
+  summarise(high_tresh = quantile(value, probs = 1 - treshold, na.rm = TRUE),
+  low_tresh = quantile(value, probs = treshold, na.rm = TRUE)
+  )
 
+pulse <- mtemp %>%
+  left_join(quant_station) %>%
+  group_by(id) %>%
+  mutate(
+    high_pulse = map2_lgl(value, high_tresh,
+      function (z, treshold) {
+	if (is.na(z)) return(NA)
+	if (z > treshold) return(TRUE) else return(FALSE)
+      }
+    ),
+    low_pulse = map2_lgl(value, low_tresh,
+      function (z, treshold) {
+	if (is.na(z)) return(NA)
+	if (z < treshold) return(TRUE) else return(FALSE)
       }
     )
   )
 yearly_pulse <- pulse %>%
   mutate(year = year(year_month)) %>%
-  group_by(id, parameter, year) %>%
+  group_by(id, year) %>%
   summarise(
-    nb_pulse = sum(pulse, na.rm = TRUE),
-    pulse = any(pulse, na.rm = TRUE)
+    nb_low_pulse = sum(low_pulse, na.rm = TRUE),
+    nb_high_pulse = sum(high_pulse, na.rm = TRUE),
+    low_pulse = any(low_pulse, na.rm = TRUE),
+    high_pulse = any(high_pulse, na.rm = TRUE)
   )
 local_yearly_pulse_temp <- yearly_pulse %>%
   ungroup()
+summary(local_yearly_pulse_temp$nb_low_pulse)
+
 
 mysave(local_yearly_pulse_temp, dir = mypath("data-raw", "temp"), overwrite = TRUE)
 
