@@ -525,25 +525,29 @@ interpolate_basin <- function(ssn_dir = mypath("data-raw", "ssn_interpolation"),
   mysave(quality_prediction, dir = paste0(ssn_dir, "/", basin_name), overwrite = TRUE)
 }
 
-interpolate_naiades <- function(ssn = NULL, basin = NULL, family = "Gaussian", formula = "value ~ 1") {
-    # Model
-    model <- SSN::glmssn(
-      formula = as.formula(formula),
-      ssn.object = ssn,
-      family = family,
-      CorModels = c("LinearSill.tailup", "Mariah.taildown",
-	"Exponential.Euclid"),
-      addfunccol = "afv_area"
-    )
-    # Prediction
-    pred_name <- paste0(basin, "_pred_sites")
-    pred <- predict(model, pred_name)
-    prediction <-
-      pred$ssn.object@predpoints@SSNPoints[[1]]@point.data[, c("id", "value", paste0("value", ".predSE"))]
-    # CV
-    cross_v <- SSN::CrossValidationStatsSSN(model)
-    # Result
-    return(list(cross_v = cross_v, prediction = prediction))
+interpolate_naiades <- function(ssn = NULL, basin = NULL, family = "Gaussian", var = "value", formula = "value ~ 1") {
+  # Model
+  model <- SSN::glmssn(
+    formula = as.formula(formula),
+    ssn.object = ssn,
+    family = family,
+    CorModels = c("LinearSill.tailup", "Mariah.taildown",
+      "Exponential.Euclid"),
+    addfunccol = "afv_area"
+  )
+  #if the model failed:
+  if (class(model) == "list") {
+    return(NA)
+  }
+  # Prediction
+  pred_name <- paste0(basin, "_pred_sites")
+  pred <- predict(model, pred_name)
+  prediction <-
+    pred$ssn.object@predpoints@SSNPoints[[1]]@point.data[, c("id", var, paste0(var, ".predSE"))]
+  # CV
+  cross_v <- SSN::CrossValidationStatsSSN(model)
+  # Result
+  return(list(cross_v = cross_v, prediction = prediction))
   }
 fill_data_ssn <- function(ssn = NULL, data = NULL, var = NULL,
    enquo_var = FALSE, ...) {
