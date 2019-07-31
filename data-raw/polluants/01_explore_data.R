@@ -83,3 +83,48 @@ mclapply(analysis_files, function (file_name) {
 
 myload(analyses_2016, dir = mypath("data-raw", "polluants", "naiades_data"))
 
+########################
+#  Get press category  #
+########################
+press_cat <- read_csv2(mypath("data-raw", "polluants", "naiades_data",
+    "pressure_info_olivier.csv")) %>%
+  rename(parameter = lblong_param) %>%
+  select(parameter, direction, category)
+
+replace_rules <- c(
+  "\\(" = "-",
+  "\\)" = "-",
+  "\\'" = ""
+)
+press_cat %<>%
+  mutate(
+    parameter = stringi::stri_trans_general(parameter, "Latin-ASCII"),
+    parameter = tolower(parameter),
+    parameter = str_replace_all(parameter, " ", "_"),
+    parameter = str_replace_all(parameter, replace_rules),
+    category = tolower(category)
+    )
+sup_category <- c(
+  "tetrachloroethylene" = "industry", #increasing
+  "dbo5" = "matieres organiques",# increasing 
+  "tributyletain_oxyde" = "fungicides",# increasing
+  "durete_totale" = "other", #increasing
+  "tetrachl.carbone" = "industry", #increasing
+  "dibutyletain_dichlorure" = "industry",
+  "dibutyletain_oxyde" = "industry",
+  "octabromodiph_ether_205" = "industry",
+  "octabromodiph_ether_203" = "industry"
+)
+supp_press_cat <- tibble(
+  parameter = names(sup_category),
+  direction = "increasing",
+  category = sup_category
+)
+press_cat <- rbind(press_cat, supp_press_cat) %>%
+  filter(!is.na(category))
+mysave(press_cat, dir = mypath("data-raw", "polluants"), overwrite = TRUE)
+
+# To make the database:
+press_cat %<>%
+  mutate(ld50 = NA, adi = NA, arfd = NA, aoel = NA)
+write_csv(press_cat, path = mypath("data-raw", "polluants", "polluants_effects.csv"))
