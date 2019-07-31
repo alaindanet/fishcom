@@ -14,14 +14,15 @@ source(mypath("R", "plot_methods.R"))
 library('SSN')
 library(parallel)
 basin <- c("ouest", "sud", "est", "nord") #"nord"
-myload(local_yearly_pulse_temp, dir = mypath("data-raw", "temp"))
+myload(yearly_local_pulse_polluants, dir = mypath("data-raw", "polluants"))
 
-
-year_span <- unique(local_yearly_pulse_temp$year)
-combin <- expand.grid(list(basin = basin, year = year_span)) %>%
+year_span <- unique(yearly_local_pulse_polluants$year)
+parameter <- unique(yearly_local_pulse_polluants$parameter)
+combin <- expand.grid(list(basin = basin, year = year_span, parameter = parameter)) %>%
   as_tibble() %>%
-  mutate(basin = as.character(basin), year = as.integer(year)) %>%
   arrange(desc(basin))
+#TODO: to continue to fit for polluants; file comes from temperature pulse
+#interpolation
 
 # Get ssn
 myload(ssn, dir = mypath("data-raw", "fire_ssn", "temperature"))

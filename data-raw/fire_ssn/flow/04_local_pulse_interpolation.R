@@ -24,8 +24,8 @@ combin <- expand.grid(list(basin = basin, year = year_span)) %>%
 
 # Get ssn
 myload(ssn, dir = mypath("data-raw", "fire_ssn", "flow"))
-combin$ssn <- sapply(combin$basin, function (basin){
-  return(ssn[[as.character(basin)]])
+combin$ssn <- sapply(combin$basin, function (basin_chr){
+  return(ssn[[as.character(basin_chr)]])
 })
 
 # Get data
@@ -74,7 +74,7 @@ sapply(basin, function (basin_chr) {
   stopifnot(nrow(combin[!combin$basin %in% basin_chr, ]) == 0)
 
   # if already data:
-  obj_name <- paste0(basin, "_interp_", var_chr)
+  obj_name <- paste0(basin_chr, "_interp_", var_chr)
   obj_path <- mypath("data-raw", "flow", paste0(obj_name,".rda"))
   if (file.exists(obj_path)) {
     # filter already done interpolation
@@ -111,7 +111,7 @@ sapply(basin, function (basin_chr) {
   assign(paste0(obj_name), combin)
 
   save(list = paste0(obj_name), file = obj_path)
-  message(paste0("Interpolation done for basin: ", basin))
+  message(paste0("Interpolation done for basin: ", basin_chr))
   gc()
   return(NULL)
 })
