@@ -127,4 +127,8 @@ mysave(press_cat, dir = mypath("data-raw", "polluants"), overwrite = TRUE)
 # To make the database:
 press_cat %<>%
   mutate(ld50 = NA, adi = NA, arfd = NA, aoel = NA)
-write_csv(press_cat, path = mypath("data-raw", "polluants", "polluants_effects.csv"))
+#write_csv(press_cat, path = mypath("data-raw", "polluants", "polluants_effects.csv"))
+
+# To get the database in rda:
+press_cat <- read_delim(mypath("data-raw", "polluants", "polluants_effects.csv"), delim = ";", locale = locale(decimal_mark = ","))
+mysave(press_cat, dir = mypath("data-raw", "polluants"), overwrite = TRUE)
