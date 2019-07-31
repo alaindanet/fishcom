@@ -51,12 +51,13 @@ MoreArgs = list(.data = local_yearly_pulse_flow,
 
 # Loop to compute the two types of pulse:
 for (pulse_type in c("low_pulse", "high_pulse")) {
+  var_chr <- pulse_type#paste0("nb_", pulse_type)
 
 # Get data in SSN
 options(mc.cores = 1)
 combin$ssn <- mcMap(fill_data_ssn,
   ssn = combin$ssn, data = combin$data,
-  MoreArgs = list(var = paste0("nb_",pulse_type),
+  MoreArgs = list(var = var_chr,
    enquo_var = FALSE)
 )
 
@@ -66,13 +67,14 @@ combin$ssn <- mcMap(fill_data_ssn,
 
 data_dir <- mypath("data-raw", "flow")
 options(mc.cores = 30)
-sapply(basin, function (basin) {
+sapply(basin, function (basin_chr) {
 
-  combin <- filter(combin, basin == basin) %>%
+  combin <- filter(combin, basin == basin_chr) %>%
     select(-data)
+  stopifnot(nrow(combin[!combin$basin %in% basin_chr, ]) == 0)
 
   # if already data:
-  obj_name <- paste0(basin, "_interp_nb_", pulse_type)
+  obj_name <- paste0(basin, "_interp_", var_chr)
   obj_path <- mypath("data-raw", "flow", paste0(obj_name,".rda"))
   if (file.exists(obj_path)) {
     # filter already done interpolation
@@ -96,8 +98,8 @@ sapply(basin, function (basin) {
     basin = combin[["basin"]],
     MoreArgs = list(
       family = "Poisson",
-      formula = paste0("nb_", pulse_type, " ~ 1"),
-      var = paste0("nb_", pulse_type)
+      formula = paste0(var_chr, " ~ 1"),
+      var = var_chr 
     ),
     mc.preschedule = FALSE
   )
@@ -120,18 +122,18 @@ sapply(basin, function (basin) {
 #####################
 
 # Object names:
-pred_obj <- paste0("yearly_flow_local_", pulse_type, "_interp")
-cv_obj <- paste0("cv_flow_local_", pulse_type, "_interp")
+pred_obj <- paste0("yearly_flow_local_", var_chr, "_interp")
+cv_obj <- paste0("cv_flow_local_", var_chr, "_interp")
 
 # If already done, skip the loop below:
 if (all(file.exists(paste0(mypath("data-raw", "flow"), "/", c(pred_obj, cv_obj), ".rda")))) {
-  cat(paste0("Results for ", pulse_type, " has been already gathered.\n"))
+  cat(paste0("Results for ", var_chr, " has been already gathered.\n"))
   break 
 }
 
 
 data_list <- lapply(basin, function (x) {
-  obj <- paste0(x, "_interp_nb_", pulse_type)
+  obj <- paste0(x, "_interp_", var_chr)
   load(mypath("data-raw", "flow", paste0(obj, ".rda")))
   assign("data", get(obj))
   return(data)
@@ -161,9 +163,9 @@ interpolation %<>%
     x[["cross_v"]]
   }
 }),
-    prediction = map2(ssn, basin, function(x, basin) {
+    prediction = map2(ssn, basin, function(x, basin_chr) {
   if(is.null(names(x))) {
-    ids <- id_by_basin[which(id_by_basin$basin == basin), ]$id
+    ids <- id_by_basin[which(id_by_basin$basin == basin_chr), ]$id
     out <- data.frame(
       matrix(NA, nrow = length(ids), ncol = 3)
     )
@@ -178,7 +180,7 @@ interpolation %<>%
   
 prediction <- interpolation %>%
   unnest(prediction)
-prediction <- prediction[, c("id", "year", paste0("nb_", pulse_type), paste0("nb_", pulse_type, ".predSE"))]
+prediction <- prediction[, c("id", "year", var_chr, paste0(var_chr, ".predSE"))]
 assign(pred_obj, prediction)
 cross_v <- interpolation %>%
   unnest(cross_v) %>%
@@ -190,19 +192,16 @@ sapply(list(pred_obj, cv_obj), function (x) {
   })
 
 
-dist_yearly_flow_local_pulse <- local_yearly_pulse_flow %>%
-  gather(pulse, nb, nb_low_pulse, nb_high_pulse) %>%
-  group_by(pulse) %>%
-  summarise(min = min(nb), max = max(nb))
-
+temp <- local_yearly_pulse_flow[, names(local_yearly_pulse_flow) %in% var_chr] %>%
+  unlist
+dist_yearly_flow_local_pulse <- c(min = min(temp), max = max(temp))
 
 # Filter abberant values:
 options(mc.cores = 15)
 library(parallel)
 prediction$value_corrected <- mcMap(
   function (x, distri) {
-    check <- distri %>%
-      unlist
+    check <- distri
     if (is.na(x)) {
       return(NA)
     } else if (x < check["min"]) {
@@ -213,10 +212,9 @@ prediction$value_corrected <- mcMap(
       return(x)
     }
   },
-  x = prediction[[paste0("nb_",pulse_type)]],
+  x = prediction[[var_chr]],
   MoreArgs = list(
-    distri = filter(dist_yearly_flow_local_pulse, pulse == paste0("nb_", pulse_type)) %>%
-      select(min, max)
+    distri = dist_yearly_flow_local_pulse 
   )
 )
 
