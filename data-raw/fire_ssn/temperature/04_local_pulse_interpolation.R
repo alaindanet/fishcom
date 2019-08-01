@@ -51,8 +51,16 @@ MoreArgs = list(.data = local_yearly_pulse_temp,
 )
 
 # Loop to compute the two types of pulse:
-for (pulse_type in c("low_pulse", "high_pulse")) {
+for (pulse_type in c("nb_low_pulse", "nb_high_pulse", "low_pulse", "high_pulse")) {
   var_chr <- pulse_type#paste0("nb_", pulse_type)
+
+  if (pulse_type %in% c("nb_low_pulse", "nb_high_pulse")) {
+    dist_family <- "Poisson" 
+  } else if (pulse_type %in% c("low_pulse", "high_pulse")) {
+    dist_family <- "Binomial" 
+  } else {
+    stop("Unknown variable.")
+  }
 
 # Get data in SSN
 options(mc.cores = 1)
@@ -98,7 +106,7 @@ sapply(basin, function (basin_chr) {
     ssn = combin[["ssn"]],
     basin = combin[["basin"]],
     MoreArgs = list(
-      family = "Poisson",
+      family = dist_family,
       formula = paste0(var_chr, " ~ 1"),
       var = var_chr 
     ),
@@ -129,7 +137,7 @@ cv_obj <- paste0("cv_temp_local_", var_chr, "_interp")
 # If already done, skip the loop below:
 if (all(file.exists(paste0(mypath("data-raw", "temp"), "/", c(pred_obj, cv_obj), ".rda")))) {
   cat(paste0("Results for ", var_chr, " has been already gathered.\n"))
-  break 
+  next 
 }
 
 
@@ -193,9 +201,9 @@ sapply(list(pred_obj, cv_obj), function (x) {
   })
 
 
-temp <- local_yearly_pulse_flow[, names(local_yearly_pulse_flow) %in% var_chr] %>%
+temp <- local_yearly_pulse_temp[, colnames(local_yearly_pulse_temp) %in% var_chr] %>%
   unlist
-dist_yearly_flow_local_pulse <- c(min = min(temp), max = max(temp))
+dist_yearly_temp_local_pulse <- c(min = min(temp), max = max(temp))
 
 # Filter abberant values:
 options(mc.cores = 15)
@@ -222,10 +230,10 @@ prediction$value_corrected <- mcMap(
 prediction$value_corrected <- 
   sapply(prediction$value_corrected, function(x) x[1])
 
-save(list = pred_obj, file = mypath("data-raw", "flow", paste0(pred_obj, ".rda")))
+save(list = pred_obj, file = mypath("data-raw", "temp", paste0(pred_obj, ".rda")))
 
 }
 
-myload(yearly_temp_local_high_pulse_interp, yearly_temp_local_low_pulse_interp,
+myload(yearly_temp_local_nb_high_pulse_interp, yearly_temp_local_nb_low_pulse_interp,
   dir = mypath("data-raw", "temp"))
 

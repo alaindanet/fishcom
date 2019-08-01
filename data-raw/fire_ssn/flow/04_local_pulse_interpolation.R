@@ -50,8 +50,16 @@ MoreArgs = list(.data = local_yearly_pulse_flow,
 )
 
 # Loop to compute the two types of pulse:
-for (pulse_type in c("low_pulse", "high_pulse")) {
+for (pulse_type in c("nb_low_pulse", "nb_high_pulse", "low_pulse", "high_pulse")) {
   var_chr <- pulse_type#paste0("nb_", pulse_type)
+
+  if (pulse_type %in% c("nb_low_pulse", "nb_high_pulse")) {
+    dist_family <- "Poisson" 
+  } else if (pulse_type %in% c("low_pulse", "high_pulse")) {
+    dist_family <- "Binomial" 
+  } else {
+    stop("Unknown variable.")
+  }
 
 # Get data in SSN
 options(mc.cores = 1)
@@ -97,7 +105,7 @@ sapply(basin, function (basin_chr) {
     ssn = combin[["ssn"]],
     basin = combin[["basin"]],
     MoreArgs = list(
-      family = "Poisson",
+      family = dist_family,
       formula = paste0(var_chr, " ~ 1"),
       var = var_chr 
     ),
@@ -128,7 +136,7 @@ cv_obj <- paste0("cv_flow_local_", var_chr, "_interp")
 # If already done, skip the loop below:
 if (all(file.exists(paste0(mypath("data-raw", "flow"), "/", c(pred_obj, cv_obj), ".rda")))) {
   cat(paste0("Results for ", var_chr, " has been already gathered.\n"))
-  break 
+  next 
 }
 
 
