@@ -24,6 +24,7 @@ knitr::opts_chunk$set(
 )
 library(tidyverse)
 library(sf)
+library(lubridate)
 library(ggpmisc)
 library(cowplot)
 library(kableExtra)
@@ -36,7 +37,7 @@ theme_set(theme_alain())
 
 ```{r load dataset, include = FALSE}
 myload(yearly_press_interp_mv_avg, dir = data_common)
-myload(synchrony, press_polluants, press_z_category, temporal_community_metrics, dir = mypath("data"))
+myload(synchrony, press_polluants, press, temporal_community_metrics, dir = mypath("data"))
 ```
 
 ```{r test for success by variable}
@@ -51,6 +52,8 @@ kable(filter(eff_interp, frac_obs < .80))
 
 # Plot some series
 
+## Polluants
+
 ```{r}
 test <- yearly_press_interp_mv_avg %>%
   filter(id %in% sample(id, 5), parameter %in% sample(parameter, 12))
@@ -58,6 +61,8 @@ ggplot(test, aes(x = year, y = value_corrected)) +
   geom_line(aes(color = as.factor(id))) +
   facet_wrap(~parameter, scales = "free_y")
 ```
+
+
 
 # Plot some press
 
@@ -127,15 +132,26 @@ g2
 # Press category
 
 ```{r}
-myload(press_z_category, dir = mypath("data"))
+myload(press, dir = mypath("data"))
 ```
+
+## Viz press
+
+```{r}
+ggplot(press, aes(x = press)) +
+  geom_histogram() + 
+  facet_wrap(~category, scales = "free_x")
+
+```
+
+## Model
 
 ```{r}
 stab_cat_press <- synchrony %>%
-  left_join(rename(press_z_category, station = id))
+  left_join(rename(press, station = id))
 
 formula <- y ~ x #needed for stat_poly_eq
-ggplot(stab_cat_press, aes(x = z_sum, y = cv_com)) +
+ggplot(stab_cat_press, aes(x = press, y = cv_com)) +
   geom_point() + 
   facet_wrap(~category, scales = "fixed") +
   geom_smooth(method = 'lm', formula = formula) +
@@ -144,13 +160,13 @@ ggplot(stab_cat_press, aes(x = z_sum, y = cv_com)) +
     eq.with.lhs = "italic(hat(y))~`=`~",
     aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
     parse = TRUE) +
-  labs(x = "Z sum of pressure", y = "CV of the community")
+  labs(x = "Pressure", y = "CV of the community")
 ```
 ```{r}
 stab_cat_press_model <- stab_cat_press %>%
   select(-station, -synchrony, -cv_sp, -cv_classic) %>%
   filter(!is.na(category)) %>%
-  spread(category, z_sum)
+  spread(category, press)
 na.omit(stab_cat_press_model)
 mod <- lm(cv_com ~ ., stab_cat_press_model)
 p2 <- jtools::plot_summs(mod)
@@ -161,7 +177,7 @@ p2
 stab_cat_press_model <- stab_cat_press %>%
   select(-synchrony, -cv_sp, -cv_classic) %>%
   filter(!is.na(category)) %>%
-  spread(category, z_sum) %>%
+  spread(category, press) %>%
   left_join(select(temporal_community_metrics, station, richness_med)) %>%
   select(-station)
 na.omit(stab_cat_press_model)
