@@ -7,41 +7,31 @@ library(magrittr)
 mypath <- rprojroot::find_package_root_file
 source(mypath("R", "misc.R"))
 
-data <- read_csv2(mypath("data-raw", "naiades_temperatures", "analyse.csv"))
-str(data[, "CdRqAna"])
-unique(data[, "NomRdd"])
+data <- read_delim(mypath("data-raw", "naiades_temperatures", "analyse.csv"),
+  delim = ";")
 replacement_col <- c(
   "CdStationMesureEauxSurface" = "id",
-  "LbSupport" = "substrate",
-  "CdFractionAnalysee" = "id_portion",
-  "LbFractionAnalysee" = "portion",
-  "DatePrel" = "date",
-  "CdParametre" = "id_parameter",
-  "LbLongParamètre" = "parameter",
-  "RsAna" = "value",
-  "SymUniteMesure" = "units",
-  "MnemoStatutAna" = "statut",
-  "CdRqAna" = "id_rq",
-  "LbQualAna" = "qualification"
+  "DtAnaTemp" = "date",
+  "HrAnaTemp" = "time",
+  "RsAnaTemp" = "value"
 )
-#data %<>% .[, names(replacement_col)]
-#colnames(data) %<>% str_replace_all(., replacement_col)
 
+data %<>% .[, names(replacement_col)]
+colnames(data) %<>% str_replace_all(., replacement_col)
 
-#nit <- filter(data, LbLongParamètre == "Nitrates") %>%
-  #select(CdStationMesureEauxSurface, LbSupport, LbFractionAnalysee, DatePrel, LbLongParamètre, RsAna, LbQualAna) %>%
-  #mutate(RsAna = as.numeric(RsAna)) %>%
-  #arrange(CdStationMesureEauxSurface, DatePrel)
+# Filter abberant temperature:
+check <- data %>%
+  group_by(id) %>%
+  mutate(
+    check_up = value > mean(value) + 5 * sd(value),
+    check_dw = value < mean(value) - 5 * sd(value)
+  )
 
-#min(nit$DatePrel)
-#max(nit$DatePrel)
-#summary(nit$RsAna)
-#filter(nit, RsAna > 100)
-#filter(nit, LbQualAna == "Correcte", RsAna > 100)
+check %<>%
+  mutate(value = ifelse(check_up | check_dw, NA, value)) %>%
+  select(-check_up, -check_dw)
 
-#myload(station_naiades, dir = mypath("data-raw"))
-#bre_station <- filter(station_naiades, id) 
-
-##########################
-#  Transform csv in rda  #
-##########################
+hourly_temp_naiades <- check
+sample_hourly_temp_naiades <- filter(check, id %in% sample(unique(check$id), 50))
+mysave(hourly_temp_naiades, dir = mypath("data-raw", "naiades_temperatures"), overwrite = TRUE)
+mysave(sample_hourly_temp_naiades, dir = mypath("data-raw", "naiades_temperatures"), overwrite = TRUE)
