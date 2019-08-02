@@ -25,9 +25,10 @@ test <- mclapply(analysis_files, function (files) {
   data
   })
 data <- do.call(rbind, test)
+
 data %<>%
   filter(date > "1994-01-01") %>%
-  select(id, date, parameter, value) %>%
+  select(id, date, time, parameter, value) %>%
   mutate(value = as.numeric(value))
 analysis_total <- data
 mysave(analysis_total, dir = mypath("data-raw", "polluants", "naiades_data"), overwrite = TRUE)

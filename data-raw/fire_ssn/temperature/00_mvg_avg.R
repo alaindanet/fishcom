@@ -11,8 +11,9 @@ mypath <- rprojroot::find_package_root_file
 source(mypath("R", "misc.R"))
 myload(quality_data, dir = mypath("data-raw"))
 
-
+unique(quality_data$validity)
 prep_data <- quality_data %>%
+  filter(! validity %in% c("9", "Correcte")) %>%
   filter(var_code == "temp") %>%
   mutate(
     value = as.numeric(value),
@@ -28,7 +29,14 @@ few_records <- prep_data %>%
   filter(nobs < 24) 
 
 prep_data %<>%
-  filter(! id %in% few_records$id) %>%
+  filter(! id %in% few_records$id) 
+
+# Additional data check 
+prep_data %<>%
+  filter(!value > 100, !value < -4)
+
+
+prep_data %<>%
   group_by(id) %>%
   arrange(desc(year_month)) %>%
   nest()
@@ -36,7 +44,7 @@ prep_data %<>%
 rm(quality_data)
 options(mc.cores = 15)
 prep_data$moving_avg <- parallel::mclapply(prep_data$data, function(x) {
-    rollapplyr(data = x$value, width = 12, FUN = mean, na.rm = TRUE, fill = NA, partial = 3)
+    rollapplyr(data = x$value, width = 12, FUN = mean, na.rm = TRUE, fill = NA, partial = 6)
     })
 prep_data %<>%
   unnest()
@@ -44,9 +52,8 @@ prep_data %<>%
   filter(year_month > "1994-01-01")
 
 monthly_avg_temp <- prep_data
-# Yearly avg
-mysave(monthly_avg_temp, dir = mypath("data-raw", "temp"))
 
+# Yearly avg
 yearly_avg_temp <- monthly_avg_temp %>%
   mutate(year = year(year_month)) %>%
   group_by(id, year) %>%

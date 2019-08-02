@@ -150,8 +150,9 @@ data_list <- lapply(basin, function (x) {
 # Merge them:
 interpolation <- do.call(rbind, data_list)
 
-fill_empty_cross_v <- names(interpolation$ssn[[3]][["cross_v"]])
-fill_empty_pred <- names(interpolation$ssn[[3]][["prediction"]])
+list_names_id <- which(sapply(interpolation$ssn, class) == "list")[1]
+fill_empty_cross_v <- names(interpolation$ssn[[list_names_id]][["cross_v"]])
+fill_empty_pred <- names(interpolation$ssn[[list_names_id]][["prediction"]])
 id_by_basin <- interpolation %>%
   group_by(basin) %>%
   slice(4) %>%
@@ -223,7 +224,7 @@ prediction$value_corrected <- mcMap(
   },
   x = prediction[[var_chr]],
   MoreArgs = list(
-    distri = dist_yearly_flow_local_pulse 
+    distri = dist_yearly_temp_local_pulse 
   )
 )
 

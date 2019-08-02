@@ -27,13 +27,15 @@ few_records <- prep_data %>%
 
 prep_data %<>%
   group_by(id, parameter) %>%
-  arrange(desc(year_month)) %>%
+  arrange(desc(year_month)) 
+
+prep_data %<>%
   nest()
 
 rm(analysis_total)
 options(mc.cores = 15)
 prep_data$moving_avg <- parallel::mclapply(prep_data$data, function(x) {
-    rollapplyr(data = x$value, width = 12, FUN = mean, na.rm = TRUE, fill = NA, partial = 3)
+    rollapplyr(data = x$value, width = 12, FUN = mean, na.rm = TRUE, fill = NA, partial = 9)
     })
 prep_data %<>%
   unnest()

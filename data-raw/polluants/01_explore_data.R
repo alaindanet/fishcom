@@ -7,15 +7,19 @@ library(magrittr)
 mypath <- rprojroot::find_package_root_file
 source(mypath("R", "misc.R"))
 
-data <- read_csv2(mypath("data-raw", "polluants", "naiades_data", "analyses_2016.csv"))
-str(data[, "CdRqAna"])
-unique(data[, "NomRdd"])
+data2 <- read_csv2(mypath("data-raw", "polluants", "naiades_data", "analyses_2016.csv"))
+data2 <- data.table::fread(mypath("data-raw", "polluants", "naiades_data",
+    "analyses_2016.csv"))
+data2 %<>% as_tibble()
+str(data2[, "CdRqAna"])
+unique(data2[, "NomRdd"])
 replacement_col <- c(
   "CdStationMesureEauxSurface" = "id",
   "LbSupport" = "substrate",
   "CdFractionAnalysee" = "id_portion",
   "LbFractionAnalysee" = "portion",
   "DatePrel" = "date",
+  "HeurePrel" = "time",
   "CdParametre" = "id_parameter",
   "LbLongParamètre" = "parameter",
   "RsAna" = "value",
@@ -82,6 +86,48 @@ mclapply(analysis_files, function (file_name) {
   })
 
 myload(analyses_2016, dir = mypath("data-raw", "polluants", "naiades_data"))
+
+################
+#  Operations  #
+################
+data2 <- read_delim(
+  mypath("data-raw", "polluants", "naiades_data", "operations_2018.csv"),
+  delim = ";", locale = locale(decimal_mark = ","),
+  col_types = cat(c(rep("?", 26), rep("-", 6)))
+)
+
+analysis_files <- list.files(
+  path = mypath("data-raw", "polluants", "naiades_data"),
+  pattern = "operations.*.csv", full.names = FALSE)
+
+options(mc.cores = 8)
+parallel::mclapply(analysis_files, function (file_name) {
+  temp <- read_csv2(mypath("data-raw", "polluants", "naiades_data", file_name),
+  col_types = cat(c(rep("?", 26), rep("-", 6)))
+  )
+
+  obj <- str_sub(file_name, end = -5)
+  assign(obj, temp, envir = .GlobalEnv)
+  save(list = obj,
+    file = mypath("data-raw", "polluants", "naiades_data", paste0(obj, ".rda")),
+    compress = "bzip2"
+  )
+  invisible()
+  })
+
+operation_files <- list.files(
+  path = mypath("data-raw", "polluants", "naiades_data"),
+  pattern = "operations.*.rda", full.names = FALSE)
+
+test <- parallel::mclapply(operation_files, function (files) {
+
+  obj_name <- str_sub(files, end = -5) 
+  print(obj_name)
+  load(mypath("data-raw", "polluants", "naiades_data", files))
+  data <- get(obj_name)
+  data
+  })
+data <- do.call(rbind, test)
 
 ########################
 #  Get press category  #
