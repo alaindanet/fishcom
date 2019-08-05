@@ -19,8 +19,7 @@ prep_data <- hourly_temp_naiades %>%
     tmax = max(value, na.rm = TRUE)
   )
 
-# There are not so many stations (650), so we keep them all:
-
+# There are not many stations (650), so we keep them all:
 prep_data %<>%
   group_by(id) %>%
   arrange(desc(date)) %>%
@@ -57,8 +56,8 @@ mysave(sample_daily_avg_temp, daily_avg_temp, yearly_avg_temp,
 #TODO: define low and high pulse for temp data
 
 
-myload(monthly_avg_temp, dir = mypath("data-raw", "temp"))
-mtemp <- monthly_avg_temp
+myload(daily_avg_temp, dir = mypath("data-raw", "naiades_temperatures"))
+mtemp <- daily_avg_temp 
 
 #################
 #  Local pulse  #
