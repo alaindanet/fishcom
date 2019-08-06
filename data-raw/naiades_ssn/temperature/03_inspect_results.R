@@ -97,5 +97,9 @@ yearly_temp_press_interp_mv_avg$value_corrected <- mcMap(
 yearly_temp_press_interp_mv_avg$value_corrected <- 
   sapply(yearly_temp_press_interp_mv_avg$value_corrected, function(x) x[1])
 
-mysave(yearly_temp_press_interp_mv_avg,
+press_temperature <- yearly_temp_press_interp_mv_avg %>%
+  group_by(id) %>%
+  summarise(temperature = mean(value_corrected, na.rm = TRUE))
+
+mysave(yearly_temp_press_interp_mv_avg, press_temperature,
   dir = mypath("data-raw", "naiades_temperatures"), overwrite = TRUE)

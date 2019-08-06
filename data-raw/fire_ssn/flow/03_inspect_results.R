@@ -98,5 +98,11 @@ yearly_flow_press_interp_mv_avg$value_corrected <- mcMap(
 yearly_flow_press_interp_mv_avg$value_corrected <- 
   sapply(yearly_flow_press_interp_mv_avg$value_corrected, function(x) x[1])
 
-mysave(yearly_flow_press_interp_mv_avg,
+press_flow <- yearly_flow_press_interp_mv_avg %>%
+  group_by(id) %>%
+  summarise(flow = mean(value_corrected, na.rm = TRUE))
+
+mysave(yearly_flow_press_interp_mv_avg, press_flow,
   dir = mypath("data-raw", "flow"), overwrite = TRUE)
+
+
