@@ -13,18 +13,6 @@ source(mypath("R", "geo_methods.R"))
 source(mypath("R", "plot_methods.R"))
 myload(yearly_avg_polluants, dir = mypath("data-raw", "polluants"))
 
-replace_rules <- c(
-  "\\(" = "-",
-  "\\)" = "-",
-  "\\'" = ""
-)
-yearly_avg_polluants %<>%
-  mutate(
-    parameter = stri_trans_general(parameter, "Latin-ASCII"),
-    parameter = tolower(parameter),
-    parameter = str_replace_all(parameter, " ", "_"),
-    parameter = str_replace_all(parameter, replace_rules)
-    )
 saving_dir <- mypath("data-raw", "polluants", "yearly_parameter_data")
 length(unique(yearly_avg_polluants$parameter))
 if (!dir.exists(saving_dir)) {
@@ -48,5 +36,4 @@ yearly_avg_polluants %>%
       invisible()
 }))
 
-mysave(yearly_avg_polluants, dir = mypath("data-raw", "polluants"), overwrite = TRUE)
 

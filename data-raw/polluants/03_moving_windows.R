@@ -6,6 +6,7 @@
 library(tidyverse)
 library(magrittr)
 library(lubridate)
+library(stringi)
 library('zoo') 
 mypath <- rprojroot::find_package_root_file
 source(mypath("R", "misc.R"))
@@ -41,11 +42,24 @@ prep_data %<>%
   unnest()
 
 monthly_avg_polluants <- prep_data
+replace_rules <- c(
+  "\\(" = "-",
+  "\\)" = "-",
+  "\\'" = ""
+)
+monthly_avg_polluants %<>%
+  mutate(
+    parameter = stri_trans_general(parameter, "Latin-ASCII"),
+    parameter = tolower(parameter),
+    parameter = str_replace_all(parameter, " ", "_"),
+    parameter = str_replace_all(parameter, replace_rules)
+    )
 # Yearly avg
-mysave(monthly_avg_polluants, dir = mypath("data-raw", "polluants"))
+mysave(monthly_avg_polluants, dir = mypath("data-raw", "polluants"), overwrite = TRUE)
 
 yearly_avg_polluants <- monthly_avg_polluants %>%
   mutate(year = year(year_month)) %>%
+  filter(!year %in% c(1994, 2018)) %>% # To epure moving avg NA
   group_by(id, parameter, year) %>%
   summarise(value = mean(moving_avg, na.rm = TRUE), raw_value = mean(value, na.rm = TRUE)) %>%
   ungroup()
@@ -65,18 +79,6 @@ mysave(sample_monthly_avg_polluants, monthly_avg_polluants, yearly_avg_polluants
 myload(monthly_avg_polluants,
   press_cat, dir = mypath("data-raw", "polluants"))
 mpolluants <- monthly_avg_polluants
-replace_rules <- c(
-  "\\(" = "-",
-  "\\)" = "-",
-  "\\'" = ""
-)
-mpolluants %<>%
-  mutate(
-    parameter = stringi::stri_trans_general(parameter, "Latin-ASCII"),
-    parameter = tolower(parameter),
-    parameter = str_replace_all(parameter, " ", "_"),
-    parameter = str_replace_all(parameter, replace_rules)
-    )
 
 mpolluants %<>% left_join(press_cat, by = "parameter")
 missing_cat <- filter(mpolluants, is.na(category))

@@ -86,6 +86,10 @@ mclapply(analysis_files, function (file_name) {
   })
 
 myload(analyses_2016, dir = mypath("data-raw", "polluants", "naiades_data"))
+unit_parameter <- analyses_2016 %>%
+  group_by(parameter) %>%
+  summarise(units = list(unique(units))) %>%
+  unnest(units)
 
 ################
 #  Operations  #

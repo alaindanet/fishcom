@@ -24,8 +24,9 @@ combin$ssn <- sapply(combin$basin, function (basin){
   return(ssn[[as.character(basin)]])
 })
 
+
 # Get data
-options(mc.cores = 30)
+options(mc.cores = 15)
 combin$data <- mcMap(function (basin, year, parameter, data_dir, ssn_dir){
   obs_data <- paste0(data_dir, "/", parameter, ".rda")
   load(obs_data) #name of the object is data
@@ -60,12 +61,12 @@ combin$ssn <- mcMap(fill_data_ssn,
 #####################
 
 data_dir <- mypath("data-raw", "polluants")
-options(mc.cores = 15)
+options(mc.cores = 10)
 sapply(basin, function (basin) {
 
   combin <- filter(combin, basin == basin) %>%
     select(-data) %>%
-    filter(parameter %in% unique(parameter)[76:length(unique(parameter))])
+    filter(parameter %in% unique(parameter)[1:75]) #76:length(unique(parameter))
 
   # if already data:
   obj_name <- paste0(basin, "_interp_mv_avg")
