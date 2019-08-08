@@ -141,12 +141,19 @@ filter(data, most_used_u != units, units == "mg/L")
 data %<>%
   mutate(
     units = ifelse(is.na(most_used_u), units, most_used_u),
-    value = value_fixed) %>%
+    value = value_fixed
+  ) 
+
+analysis_total <- data %>%
   select(id, date, parameter, value)
 
-analysis_total <- data
+polluant_units <- data %>%
+  group_by(parameter) %>%
+  summarise(units = unique(units))
 
-mysave(analysis_total, dir = mypath("data-raw", "polluants", "naiades_data"), overwrite = TRUE)
+
+
+mysave(analysis_total, polluant_units, dir = mypath("data-raw", "polluants", "naiades_data"), overwrite = TRUE)
 
 fourier_data <- data %>%
   ungroup() %>%
