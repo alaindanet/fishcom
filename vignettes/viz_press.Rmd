@@ -37,7 +37,7 @@ theme_set(theme_alain())
 
 ```{r load dataset, include = FALSE}
 myload(yearly_press_interp_mv_avg, dir = data_common)
-myload(synchrony, press_polluants, press, temporal_community_metrics, dir = mypath("data"))
+myload(synchrony, press_polluants, temporal_evt_press, temporal_community_metrics, dir = mypath("data"))
 ```
 
 ```{r test for success by variable}
@@ -132,17 +132,25 @@ g2
 # Press category
 
 ```{r}
-myload(press, dir = mypath("data"))
+myload(temporal_evt_press, dir = mypath("data"))
+press <- temporal_evt_press %>%
+  gather(category, press, -id)
 ```
 
 ## Viz press
 
 ```{r}
+
 ggplot(press, aes(x = press)) +
   geom_histogram() + 
   facet_wrap(~category, scales = "free_x")
 
 ```
+
+```{r}
+kable(cor(select(temporal_evt_press, -id), method = "spearman"))
+```
+
 
 ## Model
 

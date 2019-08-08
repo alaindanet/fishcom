@@ -4,6 +4,8 @@
 
 library('tidyverse')
 library('magrittr')
+mypath <- rprojroot::find_package_root_file
+source(mypath("R", "misc.R"))
 
 
 # Habitat description
@@ -36,36 +38,22 @@ temporal_habitat_station <- habitat_station %>%
     vars(hole_pit_med, under_bank_med, rock_shelter_med, logjam_stumps_med, aqua_vg_shelter_med, edge_vg_med),
     list(~recode_factor(., !!!lvl, .ordered = TRUE)))
 mysave(temporal_habitat_station, dir = mypath("data"))
-# Environmental pressure
-myload(press, dir = mypath("data-raw", "ssn_interpolation"))
+
+############################
+#  Environmental pressure  #
+############################
+# Flow, polluant and temperature
+
+# polluants
+myload(press, dir = mypath("data"))
 press %<>%
-  spread(var_code, press) %>%
-  select(-DOC, -TOC)
-cor(na.omit(press[, !names(press) == "id"]))
-press %<>% rename(station = id)
+  spread(category, press)
 
-myload(temporal_station_desc, dir = mypath("data"))
-temporal_station_desc %<>%
-  select(
-    -width_river_mean,
-    -avg_depth_station_mean,
-    -width_river_cv,
-    -avg_depth_station_cv)
+myload(press_temperature, dir = mypath("data-raw", "naiades_temperatures"))
+myload(press_flow, dir = mypath("data-raw", "flow"))
 
-test <- left_join(press, temporal_station_desc) %>%
-  left_join(temporal_habitat_station) %>%
-  ungroup
-test %<>%
-  mutate_if(is.factor, ~as.integer(.))
-
-library('ade4')
-temporal_habitat_station
-pca <- dudi.pca(as.data.frame(na.omit(select(test, -station))), scannf = FALSE, nf = 4, center = TRUE, scale = TRUE)
-
-screeplot(pca)
-summary(pca)
-scatter(pca, posieig = "none")
-s.corcircle(pca$co)
-s.corcircle(pca$co, xax = 1, yax = 3)
-s.corcircle(pca$co, xax = 2, yax = 3)
+temporal_evt_press <- press %>%
+  left_join(press_temperature) %>%
+  left_join(press_flow)
+mysave(temporal_evt_press, dir = mypath("data"), overwrite = TRUE)
 
