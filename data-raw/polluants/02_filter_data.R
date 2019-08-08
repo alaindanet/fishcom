@@ -151,9 +151,25 @@ polluant_units <- data %>%
   group_by(parameter) %>%
   summarise(units = unique(units))
 
-
+replace_rules <- c(
+  "\\(" = "-",
+  "\\)" = "-",
+  "\\'" = ""
+)
+polluant_units %<>%
+  mutate(
+    parameter = stringi::stri_trans_general(parameter, "Latin-ASCII"),
+    parameter = tolower(parameter),
+    parameter = str_replace_all(parameter, " ", "_"),
+    parameter = str_replace_all(parameter, replace_rules)
+    )
 
 mysave(analysis_total, polluant_units, dir = mypath("data-raw", "polluants", "naiades_data"), overwrite = TRUE)
+
+
+#######################################
+#  Check the periodicity of the data  #
+#######################################
 
 fourier_data <- data %>%
   ungroup() %>%
