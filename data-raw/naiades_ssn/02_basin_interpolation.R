@@ -66,7 +66,7 @@ sapply(basin, function (basin) {
 
   combin <- filter(combin, basin == basin) %>%
     select(-data) %>%
-    filter(parameter %in% unique(parameter)[1:75]) #76:length(unique(parameter))
+    filter(parameter %in% unique(parameter)[76:length(unique(parameter))]) #1:75
 
   # if already data:
   obj_name <- paste0(basin, "_interp_mv_avg")
