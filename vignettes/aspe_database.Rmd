@@ -29,10 +29,10 @@ library(magrittr)
 library(dbplyr)
 library(lubridate)
 library(ggplot2)
-devtools::load_all()
-theme_set(theme_alain())
+#devtools::load_all()
+#theme_set(theme_alain())
+source(mypath("R", "misc.R"))
 ```
-
 
 This document groups all the questions and remarks that I have regarding the
 ASPE database. Those questionings will be addressed to Thierry Point and Eddy
@@ -225,7 +225,7 @@ op %<>%
 # and them accordingly to fishing operation env and general
 # HERE
 op_desc <- tbl(con, in_schema("aspe", "operation_description_peche")) %>%
-  filter(odp_ope_id %in% op$id) %>%
+  filter(odp_ope_id %in% !!op$id) %>%
   collect()
 colnames(op_desc)
 desc_op_col <-c(
@@ -394,7 +394,7 @@ save(op_desc, file = mypath("data-raw", "fishing_op_build", "op_desc.rda"))
 
 ```{r}
 op_env <- tbl(con, in_schema("aspe", "operation_donnees_environnementales")) %>%
-  filter(ode_ope_id %in% op$id) %>%
+  filter(ode_ope_id %in% !!op$id) %>%
   collect()
 colnames(op_env)
 env_op_col <- c(
@@ -580,7 +580,7 @@ save(op_env, file = mypath("data-raw", "fishing_op_build", "op_env.rda"))
 
 ```{r}
 op_hab <- tbl(con, in_schema("aspe", "habitat")) %>%
-  filter(hab_id %in% op_env$habitat_id) %>%
+  filter(hab_id %in% !!op_env$habitat_id) %>%
   collect()
 colnames(op_hab)
 ```
@@ -697,7 +697,7 @@ mysave(op_hab, dir = mypath("data-raw"), overwrite = TRUE)
 
 ```{r}
 sampling_point <- tbl(con, in_schema("aspe", "point_prelevement")) %>%
-  filter(pop_id %in% op$id) %>%
+  filter(pop_id %in% !!op$id) %>%
   collect()
 sampling_point %<>% rename_all(
   list(~ gsub("pop_", "", make.names(colnames(sampling_point)))))
@@ -870,7 +870,7 @@ station %<>%
       ))
 
 station <- do.call(rbind, station$data)
-mapview::mapview(station)@map
+#mapview::mapview(station)@map
 ```
 
 Many station are outside metropolitan France. For the moment, we will suppress
@@ -912,7 +912,7 @@ if (any(colnames(op) %in% "station")) {
   op %<>% select(-station)
 }
 station_id <- select(sampling_point, id, sta_id) %>%
-  rename(pop_id = id, station = sta_id)
+  rename(station = sta_id)
 op %<>%
   left_join(., station_id)
 
@@ -1013,12 +1013,12 @@ point_group
 
 I am not sure about what is the meaning of the points. I guess that that it is
 the fishing protocol "partial by points". If I want to merge it with "partial
-over bank", I have to select standard points in which 100 points were done in
+over bank", I have to select standard points in which 100%  were done in
 bank.
 
 ```{r}
 point_group %<>%
-  filter(grp_tgp_id == "standards" & nb_pt_berge == 100)
+  filter(grp_tgp_id == "standards" & nb_pt_berge == grp_nombre)
 ```
 
 ### Filter elementary prelevement
@@ -1027,6 +1027,8 @@ We exclude all the prelevements that are not coming from standard point or that
 are not in which all the points were not coming from the berge
 
 ```{r}
+pre_ele %<>%
+  collect()
 pre_ele %<>%
   filter(! (type_prelevement == "Groupe de points" & !(pre_id %in% collect(point_group)$grp_id)))
 ```
@@ -1102,16 +1104,11 @@ save(lot_testing, file = mypath("data-raw","fishing_op_build",
 ```{r}
 ind_measure <- tbl(con, in_schema("aspe", "mesure_individuelle"))
 arrange(ind_measure, mei_lop_id)
-ref_type_lot %<>%
-  rename(
-    lop_tyl_id = tyl_id,
-    type_lot = tyl_libelle) %>%
-  select(-tyl_ordre_affichage)
 ```
 
 ```{r echo = FALSE, include = FALSE}
 ind_measure_testing <-
-  filter(ind_measure, mei_lop_id %in% lot_testing$lop_id) %>%
+  filter(ind_measure, mei_lop_id %in% !!lot_testing$lop_id) %>%
   collect()
 save(ind_measure_testing, file = mypath("data-raw","fishing_op_build",
     "ind_measure_testing.rda"))
@@ -1131,13 +1128,14 @@ the operation that we select above.
 ```{r}
 # All the relevant prelevement which are in the selected op:
 pre_id_ok <- pre_ele %>%
-  filter(pre_ope_id %in% op$id) %>%
+  filter(pre_ope_id %in% !!op$opcod) %>%
   collect()
 # filter: 
 fish_lot <- lot_poissons %>%
-  filter(lop_pre_id %in% pre_id_ok$pre_id) %>%
+  filter(lop_pre_id %in% !!pre_id_ok$pre_id) %>%
   collect()
-save(fish_lot, file = mypath("data-raw","fishing_op_build", "fish_lot.rda"))
+elementary_sampling <- pre_id_ok 
+mysave(fish_lot, elementary_sampling, dir = mypath("data-raw","fishing_op_build"))
 ```
 
 ```{r add opcod to lot_poissons}
@@ -1157,7 +1155,7 @@ mysave(lot_id_opcod, dir = mypath("data-raw","fishing_op_build"), overwrite =
 ```{r select measurement}
 # The measurement that are in the relevant lot:
 lot_measure <- ind_measure %>%
-  filter(mei_lop_id %in% fish_lot$lop_id) %>%
+  filter(mei_lop_id %in% !!fish_lot$lop_id) %>%
   collect()
 
 save(lot_measure, file = mypath("data-raw","fishing_op_build", "lot_measure.rda"))

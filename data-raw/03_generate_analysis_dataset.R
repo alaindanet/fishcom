@@ -13,6 +13,7 @@ library(lubridate)
 mypath <- rprojroot::find_package_root_file
 mydir <- mypath("data-raw", "fishing_op_build")
 source(mypath("R", "plot_methods.R"))
+source(mypath("R", "building_dataset.R"))
 source(mypath("R", "misc.R"))
 theme_set(theme_alain())
 
@@ -116,11 +117,10 @@ op %<>%
   mutate(year = year(date))
 
 op_analysis_complete_partial <- op
-devtools::use_data(op_analysis_complete_partial, overwrite = TRUE)
 
 op %<>% filter( protocol == "complete")
 op_analysis <- op
-devtools::use_data(op_analysis, overwrite = TRUE)
+mysave(op_analysis, op_analysis_complete_partial, dir = mypath("data"), overwrite = TRUE)
 
 good_opcod_id <- select(ungroup(op_analysis), opcod) %>% unlist
 
@@ -157,6 +157,23 @@ filter(op_analysis, station == 203)
 op_analysis %<>% filter(opcod %in% filter(test_too_different, out == FALSE)$opcod)
 
 mysave(op_analysis, dir = mypath("data"), overwrite = TRUE)
+
+#####################
+#  Partial fishing  #
+#####################
+
+myload(op_analysis_complete_partial, dir = mypath("data"))
+myload(op_desc, dir = mypath("data-raw"))
+op_desc %<>%
+  rename(opcod = ope_id) %>%
+  filter(opcod %in% unique(op_analysis_complete_partial$opcod))
+op_partial <- op_analysis_complete_partial %>%
+  filter(protocol != "complete") %>%
+  left_join(select(op_desc, opcod, length_sourced)) %>%
+  arrange(station)
+
+## To launch again build fish lot on the clusteq
+
 
 ########################
 #  Environmental data  #

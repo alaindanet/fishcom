@@ -22,8 +22,9 @@ library(ggpmisc)
 library(sf)
 library(rgdal)
 library(lubridate)
-devtools::load_all()
-theme_set(theme_alain())
+#devtools::load_all()
+#theme_set(theme_alain())
+fish_build_dir <- 
 ```
 
 # What is known 

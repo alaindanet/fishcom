@@ -99,6 +99,7 @@ rm(lot_id_opcod)
 ########################################
 #  Extract nb species and individuals  #
 ########################################
+myload(fish_length, dir = mypath("data"))
 
 op_sp_ind <- fish_length %>%
   group_by(opcod, species) %>%
