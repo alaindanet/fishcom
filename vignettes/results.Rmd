@@ -33,7 +33,9 @@ library(NetIndices)
 library(tidygraph)
 library(ggraph)
 library(lubridate)
-devtools::load_all()
+#devtools::load_all()
+source(mypath("R", "misc.R"))
+source(mypath("R", "plot_methods.R"))
 theme_set(theme_alain())
 ```
 
@@ -62,6 +64,7 @@ plot.igraph(g,layout=lay,vertex.label=NA,vertex.size=2,edge.arrow.size=.5,edge.w
 
 ```{r}
 myload(network_analysis, dir = dest_dir)
+myload(op_analysis, dir = data_common)
 net <- network_analysis %>%
   dplyr::select(opcod, network) %>%
   unnest() %>%
@@ -340,7 +343,7 @@ average, the biomass at the higher trophic level seemed more stable.
 
 ### Correlation between stability of trophic level and  richness
 
-```{r}
+```{r, eval = FALSE}
 correlation_troph_group <- net_troph_group %>%
   select(station, biomass_stab, troph_group, richness_avg) %>%
   gather(var, values, biomass_stab, richness_avg) %>%
@@ -594,9 +597,8 @@ station_stab <- left_join(station_analysis, rename(stab, id = station)) %>%
   filter(!is.na(biomass_stab))
 ggplot(data = region_polygon) +
     geom_sf() +
-    geom_sf(data = station_stab, aes(color = biomass_stab), size = 4) +
+    geom_sf(data = station_stab, aes(color = log(biomass_stab)), size = 4) +
     scale_color_gradient(low = "red", high = "green")
-
 ```
 
 # Persistence of the community

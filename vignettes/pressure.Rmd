@@ -30,6 +30,7 @@ library(magrittr)
 library(igraph)
 library(NetIndices)
 library(tidygraph)
+library(sf)
 library(ggraph)
 library(lubridate)
 source(mypath("R", "misc.R"))
@@ -39,62 +40,39 @@ theme_set(theme_alain())
 ```
 
 ```{r load dataset, include = FALSE}
-myload(temporal_press_prob_analysis, temporal_press_cat_analysis,
-  temporal_community_metrics,
-  dir = mypath("data"))
-myload(op_ODP, dir = mypath("data-raw", "fish_pressures"))
-myload(press, dir = mypath("data-raw", "ssn_interpolation"))
-
+myload(yearly_press_interp_mv_avg, dir = mypath("data-raw", "polluants"))
+myload(synchrony, press_polluants, temporal_evt_press, temporal_community_metrics, dir = mypath("data"))
 ```
+
+```{r add flow and temperature}
+myload(press_temperature, dir = mypath("data-raw", "naiades_temperatures"))
+myload(press_flow, dir = mypath("data-raw", "flow"))
+press_temperature %<>%
+  gather(category, press, temperature)
+press_flow %<>%
+  gather(category, press, flow)
+
+press_polluants  <-  rbind(press_polluants, press_temperature, press_flow)
+```
+
 
 # Raw data
 
 ```{r}
-#myload(quality_data, dir = mypath("data-raw"))
-```
-```{r}
-## Number of variables: 
-#length(unique(quality_data$var_code))
-## Keep interesting ones:
-#var_to_keep <- c(
-#"CONDUCTY", "DOC", "pH", "temp",
-#"TURB_NEPHEL", "NH4", "NO2",
-#"NO3", "PO4", "SO4", "D_OXY", "OXY_SAT",
-#"PHY_CHLA", "PHY_CHLB", "PHY_CHLC","SiO3", "TKN", "TP"
-#)
-#quality_data %<>%
-  #filter(var_code %in% var_to_keep) %>%
-  #mutate(year_month = paste0(year(meas_date), "-", month(meas_date)))
-  
-```
-
-```{r}
-var_table <- read_csv2(mypath("data-raw", "flow_quality", "var_donuts.csv")) %>%
-  filter(fra_code %in% c("water_raw", "water_filtrated", "water_unknown")) %>%
-  distinct(var_code, var_name, units)
-kable(var_table)
+# Put units to present all the parameters
+myload(polluant_units, dir = mypath("data-raw", "polluants", "naiades_data"))
+kable(polluant_units)
 ```
 
 
-## Correlation between variables
+
+## Between press correlation
 
 ```{r, eval = FALSE}
-var_values <- select(quality_data, id, meas_date, fraction, var_code, value) %>%
-  tibble::rowid_to_column("ID") %>%
-  spread(var_code, value) %>%
-  mutate(
-    year_month = myd(paste0(month(meas_date),"-", year(meas_date)), truncated = 1),
-    year = year(meas_date)) %>%
-  group_by(id, year) %>%
-  summarise_if(is.double, ~ mean(., na.rm = TRUE))
+var_values <-  press_polluants %>%
+  spread(category, press) 
 
-var_enough_sampled <- ungroup(var_values) %>%
-  summarise_if(is.double, ~sum(is.na(.))/n()) %>%
-  unlist()
-var_enough_sampled <- var_enough_sampled[var_enough_sampled < .5]
-
-m <- cor(na.omit(select(var_values[, names(var_enough_sampled)], - meas_date,
-      -year, -year_month)))
+m <- cor(na.omit(select(var_values, -id)))
 
 as.data.frame(round(m, 2)) %>%
   mutate_all(list(~cell_spec(., "html", color = ifelse(abs(.) > .65 & . != 1, "red",
@@ -104,115 +82,82 @@ as.data.frame(round(m, 2)) %>%
   kable(format = "html", escape = F)
 ```
 
-## Temporal dynamics
-
-```{r, eval = FALSE}
-station_best_sampled <- var_values %>%
-  group_by(id) %>%
-  summarise_if(is.double, ~sum(is.na(.))/n()) %>%
-  arrange(NO3, NH4, PO4) %>%
-  sample_n(5, weigth = 1/(SO4 +1))
-```
-
-```{r, fig.dim = c(14, 14), eval = FALSE}
-best_sta_data <- quality_data %>%
-  filter(id %in% station_best_sampled$id[1:5])
-
-ggplot(best_sta_data, aes(x = meas_date, y = value)) +
-  geom_line(aes(color = id)) +
-  facet_wrap(~var_code, scale = "free_y")
-```
-
-
-## Sampling assessment
-
-```{r, eval = FALSE}
-test <- list(
-  year_month = unique(quality_data$year_month),
-  id = unique(quality_data$id),
-  var_code = unique(quality_data$var_code)
-)
-comb_year_id <- expand.grid(test) %>%
-  as_tibble
-quality_data_complete <- comb_year_id %>%
-  dplyr::left_join(dplyr::select(quality_data, id, var_code, value, year_month))
-
-sampling <- quality_data_complete %>%
-  group_by(var_code, id) %>%
-  summarise(nb_obs = sum(!is.na(value)) / n()) %>%
-  group_by(var_code) %>%
-  summarise(nb_obs = mean(nb_obs, na.rm = TRUE)) %>%
-  arrange(desc(nb_obs))
-
-kable(sampling)
-```
-
-# Interpolation
-
-## Map press
+I can delete some redondant variables 
 
 ```{r}
-myload(station_analysis, region_polygon, dir = mypath("data"))
-station <- select(station_analysis, id)
-station_press <- left_join(station, press)
-
-g <- purrr::map(unique(station_press$var_code),
-           function(x) {
-	     ggplot(data = region_polygon) +
-	       geom_sf() +
-	       geom_sf(data = filter(station_press, var_code == x),
-		 aes(color = press), size = 4) +
-	       scale_color_gradient(low = "green", high = "red") +
-	       ggtitle(x)
-	   }
-)
-
-g2 <- cowplot::plot_grid(plotlist = g)
-g2
+#unique(press_polluants$category)
+#unique(press_polluants$station)
+press_polluants %<>%
+  filter(!category %in% c(
+      "matieres azotees", "other", "matieres phosphorees", "matieres
+      organiques"))
 ```
 
 
-## Press and stability
+# Press and stability
 
 ```{r}
-press
 biomass_com <- temporal_community_metrics %>%
   select(station, biomass_stab, richness_med, betadiv)
-press %<>% mutate(station = id) %>%
-  left_join(biomass_com, by = "station")
+biomass_com %<>%
+  left_join(rename(press_polluants, station = id), by = "station")
+biomass_com %<>% na.omit()
 ```
 
 ```{r}
-press_scale <- press %>%
-  group_by(var_code) %>%
-  mutate(press_scale = scale(press))
-p1 <- ggplot(press_scale, aes(x = press_scale, y = biomass_stab)) +
+p1 <- ggplot(biomass_com, aes(x = press, y = biomass_stab)) +
   geom_point() +
-  facet_wrap(~ var_code) +
+  facet_wrap(~ category, scales = "free_x") +
   labs(x = "Scaled press", y = "Biomass stability")
 p1
 ```
 
+
+## Model
+
+### Biomass stability
+
 ```{r}
-p2 <- ggplot(press_scale, aes(x = press, y = biomass_stab)) +
-  geom_point() +
-  facet_wrap(~ var_code, scales = "free_x") +
-  labs(x = "Scaled press", y = "Biomass stability")
-p2
+mod_press_data <- biomass_com %>%
+  select(-betadiv) %>%
+  filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  spread(category, press)
+
+model <- lm(biomass_stab ~ .*richness_med,
+  select(mod_press_data, -station)) 
+summary(model)
+par(mfrow = c(2,2))
+plot(model)
 ```
 
-### Model
+### Persistance of biomass composition
 
 ```{r}
-mod_press_data <- press_scale %>%
-  select(station, var_code, press, biomass_stab, betadiv) %>%
-  spread(var_code, press)
-mod_press_data %>%
-  summarise_all(~sum(is.na(.)))
+mod_press_data <- biomass_com %>%
+  select(-biomass_stab) %>%
+  filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  spread(category, press)
 
-model <- lm(biomass_stab ~ CONDUCTY + NO2 + NO3 + D_OXY + PHY_CHLA + temp + TKN + TP + pH,
-  mod_press_data) 
+model <- lm(betadiv ~ .*richness_med,
+  select(mod_press_data, -station)) 
 summary(model)
+par(mfrow = c(2,2))
+plot(model)
+```
+
+### Median diversity
+
+```{r}
+mod_press_data <- biomass_com %>%
+  select(-biomass_stab, -betadiv) %>%
+  filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  spread(category, press)
+
+model <- lm(richness_med ~ .,
+  select(mod_press_data, -station)) 
+summary(model)
+par(mfrow = c(2,2))
+plot(model)
 ```
 
 ### Model by hydrographic region
@@ -237,6 +182,7 @@ mod_press_data %<>%
 model <- lm(biomass_stab ~ basin:(CONDUCTY + NO2 + NO3 + D_OXY + PHY_CHLA + temp + TKN + TP + pH) ,
   mod_press_data) 
 summary(model)
+plot(model)
 ```
 
 ```{r}

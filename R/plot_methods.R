@@ -398,7 +398,7 @@ mylabel <- function() {
 troph_group_labeller <- function (troph_class = NULL, round_lvl = 2) {
 
   if (is.null(troph_class)) {
-    data(trophic_class)
+    myload(trophic_class, dir = mypath("data"))
     troph_class <- trophic_class
   }
   troph_class %<>%

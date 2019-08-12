@@ -98,9 +98,19 @@ yearly_flow_press_interp_mv_avg$value_corrected <- mcMap(
 yearly_flow_press_interp_mv_avg$value_corrected <- 
   sapply(yearly_flow_press_interp_mv_avg$value_corrected, function(x) x[1])
 
+# If several times interpolated flow:
+# Keep the best prediction (lowest predSE):
+yearly_flow_press_interp_mv_avg %<>%
+  group_by(id, year) %>%
+  arrange(value.predSE) %>%
+  slice(1)
+
+
 press_flow <- yearly_flow_press_interp_mv_avg %>%
   group_by(id) %>%
   summarise(flow = mean(value_corrected, na.rm = TRUE))
+filter(yearly_flow_press_interp_mv_avg, id == 10153) %>%
+  arrange(year)
 
 mysave(yearly_flow_press_interp_mv_avg, press_flow,
   dir = mypath("data-raw", "flow"), overwrite = TRUE)
