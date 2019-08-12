@@ -38,7 +38,7 @@ check_lot <- compiler::cmpfun(check_lot)
 
 tic()
 fish_lot_check <-
-  get_size_from_lot(
+  get_check_lot(
     lot = fish_lot,
     id_var = lop_id,
     type_var = type_lot,
