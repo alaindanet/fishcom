@@ -1018,7 +1018,8 @@ bank.
 
 ```{r}
 point_group %<>%
-  filter(grp_tgp_id == "standards" & nb_pt_berge == grp_nombre)
+  filter(grp_tgp_id == "standards" & nb_pt_berge == grp_nombre) %>%
+  collect()
 ```
 
 ### Filter elementary prelevement
@@ -1030,7 +1031,7 @@ are not in which all the points were not coming from the berge
 pre_ele %<>%
   collect()
 pre_ele %<>%
-  filter(! (type_prelevement == "Groupe de points" & !(pre_id %in% collect(point_group)$grp_id)))
+  filter(!(type_prelevement == "Groupe de points" & !(pre_id %in% !!point_group$grp_id)))
 ```
 
 ## Species 
@@ -1117,7 +1118,7 @@ filter(lot_poissons, type_lot == "N") %>%
   select(lop_id, lop_effectif) %>%
   collect() %>%
   slice(10)
-filter(ind_measure, mei_lop_id == 3558592) %>% collect()
+filter(ind_measure, mei_lop_id == 281301) %>% collect()
 ```
 
 ### Filter relevant lot and measurement
@@ -1135,7 +1136,7 @@ fish_lot <- lot_poissons %>%
   filter(lop_pre_id %in% !!pre_id_ok$pre_id) %>%
   collect()
 elementary_sampling <- pre_id_ok 
-mysave(fish_lot, elementary_sampling, dir = mypath("data-raw","fishing_op_build"))
+mysave(fish_lot, elementary_sampling, dir = mypath("data-raw","fishing_op_build"), overwrite = TRUE)
 ```
 
 ```{r add opcod to lot_poissons}
@@ -1155,12 +1156,13 @@ mysave(lot_id_opcod, dir = mypath("data-raw","fishing_op_build"), overwrite =
 ```{r select measurement}
 # The measurement that are in the relevant lot:
 lot_measure <- ind_measure %>%
-  filter(mei_lop_id %in% !!fish_lot$lop_id) %>%
-  collect()
+  collect() %>%
+  filter(mei_lop_id %in% unique(fish_lot$lop_id))
 
 save(lot_measure, file = mypath("data-raw","fishing_op_build", "lot_measure.rda"))
 rm(fish_lot)
 rm(lot_measure)
+
 ```
 
 ### Generate fish
