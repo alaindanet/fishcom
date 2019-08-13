@@ -108,7 +108,10 @@ yearly_flow_press_interp_mv_avg %<>%
 
 press_flow <- yearly_flow_press_interp_mv_avg %>%
   group_by(id) %>%
-  summarise(flow = mean(value_corrected, na.rm = TRUE))
+  summarise(
+    flow = mean(value_corrected, na.rm = TRUE),
+    cv_flow = sd(value_corrected, na.rm = TRUE) / flow
+  )
 filter(yearly_flow_press_interp_mv_avg, id == 10153) %>%
   arrange(year)
 

@@ -99,7 +99,10 @@ yearly_temp_press_interp_mv_avg$value_corrected <-
 
 press_temperature <- yearly_temp_press_interp_mv_avg %>%
   group_by(id) %>%
-  summarise(temperature = mean(value_corrected, na.rm = TRUE))
+  summarise(
+    temperature = mean(value_corrected, na.rm = TRUE),
+    cv_temperature = sd(value_corrected, na.rm = TRUE) / temperature
+  )
 
 mysave(yearly_temp_press_interp_mv_avg, press_temperature,
   dir = mypath("data-raw", "naiades_temperatures"), overwrite = TRUE)

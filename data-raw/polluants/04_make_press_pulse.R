@@ -14,7 +14,6 @@ source(mypath("R", "misc.R"))
 
 myload(yearly_press_interp_mv_avg, dir = mypath("data-raw", "polluants"))
 
-
 press <- yearly_press_interp_mv_avg %>%
   group_by(parameter, id) %>%
   summarise(frac_obs = sum(!is.na(value_corrected)) / n(), press = mean(value_corrected, na.rm = TRUE))

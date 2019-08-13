@@ -48,11 +48,13 @@ myload(synchrony, press_polluants, temporal_evt_press, temporal_community_metric
 myload(press_temperature, dir = mypath("data-raw", "naiades_temperatures"))
 myload(press_flow, dir = mypath("data-raw", "flow"))
 press_temperature %<>%
-  gather(category, press, temperature)
+  mutate(category = "temperature") %>%
+  rename(press = temperature, cv_press = cv_temperature)
 press_flow %<>%
-  gather(category, press, flow)
+  mutate(category = "flow") %>%
+  rename(press = flow, cv_press = cv_flow)
 
-press_polluants  <-  rbind(press_polluants, press_temperature, press_flow)
+press_polluants  <-  bind_rows(press_polluants, press_temperature, press_flow)
 ```
 
 
@@ -70,6 +72,7 @@ kable(polluant_units)
 
 ```{r, eval = FALSE}
 var_values <-  press_polluants %>%
+  select(-cv_press) %>%
   spread(category, press) 
 
 m <- cor(na.omit(select(var_values, -id)))
@@ -119,7 +122,7 @@ p1
 
 ```{r}
 mod_press_data <- biomass_com %>%
-  select(-betadiv) %>%
+  select(-betadiv, - cv_press) %>%
   filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
   spread(category, press)
 
@@ -190,229 +193,5 @@ model <- lm(betadiv ~ basin:(CONDUCTY + NO2 + NO3 + D_OXY + PHY_CHLA + temp + TK
   mod_press_data) 
 summary(model)
 plot(model)
-```
-
-
-## Correlation between variables
-
-```{r}
-M <- cor(
-  select(press, var_code, press) %>%
-    spread(var_code, press) %>%
-    select(-DOC, - TOC) %>%
-    ungroup() %>%
-    select(-id)
-, method = "spearman")
-corrplot::corrplot(M, method = "circle")
-```
-
-```{r}
-library(ade4)
-press_4_pca  <- select(mod_press_data,
-  -biomass_stab, - betadiv, -station, -basin, -DOC, -TOC, -PHY_CHLA) %>%
-  na.omit
-pca <- ade4::dudi.pca(as.data.frame(press_4_pca), scannf = FALSE, nf = 3, center = TRUE, scale = TRUE)
-
-screeplot(pca)
-summary(pca)
-scatter(pca, posieig = "none")
-par(mfrow = c(2,2))
-s.corcircle(pca$co, xax = 1, yax = 2)
-title("Axis x = Comp1", "Axis y = Comp2")
-s.corcircle(pca$co, xax = 3, yax = 2)
-title("Axis x = Comp3", "Axis y = Comp2")
-s.corcircle(pca$co, xax = 1, yax = 3)
-title("Axis x = Comp1", "Axis y = Comp3")
-dev.off()
-
-```
-
-```{r}
-mod_press_data %<>%
-  mutate(axis1 = pca$li[[1]], axis2 = pca$li[[2]])
-model <- lm(betadiv ~ basin:(axis1 + axis2),
-  mod_press_data) 
-summary(model)
-plot(model)
-```
-
-
-
-# Olivier datas
-
-```{r signification variable}
-kable(op_AUC)
-```
-```{r}
-
-```
-
-
-
-## Probability
-
-```{r}
-biomass_com <- temporal_community_metrics %>%
-  select(station, biomass_stab, richness_med, betadiv)
-press <- temporal_press_prob_analysis %>%
-  select(station, pressure, prob) %>%
-  left_join(select(biomass_com, station, biomass_stab)) %>%
-  filter(!is.na(biomass_stab))
-```
-
-```{r}
-p1 <- ggplot(press, aes(x = prob, y = biomass_stab)) +
-  geom_point() +
-  facet_wrap(~ pressure) +
-  labs(x = "Average probability to impact", y = "Biomass stability")
-p1
-```
-
-## Crap statistical model
-
-```{r}
-press_4_mod <- press %>%
-  spread(pressure, prob) %>%
-  select(-station)
-mod <- lm(log(biomass_stab) ~ ., press_4_mod)
-p2 <- jtools::plot_summs(mod)
-p2
-```
-
-```{r}
-par(mfrow = c(2, 2))
-plot(mod)
-dev.off()
-```
-
-## PCA
-
-```{r}
-library(ade4)
-press_4_pca  <- select(press_4_mod, -biomass_stab) %>%
-  na.omit
-pca <- ade4::dudi.pca(as.data.frame(press_4_pca), scannf = FALSE, nf = 3, center = TRUE, scale = TRUE)
-
-screeplot(pca)
-summary(pca)
-scatter(pca, posieig = "none")
-par(mfrow = c(2,2))
-s.corcircle(pca$co, xax = 1, yax = 2)
-title("Axis x = Comp1", "Axis y = Comp2")
-s.corcircle(pca$co, xax = 3, yax = 2)
-title("Axis x = Comp3", "Axis y = Comp2")
-s.corcircle(pca$co, xax = 1, yax = 3)
-title("Axis x = Comp1", "Axis y = Comp3")
-dev.off()
-```
-
-```{r}
-stab <- temporal_community_metrics %>%
-  select(station, biomass_stab)
-
-press_spread <- press %>%
-  spread(pressure, prob) %>%
-  filter(!is.na(chem.3_pcb))
-press_spread %<>%
-  mutate(axis1 = pca$li[[1]], axis2 = pca$li[[2]])
-
-### variable 
-var_pca <- tibble(
-  variable = rownames(pca$co),
-  comp1 = 5 * pca$co[[1]],
-  comp2 = 5 * pca$co[[2]]
-)
-
-p1 <- ggplot(data = press_spread, aes(x = axis1, y = axis2, color = biomass_stab, size = biomass_stab)) +
-  geom_point() +
-  geom_text(data = var_pca, aes(x = comp1, y = comp2, label = variable), inherit.aes = FALSE, size = 6) +
-  labs(x = "Hydromorpho", y = "Pollution")
-p1
-```
-
-```{r}
-model_pca <- lm(biomass_stab ~ axis1 + axis2, press_spread)
-summary(model_pca)
-par(mfrow = c(2,2))
-plot(model_pca)
-dev.off()
-#TODO: add network network metric
-```
-
-# Pressure lvl as category  
-
-```{r}
-press_cat <- temporal_press_cat_analysis %>%
-  mutate_if(is.factor, as.character) %>%
-  gather(pressure, category, - station) %>%
-  left_join(select(biomass_com, station, biomass_stab)) %>%
-  filter(!is.na(biomass_stab)) %>%
-  mutate(category = fct_relevel(category, "Bad", "Poor", "Moderate", "Good", "High"))
-```
-
-```{r, fig.dim = c(14, 10)}
-p1 <- ggplot(press_cat, aes(x = category, y = biomass_stab)) +
-  geom_boxplot() +
-  facet_wrap(~pressure) +
-  labs(x = "Severity of the pressure", y = "Stability of the biomass")
-p1
-dev.off()
-```
-
-```{r}
-mod_data <- spread(press_cat, pressure, category)
-var_to_rm <- sapply(mod_data, function (x) {sum(is.na(x)) < 100 })
-var_to_rm <- names(var_to_rm)[which(var_to_rm == TRUE)]
-mod_data %<>%
-  select_at(vars(var_to_rm, "biomass_stab")) %>%
-  select(-station)
-summary(mod_data)
-
-mod <- lm(biomass_stab ~ ., mod_data)
-summary(mod)
-```
-```{r}
-summary(aov(mod))
-```
-
-## PCA
-
-```{r}
-press_4_pca  <- select(mod_data, -biomass_stab) %>%
-  na.omit %>%
-  mutate_all(as.numeric)
-pca <- ade4::dudi.pca(as.data.frame(press_4_pca), scannf = FALSE, nf = 3, center = TRUE, scale = TRUE)
-
-summary(pca)
-scatter(pca, posieig = "none")
-par(mfrow = c(2,2))
-s.corcircle(pca$co, xax = 1, yax = 2)
-title("Axis x = Comp1", "Axis y = Comp2")
-s.corcircle(pca$co, xax = 3, yax = 2)
-title("Axis x = Comp3", "Axis y = Comp2")
-s.corcircle(pca$co, xax = 1, yax = 3)
-title("Axis x = Comp1", "Axis y = Comp3")
-dev.off()
-```
-
-# Synchrony
-
-```{r}
-station_sync <- left_join(station, rename(synchrony, id = station)) %>%
-  gather(var_code, value, synchrony, cv_sp, cv_com)
-
-g <- purrr::map(unique(station_sync$var_code),
-           function(x) {
-	     ggplot(data = region_polygon) +
-	       geom_sf() +
-	       geom_sf(data = filter(station_sync, var_code == x),
-		 aes(color = value), size = 2) +
-	       scale_color_gradient(low = "green", high = "red") +
-	       ggtitle(x)
-	   }
-)
-
-g2 <- cowplot::plot_grid(plotlist = g)
-g2
 ```
 
