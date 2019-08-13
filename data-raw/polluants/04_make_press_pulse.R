@@ -16,7 +16,11 @@ myload(yearly_press_interp_mv_avg, dir = mypath("data-raw", "polluants"))
 
 press <- yearly_press_interp_mv_avg %>%
   group_by(parameter, id) %>%
-  summarise(frac_obs = sum(!is.na(value_corrected)) / n(), press = mean(value_corrected, na.rm = TRUE))
+  summarise(
+    frac_obs = sum(!is.na(value_corrected)) / n(),
+    press = mean(value_corrected, na.rm = TRUE),
+    cv_press = sd(value_corrected, na.rm = TRUE) / press
+  )
 
 # Keep only the data where we have enough observation 
 press %<>%
@@ -77,7 +81,7 @@ ld_cat <- c(
 # LD50 are in mg/L and parameter in µg/L:
 press_polluants %<>%
   left_join(polluant_units) %>%
-  select(parameter, id, press, direction, category, ld50_fish, units)
+  select(parameter, id, press, cv_press, direction, category, ld50_fish, units)
 
 #########################
 #  Weighting polluants  #
@@ -93,7 +97,8 @@ press_ld %<>%
   # But it's to remember the unit issue
   group_by(id, category) %>%
   summarise(
-    press = sum(press * (1 / ld50_fish / sum(1 / ld50_fish, na.rm = TRUE)), na.rm = TRUE)
+    press = sum(press * (1 / ld50_fish / sum(1 / ld50_fish, na.rm = TRUE)), na.rm = TRUE),
+    cv_press = sum(cv_press * (1 / ld50_fish / sum(1 / ld50_fish, na.rm = TRUE)), na.rm = TRUE),
   )
 
 #######################
@@ -129,11 +134,14 @@ press_non_ld %<>%
 #stopifnot(test_inversion[1,]$z_press_temp == test_inversion[1,]$z_press * -1)
 
 press_non_ld %<>%
-  select(parameter, id, press, category, z_press)
+  select(parameter, id, press, cv_press, category, z_press)
 
 press_non_ld %<>%
   group_by(id, category) %>%
-  summarise(press = sum(z_press))
+  summarise(
+    press = sum(z_press),
+    cv_press = sum(cv_press),
+  )
 
 #Merge the two:
 press_polluants <- rbind(press_ld, press_non_ld) %>%

@@ -137,7 +137,7 @@ plot(model)
 
 ```{r}
 mod_press_data <- biomass_com %>%
-  select(-biomass_stab) %>%
+  select(-biomass_stab, -cv_press) %>%
   filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
   spread(category, press)
 
@@ -152,7 +152,7 @@ plot(model)
 
 ```{r}
 mod_press_data <- biomass_com %>%
-  select(-biomass_stab, -betadiv) %>%
+  select(-biomass_stab, -betadiv, -cv_press) %>%
   filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
   spread(category, press)
 
@@ -162,6 +162,41 @@ summary(model)
 par(mfrow = c(2,2))
 plot(model)
 ```
+
+## With CV of press
+
+### Stability
+
+```{r}
+mod_press_data <- biomass_com %>%
+  select(-betadiv, -press) %>%
+  filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  spread(category, cv_press)
+
+model <- lm(biomass_stab ~ .*richness_med,
+  select(mod_press_data, -station)) 
+summary(model)
+par(mfrow = c(2,2))
+plot(model)
+```
+
+
+
+### Persistance of community composition
+
+```{r}
+mod_press_data <- biomass_com %>%
+  select(-biomass_stab, -press) %>%
+  filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  spread(category, cv_press)
+
+model <- lm(betadiv ~ .*richness_med,
+  select(mod_press_data, -station)) 
+summary(model)
+par(mfrow = c(2,2))
+plot(model)
+```
+
 
 ### Model by hydrographic region
 
