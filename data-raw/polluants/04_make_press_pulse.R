@@ -95,10 +95,11 @@ stopifnot(unique(press_ld$units) == "µg/L")
 press_ld %<>%
   mutate(ld50_fish = ld50_fish * 10^3) %>% # Get ld_50 in µg. no effect since it's a weight
   # But it's to remember the unit issue
-  group_by(id, category) %>%
+  group_by(id) %>%
   summarise(
     press = sum(press * (1 / ld50_fish / sum(1 / ld50_fish, na.rm = TRUE)), na.rm = TRUE),
     cv_press = sum(cv_press * (1 / ld50_fish / sum(1 / ld50_fish, na.rm = TRUE)), na.rm = TRUE),
+    category = "polluants"
   )
 
 #######################
@@ -144,7 +145,7 @@ press_non_ld %<>%
   )
 
 #Merge the two:
-press_polluants <- rbind(press_ld, press_non_ld) %>%
+press_polluants <- bind_rows(press_ld, press_non_ld) %>%
   as_tibble() %>%
   unnest()
 

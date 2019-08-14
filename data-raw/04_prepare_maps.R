@@ -189,3 +189,31 @@ nearest_lines <- dce[nearest_lines_id,]
 dist_station_stream <- st_distance(station_analysis, nearest_lines)
 ### Get the shortest distance for each station
 ### Match station to the nearest river
+
+################################################################################
+#                               Hydrologic basin                               #
+################################################################################
+
+basin <- read_sf(mypath("data-raw", "basin_dce", "BassinDCE.shp"))
+basin %<>% st_transform(crs = 2154)
+# Filter antilles
+basin %<>% filter(CdBassinDC %in% c("B1", "B2", "A", "D", "F", "C", "G", "H"))
+basin <- rmapshaper::ms_simplify(input = basin) %>%
+  st_as_sf()
+plot(st_geometry(basin))
+nord <- basin %>%
+  filter(CdBassinDC %in% c("B1", "B2", "C", "A", "H")) %>%
+  st_union() %>%
+  st_sf()
+plot(st_geometry(nord))
+basin2 <- basin %>%
+  filter(!CdBassinDC %in% c("B1", "B2", "C", "A", "H"))
+basin4 <- c(st_geometry(basin2), st_geometry(nord)) %>%
+  st_sf() %>%
+  mutate(basin_name = c("est", "sud", "ouest" , "nord"))
+plot(basin4)
+
+hydrologic_basin <- 
+mysave(hydrologic_basin, dir = mypath("data-raw", "fire_ssn"),
+  overwrite = TRUE)
+

@@ -35,57 +35,9 @@ theme_set(theme_alain())
 
 ```{r load dataset, include = FALSE}
 myload(synchrony, temporal_community_metrics, dir = mypath("data"))
-```
-```{r compare both stability measure}
 synchrony %<>%
   mutate(stab_com = 1 / cv_com)
-compare_stab <- synchrony %>%
-  left_join(select(temporal_community_metrics, station, biomass_cv), by =
-    "station")
-ggplot(compare_stab, aes(x = cv_com, y = biomass_cv)) +
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  labs(x = "Thibault & Connelly",
-    y = "Classic measure",
-  title = "Compare the two CV measurements")
 ```
-
-```{r}
-ggplot(synchrony, aes(x = cv_classic, y = cv_com)) +
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  labs(x = "Thibault & Connelly",
-    y = "Classic measure",
-  title = "Compare the two stability measurement: 1/CV")
-```
-
-
-```{r compare distributions of the stability measurements}
-compare_stab2 <- compare_stab %>%
-  gather(stab, value, cv_com, biomass_cv)
-
-ggplot(compare_stab2, aes(x = value)) +
-  geom_histogram() +
-  facet_wrap(~ stab)
-```
-
-```{r richness_med versus stability}
-compare_stab_div <- compare_stab2 %>%
-  left_join(select(temporal_community_metrics, station, richness_med),
-    by = "station")
-formula <- y ~ x #needed for stat_poly_eq
-ggplot(compare_stab_div, aes(y = value, x = richness_med)) +
-  geom_point() +
-  facet_wrap(~ stab) +
-  geom_smooth(method = 'lm', formula = formula) +
-  stat_poly_eq(
-    formula = formula,
-    eq.with.lhs = "italic(hat(y))~`=`~",
-    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
-    parse = TRUE) +
-  labs(x = "Median richness", y = "Biomass stability")
-```
-
 
 
 ```{r synchrony and diversity}
@@ -108,13 +60,12 @@ sync_plot <- ggplot(sync, aes(y = synchrony, x = richness_med)) +
 ```{r}
 cv <- synchrony %>% 
   select(station, cv_sp, cv_com) %>%
-  left_join(select(temporal_community_metrics, station, richness_med,
-      biomass_cv),
+  left_join(select(temporal_community_metrics, station, richness_med),
     by = "station") %>%
-  gather(cv, value, cv_sp, cv_com, biomass_cv)
+  gather(cv, value, cv_sp, cv_com)
 cv_plot <- ggplot(cv, aes(y = value, x = richness_med)) +
   geom_point() +
-  facet_wrap(~ cv, scales = "free_y") +
+  facet_wrap(~ cv, scales = "fixed") +
   geom_smooth(method = 'lm', formula = formula) +
   stat_poly_eq(
     formula = formula,
@@ -225,3 +176,132 @@ cv_div_plot <- ggplot(cv_div, aes(y = cv_com, x = div)) +
 plot_grid(stab_div_plot, cv_div_plot, ncol = 1)
 ```
 
+# Effect of press on synchrony and species cv on press
+
+```{r load press}
+myload(press_polluants, dir = mypath("data"))
+myload(press_temperature, dir = mypath("data-raw", "naiades_temperatures"))
+myload(press_flow, dir = mypath("data-raw", "flow"))
+press_temperature %<>%
+  mutate(category = "temperature") %>%
+  rename(press = temperature, cv_press = cv_temperature)
+press_flow %<>%
+  mutate(category = "flow") %>%
+  rename(press = flow, cv_press = cv_flow)
+
+press_polluants  <-  bind_rows(
+  press_polluants, press_temperature, press_flow) %>%
+  rename(station = id) %>%
+  filter(!category %in% c(
+      "matieres azotees", "other", "matieres phosphorees", "matieres
+      organiques"))
+  #filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen"))
+```
+
+
+```{r cv decomposition and press}
+sync_cv <- synchrony %>% 
+  select(station, synchrony, cv_sp) %>%
+  #left_join(select(temporal_community_metrics, station, richness_med),
+    #by = "station") %>%
+  left_join(press_polluants, by = "station") %>%
+  gather(cv_com, value, synchrony, cv_sp)
+
+sync_plot <- ggplot(sync_cv, aes(y = value, x = press)) +
+  geom_point() +
+  geom_smooth(method = 'lm', formula = formula) +
+  facet_grid(cv_com ~ category, scales = "free") +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(x = "Press", y = "CV com decomposition")
+sync_plot
+```
+
+## Synchrony
+
+```{r}
+mod_press_data <- synchrony %>% 
+  select(station, synchrony, cv_sp) %>%
+  left_join(press_polluants, by = "station") %>%
+  select(-cv_press) %>%
+  spread(category, press) %>%
+  left_join(select(temporal_community_metrics, station, richness_med),
+    by = "station")
+
+
+model <- lm(synchrony ~ .*richness_med,
+  select(mod_press_data, -station, -cv_sp)) 
+summary(model)
+par(mfrow = c(2,2))
+plot(model)
+```
+
+## CV sp
+
+```{r}
+model <- lm(cv_sp ~ .*richness_med,
+  select(mod_press_data, -station, -synchrony)) 
+summary(model)
+par(mfrow = c(2,2))
+plot(model)
+```
+
+
+# Appendix
+
+## Compare stability measurements
+
+Here I make sure that the CV measurements that I did for the classic community
+(Total CV)
+and from Thibault et Connelly (decomposition in avg species CV and synchrony) corresponds to each other.
+
+```{r compare both stability measure}
+compare_stab <- synchrony %>%
+  left_join(select(temporal_community_metrics, station, biomass_cv), by =
+    "station")
+ggplot(compare_stab, aes(x = cv_com, y = biomass_cv)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1) +
+  labs(x = "Thibault & Connelly",
+    y = "Classic measure",
+  title = "Compare the two CV measurements")
+```
+
+```{r}
+ggplot(synchrony, aes(x = cv_classic, y = cv_com)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1) +
+  labs(x = "Thibault & Connelly",
+    y = "Classic measure",
+  title = "Compare the two stability measurement: 1/CV")
+```
+
+
+```{r compare distributions of the stability measurements}
+compare_stab2 <- compare_stab %>%
+  gather(stab, value, cv_com, biomass_cv)
+
+ggplot(compare_stab2, aes(x = value)) +
+  geom_histogram() +
+  facet_wrap(~ stab)
+```
+
+```{r richness_med versus stability}
+compare_stab_div <- compare_stab2 %>%
+  left_join(select(temporal_community_metrics, station, richness_med),
+    by = "station")
+formula <- y ~ x #needed for stat_poly_eq
+ggplot(compare_stab_div, aes(y = value, x = richness_med)) +
+  geom_point() +
+  facet_wrap(~ stab) +
+  geom_smooth(method = 'lm', formula = formula) +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(x = "Median richness", y = "Biomass stability")
+```

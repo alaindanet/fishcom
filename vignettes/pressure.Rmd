@@ -108,7 +108,7 @@ biomass_com %<>% na.omit()
 ```
 
 ```{r}
-p1 <- ggplot(biomass_com, aes(x = press, y = biomass_stab)) +
+p1 <- ggplot(biomass_com, aes(x = press, y = log(biomass_stab))) +
   geom_point() +
   facet_wrap(~ category, scales = "free_x") +
   labs(x = "Scaled press", y = "Biomass stability")
@@ -123,7 +123,7 @@ p1
 ```{r}
 mod_press_data <- biomass_com %>%
   select(-betadiv, - cv_press) %>%
-  filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  #filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
   spread(category, press)
 
 model <- lm(biomass_stab ~ .*richness_med,
@@ -138,7 +138,7 @@ plot(model)
 ```{r}
 mod_press_data <- biomass_com %>%
   select(-biomass_stab, -cv_press) %>%
-  filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  #filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
   spread(category, press)
 
 model <- lm(betadiv ~ .*richness_med,
@@ -180,8 +180,6 @@ par(mfrow = c(2,2))
 plot(model)
 ```
 
-
-
 ### Persistance of community composition
 
 ```{r}
@@ -202,6 +200,10 @@ plot(model)
 
 ```{r}
 myload(my_hydro_basin, dir = mypath("data-raw", "ssn_interpolation"))
+myload(station_analysis, dir = mypath("data"))
+station <- station_analysis %>%
+  select(id)
+
 mask <- sf::st_intersects(station, my_hydro_basin)
 
 station$basin <- purrr::map_chr(mask, function (x){
@@ -212,21 +214,65 @@ station$basin <- purrr::map_chr(mask, function (x){
   }
   })
 ```
-```{r}
-mod_press_data %<>%
+
+#### Stability of biomass
+
+```{r, eval = FALSE}
+mod_by_basin <- biomass_com %>%
+  select(-betadiv, -cv_press) %>%
+  filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  spread(category, press) %>%
   left_join(rename(station, station = id), by = "station") %>%
-  select(-geometry)
+  select(-geometry, -station) %>%
+  filter(!is.na(basin))
 
-model <- lm(biomass_stab ~ basin:(CONDUCTY + NO2 + NO3 + D_OXY + PHY_CHLA + temp + TKN + TP + pH) ,
-  mod_press_data) 
-summary(model)
-plot(model)
+mod_by_basin %<>%
+  group_by(basin) %>%
+  nest()
+
+model_basin <- function(df) {
+  lm(biomass_stab ~ richness_med*., data = df)
+}
+
+mod_by_basin %<>%
+  mutate(
+    model = map(data, model_basin),
+    coeff = map(model, broom::tidy)
+  )
+
+mod_by_basin %>%
+  unnest(coeff) %>%
+  filter(basin == "ouest")
+
 ```
 
-```{r}
-model <- lm(betadiv ~ basin:(CONDUCTY + NO2 + NO3 + D_OXY + PHY_CHLA + temp + TKN + TP + pH),
-  mod_press_data) 
-summary(model)
-plot(model)
-```
+#### Persistance of the community
 
+```{r, eval = FALSE}
+mod_by_basin <- biomass_com %>%
+  select(-biomass_stab, -cv_press) %>%
+  filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  spread(category, press) %>%
+  left_join(rename(station, station = id), by = "station") %>%
+  select(-geometry, -station) %>%
+  filter(!is.na(basin))
+
+mod_by_basin %<>%
+  group_by(basin) %>%
+  nest()
+
+model_basin <- function(df) {
+  lm(betadiv ~ richness_med*., data = df)
+}
+
+mod_by_basin %<>%
+  mutate(
+    model = map(data, model_basin),
+    coeff = map(model, broom::tidy)
+  )
+
+mod_by_basin %>%
+  unnest(coeff) %>%
+  filter(basin == "ouest")
+
+```
