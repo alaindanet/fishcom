@@ -36,6 +36,9 @@ source(mypath("R", "building_dataset.R"))
 gen_fish_from_lot <- compiler::cmpfun(gen_fish_from_lot)
 #source(mypath("analysis", "misc", "parallel_setup.R"))
 
+library(parallel)
+options(mc.cores = 30)
+
 tic()
 fish_length <-
   get_size_from_lot(
@@ -48,7 +51,9 @@ fish_length <-
     species = species,
     measure = lot_measure,
     measure_id_var = mei_lop_id,
-    size_var = mei_taille)
+    size_var = mei_taille,
+    future_enabled = FALSE 
+  )
 toc()
 #sequential: 37k sec and 47k sec if the gen_fish_from_lot is not compiled.
 

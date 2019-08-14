@@ -21,6 +21,7 @@ get_size_from_lot <- function(
   measure_id_var <- rlang::enquo(measure_id_var)
   measure_id_var_chr <- rlang::quo_name(measure_id_var)
   size_var <- rlang::enquo(size_var)
+  size_var_chr <- rlang::quo_name(size_var)
 
   # Filter surnumerous variable:
   lot %<>%
@@ -64,33 +65,28 @@ get_size_from_lot <- function(
     message("incorrect lot G have been filtered")
   }
 
-  if (future_enabled) {
-    loop <- furrr::future_pmap
-  } else {
-    loop <- purrr::pmap
-    gen_fish_from_lot <- compiler::cmpfun(gen_fish_from_lot)
+  bad_N  <- ! measure[[measure_id_var_chr]] %in% lot[lot[[type_var_chr]] == "N", ][[id_var_chr]]
+  if (any(bad_N)) {
+    lot <- lot[! lot[[id_var_chr]] %in% measure[bad_N,][[measure_id_var_chr]], ] 
+    message("Lot N not found in measure have been removed")
   }
+
+  gen_fish_from_lot <- compiler::cmpfun(gen_fish_from_lot)
   output <- lot %>%
     dplyr::mutate(
       fish =
-    loop(list(
-    id = !!id_var,
-    type = !!type_var,
-    min_size = !!min_var,
-    max_size = !!max_var,
-    nb = !!nb_var
-        ),
-      ~gen_fish_from_lot(
-    id = ..1,
-    type = ..2,
-    min_size = ..3,
-    max_size = ..4,
-    nb = ..5,
-    ind_measure = measure,
-    ind_size = !!size_var,
-    ind_id = !!measure_id_var
-    ),
-    )
+	mcMap(gen_fish_from_lot,
+	  id = !!id_var,
+	  type = !!type_var,
+	  min_size = !!min_var,
+	  max_size = !!max_var,
+	  nb = !!nb_var,
+	  MoreArgs = list( 
+	    ind_measure = measure,
+	    ind_size = size_var_chr,
+	    ind_id = measure_id_var_chr
+	  )
+	)
       ) %>%
   dplyr::select(!!id_var, !!species, fish) %>%
   tidyr::unnest(fish)
@@ -137,7 +133,7 @@ gen_fish_from_lot <- function (
     sep = "")
       warning(warning_msg)
       lot <- NA
-    } else if (nb < 10) {
+    } else if (nb < 5) {
       warning_msg <- paste(
       "# of obs is inferior to 10 (actual # is,", length(nb),
       ") in Lot type G number", id,".\n", "Lot put as NA\n", sep = "")
@@ -158,7 +154,7 @@ gen_fish_from_lot <- function (
     size <- na.omit(size)
     stopifnot(is.na(size) | nrow(size) == 0)
     # Sanity check:
-    if (length(size) < 20) {
+    if (length(size) < 10) {
       warning_msg <- paste(
       "# of obs is inferior to 20 (actual # is,", length(size),
       ") in Lot type S/L number ", id,".\n", "Lot put as NA\n", sep = "")
