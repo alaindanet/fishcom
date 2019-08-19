@@ -72,7 +72,6 @@ calc_attributes_edges(input_raster = c("slope", "dem"),
   stat_rast = rep("mean", 2),
   attr_name_rast = c("avSlo", "avAlt")
                       )
-calc_sites(pred_sites = "station_o")
 calc_attributes_sites_approx(sites_map = "sites",
                              input_attr_name = c("avSlo", "avAlt"),
                              output_attr_name = c("avSloA", "avAltA"),
@@ -91,3 +90,15 @@ ssn_dir <- mypath("data-raw", "fish_station_ssn", "fish_station.ssn")
 export_ssn(ssn_dir, delete_directory = TRUE)
 
 unlink_.gislock()
+
+#####################
+#  Save ssn object  #
+#####################
+library(SSN)
+ssn <- SSN::importSSN(ssn_dir, o.write = TRUE)
+# Compute the weight of each streams lines when they merged:
+ssn <- SSN::additive.function(ssn, "H2OArea",
+  "afv_area")
+# create distance matrix between pred and obs:
+SSN::createDistMat(ssn, o.write = TRUE)
+mysave(ssn, dir = mypath("data-raw", "fish_station_ssn"), overwrite = TRUE)
