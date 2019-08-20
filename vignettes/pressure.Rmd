@@ -220,7 +220,7 @@ station$basin <- purrr::map_chr(mask, function (x){
 ```{r, eval = FALSE}
 mod_by_basin <- biomass_com %>%
   select(-betadiv, -cv_press) %>%
-  filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  #filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
   spread(category, press) %>%
   left_join(rename(station, station = id), by = "station") %>%
   select(-geometry, -station) %>%
@@ -251,7 +251,7 @@ mod_by_basin %>%
 ```{r, eval = FALSE}
 mod_by_basin <- biomass_com %>%
   select(-biomass_stab, -cv_press) %>%
-  filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  #filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
   spread(category, press) %>%
   left_join(rename(station, station = id), by = "station") %>%
   select(-geometry, -station) %>%
@@ -272,7 +272,6 @@ mod_by_basin %<>%
   )
 
 mod_by_basin %>%
-  unnest(coeff) %>%
-  filter(basin == "ouest")
+  unnest(coeff)
 
 ```
