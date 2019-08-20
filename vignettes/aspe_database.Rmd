@@ -52,6 +52,7 @@ con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "afb_fish", port = 5434)
 db_op <- tbl(con, in_schema("aspe", "operation"))
 db_op %<>%
   rename_all(list(~ gsub("ope_", "", make.names(colnames(db_op)))))
+filter(db_op, id == 406)
 ```
 
 
@@ -189,7 +190,7 @@ protocol_kept$pro_libelle %<>% str_replace_all(., protocol_replacement)
 
 ```{r}
 # Selected ids 
-col_to_keep <- c("id", "date", "pro_id", "pente_ligne_eau", "section_mouillee",
+col_to_keep <- c("id", "date", "pop_id", "pro_id", "pente_ligne_eau", "section_mouillee",
   "durete_totale", "temp_max_moyenne_eau", "temp_air_bassin_versant",
   "precipitation_bassin_versant", "amplitude_thermique_air_station",
   "temperature_air_station", "surface_calculee", "espece_ciblee", "niq_id",
@@ -697,7 +698,7 @@ mysave(op_hab, dir = mypath("data-raw"), overwrite = TRUE)
 
 ```{r}
 sampling_point <- tbl(con, in_schema("aspe", "point_prelevement")) %>%
-  filter(pop_id %in% !!op$id) %>%
+  filter(pop_id %in% !!op$pop_id) %>%
   collect()
 sampling_point %<>% rename_all(
   list(~ gsub("pop_", "", make.names(colnames(sampling_point)))))
@@ -912,13 +913,12 @@ if (any(colnames(op) %in% "station")) {
   op %<>% select(-station)
 }
 station_id <- select(sampling_point, id, sta_id) %>%
-  rename(station = sta_id)
+  rename(pop_id = id, station = sta_id) # pop_id to link with pop_id
 op %<>%
   left_join(., station_id)
 
 op %<>% select(id, date, station, protocol, everything()) %>%
   rename(opcod = id, surface = surface_calculee)
-
 ```
 
 ### Filter op over station
@@ -930,7 +930,6 @@ before_nrow <- nrow(op)
 op %<>% filter(!is.na(station))
 cat(round((before_nrow - nrow(op)) / before_nrow * 100),
   "% of the operations do not have identified stations.\n")
-mysave(op, dir = mypath("data-raw", "fishing_op_build"), overwrite = TRUE)
 ```
 
 # Exploration
@@ -1018,8 +1017,9 @@ bank.
 
 ```{r}
 point_group %<>%
-  filter(grp_tgp_id == "standards" & nb_pt_berge == grp_nombre) %>%
   collect()
+point_group %<>%
+  filter(grp_tgp_id == "standards" & nb_pt_berge >= 0.90*(grp_nombre))
 ```
 
 ### Filter elementary prelevement
@@ -1031,7 +1031,11 @@ are not in which all the points were not coming from the berge
 pre_ele %<>%
   collect()
 pre_ele %<>%
-  filter(!(type_prelevement == "Groupe de points" & !(pre_id %in% !!point_group$grp_id)))
+  filter(!(type_prelevement == "Groupe de points" & !(pre_id %in% point_group$grp_id)))
+
+op %<>%
+  filter(opcod %in% pre_ele$pre_ope_id)
+mysave(op, dir = mypath("data-raw", "fishing_op_build"), overwrite = TRUE)
 ```
 
 ## Species 
