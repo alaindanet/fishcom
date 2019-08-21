@@ -58,7 +58,6 @@ net_test %<>%
       test
 } ))
 
-debug(set_layout_graph)
 p <- set_layout_graph(
   net = net_test[["net"]][[1]],
   title = "test",
@@ -70,7 +69,6 @@ net_test %<>%
   mutate(net = map(net, as_data_frame),
     net = map(net, as_tibble))
 
-undebug(set_layout_graph)
 source(mypath("R", "plot_methods.R"))
 p1 <- plot_temporal_network(
    data = net_test,

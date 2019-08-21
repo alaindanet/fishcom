@@ -4,18 +4,11 @@
 
 library(tidyverse)
 library(magrittr)
-library(cowplot)
-library(ggpmisc)
-library(sf)
-library(rgdal)
 library(lubridate)
-#devtools::load_all()
 mypath <- rprojroot::find_package_root_file
 mydir <- mypath("data-raw", "fishing_op_build")
-source(mypath("R", "plot_methods.R"))
 source(mypath("R", "building_dataset.R"))
 source(mypath("R", "misc.R"))
-theme_set(theme_alain())
 
 
 myload(op, dir = mypath("data-raw"))
@@ -23,122 +16,43 @@ myload(op, dir = mypath("data-raw"))
 #op_sp_ind Summary of op 
 myload(op_sp_ind, dir = mypath("data"))
 op_sp_ind
-
 op %<>% left_join(op_sp_ind, by = "opcod")
 
-##############################################
-#  Distribution of fishing operation timing  #
-##############################################
-
-
-qplot(month, data = mutate(op, month = month(date))) +
-  labs(x = "Date",
-    y = "Frequency")
-
-
-######################################
-#  Remove doubled fishing operation  #
-######################################
-
-# Get the time between each sampling event
-int_op <- op %>%
-  ungroup() %>%
-  group_by(station) %>%
-  arrange(date) %>%
-  mutate(
-    point = seq(1, length(station)),
-    sample_sep = c(NA, date[-1] - date[-length(station)])
-  ) %>%
-  arrange(station)
-
-## double_station 
-low_int <- filter(int_op, sample_sep < 60) %>%
-  ungroup() %>%
-  arrange(station)
-filter(int_op, station == 657)
-
-## filter double sampling, surely doubled 
-clean_dbl <- group_by(int_op, station) %>%
-  nest() %>%
-  mutate(data = map(data, keep_most_complete_sampling)) %>%
-  unnest()
-
-
-# Check new time separation between 2 consecutive ops  
-clean_dbl %<>%
-  group_by(station) %>%
-  arrange(date) %>%
-  mutate(
-    point = seq(1, length(station)),
-    sample_sep = c(NA, date[-1] - date[-length(station)])
-  ) %>%
-  arrange(station)
-qplot(sample_sep, data = filter(clean_dbl, sample_sep < 2000)) +
-  labs(x = "Number of days between two fishing operation",
-    y = "Frequency") +
-  xlim(c(0, 2000))
-filter(clean_dbl, sample_sep < 160)
-filter(clean_dbl, station == 709)
-filter(clean_dbl, station == 657)
-
-# Numbering the sampling events by station
-op_hist <- clean_dbl %>%
-  group_by(station) %>%
-  summarise(freq = n()) %>%
-  arrange(desc(freq)) %>%
-  mutate(station = fct_inorder(as.factor(station)))
-# good station IDs
-good_station <- op_hist %>%
-  dplyr::filter(freq >= 10)
-good_station_id <- good_station %>%
-  dplyr::select(station) %>%
-  unlist(., use.names = FALSE)
-length(good_station_id)
-qplot(x = freq, data = good_station, geom = "histogram")
-
-# Test fish month distribution 
-op_test <- filter(op, station %in% good_station_id) %>%
-  mutate(month = month(date))
-qplot(month, data = op_test) +
-  labs(x = "Date",
-    y = "Frequency")
-## By station
-op_test_station  <- op_test %>%
-  group_by(station) %>%
-  summarise(avg = mean(month), sdt = sd(month))
-qplot(sdt, data = op_test_station) +
-  labs(x = "Date",
-    y = "Frequency")
-
-
-# For temporal analysis, we keep station followed more than 10 times
-op <- filter(op, station %in% good_station_id)
 op %<>%
-  mutate(year = year(date))
+  mutate(
+    protocol_type = ifelse(protocol == "complete", "complete", "partial"),
+    date = lubridate::date(date) #date-time to date
+    ) %>%
+  select(opcod, date, station, protocol, protocol_type, surface, nb_sp, nb_ind)
 
-op_analysis_complete_partial <- op
+op_clean <- op %>%
+  group_by(protocol_type) %>%
+  nest() %>%
+  mutate(clean = purrr::map(data,
+      ~rm_dbl_fishing_op(op = .x, sep_threshold = 270, nb_sampling = 10))) %>%
+  select(-data)
 
-op %<>% filter( protocol == "complete")
-op_analysis <- op
-mysave(op_analysis, op_analysis_complete_partial, dir = mypath("data"), overwrite = TRUE)
+# Check that there are not double station:
+station_protocol <- sapply(op_clean$clean, function (x) {
+ unique(x$station) 
+}) %>% unlist()
+length(unique(station_protocol)) == length(station_protocol)
 
-good_opcod_id <- select(ungroup(op_analysis), opcod) %>% unlist
-
-################################
-#  Test for the length fished  #
-################################
-
+opcod_clean <- op_clean %>%
+  unnest() %>%
+  .[["opcod"]]
+  
 # Test for the length fished
 myload(op_desc, dir = mypath("data-raw"))
-myload(op_analysis, dir = mypath("data"))
 op_desc %<>%
   rename(opcod = ope_id) %>%
-  filter(opcod %in% good_opcod_id)
-op_analysis %<>%
+  filter(opcod %in% opcod_clean)
+op_clean %<>%
+  unnest() %>%
   left_join(select(op_desc, opcod, length_sourced)) %>%
-  arrange(station)
+  arrange(station) 
 
-op_cv_length <- op_analysis %>%
+op_cv_length <- op_clean %>%
   group_by(station) %>%
   summarise(
     mean = mean(length_sourced),
@@ -146,34 +60,25 @@ op_cv_length <- op_analysis %>%
     cv = mean / sd(length_sourced),
     cv = replace(cv, cv == Inf, 0)
   )
-test_too_different <- op_analysis %>%
+test_too_different <- op_clean %>%
   left_join(op_cv_length, by = "station") %>%
   mutate(out = ifelse(length_sourced > median + .3 * median, TRUE, FALSE))
 filter(test_too_different, out == TRUE) %>%
+  filter(protocol != "complete") %>%
   arrange(station)
+filter(op_clean, station == 345)
 
-filter(op_analysis, station == 203)
+op_analysis <- op_clean %>%
+  filter(opcod %in% filter(test_too_different, out == FALSE)$opcod)
 
-op_analysis %<>% filter(opcod %in% filter(test_too_different, out == FALSE)$opcod)
+op_hist <- op_analysis %>%
+  group_by(station) %>%
+  summarise(n = n()) %>%
+  filter(n >= 10)
+op_analysis %<>% 
+  filter(station %in% op_hist$station)
 
 mysave(op_analysis, dir = mypath("data"), overwrite = TRUE)
-
-#####################
-#  Partial fishing  #
-#####################
-
-myload(op_analysis_complete_partial, dir = mypath("data"))
-myload(op_desc, dir = mypath("data-raw"))
-op_desc %<>%
-  rename(opcod = ope_id) %>%
-  filter(opcod %in% unique(op_analysis_complete_partial$opcod))
-op_partial <- op_analysis_complete_partial %>%
-  filter(protocol != "complete") %>%
-  left_join(select(op_desc, opcod, length_sourced)) %>%
-  arrange(station)
-
-## To launch again build fish lot on the clusteq
-
 
 ########################
 #  Environmental data  #
@@ -191,7 +96,7 @@ op_env %<>%
 summary(op_env)
 
 env_analysis <- op_env
-devtools::use_data(env_analysis, overwrite = TRUE)
+mysave(env_analysis, dir = mypath("data"), overwrite = TRUE)
 rm(env_analysis, op_env, op_desc)
 
 op_hab %<>%
@@ -199,7 +104,7 @@ op_hab %<>%
   left_join(select(op_analysis, opcod, station))
 
 hab_analysis <- op_hab
-devtools::use_data(hab_analysis, overwrite = TRUE)
+mysave(hab_analysis, dir = mypath("data"), overwrite = TRUE)
 rm(hab_analysis, op_hab)
 
 
@@ -208,6 +113,7 @@ rm(hab_analysis, op_hab)
 #######################
 
 myload(fish_length, dir = mypath("data"))
+myload(op_analysis, dir = mypath("data"))
 
 # Select good op
 fish_length %<>% filter(opcod %in% good_opcod_id)
@@ -221,17 +127,21 @@ low_nb_ind <- filter(nb_ind_sp, nind <= 100)
 fish_length %<>% filter(!species %in% low_nb_ind$species)
 
 # Remove crazy length
-filter(fish_length, length > 1000)
-## TRF distri 
-filter(fish_length, species == "TRF") %>%
-  summary()
+filter(fish_length, length > 5000)
+distri_sp_length <- fish_length %>%
+  group_by(species) %>%
+  summarise(
+    avg = mean(length, na.rm = TRUE),
+    sdt = sd(length, na.rm = TRUE))
 # Remove it
 fish_length %<>%
-  filter(!length > 10000) # Also drop NA 
+  left_join(distri_sp_length) %>%
+  mutate(length = ifelse(length > avg + 5 * sdt, NA, length)) %>%
+  select(-avg, -sdt)
 
 length_analysis <- fish_length
 
-devtools::use_data(length_analysis, overwrite = TRUE)
+mysave(length_analysis, dir = mypath("data"), overwrite = TRUE)
 rm(fish_length, length_analysis)
 
 ##################
@@ -250,19 +160,4 @@ plot(st_geometry(station_analysis), pch = 20, col = "red", add = T)
 mysave(station_analysis, dir = mypath("data"), overwrite = TRUE)
 write_sf(station_analysis,mypath("data-raw", "station", "station_analysis_wgs84.shp"))
 
-###################
-#  Pressure data  #
-###################
-
-myload(press_prob_avg, press_cat_med, dir = mypath("data-raw"))
-myload(op_analysis, dir = mypath("data"))
-
-press_prob_avg %<>%
-  filter(station %in% op_analysis$station)
-press_cat_med %<>%
-  filter(station %in% op_analysis$station)
-temporal_press_prob_analysis <- press_prob_avg
-temporal_press_cat_analysis <- press_cat_med
-mysave(temporal_press_prob_analysis, temporal_press_cat_analysis,
-  dir = mypath("data"), overwrite = TRUE)
 

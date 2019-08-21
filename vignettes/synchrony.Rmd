@@ -234,7 +234,7 @@ mod_press_data <- synchrony %>%
 
 model <- lm(synchrony ~ .*richness_med,
   select(mod_press_data, -station, -cv_sp)) 
-summary(model)
+pander(summary(model))
 par(mfrow = c(2,2))
 plot(model)
 ```
@@ -244,7 +244,7 @@ plot(model)
 ```{r}
 model <- lm(cv_sp ~ .*richness_med,
   select(mod_press_data, -station, -synchrony)) 
-summary(model)
+pander(summary(model))
 par(mfrow = c(2,2))
 plot(model)
 ```

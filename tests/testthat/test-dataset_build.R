@@ -1,6 +1,7 @@
 context("dataset_build")
 library('magrittr')
 library('tidyverse')
+library(parallel)
 
 
 lot_test <- structure(list(lop_id = c(2287257L, 2206696L, 3877352L, 3130579L,

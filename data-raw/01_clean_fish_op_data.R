@@ -7,16 +7,14 @@
 
 library(tidyverse)
 library(magrittr)
-devtools::load_all()
 mypath <- rprojroot::find_package_root_file
 mydir <- mypath("data-raw", "fishing_op_build")
+source(mypath("R", "misc.R"))
 
 ################################################################################
 #                                 Fish length                                  #
 ################################################################################
-
-
-load(mypath("data-raw", "fishing_op_build", "fish_length.rda"))
+myload(fish_length, dir = mypath("data-raw", "fishing_op_build"))
 
 ##############################
 #  Remove migratory species  #
@@ -85,21 +83,20 @@ fish_length %<>%
 #  Obtain opcod  #
 ##################
 
-myload(lot_id_opcod, dir = mypath("data-raw","fishing_op_build"))
+myload(lot_id_opcod, op, dir = mypath("data-raw","fishing_op_build"))
 
 fish_length %<>%
   left_join(lot_id_opcod) %>%
   rename(length = fish) %>%
   select(opcod, species, length)
 
-
-devtools::use_data(fish_length, overwrite = TRUE)
-rm(lot_id_opcod)
+# Keep only interesting operation:
+fish_length %<>%
+  filter(opcod %in% op$opcod)
 
 ########################################
 #  Extract nb species and individuals  #
 ########################################
-myload(fish_length, dir = mypath("data"))
 
 op_sp_ind <- fish_length %>%
   group_by(opcod, species) %>%
@@ -109,7 +106,7 @@ op_sp_ind <- fish_length %>%
     nb_sp  = n(),
     nb_ind = sum(nind)
     )
-devtools::use_data(op_sp_ind, overwrite = TRUE)
+mysave(op_sp_ind, dir = mypath("data"), overwrite = TRUE)
 
 #######################
 #  Nb ind by species  #
@@ -118,16 +115,15 @@ devtools::use_data(op_sp_ind, overwrite = TRUE)
 nb_ind_sp <- fish_length %>%
   group_by(species) %>%
   summarise(nind = n())
-devtools::use_data(nb_ind_sp, overwrite = TRUE)
+mysave(fish_length, nb_ind_sp, dir = mypath("data"), overwrite = TRUE)
 
 ################################################################################
 #                                Operation data                                #
 ################################################################################
 
-load(mypath("data-raw", "fishing_op_build", "op.rda"))
+myload(lot_id_opcod, op, dir = mypath("data-raw","fishing_op_build"))
 
 op %>% filter(is.na(date))
-
 #Ok
 mysave(op, dir = mypath("data-raw"), overwrite = TRUE)
 
@@ -139,7 +135,7 @@ load(mypath("data-raw", "fishing_op_build", "op_desc.rda"))
 op_desc
 # Look ok
 
-mysave(op_desc, dir = mypath("data-raw"))
+mysave(op_desc, dir = mypath("data-raw"), overwrite = TRUE)
 ################################################################################
 #                         Operation environmental data                         #
 ################################################################################
@@ -155,11 +151,4 @@ mysave(op_env, dir = mypath("data-raw"), overwrite = TRUE)
 
 load(mypath("data-raw", "fishing_op_build", "station.rda"))
 library('sf')
-station <- sfc_as_cols(station, names = c("lon", "lat"))
-st_geometry(station) <- NULL
-
-station %<>%
-  rename(precise_location = localisation_precise) %>%
-  select(id, precise_location, com_code_insee, lon, lat)
-
-mysave(station, dir = mypath("data-raw"))
+mysave(station, dir = mypath("data-raw"), overwrite = TRUE)
