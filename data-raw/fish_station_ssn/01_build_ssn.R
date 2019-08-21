@@ -63,19 +63,19 @@ edges <- readVECT("edges", ignore.stderr = TRUE)
 head(edges@data, n = 4)
 
 # Compute slope from dem:
-execGRASS("r.slope.aspect", flags = c("overwrite","quiet"),
-          parameters = list(
-            elevation = "dem",
-            slope = "slope"
-          ))
-calc_attributes_edges(input_raster = c("slope", "dem"),
-  stat_rast = rep("mean", 2),
-  attr_name_rast = c("avSlo", "avAlt")
-                      )
-calc_attributes_sites_approx(sites_map = "sites",
-                             input_attr_name = c("avSlo", "avAlt"),
-                             output_attr_name = c("avSloA", "avAltA"),
-                             stat = rep("mean", 2))
+#execGRASS("r.slope.aspect", flags = c("overwrite","quiet"),
+          #parameters = list(
+            #elevation = "dem",
+            #slope = "slope"
+          #))
+#calc_attributes_edges(input_raster = c("slope", "dem"),
+  #stat_rast = rep("mean", 2),
+  #attr_name_rast = c("avSlo", "avAlt")
+                      #)
+#calc_attributes_sites_approx(sites_map = "sites",
+                             #input_attr_name = c("avSlo", "avAlt"),
+                             #output_attr_name = c("avSloA", "avAltA"),
+                             #stat = rep("mean", 2))
 sites <- readVECT("sites", ignore.stderr = TRUE)
 head(sites@data, n = 4)
 site_o <- readVECT("sites_o", ignore.stderr = TRUE)

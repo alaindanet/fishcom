@@ -36,6 +36,9 @@ source(mypath("R", "building_dataset.R"))
 check_lot <- compiler::cmpfun(check_lot)
 #source(mypath("analysis", "misc", "parallel_setup.R"))
 
+library(parallel)
+options(mc.cores = 30)
+#debug(get_check_lot)
 tic()
 fish_lot_check <-
   get_check_lot(

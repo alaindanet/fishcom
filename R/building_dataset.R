@@ -16,7 +16,9 @@ get_size_from_lot <- function(
   nb_var_chr <- rlang::quo_name(nb_var)
   species <- rlang::enquo(species)
   max_var <- rlang::enquo(max_var)
+  max_var_chr <- rlang::quo_name(max_var)
   min_var <- rlang::enquo(min_var)
+  min_var_chr <- rlang::quo_name(min_var)
 
   measure_id_var <- rlang::enquo(measure_id_var)
   measure_id_var_chr <- rlang::quo_name(measure_id_var)
@@ -57,42 +59,36 @@ get_size_from_lot <- function(
     dplyr::filter(!!type_var == "G" & (is.na(!!min_var) | is.na(!!max_var)))
   incorrect_G <-  lot %>%
     dplyr::filter(!!type_var == "G" & !!min_var >= !!max_var)
+  low_n_G <-  lot %>%
+    dplyr::filter(!!type_var == "G" & !!nb_var < 5)
 
   if (any(c(nrow(na_G), nrow(incorrect_G)) != 0)) {
-    G_bad_id <- c(na_G[[id_var_chr]], incorrect_G[[id_var_chr]])
+    G_bad_id <- c(na_G[[id_var_chr]], incorrect_G[[id_var_chr]], low_n_G[[id_var_chr]])
 
     lot %<>% dplyr::filter(!( !!id_var %in% G_bad_id))
     message("incorrect lot G have been filtered")
   }
 
-  bad_N  <- ! measure[[measure_id_var_chr]] %in% lot[lot[[type_var_chr]] == "N", ][[id_var_chr]]
-  if (any(bad_N)) {
-    lot <- lot[! lot[[id_var_chr]] %in% measure[bad_N,][[measure_id_var_chr]], ] 
-    message("Lot N not found in measure have been removed")
-  }
 
   gen_fish_from_lot <- compiler::cmpfun(gen_fish_from_lot)
-  output <- lot %>%
-    dplyr::mutate(
-      fish =
-	mcMap(gen_fish_from_lot,
-	  id = !!id_var,
-	  type = !!type_var,
-	  min_size = !!min_var,
-	  max_size = !!max_var,
-	  nb = !!nb_var,
+  lot$fish <- mcMap(gen_fish_from_lot,
+	  id = lot[[id_var_chr]],
+	  type = lot[[type_var_chr]],
+	  min_size = lot[[min_var_chr]],
+	  max_size = lot[[max_var_chr]],
+	  nb = lot[[nb_var_chr]],
 	  MoreArgs = list( 
 	    ind_measure = measure,
 	    ind_size = size_var_chr,
 	    ind_id = measure_id_var_chr
 	  )
 	)
-      ) %>%
-  dplyr::select(!!id_var, !!species, fish) %>%
-  tidyr::unnest(fish)
+
+  # Filter and extract:
+  output <- lot %>%
+  dplyr::select(!!id_var, !!species, fish) 
 
   output
-
 }
 
 #' Generate fish from fishing lot (AFB) 
@@ -156,7 +152,7 @@ gen_fish_from_lot <- function (
     # Sanity check:
     if (length(size) < 10) {
       warning_msg <- paste(
-      "# of obs is inferior to 20 (actual # is,", length(size),
+      "# of obs is inferior to 10 (actual # is,", length(size),
       ") in Lot type S/L number ", id,".\n", "Lot put as NA\n", sep = "")
       warning(warning_msg)
       lot <- rep(NA, nb)
@@ -168,8 +164,18 @@ gen_fish_from_lot <- function (
     # Sample inside the 90% of the distribution probability:
     p05 <- quantile(size, 0.05)
     p95 <- quantile(size, 0.95)
-    lot <- truncdist::rtrunc(n = nb, spec = "norm", a = p05, b = p95,
-      mean = avg, sd = sdt)
+
+    # Error if p05 >= p95
+    if (p05 >= p95) {
+      warning_msg <- paste(
+      "p05 is equal or greater than p95 (p05 = ", p05, ", P95 = ", p95,
+      ") in Lot type S/L number ", id,".\n", "Lot put as NA\n", sep = "")
+      warning(warning_msg)
+      lot <- rep(NA, nb)
+    } else {
+      lot <- truncdist::rtrunc(n = nb, spec = "norm", a = p05, b = p95,
+	mean = avg, sd = sdt)
+    }
     }
   } else if (type == "I") {
     # All individuals have been measured:
@@ -210,6 +216,7 @@ get_check_lot <- function(
   measure_id_var <- rlang::enquo(measure_id_var)
   measure_id_var_chr <- rlang::quo_name(measure_id_var)
   size_var <- rlang::enquo(size_var)
+  size_var_chr <- rlang::quo_name(size_var)
 
   # Filter surnumerous variable:
   lot %<>%
@@ -224,36 +231,25 @@ get_check_lot <- function(
     message("surnumerous lot in measure were removed")
   }
 
-  if (future_enabled) {
-    loop <- furrr::future_pmap
-  } else {
-    loop <- purrr::pmap
-    check_lot <- compiler::cmpfun(check_lot)
-  }
+  check_lot <- compiler::cmpfun(check_lot)
   output <- lot %>%
     dplyr::mutate(
-      check =
-    loop(list(
-    id = !!id_var,
-    type = !!type_var,
-    min_size = !!min_var,
-    max_size = !!max_var,
-    nb = !!nb_var
-        ),
-      ~check_lot(
-    id = ..1,
-    type = ..2,
-    min_size = ..3,
-    max_size = ..4,
-    nb = ..5,
-    ind_measure = measure,
-    ind_size = !!size_var,
-    ind_id = !!measure_id_var
-    ),
-    )
+      fish =
+	mcMap(check_lot,
+	  id = !!id_var,
+	  type = !!type_var,
+	  min_size = !!min_var,
+	  max_size = !!max_var,
+	  nb = !!nb_var,
+	  MoreArgs = list( 
+	    ind_measure = measure,
+	    ind_size = size_var_chr,
+	    ind_id = measure_id_var_chr
+	  )
+	)
       ) %>%
-  dplyr::select(!!id_var, !!species, !!type_var, check) %>%
-  tidyr::unnest(check)
+  dplyr::select(!!id_var, !!species, fish) %>%
+  tidyr::unnest(fish)
 
   output
 }
@@ -281,9 +277,6 @@ check_lot <- function (
   id = NULL, type = NULL,  min_size = NULL, max_size = NULL, nb = NULL,
   ind_measure = NULL, ind_id = NULL, ind_size = NULL, ...) {
 
-  # Promise:
-  ind_id <- rlang::enquo(ind_id)
-  ind_size <- rlang::enquo(ind_size)
 
   # Build by lot
   if (type == "G") {
@@ -298,8 +291,8 @@ check_lot <- function (
     }
   } else if (type == "S/L") {
     #Get size:
-    mask <- which(ind_measure[[rlang::quo_name(ind_id)]] == id)
-    size <- ind_measure[mask, ][[rlang::quo_name(ind_size)]]
+    mask <- which(ind_measure[[ind_id]] == id)
+    size <- ind_measure[mask, ][[ind_size]]
     size <- na.omit(size)
     stopifnot(is.na(size) | nrow(size) == 0)
     # Sanity check:
@@ -310,8 +303,8 @@ check_lot <- function (
     }
   } else if (type == "I") {
     # All individuals have been measured:
-    mask <- which(ind_measure[[rlang::quo_name(ind_id)]] == id)
-    lot <- ind_measure[mask, ][[rlang::quo_name(ind_size)]]
+    mask <- which(ind_measure[[ind_id]] == id)
+    lot <- ind_measure[mask, ][[ind_size]]
     if (length(lot) == nb) {
       status <- "good"
     } else {
@@ -319,8 +312,8 @@ check_lot <- function (
     }
   } else if (type == "N") {
     # One big individual:
-    mask <- which(ind_measure[[rlang::quo_name(ind_id)]] == id)
-    lot <- ind_measure[mask, ][[rlang::quo_name(ind_size)]]
+    mask <- which(ind_measure[[ind_id]] == id)
+    lot <- ind_measure[mask, ][[ind_size]]
     if (length(lot) == nb) {
       status <- "good"
     } else {
