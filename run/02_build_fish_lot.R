@@ -62,5 +62,5 @@ toc()
   #if (is.numeric(x)) { x } else { NA }
   #})
 fish_length %<>% unnest(fish)
-save(fish_length, file = mypath("data", "fish_length.rda"))
+save(fish_length, file = mypath("data-raw", "fish_op_build", "fish_length.rda"))
 cat("Done!")
