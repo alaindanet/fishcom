@@ -31,22 +31,22 @@ clean:
 	rm $(DEST)/run/temporal_networks.*
 
 import_file:
-	rsync -e ssh -r -avz $(RSYNC_OPT) $(CLUSTER):$(RUN_DIR)/$(FILE) $(DEST)/$(FILE)
+	rsync --update -e ssh -r -avz $(RSYNC_OPT) $(CLUSTER):$(RUN_DIR)/$(FILE) $(DEST)/$(FILE)
 
 export_file:
-	rsync -e ssh -r -avz $(RSYNC_OPT) $(DEST)/$(FILE) $(CLUSTER):$(RUN_DIR)/$(FILE)
+	rsync --update -e ssh -r -avz $(RSYNC_OPT) $(DEST)/$(FILE) $(CLUSTER):$(RUN_DIR)/$(FILE)
 
 import_data:
-	rsync -e ssh -r -avz $(RSYNC_OPT) $(CLUSTER):$(RUN_DIR)/data/* $(DEST)/data/
+	rsync --update -e ssh -r -avz $(RSYNC_OPT) $(CLUSTER):$(RUN_DIR)/data/* $(DEST)/data/
 
 export_data:
-	rsync -e ssh -r -avz $(RSYNC_OPT) $(DEST)/data/* $(CLUSTER):$(RUN_DIR)/data/
+	rsync --update -e ssh -r -avz $(RSYNC_OPT) $(DEST)/data/* $(CLUSTER):$(RUN_DIR)/data/
 
 import_raw_data:
-	rsync -e ssh -r -avz $(RSYNC_OPT) $(CLUSTER):$(RUN_DIR)/data-raw/* $(DEST)/data-raw/
+	rsync --update -e ssh -r -avz $(RSYNC_OPT) $(CLUSTER):$(RUN_DIR)/data-raw/* $(DEST)/data-raw/
 
 export_raw_data:
-	rsync -e ssh -r -avz $(RSYNC_OPT) $(DEST)/data-raw/* $(CLUSTER):$(RUN_DIR)/data-raw/
+	rsync --update -e ssh -r -avz $(RSYNC_OPT) $(DEST)/data-raw/* $(CLUSTER):$(RUN_DIR)/data-raw/
 
 
 git_update:
