@@ -312,7 +312,7 @@ prepare_pulse_interpolation <- function(data = NULL, date = NULL, var = NULL,
 #' @param streams sf object or path to the hydrologic network 
 #' @param ssn_path path to write the ssn folder
 #' @param slope logical compute the slope attribute for pred and obs sites   
-prepare_ssn <- function (grass_path = "/usr/lib/grass72/", mnt_path = NULL,
+prepare_ssn <- function (grass_path = "/usr/lib/grass76/", mnt_path = NULL,
   pred_path = NULL, pred_name = NULL, sites = NULL, streams = NULL,
   ssn_path = NULL, slope = FALSE) {
 
@@ -326,6 +326,7 @@ prepare_ssn <- function (grass_path = "/usr/lib/grass72/", mnt_path = NULL,
     pred_sites = pred_path
   )
   openSTARS::derive_streams()
+  rgrass7::use_sp()
 
   cj <- openSTARS::check_compl_junctions()
   #cj <- openSTARS::check_compl_confluences()
@@ -347,6 +348,7 @@ prepare_ssn <- function (grass_path = "/usr/lib/grass72/", mnt_path = NULL,
       stat_rast = rep("mean", 2),
       attr_name_rast = c("avSlo", "avAlt")
     )
+    if (!is.null(pred_path)) {
     openSTARS::calc_sites(pred_sites = paste0(pred_name, "_o"))
     openSTARS::calc_attributes_sites_approx(sites_map = "sites",
       input_attr_name = c("avSlo", "avAlt"),
@@ -356,11 +358,20 @@ prepare_ssn <- function (grass_path = "/usr/lib/grass72/", mnt_path = NULL,
       input_attr_name = c("avSlo", "avAlt"),
       output_attr_name = c("avSloA", "avAltA"),
       stat = rep("mean", 2))
+    }
   } else {
-    openSTARS::calc_sites(pred_sites = paste0(pred_name, "_o"))
+    if (!is.null(pred_path)) {
+      openSTARS::calc_sites(pred_sites = paste0(pred_name, "_o"))
+    } else {
+      openSTARS::calc_sites()
+    }
   }
 
-  openSTARS::export_ssn(ssn_path, predictions = pred_name, delete_directory = TRUE)
+  if (!is.null(pred_path)) {
+    openSTARS::export_ssn(ssn_path, predictions = pred_name, delete_directory = TRUE)
+  } else {
+    openSTARS::export_ssn(ssn_path, delete_directory = TRUE)
+  }
   rgrass7::unlink_.gislock()
 }
 
