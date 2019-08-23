@@ -125,10 +125,6 @@ com %<>%
 	mutate_if(is.integer, list(~replace(.,is.na(.), as.integer(0)))) %>%
 	arrange(date) %>%
 	select(-date)
-      if (binary) {
-	x %<>%
-	  mutate_all(list(~replace(., .!= 0, as.integer(1))))
-      }
       x
 }
     )

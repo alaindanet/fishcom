@@ -66,7 +66,7 @@ filter(biomass_variation, is.na(troph_group))
 biomass_variation %<>%
   left_join(., check_obs, by = c("station", "troph_group")) %>%
   mutate_at(vars(biomass_avg:nbnode_stab), funs(if_else(enough_obs, ., NA_real_))) %>%
-  select_at(vars(matches("biomass|richness_avg|station|troph_group")))
+  select_at(vars(dplyr::matches("biomass|richness_avg|station|troph_group")))
 
 ## Merge with temporal_network_metrics
 biomass_variation %<>%
@@ -145,14 +145,33 @@ op <- op_analysis %>% dplyr::select(opcod, station, date)
 net <- left_join(network_metrics, op, by = "opcod") %>%
   ungroup() %>%
   filter(!is.na(station))
-rm(op_analysis, network_analysis)
+
 troph_group_biomass <- net %>%
-  unnest(composition) %>%
+  unnest(composition) 
+
+# Set troph_group names in function of the number of group
+unique_troph_group <- unique(troph_group_biomass$troph_group)
+set_troph_names <- function (troph = NULL, nb_names = 2) {
+  if (troph == 1) {
+    return("low")
+  } else if (troph == 2) {
+    if (nb_names == 3) {
+      return("medium")
+    } else {
+      return("high")
+    }
+  } else if (troph == 3) {
+    return("high")
+  }
+}
+
+troph_group_biomass %<>%
   group_by(station, troph_group, date) %>%
   summarise(biomass = mean(biomass)) %>%
   ungroup() %>%
-  mutate(troph_group = ifelse(troph_group == 2, "low", "high"))
-  #spread(troph_group, biomass) %>%
+  mutate(troph_group =
+    map_chr(troph_group, ~set_troph_names(.x, nb_names = length(unique_troph_group)))
+  )
 
 complete_com <- troph_group_biomass %>%
   group_by(station) %>%
@@ -172,7 +191,6 @@ complete_com %<>% left_join(troph_group_biomass, by = c("station", "troph_group"
 test <- complete_com %>%
   group_by(station, troph_group, date) %>%
   summarise(nobs = n())
-filter(test, nobs > 1)
 complete_com %<>%
   group_by(station) %>%
   nest()
@@ -182,6 +200,7 @@ complete_com %<>%
     com_mat = purrr::map(data, function(x) spread(x, troph_group, biomass)),
     com_mat = purrr::map(com_mat, function(x) select(x, -date))
   )
+complete_com$com_mat[[1]]
 synchrony <- complete_com %>%
   mutate(
     avg_troph_group = purrr::map(com_mat, colMeans),
@@ -213,7 +232,7 @@ troph_group_synchrony <- synchrony
 # ADD the diversity total and by troph_group
 div_troph_group <- net %>%
   unnest(composition) %>%
-  select(station, species, troph_group, date) %>%
+  select(station, matches("species|sp_class"), troph_group, date) %>%
   mutate(troph_group = ifelse(troph_group == 2, "low", "high")) %>%
   group_by(station, troph_group, date) %>%
   summarise(nbsp = n()) %>%
