@@ -36,6 +36,11 @@ weight_analysis <- sanatize_metaweb(
   fish_diet_shift = metaweb_analysis$size_class,
   nb_class = max(unique(metaweb_analysis$size_class$class_id))
   )
+# Remove NA length:
+n_old <- nrow(weight_analysis)
+weight_analysis %<>% filter(!is.na(length))
+cat((n_old - nrow(weight_analysis)) / n_old  * 100, " % of the individuals have been removed.\n")
+cat("Since their length was NAs.\n")
 
 # compute weight by node and by opcod
 weight_analysis %<>% assign_size_class(., species, var = length,
@@ -67,6 +72,10 @@ network_composition <-
   left_join(abundance, biomass_node, by = c("opcod", "sp_class")) %>%
   group_by(opcod) %>%
   nest(.key = composition)
+
+if ("composition" %in% colnames(network_analysis)) {
+ network_analysis %<>% select(-composition)
+}
 network_analysis <-
   left_join(network_analysis, network_composition, by = "opcod")
 
@@ -107,6 +116,9 @@ source('../analysis/misc/parallel_setup.R')
 network_analysis %<>%
   mutate(
   composition = furrr::future_map(composition, function (compo, troph_group){
+    if ("troph_group" %in% colnames(network_analysis)) {
+      compo %<>% select(-troph_group)
+    }
     left_join(compo, troph_group, by = "sp_class")
 }, troph_group = trophic_level))
 
@@ -122,10 +134,10 @@ if (!is.null(options("network.type")) & options("network.type") == "species") {
       troph_level = sum(biomass * troph_level) / sum(biomass),
       biomass = sum(biomass)
     ) %>%
-    ungroup() %>%
-    mutate(
-      troph_group = get_size_class(., NULL, troph_level, trophic_class)
-    ) %>%
+    ungroup() 
+  composition$troph_group <- get_size_class(composition, NULL, troph_level, trophic_class)
+
+  composition %<>%
     group_by(opcod) %>%
     nest(.key = composition)
 
@@ -166,7 +178,7 @@ network_analysis %>%
   filter(is.na(troph_group))
 network_analysis %>%
   unnest(composition) %>%
-  filter(opcod == 25770)
+  filter(opcod == 2303)
 
 mysave(network_analysis, dir = dest_dir, overwrite = TRUE)
 

@@ -58,13 +58,6 @@ if (any(is.na(metaweb_analysis$size_class))) {
   stop("NA in class id, something went wrong")
 }
 
-qplot(x = length, data = filter(length_analysis, species == "TRF"), geom = "histogram")
-filter(length_analysis, species == "TRF") %>% map(., summary)
-filter(length_analysis, species == "TRF", is.na(length))
-filter(metaweb_analysis$size_class, species == "TRF")
-filter(metaweb_analysis$size_class, species == "IDE")
-filter(length_analysis, species == "IDE")
-
 network_analysis <- build_local_network(
   data = length_analysis,
   species = species,

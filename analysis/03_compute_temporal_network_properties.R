@@ -102,7 +102,7 @@ source('../analysis/misc/parallel_setup.R')
 net %<>%
   mutate(
     network = map2(network, station, function(x, y) {
-      message(sprintf('Station %s', y))
+      #message(sprintf('Station %s', y))
       igraph::graph_from_data_frame(x, directed = TRUE)
 }
 ))
@@ -111,11 +111,11 @@ net %<>%
   select(network, station) %>%
   group_by(station) %>%
   nest() %>%
-  mutate(betalink = map2(data, station,
+  mutate(betalink = furrr::future_map2(data, station,
       function (x, y) {
-      message(sprintf("Station %s", y))
+      #message(sprintf("Station %s", y))
       betalink::network_betadiversity(x$network)
-      }
+      }, .progress = TRUE 
       )
   ) %>%
   select(-data)
@@ -245,7 +245,7 @@ div_troph_group <- net %>%
 troph_group_synchrony %<>%
   left_join(div_troph_group, by = c("station"))
 
-mysave(troph_group_synchrony, dir = mypath("data"), overwrite = TRUE)
+mysave(troph_group_synchrony, dir = dest_dir, overwrite = TRUE)
 
 cat("-----------------------------------\n")
 cat("End of temporal metrics computation\n")

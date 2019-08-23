@@ -7,8 +7,8 @@ library(future)
 nb_cores <- future::availableCores()
 #Crap hack to determine if in local or on the PBS cluster:
 node_name <- Sys.info()["nodename"]
-if (node_name %in% c("Andy", "BigAndy")) {
-  future::plan(multisession)
+if (node_name %in% c("Andy", "BigAndy", "BrickAndy")) {
+  future::plan(multiprocess)
 #} else if (node_name %in% c("mesu0", "migale")) {
 } else {
   cl <- parallel::makeCluster(nb_cores)
