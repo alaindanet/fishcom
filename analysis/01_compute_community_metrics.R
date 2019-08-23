@@ -40,11 +40,6 @@ weight_analysis <- length_analysis %>%
   dplyr::select(opcod, species, length, weight)
 # length is given in milimeters
 
-# Sanitize check to be coherent with network:
-weight_analysis %<>%
-  filter(!species %in% "OBL") %>%
-  filter(!length < 1)
-
 mysave(weight_analysis, dir = data_common, overwrite = TRUE)
 
 #########################################
@@ -69,11 +64,11 @@ myload(weight_analysis, dir = data_common)
 weight_analysis %<>%
   group_by(opcod, species) %>%
   summarise(biomass = sum(weight), length = mean(length))
+
 ## The biomass and length are given by species
 com_analysis %<>%
   left_join(., weight_analysis, by = c("opcod", "species")) %>%
   select(opcod, species, nind, length, biomass)
-
 # Save community_analysis
 community_analysis <- com_analysis
 
@@ -110,16 +105,11 @@ com <- left_join(ungroup(community_analysis),
   summarise(nind = sum(nind)) %>%
   group_by(station) %>%
   nest()
-filter(com, station == 8442) %>%
-  unnest() %>%
-  group_by(species, date) %>%
-  summarise(n = n()) %>%
-  filter(n != 1)
+
 ## build community matrices
 com %<>%
   mutate(
     com = furrr::future_map2(data, station, function(x, y) {
-      message(sprintf('Station %s', y))
 
       x %<>% spread(species, nind) %>%
 	mutate_if(is.integer, list(~replace(.,is.na(.), as.integer(0)))) %>%
@@ -168,13 +158,6 @@ com <- left_join(community_metrics, op_analysis, by = c("opcod")) %>%
 
 com <- left_join(com, select(betadiv, -data, -com), by = "station")
 
-# Strange biomass cv: 
-filter(com, biomass_cv > 1.2)
-left_join(community_metrics, op_analysis, by = c("opcod")) %>%
-  filter(station == 1706)
-filter(community_analysis, opcod == 4223)
-# There was 57 ANG, and pretty big ones!
-
 temporal_community_metrics <- com
 mysave(temporal_community_metrics, dir = data_common, overwrite = TRUE)
 
@@ -191,6 +174,18 @@ com <- ungroup(community_analysis) %>%
   filter(!is.na(station)) %>%
   select(station, date, species, biomass)
 
+# We will compute the variance of each species in each station, which
+# require that there is some obsversation
+filter_na <- com %>%
+  group_by(station, species) %>%
+  summarise(n = sum(!is.na(biomass)) / n()) %>%
+  mutate(to_rm = ifelse(n < 0.5, TRUE, FALSE)) %>%
+  select(-n)
+com %<>%
+  left_join(filter_na) %>%
+  filter(!to_rm) %>%
+  select(-to_rm)
+
 # Get 0 biomass when the species is absent of station
 # By station replicate complete species list observed:
 complete_com <- com %>%
@@ -204,14 +199,11 @@ complete_com <- com %>%
     })
     ) %>%
   unnest(comb)
+
 # Join and put biomass to 0 when no observed:
 complete_com %<>% left_join(com, by = c("station", "species", "date")) %>%
   mutate(biomass = ifelse(is.na(biomass), 0, biomass))
 
-test <- complete_com %>%
-  group_by(station, species, date) %>%
-  summarise(nobs = n())
-filter(test, nobs > 1)
 complete_com %<>%
   group_by(station) %>%
   nest()
@@ -237,4 +229,6 @@ synchrony <- complete_com %>%
 
 synchrony %<>%
   select(station, synchrony, cv_sp, cv_com, cv_classic)
+filter(synchrony, is.na(cv_sp))
+
 mysave(synchrony, dir = mypath("data"), overwrite = TRUE)

@@ -10,6 +10,7 @@ library(magrittr)
 mypath <- rprojroot::find_package_root_file
 mydir <- mypath("data-raw", "fishing_op_build")
 source(mypath("R", "misc.R"))
+source(mypath("R", "cleaning_methods.R"))
 
 ################################################################################
 #                                 Fish length                                  #
@@ -20,63 +21,17 @@ myload(fish_length, dir = mypath("data-raw", "fishing_op_build"))
 #  Remove migratory species  #
 ##############################
 # Remove migratory species, species from lake, crayfish or very rare ones
-sp_to_remove <- c(
-"ALR",#Alose_feinte_du_Rhone
-"ALF",#Alose_feinte	
-"ALA",#Grande_alose	
-"APP",#Ecrevisse_a_pieds_blancs	
-"ASA",#Ecrevisse_a_pieds_rouges	
-"ASL",#Ecrevisse_a_pieds_greles	
-"ATH",#Atherine_pretre	
-"CDR",#Crapet_de_roche
-"COR",#Coregone	
-"CRI",#Christivomer
-"CTI",#Amour_blanc	
-"FLE",#Flet	
-"GOB",#Gobie	
-"LOU",#Bar	
-"LPM",#Lamproie_marine	
-"MGL",#Mulet_a_grosses_levres	
-"MUC",#Mulet_cabot	
-"MUD",#Mulet_dore	
-"MUP",#Mulet_porc	
-"OCL",#Ecrevisse_americaine	
-"PCC",#Ecrevisse_de_louisiane	
-"PFL",#Ecrevisse_signal	
-"PIM",#Tete_de_boule, n=1	
-"PLI",#Plie	
-"SCO",#Saumon_coho n=4
-"SAT",#Saumon atlantique
-"LPP",
-"LPR",
-"UMP"
-)
 
-fish_length %<>% dplyr::filter(!(species %in% sp_to_remove))
+fish_length %<>% dplyr::filter(!(species %in% sp_to_remove()))
 
 ################################
 #  Regroup morphotype species  #
 ################################
 #old = new
-sp_to_replace <- c(
-"CMI" = "CCO", #"Carpe_miroir"<-"Carpe_commune"
-"CCU" = "CCO", #"Carpe_cuir"<-"Carpe_commune"
-"RUB" = "GAR", #"Gardon_italien"<-"Gardon" n=1
-"CYP" = "GAR", #"Juvenile_cyp"<-"Gardon"
-"CAG" = "CAS", #"Carassin_argente"<-"Carassin"
-"CAA" = "CAS", #Carassin_dore_ou_argente"<-"Carassin"
-"CAR" = "CAS", #"Carpe_argentee"<-"Carassin"
-"CAD" = "CAS", #"Carassin_dore"<-"Carassin"
-"BRG" = "BRE", #"Hybride_breme-gardon"<-"Breme" n=4
-"HYC" = "GAR", #"Hybrides_de_cyprinides"<-"Gardon"n=20
-"LPX" = "LPP", #"Lamproie"<-"Lamproie_de_planer" n=1047
-"TRL" = "TRF", #"Truite_de_lac"<-"Truite_de_riviere"
-"TRM" = "TRF"  #"Truite_de_mer"<-"Truite_de_riviere"
-)
 
 fish_length %<>%
   mutate(
-    species = str_replace_all(species, sp_to_replace)
+    species = str_replace_all(species, sp_to_replace())
   )
 
 ##################
@@ -115,6 +70,25 @@ mysave(op_sp_ind, dir = mypath("data"), overwrite = TRUE)
 nb_ind_sp <- fish_length %>%
   group_by(species) %>%
   summarise(nind = n())
+
+
+low_nb_ind <- filter(nb_ind_sp, nind <= 100)
+
+fish_length %<>% filter(!species %in% low_nb_ind$species)
+
+# Remove crazy length
+filter(fish_length, length > 5000)
+distri_sp_length <- fish_length %>%
+  group_by(species) %>%
+  summarise(
+    avg = mean(length, na.rm = TRUE),
+    sdt = sd(length, na.rm = TRUE))
+# Remove it
+fish_length %<>%
+  left_join(distri_sp_length) %>%
+  mutate(length = ifelse(length > avg + 5 * sdt | length < avg + 5 * sdt, NA, length)) %>%
+  select(-avg, -sdt)
+
 mysave(fish_length, nb_ind_sp, dir = mypath("data"), overwrite = TRUE)
 
 ################################################################################

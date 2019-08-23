@@ -117,27 +117,6 @@ myload(op_analysis, dir = mypath("data"))
 
 # Select good op
 fish_length %<>% filter(opcod %in% good_opcod_id)
-summary(fish_length)
-
-# Remove accidental species
-nb_ind_sp <- fish_length %>%
-  group_by(species) %>%
-  summarise(nind = n())
-low_nb_ind <- filter(nb_ind_sp, nind <= 100)
-fish_length %<>% filter(!species %in% low_nb_ind$species)
-
-# Remove crazy length
-filter(fish_length, length > 5000)
-distri_sp_length <- fish_length %>%
-  group_by(species) %>%
-  summarise(
-    avg = mean(length, na.rm = TRUE),
-    sdt = sd(length, na.rm = TRUE))
-# Remove it
-fish_length %<>%
-  left_join(distri_sp_length) %>%
-  mutate(length = ifelse(length > avg + 5 * sdt, NA, length)) %>%
-  select(-avg, -sdt)
 
 length_analysis <- fish_length
 
