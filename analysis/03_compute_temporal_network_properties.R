@@ -95,14 +95,13 @@ myload(network_analysis, dir = dest_dir)
 myload(op_analysis, dir = data_common)
 
 net <- left_join(network_analysis, dplyr::select(op_analysis, opcod, station, year)) %>%
-  ungroup() %>%
-  filter(!is.na(station))
+  ungroup()
 
 source('../analysis/misc/parallel_setup.R')
 ## Get network as matrices
 net %<>%
   mutate(
-    network = furrr::future_map2(network, station, function(x, y) {
+    network = map2(network, station, function(x, y) {
       message(sprintf('Station %s', y))
       igraph::graph_from_data_frame(x, directed = TRUE)
 }
