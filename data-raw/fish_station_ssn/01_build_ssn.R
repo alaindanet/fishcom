@@ -21,14 +21,16 @@ source(mypath("R", "geo_methods.R"))
 # Load fish and environmental station
 myload(rht, dir = mypath("data-raw"))
 rht %<>% st_transform(crs = 2154)
-myload(station_analysis, dir = mypath("data"))
+myload(station_analysis, op_analysis, dir = mypath("data"))
 station <- station_analysis %>%
-  st_transform(crs = 2154)
+  st_transform(crs = 2154) %>%
+  select(id) %>%
+  rename(station = id)
 
 # Load the dem: 
 file_mnt <- mypath(
   "data-raw",
-  "dem_250m_wgs84.tif")
+  "dem_250m_lambert_93.tif")
 dem <- raster::raster(file_mnt)
 ## crop dem to rht:  
 
@@ -50,52 +52,11 @@ prepare_ssn(grass_path = "/usr/lib/grass76/",
   sites = station, streams = rht,
   ssn_path = mypath("data-raw", "fish_station_ssn", "fish_station.ssn"), slope = FALSE)
 
-# Set dem path
-file_mnt <- mypath("data-raw", "fish_station_ssn", "dem.tif")
-initGRASS(gisBase = "/usr/lib/grass76/",
-          home = tempdir(),
-          override = TRUE)
-setup_grass_environment(dem = file_mnt)
-import_data(dem = file_mnt,
-  sites = station,
-  streams = rht
-)
-derive_streams()
-
-cj <- openSTARS::check_compl_junctions()
-#cj <- openSTARS::check_compl_confluences()
-if(cj){
-  #openSTARS::correct_compl_confluences()
-  openSTARS::correct_compl_junctions()
-}
-
-calc_edges()
-# Compute slope from dem:
-#execGRASS("r.slope.aspect", flags = c("overwrite","quiet"),
-          #parameters = list(
-            #elevation = "dem",
-            #slope = "slope"
-          #))
-#calc_attributes_edges(input_raster = c("slope", "dem"),
-  #stat_rast = rep("mean", 2),
-  #attr_name_rast = c("avSlo", "avAlt")
-                      #)
-#calc_attributes_sites_approx(sites_map = "sites",
-                             #input_attr_name = c("avSlo", "avAlt"),
-                             #output_attr_name = c("avSloA", "avAltA"),
-                             #stat = rep("mean", 2))
-
-calc_sites()
-ssn_dir <- mypath("data-raw", "fish_station_ssn", "fish_station.ssn")
-export_ssn(ssn_dir, delete_directory = TRUE)
-
-unlink_.gislock()
-prepare_ssn()
 
 #####################
 #  Save ssn object  #
 #####################
-ssn <- SSN::importSSN(ssn_dir, o.write = TRUE)
+ssn <- SSN::importSSN(mypath("data-raw", "fish_station_ssn", "fish_station.ssn"), o.write = TRUE)
 # Compute the weight of each streams lines when they merged:
 ssn <- SSN::additive.function(ssn, "H2OArea",
   "afv_area")

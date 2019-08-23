@@ -133,6 +133,46 @@ par(mfrow = c(2,2))
 plot(model)
 ```
 
+#### Spatial model
+
+```{r}
+library(SSN)
+myload(ssn, dir = mypath("data-raw", "fish_station_ssn"))
+ssn@obspoints@SSNPoints[[1]]@point.data <- left_join(
+  ssn@obspoints@SSNPoints[[1]]@point.data,
+  mod_press_data
+)
+
+ssn <- SSN::importSSN(mypath("data-raw", "fish_station_ssn", "fish_station.ssn"), o.write = TRUE)
+# Compute the weight of each streams lines when they merged:
+ssn <- SSN::additive.function(ssn, "H2OArea",
+  "afv_area")
+# create distance matrix between pred and obs:
+SSN::createDistMat(ssn, o.write = TRUE)
+mysave(ssn, dir = mypath("data-raw", "fish_station_ssn"), overwrite = TRUE)
+
+formula <-  as.formula(
+  paste0("biomass_stab"," ~ ", 
+    paste0(colnames(select(mod_press_data, -station)), sep = " + ")
+    (str_c(colnames(select(mod_press_data, -station)), " + ")
+    cat(colnames(select(mod_press_data, -station)), sep = " + ")
+  )
+)
+spmod <- glmssn(
+  biomass_stab ~ richness_med * (DBO + disolved_oxygen + flow + industry +
+    mes + nitrates + ph + phosphore + polluants +
+    temperature), ssn, family = "Gaussian", CorModels =
+       c("LinearSill.tailup", "Mariah.taildown", "Exponential.Euclid"),
+       use.nugget = TRUE, use.anisotropy = FALSE, addfunccol = "afv_area", trialscol = NULL)
+summary(spmod)
+
+model <- lm(biomass_stab ~ .*richness_med,
+  select(mod_press_data, -station, -`matieres organiques`)) 
+summary(model)
+plot(model)
+```
+
+
 ### Persistance of biomass composition
 
 ```{r}
