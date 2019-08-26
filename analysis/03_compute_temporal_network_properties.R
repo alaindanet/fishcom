@@ -231,7 +231,7 @@ troph_group_synchrony <- synchrony
 # ADD the diversity total and by troph_group
 div_troph_group <- net %>%
   unnest(composition) %>%
-  select(station, matches("species|sp_class"), troph_group, date) %>%
+  select(station, dplyr::matches("species|sp_class"), troph_group, date) %>%
   mutate(troph_group = ifelse(troph_group == 2, "low", "high")) %>%
   group_by(station, troph_group, date) %>%
   summarise(nbsp = n()) %>%

@@ -63,12 +63,18 @@ com_analysis <- length_analysis %>%
 myload(weight_analysis, dir = data_common)
 weight_analysis %<>%
   group_by(opcod, species) %>%
-  summarise(biomass = sum(weight), length = mean(length))
+  summarise(biomass = sum(weight, na.rm =TRUE), length = mean(length, na.rm = TRUE))
+# NA rm bc some fish have no valid measurement
+
 
 ## The biomass and length are given by species
 com_analysis %<>%
   left_join(., weight_analysis, by = c("opcod", "species")) %>%
   select(opcod, species, nind, length, biomass)
+
+#Rm species that had no valid measurements in an opcod
+com_analysis %<>% filter( !is.nan(length))
+
 # Save community_analysis
 community_analysis <- com_analysis
 
@@ -214,6 +220,7 @@ complete_com %<>%
     com_mat = purrr::map(com_mat, function(x) select(x, -date)),
     com_mat = purrr::map(com_mat, as.matrix)
   )
+
 synchrony <- complete_com %>%
   mutate(
     avg_sp = purrr::map(com_mat, colMeans),
@@ -229,6 +236,5 @@ synchrony <- complete_com %>%
 
 synchrony %<>%
   select(station, synchrony, cv_sp, cv_com, cv_classic)
-filter(synchrony, is.na(cv_sp))
 
 mysave(synchrony, dir = mypath("data"), overwrite = TRUE)
