@@ -33,6 +33,7 @@ library(tidygraph)
 library(sf)
 library(ggraph)
 library(lubridate)
+library(pander)
 source(mypath("R", "misc.R"))
 source(mypath("R", "plot_methods.R"))
 #devtools::load_all()
@@ -60,12 +61,20 @@ press_polluants  <-  bind_rows(press_polluants, press_temperature, press_flow)
 
 # Raw data
 
+## All pollutants
+
 ```{r}
 # Put units to present all the parameters
 myload(polluant_units, dir = mypath("data-raw", "polluants", "naiades_data"))
 kable(polluant_units)
 ```
 
+## Press category
+
+```{r}
+myload(press_cat, dir = mypath("data-raw", "polluants"))
+kable(press_cat)
+```
 
 
 ## Between press correlation
@@ -128,14 +137,14 @@ mod_press_data <- biomass_com %>%
 
 model <- lm(biomass_stab ~ .*richness_med,
   select(mod_press_data, -station)) 
-summary(model)
+pander(summary(model))
 par(mfrow = c(2,2))
 plot(model)
 ```
 
 #### Spatial model
 
-```{r}
+```{r, eval = FALSE}
 library(SSN)
 myload(ssn, dir = mypath("data-raw", "fish_station_ssn"))
 ssn@obspoints@SSNPoints[[1]]@point.data <- left_join(
@@ -168,7 +177,7 @@ summary(spmod)
 
 model <- lm(biomass_stab ~ .*richness_med,
   select(mod_press_data, -station, -`matieres organiques`)) 
-summary(model)
+pander(summary(model))
 plot(model)
 ```
 
@@ -183,7 +192,7 @@ mod_press_data <- biomass_com %>%
 
 model <- lm(betadiv ~ .*richness_med,
   select(mod_press_data, -station)) 
-summary(model)
+pander(summary(model))
 par(mfrow = c(2,2))
 plot(model)
 ```
@@ -198,7 +207,7 @@ mod_press_data <- biomass_com %>%
 
 model <- lm(richness_med ~ .,
   select(mod_press_data, -station)) 
-summary(model)
+pander(summary(model))
 par(mfrow = c(2,2))
 plot(model)
 ```
@@ -215,7 +224,7 @@ mod_press_data <- biomass_com %>%
 
 model <- lm(biomass_stab ~ .*richness_med,
   select(mod_press_data, -station)) 
-summary(model)
+pander(summary(model))
 par(mfrow = c(2,2))
 plot(model)
 ```
@@ -230,7 +239,7 @@ mod_press_data <- biomass_com %>%
 
 model <- lm(betadiv ~ .*richness_med,
   select(mod_press_data, -station)) 
-summary(model)
+pander(summary(model))
 par(mfrow = c(2,2))
 plot(model)
 ```
@@ -242,7 +251,8 @@ plot(model)
 myload(my_hydro_basin, dir = mypath("data-raw", "ssn_interpolation"))
 myload(station_analysis, dir = mypath("data"))
 station <- station_analysis %>%
-  select(id)
+  select(id) %>%
+  st_transform(crs = 2154)
 
 mask <- sf::st_intersects(station, my_hydro_basin)
 
@@ -257,7 +267,7 @@ station$basin <- purrr::map_chr(mask, function (x){
 
 #### Stability of biomass
 
-```{r, eval = FALSE}
+```{r}
 mod_by_basin <- biomass_com %>%
   select(-betadiv, -cv_press) %>%
   #filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
@@ -280,15 +290,12 @@ mod_by_basin %<>%
     coeff = map(model, broom::tidy)
   )
 
-mod_by_basin %>%
-  unnest(coeff) %>%
-  filter(basin == "ouest")
-
+kable(unnest(mod_by_basin, coeff))
 ```
 
 #### Persistance of the community
 
-```{r, eval = FALSE}
+```{r}
 mod_by_basin <- biomass_com %>%
   select(-biomass_stab, -cv_press) %>%
   #filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
@@ -311,7 +318,5 @@ mod_by_basin %<>%
     coeff = map(model, broom::tidy)
   )
 
-mod_by_basin %>%
-  unnest(coeff)
-
+kable(unnest(mod_by_basin, coeff))
 ```

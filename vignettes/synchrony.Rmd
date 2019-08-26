@@ -82,7 +82,7 @@ plot_grid(sync_plot, cv_plot, ncol = 1)
 ### Synchrony and richness by trophic groups
 
 ```{r}
-myload(troph_group_synchrony, dir = mypath("data"))
+myload(troph_group_synchrony, dir = mypath("data", "classes"))
 
 sync_troph <- synchrony %>% 
   select(station, synchrony, cv_com, cv_sp) %>%
@@ -176,7 +176,7 @@ cv_div_plot <- ggplot(cv_div, aes(y = cv_com, x = div)) +
 plot_grid(stab_div_plot, cv_div_plot, ncol = 1)
 ```
 
-# Effect of press on synchrony and species cv on press
+# Effect of press on synchrony and species cv
 
 ```{r load press}
 myload(press_polluants, dir = mypath("data"))
