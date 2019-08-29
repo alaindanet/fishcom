@@ -7,149 +7,106 @@ library(magrittr)
 library('stringr')
 mypath <- rprojroot::find_package_root_file
 source(mypath("R", "misc.R"))
+source(mypath("R", "press_methods.R"))
 
 ###########
 #  press  #
 ###########
 
 myload(yearly_press_interp_mv_avg, dir = mypath("data-raw", "polluants"))
+myload(op_analysis, dir = mypath("data"))
 
-press <- yearly_press_interp_mv_avg %>%
-  group_by(parameter, id) %>%
-  summarise(
-    frac_obs = sum(!is.na(value_corrected)) / n(),
-    press = mean(value_corrected, na.rm = TRUE),
-    cv_press = sd(value_corrected, na.rm = TRUE) / press
-  )
+# Filter the year corresponding to each station:
+year_station <- op_analysis %>% 
+  group_by(station) %>%
+  summarise(year_list = list(unique(year)))
 
-# Keep only the data where we have enough observation 
-press %<>%
-  filter(frac_obs > 0.75)
-
-press_polluants <- press
-mysave(press_polluants, dir = mypath("data"), overwrite = TRUE)
-
-
-#############################
-#  Finalyze press category  #
-#############################
+# If several values have been interpolated, keep the safest
+yearly_press_interp_mv_avg %<>%
+  group_by(id, year, parameter) %>%
+  arrange(value.predSE) %>%
+  slice(1)
 
 myload(press_cat, dir = mypath("data-raw", "polluants"))
 myload(polluant_units, dir = mypath("data-raw", "polluants", "naiades_data"))
-myload(press_polluants, dir = mypath("data"))
 
-press_polluants %<>%
+yearly_press_interp_mv_avg %<>%
   ungroup() %>%
   mutate(parameter = as.character(parameter)) %>%
   left_join(press_cat, by = "parameter")
-missing_cat <- filter(press_polluants, is.na(category))
+missing_cat <- filter(yearly_press_interp_mv_avg, is.na(category))
 stopifnot(nrow(missing_cat) == 0)
-
-press_polluants %>%
-  group_by(category) %>%
-  summarise(frac_ld = sum(!is.na(ld50_fish)) / n())
-
 # Move aluminium which is more a polluant than acidification
-press_polluants %<>%
+yearly_press_interp_mv_avg %<>%
   mutate(
     category = ifelse(parameter == "aluminium", "micropolluants mineraux", category),
     category = ifelse(parameter == "ph", "ph", category) 
   )
 # Keep only phosphore total:
-press_polluants %<>%
+yearly_press_interp_mv_avg %<>%
   mutate(
     category = ifelse(parameter == "phosphore_total", "phosphore", category)
   )
 # Matières organiques
-press_polluants %<>%
+yearly_press_interp_mv_avg %<>%
   mutate(
     category = ifelse(parameter == "dbo5", "DBO", category),
     category = ifelse(parameter == "oxygene_dissous", "disolved_oxygen", category)
   )
 
+yearly_press_interp_mv_avg_cleaned <- yearly_press_interp_mv_avg %>%
+  select(id, year, parameter, value_corrected, direction, category, ld50_fish) %>%
+  rename(press = value_corrected)
 
-# Polluants avg by those categories and weighted by their ld_50:
-ld_cat <- c(
-  "herbicides",
-  "insecticides",
-  "fungicides",
-  "pcb",
-  "hap",
-  "micropolluants mineraux",
-  "micropolluants organiques")
+press_metrics <- gather_press_to_category(
+  press = yearly_press_interp_mv_avg_cleaned,
+  polluant_units = polluant_units,
+  var_to_sum = c("press"),
+group_var = c("id", "category", "year"))
 
-# LD50 are in mg/L and parameter in µg/L:
-press_polluants %<>%
-  left_join(polluant_units) %>%
-  select(parameter, id, press, cv_press, direction, category, ld50_fish, units)
+#Add temperature and flow
+myload(yearly_flow_press_interp_mv_avg, dir = mypath("data-raw", "flow"))
+myload(yearly_temp_press_interp_mv_avg, dir = mypath("data-raw", "naiades_temperatures"))
+temp_flow_temp <- yearly_flow_press_interp_mv_avg %>%
+  mutate(category = "flow") %>%
+  bind_rows(mutate(yearly_temp_press_interp_mv_avg, category = "temperature")) %>%
+  select(id, year, category,value_corrected) %>%
+  rename(press = value_corrected)
 
-#########################
-#  Weighting polluants  #
-#########################
-
-press_ld <- press_polluants %>%
-  filter(category %in% ld_cat & !is.na(ld50_fish)) 
-stopifnot(unique(press_ld$units) == "µg/L")
-
-# Weighted sum of ld by station:
-press_ld %<>%
-  mutate(ld50_fish = ld50_fish * 10^3) %>% # Get ld_50 in µg. no effect since it's a weight
-  # But it's to remember the unit issue
+temp_flow_temp %<>%
+  filter(id %in% year_station$station) %>%
   group_by(id) %>%
-  summarise(
-    press = sum(press * (1 / ld50_fish / sum(1 / ld50_fish, na.rm = TRUE)), na.rm = TRUE),
-    cv_press = sum(cv_press * (1 / ld50_fish / sum(1 / ld50_fish, na.rm = TRUE)), na.rm = TRUE),
-    category = "polluants"
-  )
+  nest() %>%
+  left_join(rename(year_station, id = station), by = "id") %>%
+  mutate(sorted = map2(data, year_list, function (x, year_list) {
+      filter(x, year %in% c(min(year_list) - 1, year_list))
+})) %>%
+  select(-data, -year_list) %>%
+  unnest(sorted)
 
-#######################
-#  Parameter non weighted  #
-#######################
+press_metrics %<>% bind_rows(temp_flow_temp)
 
-press_non_ld <- press_polluants %>%
-  filter(!category %in% ld_cat)
-unique(press_non_ld$category)
-cat_to_z_press <- c(
-  "matieres azotees",
-  "matieres organiques",
-  "mes", "matieres phosphorees",
-  "industry", "other"
-) 
-
-press_non_ld %<>%
-  group_by(parameter) %>%
-  mutate(z_press_temp = ifelse(category %in% cat_to_z_press, scale(press), press)) %>%
-  mutate(z_press = pmap_dbl(list(category, direction, z_press_temp),
-      function(cate, direction, z){# take care of the direction of the gradient
-	if (!cate %in% cat_to_z_press) {
-	 return(z) 
-	}
-	if (direction == "decreasing") {
-	  z <- z * -1
-	  return(z)
-	} else {
-	  return(z)
-	}
-    }))
-#test_inversion <- filter(press_non_ld, parameter == "ph")
-#stopifnot(test_inversion[1,]$z_press_temp == test_inversion[1,]$z_press * -1)
-
-press_non_ld %<>%
-  select(parameter, id, press, cv_press, category, z_press)
-
-press_non_ld %<>%
+temporal_press_polluants <- press_metrics %>%
   group_by(id, category) %>%
   summarise(
-    press = sum(z_press),
-    cv_press = sum(cv_press),
-  )
+    press_med = median(press, na.rm = TRUE),
+    cv_press = sd(press, na.rm = TRUE) / mean(press, na.rm = TRUE),
+    press = mean(press, na.rm = TRUE))
 
-#Merge the two:
-press_polluants <- bind_rows(press_ld, press_non_ld) %>%
-  as_tibble() %>%
-  unnest()
+mysave(yearly_press_interp_mv_avg_cleaned,
+  temporal_press_polluants,
+  press_metrics,
+  dir = mypath("data"), overwrite = TRUE)
 
-mysave(press_polluants, dir = mypath("data"), overwrite = TRUE)
+
+myload(temporal_press_polluants, dir = mypath("data"))
+
+debug(gather_press_to_category)
+gather_press_to_category(press = test,
+  polluant_units = polluant_units,
+  var_to_sum = "press",
+group_var = c("id", "category", "year"))
+
 
 ######################################
 #  Z-press category for press 10_90  #

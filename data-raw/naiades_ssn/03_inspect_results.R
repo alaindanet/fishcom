@@ -75,6 +75,9 @@ yearly_press_interp_mv_avg %<>%
   filter(!parameter %in% unique(eff_interp[which(eff_interp$frac_obs < .80), ]$parameter))
 
 myload(dist_yearly_avg_polluants, dir = mypath("data-raw", "polluants"))
+test <- dist_yearly_avg_polluants %>%
+  select(parameter, max) %>%
+  spread(parameter, max)
 
 # Filter abberant values:
 options(mc.cores = 15)
