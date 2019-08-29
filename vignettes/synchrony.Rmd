@@ -179,7 +179,7 @@ plot_grid(stab_div_plot, cv_div_plot, ncol = 1)
 # Effect of press on synchrony and species cv
 
 ```{r load press}
-myload(press_polluants, dir = mypath("data"))
+myload(temporal_press_polluants, dir = mypath("data"))
 myload(press_temperature, dir = mypath("data-raw", "naiades_temperatures"))
 myload(press_flow, dir = mypath("data-raw", "flow"))
 press_temperature %<>%
@@ -189,8 +189,8 @@ press_flow %<>%
   mutate(category = "flow") %>%
   rename(press = flow, cv_press = cv_flow)
 
-press_polluants  <-  bind_rows(
-  press_polluants, press_temperature, press_flow) %>%
+temporal_press_polluants  <-  bind_rows(
+  temporal_press_polluants, press_temperature, press_flow) %>%
   rename(station = id) %>%
   filter(!category %in% c(
       "matieres azotees", "other", "matieres phosphorees", "matieres
@@ -204,7 +204,7 @@ sync_cv <- synchrony %>%
   select(station, synchrony, cv_sp) %>%
   #left_join(select(temporal_community_metrics, station, richness_med),
     #by = "station") %>%
-  left_join(press_polluants, by = "station") %>%
+  left_join(temporal_press_polluants, by = "station") %>%
   gather(cv_com, value, synchrony, cv_sp)
 
 sync_plot <- ggplot(sync_cv, aes(y = value, x = press)) +
@@ -225,7 +225,7 @@ sync_plot
 ```{r}
 mod_press_data <- synchrony %>% 
   select(station, synchrony, cv_sp) %>%
-  left_join(press_polluants, by = "station") %>%
+  left_join(temporal_press_polluants, by = "station") %>%
   select(-cv_press) %>%
   spread(category, press) %>%
   left_join(select(temporal_community_metrics, station, richness_med),

@@ -50,14 +50,15 @@ myload(synchrony, dir = data_common)
 
 ```{r}
 station_com <- left_join(
-  select(temporal_community_metrics, station, biomass_stab),
+  select(synchrony, station, cv_com, synchrony, cv_sp),
   temporal_station_desc)
 stab_station <- station_com %>%
   gather(carac, value,
-   width_river_mean, avg_depth_station_mean)
+   width_river_mean, avg_depth_station_mean) %>%
+  gather(stability, stab, cv_com, synchrony, cv_sp)
 formula <- y ~ x #needed for stat_poly_eq
-qplot(value, biomass_stab, data =  stab_station, geom = "point") +
-  facet_grid(cols = vars(carac), scales = "free_x") +
+qplot(value, stab, data =  stab_station, geom = "point") +
+  facet_grid(cols = vars(carac), rows = vars(stability), scales = "free_x") +
   geom_smooth(method = 'lm') +
   stat_poly_eq(
     formula = formula,
@@ -73,10 +74,12 @@ qplot(value, biomass_stab, data =  stab_station, geom = "point") +
 ```{r}
 stab_station <- station_com %>%
   gather(carac, value, instream_flow,
-    artificial_flow_variation, replenishment_flow)
+    artificial_flow_variation, replenishment_flow) %>%
+  gather(stability, stab, cv_com, synchrony, cv_sp)
+
 formula <- y ~ x #needed for stat_poly_eq
-qplot(value, biomass_stab, data =  stab_station, geom = "point") +
-  facet_grid(cols = vars(carac), scales = "free_x") +
+qplot(value, stab, data =  stab_station, geom = "point") +
+  facet_grid(cols = vars(carac), rows = vars(stability), scales = "free_x") +
   xylabs(y = "biomass_stab") +
   xlab("Isolation, artificial modification")
 ```
@@ -86,10 +89,11 @@ qplot(value, biomass_stab, data =  stab_station, geom = "point") +
 ```{r}
 stab_station <- station_com %>%
   gather(carac, value, channelled, resettlement,   
-  sailed_station, nautical_sports, dredging)
+  sailed_station, nautical_sports, dredging) %>%
+  gather(stability, stab, cv_com, synchrony, cv_sp)
 formula <- y ~ x #needed for stat_poly_eq
-qplot(value, biomass_stab, data =  stab_station, geom = "point") +
-  facet_grid(cols = vars(carac), scales = "free_x") +
+qplot(value, stab, data =  stab_station, geom = "point") +
+  facet_grid(cols = vars(carac), rows = vars(stability), scales = "free_x") +
   xylabs(y = "biomass_stab") +
   xlab("Usage (nb occurence by year)")
 ```

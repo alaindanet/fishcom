@@ -41,23 +41,10 @@ theme_set(theme_alain())
 ```
 
 ```{r load dataset, include = FALSE}
-myload(yearly_press_interp_mv_avg, dir = mypath("data-raw", "polluants"))
-myload(synchrony, press_polluants, temporal_evt_press, temporal_community_metrics, dir = mypath("data"))
+#myload(yearly_press_interp_mv_avg, dir = mypath("data-raw", "polluants"))
+myload(synchrony, temporal_press_polluants, temporal_evt_press, temporal_community_metrics, dir = mypath("data"))
+myload(community_metrics, dir = mypath("data"))
 ```
-
-```{r add flow and temperature}
-myload(press_temperature, dir = mypath("data-raw", "naiades_temperatures"))
-myload(press_flow, dir = mypath("data-raw", "flow"))
-press_temperature %<>%
-  mutate(category = "temperature") %>%
-  rename(press = temperature, cv_press = cv_temperature)
-press_flow %<>%
-  mutate(category = "flow") %>%
-  rename(press = flow, cv_press = cv_flow)
-
-press_polluants  <-  bind_rows(press_polluants, press_temperature, press_flow)
-```
-
 
 # Raw data
 
@@ -79,9 +66,9 @@ kable(press_cat)
 
 ## Between press correlation
 
-```{r, eval = FALSE}
-var_values <-  press_polluants %>%
-  select(-cv_press) %>%
+```{r}
+var_values <-  temporal_press_polluants %>%
+  select(id, category, press) %>%
   spread(category, press) 
 
 m <- cor(na.omit(select(var_values, -id)))
@@ -94,27 +81,83 @@ as.data.frame(round(m, 2)) %>%
   kable(format = "html", escape = F)
 ```
 
+```{r}
+library(ade4)
+library(factoextra)
+
+
+res.pca <- dudi.pca(na.omit(select(var_values, -id)),
+  scannf = FALSE,   # Hide scree plot
+  nf = 5            # Number of components kept in the results
+)
+
+fviz_eig(res.pca)
+```
+
+```{r}
+pca_plot <- lapply(list(c(1,2), c(1, 3), c(3, 2)), function (axes) {
+  fviz_pca_var(res.pca,
+    axes = axes,
+    col.var = "contrib", # Color by contributions to the PC
+    gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+    repel = TRUE     # Avoid text overlapping
+  )
+})
+plot_grid(plotlist = pca_plot)
+```
+
+
+
 I can delete some redondant variables 
 
 ```{r}
-#unique(press_polluants$category)
-#unique(press_polluants$station)
-press_polluants %<>%
+cat_to_rm <- c("nitrates", "phosphore", "mes", "disolved_oxygen",
+  "matieres organiques", "ph", "flow", "industry", "pcb",
+  "micropolluants organiques", "micropolluants mineraux", "hap")
+temporal_press_polluants %<>%
   filter(!category %in% c(
       "matieres azotees", "other", "matieres phosphorees", "matieres
       organiques"))
 ```
 
-
-# Press and stability
-
 ```{r}
 biomass_com <- temporal_community_metrics %>%
   select(station, biomass_stab, richness_med, betadiv)
 biomass_com %<>%
-  left_join(rename(press_polluants, station = id), by = "station")
+  left_join(rename(temporal_press_polluants, station = id), by = "station")
 biomass_com %<>% na.omit()
+
+
+pca_press_data <- biomass_com %>%
+  select(station, richness_med, category, press) %>%
+  filter(!category %in% cat_to_rm) %>%
+  spread(category, press)
 ```
+
+```{r, fig.dim = c(4, 4)}
+res.pca <- dudi.pca(na.omit(select(pca_press_data, -station)),
+  scannf = FALSE,   # Hide scree plot
+  nf = 5            # Number of components kept in the results
+)
+
+fviz_eig(res.pca)
+```
+
+```{r, fig.dim = c(10, 7)}
+pca_plot <- lapply(list(c(1,2), c(1, 3), c(1, 4), c(3, 2), c(4, 2), c(4, 3)), function (axes) {
+  fviz_pca_var(res.pca,
+    axes = axes,
+    col.var = "contrib", # Color by contributions to the PC
+    gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+    repel = TRUE     # Avoid text overlapping
+  )
+})
+plot_grid(plotlist = pca_plot)
+```
+
+# Press and stability
+
+
 
 ```{r}
 p1 <- ggplot(biomass_com, aes(x = press, y = log(biomass_stab))) +
@@ -127,20 +170,67 @@ p1
 
 ## Model
 
+
 ### Biomass stability
 
 ```{r}
+
 mod_press_data <- biomass_com %>%
-  select(-betadiv, - cv_press) %>%
-  #filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  select(station, biomass_stab, richness_med, category, press) %>%
+  filter(!category %in% cat_to_rm) %>%
   spread(category, press)
 
-model <- lm(biomass_stab ~ .*richness_med,
-  select(mod_press_data, -station)) 
+model <- lm(log10(biomass_stab) ~ .*richness_med,
+  select(mod_press_data, -station))
 pander(summary(model))
 par(mfrow = c(2,2))
 plot(model)
 ```
+```{r}
+model$coefficients[["richness_med"]]
+summary.lm
+coeff <- broom::tidy(model) %>%
+  mutate(
+    ci5 = estimate - 1.96 * std.error,
+    ci95 = estimate + 1.96 * std.error,
+    est.10 = 10^estimate,
+    ci5.10 = 10^ci5,
+    ci95.10 = 10^ci95
+  )
+
+```
+
+
+Biomass stability decreased with the increase of species richness and
+temperature (). As species richness and temperature co-vary, it is not easy to
+disentangle those two effects.
+Does temperature increase species richness which in turn decreases biomass
+stability? Does the effects of species richness are an artefact of temperature?
+
+```{r}
+formula <- y ~ x + I(x^2) + I(x^3)
+p1 <- ggplot(mod_press_data, aes(x = temperature, y = richness_med)) +
+  geom_smooth(method = 'lm', formula = formula) +
+  geom_point() +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(x = "Temperature (°C)", y = "Species richness")
+p1
+```
+
+
+```{r}
+vif_mod <- car::vif(model)
+kable(vif_mod)
+```
+
+```{r}
+cor(na.omit(select(mod_press_data, -station, -biomass_stab)), method = "spearman")
+```
+
 
 #### Spatial model
 
@@ -152,24 +242,24 @@ ssn@obspoints@SSNPoints[[1]]@point.data <- left_join(
   mod_press_data
 )
 
-ssn <- SSN::importSSN(mypath("data-raw", "fish_station_ssn", "fish_station.ssn"), o.write = TRUE)
-# Compute the weight of each streams lines when they merged:
-ssn <- SSN::additive.function(ssn, "H2OArea",
-  "afv_area")
-# create distance matrix between pred and obs:
-SSN::createDistMat(ssn, o.write = TRUE)
-mysave(ssn, dir = mypath("data-raw", "fish_station_ssn"), overwrite = TRUE)
+#ssn <- SSN::importSSN(mypath("data-raw", "fish_station_ssn", "fish_station.ssn"), o.write = TRUE)
+## Compute the weight of each streams lines when they merged:
+#ssn <- SSN::additive.function(ssn, "H2OArea",
+  #"afv_area")
+## create distance matrix between pred and obs:
+#SSN::createDistMat(ssn, o.write = TRUE)
+#mysave(ssn, dir = mypath("data-raw", "fish_station_ssn"), overwrite = TRUE)
 
-formula <-  as.formula(
-  paste0("biomass_stab"," ~ ", 
-    paste0(colnames(select(mod_press_data, -station)), sep = " + ")
-    (str_c(colnames(select(mod_press_data, -station)), " + ")
-    cat(colnames(select(mod_press_data, -station)), sep = " + ")
-  )
-)
+#formula <-  as.formula(
+  #paste0("biomass_stab"," ~ ", 
+    #paste0(colnames(select(mod_press_data, -station)), sep = " + ")
+    #(str_c(colnames(select(mod_press_data, -station)), " + ")
+    #cat(colnames(select(mod_press_data, -station)), sep = " + ")
+  #)
+#)
 spmod <- glmssn(
-  biomass_stab ~ richness_med * (DBO + disolved_oxygen + flow + industry +
-    mes + nitrates + ph + phosphore + polluants +
+  biomass_stab ~ richness_med * (DBO + flow + industry +
+    polluants +
     temperature), ssn, family = "Gaussian", CorModels =
        c("LinearSill.tailup", "Mariah.taildown", "Exponential.Euclid"),
        use.nugget = TRUE, use.anisotropy = FALSE, addfunccol = "afv_area", trialscol = NULL)
@@ -185,9 +275,17 @@ plot(model)
 ### Persistance of biomass composition
 
 ```{r}
+p1 <- ggplot(biomass_com, aes(x = press, y = log10(1/(betadiv)))) +
+  geom_point() +
+  facet_wrap(~ category, scales = "free_x") +
+  labs(x = "Scaled press", y = "Log 10 of 1 / beta-diversity")
+p1
+```
+
+```{r}
 mod_press_data <- biomass_com %>%
-  select(-biomass_stab, -cv_press) %>%
-  #filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  select(station, betadiv, richness_med, category, press) %>%
+  filter(!category %in% cat_to_rm) %>%
   spread(category, press)
 
 model <- lm(betadiv ~ .*richness_med,
@@ -200,9 +298,17 @@ plot(model)
 ### Median diversity
 
 ```{r}
+p1 <- ggplot(biomass_com, aes(x = press, y = log10(1/(betadiv)))) +
+  geom_point() +
+  facet_wrap(~ category, scales = "free_x") +
+  labs(x = "Scaled press", y = "Log 10 of 1 / beta-diversity")
+p1
+```
+
+```{r}
 mod_press_data <- biomass_com %>%
-  select(-biomass_stab, -betadiv, -cv_press) %>%
-  filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  select(station, richness_med, category, press) %>%
+  filter(!category %in% cat_to_rm) %>%
   spread(category, press)
 
 model <- lm(richness_med ~ .,
@@ -216,10 +322,11 @@ plot(model)
 
 ### Stability
 
+
 ```{r}
 mod_press_data <- biomass_com %>%
-  select(-betadiv, -press) %>%
-  filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  select(station, biomass_stab, richness_med, category, cv_press) %>%
+  filter(!category %in% cat_to_rm) %>%
   spread(category, cv_press)
 
 model <- lm(biomass_stab ~ .*richness_med,
@@ -233,8 +340,8 @@ plot(model)
 
 ```{r}
 mod_press_data <- biomass_com %>%
-  select(-biomass_stab, -press) %>%
-  filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  select(station, betadiv, richness_med, category, cv_press) %>%
+  filter(!category %in% cat_to_rm) %>%
   spread(category, cv_press)
 
 model <- lm(betadiv ~ .*richness_med,
@@ -269,8 +376,8 @@ station$basin <- purrr::map_chr(mask, function (x){
 
 ```{r}
 mod_by_basin <- biomass_com %>%
-  select(-betadiv, -cv_press) %>%
-  #filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  select(station, biomass_stab, richness_med, category, press) %>%
+  filter(!category %in% cat_to_rm) %>%
   spread(category, press) %>%
   left_join(rename(station, station = id), by = "station") %>%
   select(-geometry, -station) %>%
@@ -297,8 +404,8 @@ kable(unnest(mod_by_basin, coeff))
 
 ```{r}
 mod_by_basin <- biomass_com %>%
-  select(-biomass_stab, -cv_press) %>%
-  #filter(!category %in% c("nitrates", "phosphore", "mes", "disolved_oxygen")) %>%
+  select(station, betadiv, richness_med, category, press) %>%
+  filter(!category %in% cat_to_rm) %>%
   spread(category, press) %>%
   left_join(rename(station, station = id), by = "station") %>%
   select(-geometry, -station) %>%
@@ -320,3 +427,181 @@ mod_by_basin %<>%
 
 kable(unnest(mod_by_basin, coeff))
 ```
+
+# Link between stability and network structure
+
+
+```{r}
+myload(temporal_network_metrics, dir = mypath("data", "classes"))
+avg_network <- temporal_network_metrics %>%
+  select_at(vars(matches("med|station")))
+
+biomass_com <- temporal_community_metrics %>%
+  select(station, biomass_stab, richness_med, betadiv)
+stab_biomass_net_med <- left_join(avg_network, select(biomass_com, station,
+    biomass_stab, richness_med), by = "station") %>%
+  gather(metrics, values, colnames(select_at(., vars((matches("med")))))) %>%
+  mutate(metrics = str_replace(metrics, "_med", "")) %>%
+  filter(metrics != "nbnode")
+
+ggplot(stab_biomass_net_med, aes(y = biomass_stab, x = values)) +
+  facet_wrap(~ metrics, scale = "free_x")+
+  geom_point()
+```
+
+```{r}
+mod_press_data <- stab_biomass_net_med %>%
+  spread(metrics, values)
+
+model <- lm(log(biomass_stab) ~ richness*.,
+  select(mod_press_data, -station)) 
+pander(summary(model))
+par(mfrow = c(2,2))
+plot(model)
+
+```
+
+# Distribution of biomass by trophic level
+
+```{r}
+biomass_com <- temporal_community_metrics %>%
+  select(station, biomass_stab, richness_med, betadiv)
+biomass_com %<>%
+  left_join(rename(temporal_press_polluants, station = id), by = "station")
+biomass_com %<>% na.omit()
+myload(network_analysis, dir = mypath("data", "classes")) 
+troph_bm <- network_analysis %>%
+  unnest(composition) 
+
+compute_troph_lvl_moment <- function(
+  .data = NULL,
+  group_var = opcod,
+  weight = biomass,
+  trait = troph_level) {
+  group_var <- enquo(group_var)
+  weight <- enquo(weight)
+  trait <- enquo(trait)
+
+  .data %>%
+    group_by(!!group_var) %>%
+    summarise(
+      tot_weight = sum(!!weight),
+      cwm = sum(!!weight / tot_weight * !!trait),
+      cwv = sum(!!weight / tot_weight * (!!trait - cwm)^2),
+      cwk = sum(!!weight / tot_weight * (!!trait - cwm)^3) / cwv^(3/2),
+      cws = (sum(!!weight / tot_weight * (!!trait - cwm)^2) / cwv^2) - 3
+    )
+}
+troph_lvl_moment <- compute_troph_lvl_moment(troph_bm)%>%
+  left_join(select(op_analysis, station, opcod, date)) %>%
+  filter(! cwv < 0.01)
+filter(troph_bm, opcod == 6338)
+
+
+ggplot(select(troph_lvl_moment, -opcod, -tot_weight, -date) %>% gather(moment, value, cwm:cws),
+  aes(x = value)) +
+  geom_histogram() +
+  facet_wrap(~ moment, scales = "free_x")
+```
+
+## How vary distribution of trophic level through 
+
+```{r}
+time_moment <- select(troph_lvl_moment, -opcod, -tot_weight) %>%
+  gather(moment, value, cwm:cws) %>%
+  filter(station %in% sample(.data[["station"]], 10)) %>%
+  mutate(station = as.character(station))
+
+ggplot(time_moment,
+  aes(x = date, y = value, color = station)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~ moment, scales = "free_y")
+
+```
+
+```{r}
+biomass_moment <- troph_lvl_moment %>%
+  gather(moment, value, cwm:cws) %>%
+  filter(station %in% sample(.data[["station"]], 10)) %>%
+  mutate(station = as.character(station))
+
+
+ggplot(biomass_moment, aes(x = value, y = log10(tot_weight))) +
+  facet_wrap(~ moment, scales = "free_x") +
+  geom_point(aes(color = station))
+
+```
+
+```{r}
+stab_moment <- troph_lvl_moment %>%
+  gather(moment, value, cwm:cws) %>%
+  group_by(station, moment) %>%
+  summarise(med = median(value)) %>%
+  left_join(temporal_community_metrics %>%
+  select(station, biomass_stab, richness_med, betadiv))
+
+ggplot(stab_moment, aes(x = med, y = biomass_stab)) +
+  facet_wrap(~moment, scales = "free_x") +
+  geom_point()
+  
+```
+
+```{r}
+dist_troph_bm <- troph_bm %>% 
+  left_join(select(op_analysis, station, opcod, date)) %>%
+  filter(opcod %in% sample(.data[["opcod"]], 12))# %>%
+  #group_by(opcod, troph_level) %>%
+  #summarise(biomass = sum(biomass))
+
+ggplot(dist_troph_bm, aes(x = troph_level, weight = log10(biomass))) +
+  geom_histogram() +
+  facet_wrap(~opcod)
+
+
+```
+
+
+# Distribution of species richness by trophic level
+
+```{r}
+
+biomass_com <- temporal_community_metrics %>%
+  select(station, biomass_stab, richness_med, betadiv)
+biomass_com %<>%
+  left_join(rename(temporal_press_polluants, station = id), by = "station")
+biomass_com %<>% na.omit()
+myload(network_analysis, dir = mypath("data", "species")) 
+troph_bm <- network_analysis %>%
+  unnest(composition) 
+
+
+```
+
+
+# Structural Equation Modeling
+
+```{r}
+library(piecewiseSEM)
+dsem <- biomass_com %>%
+  select(station, biomass_stab, richness_med, category, press) %>%
+  #filter(!category %in% cat_to_rm) %>%
+  spread(category, press) %>%
+  na.omit()
+
+model <- psem(
+  lm(log(biomass_stab) ~ richness_med * (DBO + fungicides + herbicides + insecticides + temperature), dsem),
+  glm(richness_med ~ temperature + DBO + fungicides + herbicides + insecticides, "gaussian", dsem),
+  lm(DBO ~ nitrates * phosphore, dsem),
+  richness_med %~~% temperature,
+  nitrates %~~% phosphore
+  )
+summary(model, .progressBar = F)
+hist(biomass_com$richness_med, breaks = seq(0, 25))
+model2 <- psem(
+  lm(log(biomass_stab) ~ richness_med + DBO + fungicides + herbicides + insecticides + temperature, dsem),
+  lm(richness_med ~ temperature, dsem)
+  )
+summary(model2, .progressBar = F)
+```
+

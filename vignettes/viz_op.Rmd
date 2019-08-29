@@ -1,0 +1,68 @@
+---
+title: "Visualize fishing operation"
+author: "Alain Danet"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Visualize fish operation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+mypath <- rprojroot::find_package_root_file
+data_common <- mypath("data-raw")
+```
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.dim = c(10, 10),
+  echo = FALSE
+)
+library(tidyverse)
+library(lubridate)
+library(ggpmisc)
+library(cowplot)
+library(kableExtra)
+library(magrittr)
+source(mypath("R", "misc.R"))
+source(mypath("R", "plot_methods.R"))
+theme_set(theme_alain())
+```
+
+```{r load dataset, include = FALSE}
+myload(op, dir = mypath("data-raw"))
+```
+
+The complete protocol correspond to the little river whereas the partial
+protocols correspond to the big river.
+In some stations, the two protocols are used and it's not a good idea the mix
+them when looking at temporal variation.
+
+```{r}
+
+qplot(month, data = mutate(op, month = month(date))) +
+  labs(x = "Date",
+    y = "Frequency")
+
+protocol_station <- op %>%
+  group_by(protocol, station) %>%
+  summarise(n = n()) %>%
+  spread(protocol, n)
+filter(protocol_station, complete > 10)
+filter(protocol_station, 
+  (partial_by_point + partial_over_bank) > 10 |
+  is.na(partial_by_point) & (partial_over_bank > 10) |
+  (partial_by_point > 10) & is.na(partial_over_bank) 
+)
+
+# Numbering the sampling events by station
+op_hist <- clean_dbl %>%
+  group_by(station) %>%
+  summarise(freq = n()) %>%
+  arrange(desc(freq)) %>%
+  mutate(station = fct_inorder(as.factor(station)))
+```
+
