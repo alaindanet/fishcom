@@ -42,8 +42,10 @@ theme_set(theme_alain())
 
 ```{r load dataset, include = FALSE}
 #myload(yearly_press_interp_mv_avg, dir = mypath("data-raw", "polluants"))
-myload(synchrony, temporal_press_polluants, temporal_evt_press, temporal_community_metrics, dir = mypath("data"))
-myload(community_metrics, dir = mypath("data"))
+myload(community_metrics, synchrony, temporal_press_polluants,
+  temporal_evt_press, temporal_community_metrics, op_analysis,
+  dir = mypath("data"))
+
 ```
 
 # Raw data
@@ -488,14 +490,13 @@ compute_troph_lvl_moment <- function(
       tot_weight = sum(!!weight),
       cwm = sum(!!weight / tot_weight * !!trait),
       cwv = sum(!!weight / tot_weight * (!!trait - cwm)^2),
-      cwk = sum(!!weight / tot_weight * (!!trait - cwm)^3) / cwv^(3/2),
-      cws = (sum(!!weight / tot_weight * (!!trait - cwm)^2) / cwv^2) - 3
+      cwk = sum(!!weight / tot_weight * (!!trait - cwm)^4 / cwv^2),
+      cws = sum(!!weight / tot_weight * (!!trait - cwm)^3 / cwv^(3/2))
     )
 }
 troph_lvl_moment <- compute_troph_lvl_moment(troph_bm)%>%
   left_join(select(op_analysis, station, opcod, date)) %>%
   filter(! cwv < 0.01)
-filter(troph_bm, opcod == 6338)
 
 
 ggplot(select(troph_lvl_moment, -opcod, -tot_weight, -date) %>% gather(moment, value, cwm:cws),
@@ -504,7 +505,7 @@ ggplot(select(troph_lvl_moment, -opcod, -tot_weight, -date) %>% gather(moment, v
   facet_wrap(~ moment, scales = "free_x")
 ```
 
-## How vary distribution of trophic level through 
+## How vary distribution of trophic level through time
 
 ```{r}
 time_moment <- select(troph_lvl_moment, -opcod, -tot_weight) %>%
@@ -571,10 +572,166 @@ biomass_com <- temporal_community_metrics %>%
 biomass_com %<>%
   left_join(rename(temporal_press_polluants, station = id), by = "station")
 biomass_com %<>% na.omit()
-myload(network_analysis, dir = mypath("data", "species")) 
+myload(network_analysis, dir = mypath("data", "classes")) 
 troph_bm <- network_analysis %>%
-  unnest(composition) 
+  unnest(composition)
+troph_div <- troph_bm %>%
+  mutate(species = str_sub(sp_class, 1, 3)) %>%
+  group_by(opcod, troph_level) %>%
+  summarise(
+    richness = length(unique(species)),
+    nb_node = length(unique(sp_class))
+  )
 
+troph_div_moment <- compute_troph_lvl_moment(troph_div, group_var = opcod,
+  weight = richness, trait = troph_level) %>%
+  left_join(select(op_analysis, station, opcod, date)) %>%
+  filter(! cwv < 0.01)
+
+```
+
+```{r}
+time_moment <- select(troph_div_moment, -opcod, -tot_weight) %>%
+  gather(moment, value, cwm:cws) %>%
+  filter(station %in% sample(.data[["station"]], 10)) %>%
+  mutate(station = as.character(station))
+
+ggplot(time_moment,
+  aes(x = date, y = value, color = station)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~moment, scales = "free_y")
+
+```
+
+```{r}
+biomass_moment <- troph_div_moment %>%
+  gather(moment, value, cwm:cws) %>%
+  filter(station %in% sample(.data[["station"]], 10)) %>%
+  mutate(station = as.character(station))
+
+ggplot(biomass_moment, aes(x = value, y = log10(tot_weight))) +
+  facet_wrap(~ moment, scales = "free_x") +
+  geom_point(aes(color = station))
+```
+
+```{r}
+stab_moment <- troph_div_moment %>%
+  gather(moment, value, cwm:cws) %>%
+  group_by(station, moment) %>%
+  summarise(med = median(value)) %>%
+  left_join(temporal_community_metrics %>%
+  select(station, biomass_stab, richness_med, betadiv))
+
+formula <- y ~ x 
+ggplot(stab_moment, aes(x = med, y = biomass_stab)) +
+  facet_wrap(~moment, scales = "free_x") +
+  geom_smooth(method = 'lm', formula = formula) +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  geom_point()
+
+#library("PearsonDS")
+#moments <- c(mean = 3.3,variance = .2,skewness = -0.7, kurtosis = 1.75)
+#rpearson(10, moments = moments)
+#plot(function(x) dpearson(x, moments), -4.5, 4.5)
+  
+```
+
+```{r}
+moment_model <- stab_moment %>%
+  ungroup() %>%
+  select(biomass_stab, moment, med) %>%
+  spread(moment, med)
+cor(moment_model)
+
+```
+
+```{r}
+model <- lm(biomass_stab ~ ., moment_model)
+pander(summary(model))
+car::vif(model) #Too much colinearity
+
+model <- lm(log10(biomass_stab) ~ cwk+cwv+cws, moment_model)
+car::vif(model) # ok
+pander(summary(model))
+par(mfrow = c(2,2))
+plot(model)
+
+```
+
+```{r}
+troph_level_dist <- bind_rows(
+  mutate(troph_lvl_moment,variable = "biomass"),
+  mutate(troph_div_moment,variable = "richness")
+  ) %>%
+  gather(moment, value, cwm:cws) %>%
+  select(opcod, station, variable, moment, value) %>%
+  group_by(station, variable,moment) %>%
+  summarise(med = median(value), cv = sd(value) / mean(value)) %>%
+  left_join(temporal_community_metrics %>%
+  select(station, biomass_stab, richness_med, betadiv))
+
+# Transform to get the stat model data
+mod_tot_troph_dist <- troph_level_dist %>%
+  ungroup() %>%
+  gather(metric, value, med, cv) %>%
+  #filter(moment != "cwm") %>% # Causes to multi colinéarity
+  unite(moment, variable, moment, metric,sep= "_") %>%
+  spread(moment, value) %>%
+  select(biomass_stab, biomass_cwk_cv:richness_cwv_med)
+
+cor(mod_tot_troph_dist)
+
+model <- lm(log10(biomass_stab) ~ ., select(mod_tot_troph_dist,
+    -biomass_cws_med, - richness_cwm_med, -biomass_cwv_med)) 
+car::vif(model)
+```
+
+
+```{r}
+res.pca <- dudi.pca(na.omit(select(mod_tot_troph_dist, -biomass_stab)),
+  scannf = FALSE,   # Hide scree plot
+  nf = 4            # Number of components kept in the results
+)
+
+fviz_eig(res.pca)
+pca_plot <- lapply(list(c(1,2), c(1, 3), c(3, 2)), function (axes) {
+  fviz_pca_var(res.pca,
+    axes = axes,
+    col.var = "contrib", # Color by contributions to the PC
+    gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+    repel = TRUE     # Avoid text overlapping
+  )
+})
+plot_grid(plotlist = pca_plot)
+```
+
+
+```{r}
+samp_opcod <- sample(troph_bm[["opcod"]], 12)
+dist_troph_bm <- troph_bm %>% 
+  left_join(select(op_analysis, station, opcod, date)) %>%
+  filter(opcod %in% samp_opcod)
+
+temp_moments <- troph_lvl_moment  %>%
+  filter(opcod %in% samp_opcod) %>%
+  select(opcod, cwm:cws) %>%
+  mutate(troph_level = 3.5, biomass = 20) %>%
+  mutate_at(vars(starts_with("cw")), ~round(., 2)) %>%
+  mutate(label = paste("M = ", cwm, "\nV = ", cwv, "\nK = ", cwk , "\nS = ", cws))
+
+ggplot(dist_troph_bm, aes(x = troph_level, weight = log10(biomass))) +
+  geom_histogram() +
+  facet_wrap(~opcod) +
+  labs(x = "Trophic level", y = "Log10 of Biomass") +
+  geom_text(data = temp_moments, aes(x = troph_level, y = biomass, label = label))
+```
+
+```{r}
 
 ```
 
