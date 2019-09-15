@@ -48,14 +48,9 @@ According to the postdoc advertisement:
   - [ ] Station
   - [ ] Water quality
 - [ ] Environmental data
-  - [x] temporal flow and quality (Marie Silvestre):
-    - [x] Interpolate flow and quality
-    - [ ] Re-run with moving avg
-  - [ ] How to analyze qualitative data:
-    - [x] Habitat
+  - [x] temporal flow and quality
   - [x] Pressure data (Olivier Dezerald & Philippe Usseglio-Polatera):
-  - [ ] Temperature data?
-    - [ ] https://hubeau.eaufrance.fr/page/api-temperature-continu
+  - [x] Temperature data
   - [x] ONDE for etiage: from 2012 to 2018 
   - [x] ROE for obstacle:
     - [ ] To explore
@@ -68,22 +63,12 @@ According to the postdoc advertisement:
   - [ ] 02_run_analysis.R:
     - [ ] separate build_network from metrics computation
 - [x] network methods:
-  - [x] connectance, average trophic level, richness
-    - [ ] beautiful plots
-      - [ ] plot "tableau de bord"
-        - [ ] réseau + some information
     - [/] nestedness, trophic length, modularity, trophic group:
       - [ ] compute betalink: [ingnacio bartomeus](https://github.com/ibartomeus/betalink/tree/new_features)
       - [ ] trophic group: [cf legendre website](https://www.biologie.ens.fr/~legendre/n_w/n_w.html) 
   - [ ] network analysis:
-    - [ ] Compute trophic level by network
-    - [ ] compute above network indices
-    - [ ] post-modularity values? @poisot_an_2013
-    - [ ] null model for nestedness
-    - [ ] null model for connectance
-    - [ ] null models everywhere ?
-  - [ ] community methods:
-    - [ ] compute population stability and synchrony
+    - [x] Analyze ratio of species number in trophic group
+    - [x] Get species/class diet by network
 - [x] Fish datasets to generate
 - [ ] Assess quality of the dataset:
 
@@ -92,7 +77,7 @@ According to the postdoc advertisement:
 ### Characterize pressures and pulse 
 
 The idea is to characterize pressure by the average of quantitative pressures
-such as water quality, polluants and landscape constraints (nb of obstacles,
+such as water quality, pollutants and landscape constraints (nb of obstacles,
 concentration of agriculture). The pulse can be characterize by the 10th or 90th
 percentile of the distribution of the quantitative perturbations.  
 

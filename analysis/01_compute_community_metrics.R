@@ -10,6 +10,7 @@ library(furrr)
 library(vegan)
 mypath <- rprojroot::find_package_root_file
 source(mypath("R", "misc.R"))
+source(mypath("R", "community_methods.R"))
 #devtools::load_all()
 
 # Cores
@@ -94,7 +95,42 @@ com <- community_analysis %>%
     biomass = sum(biomass)
   )
 
-community_metrics <- com
+######################
+#  Compute evenness  #
+######################
+
+evenness <- community_analysis %>%
+    select(opcod, species, nind) %>%
+    group_by(opcod, species) %>%
+    summarise(nind = sum(nind)) %>%
+    group_by(opcod) %>%
+    nest() %>%
+    mutate(
+    pielou = furrr::future_map(data, function(.data) {
+      .data %<>% spread(species, nind) %>%
+	mutate_if(is.integer, list(~replace(.,is.na(.), as.integer(0))))
+
+      richness <- vegan::specnumber(.data)
+
+      if (richness == 1) {
+	pielou <- 0
+	simpson <- 0
+      } else {
+	pielou <- vegan::diversity(.data) / log(richness)
+	simpson <- vegan::diversity(.data, index = "simpson")
+      }
+
+      out <- tibble( pielou = pielou, simpson = simpson)
+      return(out)
+    })
+    )
+
+evenness %<>%
+  unnest(pielou) %>% 
+  select(-data)
+
+community_metrics <- left_join(com,
+  evenness, by = "opcod")
 mysave(community_metrics, dir = data_common, overwrite = TRUE)
 
 ############################
@@ -110,6 +146,7 @@ com <- left_join(ungroup(community_analysis),
   group_by(station, date, species) %>%
   summarise(nind = sum(nind)) %>%
   group_by(station) %>%
+  arrange(date) %>%
   nest()
 
 ## build community matrices
@@ -126,19 +163,6 @@ com %<>%
     )
   )
 #
-compute_betadiv <- function(com, binary = FALSE, time_to_time = FALSE) {
-  if (binary) {
-    com %<>% replace(., . != 0, 1)
-  }
-
-  dist_mat <- vegan::vegdist(com, method = "bray", binary = binary)
-
-  if (time_to_time) {
-    dist_mat <- diag(dist_mat)
-  }
-
-  mean(dist_mat)
-}
 # Here I take the overall mean of differences between years but could be an idea
 # to consider the mean of dissimilarity year to year (i.e. the diagonal values)
 betadiv <- com %>%
@@ -157,10 +181,10 @@ betadiv <- com %>%
 myload(community_metrics, op_analysis, dir = mypath("data"))
 
 com <- left_join(community_metrics, op_analysis, by = c("opcod")) %>%
+  select(station, richness, nind, biomass, pielou, simpson) %>%
   group_by(station) %>%
-  select(station, richness, nind, biomass) %>%
-  summarise_at(c("richness", "nind", "biomass"),
-    funs(avg = mean, cv = sd(.) / mean(.), med = median, stab = mean(.) / sd(.)))
+  summarise_at(c("richness", "nind", "biomass", "pielou", "simpson"),
+    list(avg = mean, cv =~ sd(.) / mean(.), med = median, stab = ~mean(.) / sd(.)))
 
 com <- left_join(com, select(betadiv, -data, -com), by = "station")
 

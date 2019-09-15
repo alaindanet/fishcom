@@ -15,7 +15,9 @@ library(rnetcarto)
 library(furrr)
 library(tictoc)
 #library(ggmisc)
-devtools::load_all()
+#devtools::load_all()
+source(mypath("R", "metaweb_build.R"))
+source(mypath("R", "local_network_build.R"))
 
 
 #########################################
@@ -257,8 +259,8 @@ network_analysis %<>%
     compartiment = map_dbl(metrics, "Cbar"),
     troph_level = future_map(network, NetIndices::TrophInd),
     troph_level = map(troph_level, "TL"),
-    troph_level_avg = map_dbl(troph_level, mean),
-    troph_length = map_dbl(troph_level, max),
+    mean_troph_level = map_dbl(troph_level, mean),
+    max_troph_lvl = map_dbl(troph_level, max),
     modularity = map_dbl(modul_guimera, 2)
   )
 
@@ -276,17 +278,110 @@ cat("-----------------------\n")
 myload(network_metrics, dir = dest_dir)
 
 c_richness_mod <- lm(connectance ~ nbnode, network_metrics)
-#summary(c_richness_mod)
-#qplot(nbnode, connectance, data =  network_metrics, geom = "point") +
-#  geom_smooth(method = 'lm') +
-#  stat_poly_eq(
-#    formula = formula,
-#    eq.with.lhs = "italic(hat(y))~`=`~",
-#    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
-#    parse = TRUE) +
-#  xylabs(x = "nbnode", y = "connectance")
+m_richness_mod <- lm(modularity ~ log(nbnode) + I(log(nbnode)^2), network_metrics)
+troph_lvl_richness_mod <- lm(troph_level_avg ~ log(nbnode) + I(log(nbnode)^2), network_metrics)
+#troph_length_richness_mod <- lm(troph_length ~ log(nbnode) + I(log(nbnode)^2), network_metrics)
+summary(troph_lvl_richness_mod)
+formula <- y ~ x 
+qplot(nbnode, troph_length, data =  network_metrics, geom = "point") +
+  geom_smooth(method = 'lm', formula = formula) +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(x = "nbnode", y = "connectance")
 # Take residuals as Morris et al. (2014)
 network_metrics$connectance_corrected <- residuals(c_richness_mod)
+network_metrics$modularity_corrected <- residuals(m_richness_mod)
+network_metrics$mean_troph_level_corrected <- residuals(troph_lvl_richness_mod)
+
+mysave(network_metrics, dir = dest_dir, overwrite = TRUE)
+
+#####################################
+#  Compute species diet by network  #
+#####################################
+
+myload(network_analysis, dir = dest_dir)
+# Get network
+net <- network_analysis %>%
+  unnest(network) %>%
+  group_by(opcod)
+
+# Match fish, plant and other animal as prey  
+convert_sp_in_diet <- c(
+  "[A-Z]{3}.{2}" = "fish",
+  "phytopl" = "phyto_plankton",
+  "phytob" = "phyto_benthos",
+  "zoopl" = "zoo_plankton",
+  "zoob" = "zoo_benthos"
+)
+if ("species" %in% colnames(net)) {
+  names(convert_sp_in_diet[convert_sp_in_diet == "fish"]) <- "[A-Z]{3}"
+
+}
+
+net_diet <- net %>%
+  mutate(
+    diet = str_replace_all(from, convert_sp_in_diet),
+    diet = ifelse(!diet %in% convert_sp_in_diet, NA, diet)
+  )
+
+# Exclude macrophages (macroph) from feeders since we do not have data about
+# their biomass 
+net_diet %<>%
+  filter(!is.na(diet))
+# Keep only the predators 
+net_diet %<>%
+  select(opcod, to, diet) %>%
+  rename("predator" = "to")
+
+# Add the biomass of the predators:
+biomass_predator <- network_analysis %>%
+  unnest(composition) %>%
+  select(opcod, sp_class, biomass)
+
+if ("species" %in% colnames(net)) {
+  col_sp <- "species"
+} else {
+  col_sp <- "sp_class"
+}
+net_diet %<>%
+  left_join(rename(biomass_predator, "predator" = col_sp), by = c("opcod", "predator"))
+# Since we do not have biomass about compartment expect fishes, we will keep
+#only the predators that match fish   
+fish_id <- names(convert_sp_in_diet[convert_sp_in_diet == "fish"])
+net_diet %<>%
+  mutate(pred_fish = str_match(predator, fish_id)) %>%
+  filter(!is.na(pred_fish))
+# Ok, we have biomass for all the fishes of the network
+stopifnot(filter(net_diet, is.na(biomass)) %>% nrow() == 0)
+
+# Get the total biomass by opcod:
+total_biomass <- biomass_predator %>%
+  group_by(opcod) %>%
+  summarise(total_biomass = sum(biomass))
+
+# Compute the biomass by diet:
+net_diet %<>%
+  group_by(opcod, diet) %>%
+  summarise(biomass = sum(biomass)) %>%
+  group_by(opcod) %>%
+  mutate(rel_biomass = biomass / sum(biomass))
+# check that rel_biomass has been correctly computed:  
+check_rel_biomass <- net_diet %>%
+  group_by(opcod) %>%
+  summarise(check = round(sum(rel_biomass), 2))
+stopifnot(unique(check_rel_biomass$check) == 1)
+
+myload(network_metrics, dir = dest_dir)
+
+net_diet %<>%
+  group_by(opcod) %>%
+  nest(.key = "diet_composition")
+
+network_metrics %<>%
+  left_join(net_diet, by = "opcod")
 
 mysave(network_metrics, dir = dest_dir, overwrite = TRUE)
 

@@ -21,7 +21,7 @@ myload(network_metrics, dir = dest_dir)
 op_analysis %<>%
   dplyr::select(opcod, station, year)
 to_be_summarized <- c("nestedness", "connectance", "connectance_corrected", "nbnode",
-  "mean_troph_level", "max_troph_level", "modularity")
+  "mean_troph_level", "mean_troph_level_corrected", "max_troph_level", "modularity", "modularity_corrected")
 com <- left_join(network_metrics, op_analysis, by = "opcod") %>%
   group_by(station) %>%
   rename(mean_troph_level = troph_level_avg,
@@ -39,8 +39,8 @@ cat("---------------------------------------------\n")
 cat("Temporal network biomass by trophic group\n")
 cat("---------------------------------------------\n")
 
-myload(op_analysis, metaweb_analysis, network_analysis, dir = data_common)
-myload(network_metrics, dir = dest_dir)
+myload(op_analysis, metaweb_analysis, dir = data_common)
+myload(network_metrics, network_analysis, dir = dest_dir)
 
 op <- op_analysis %>% dplyr::select(opcod, station, year)
 net <- left_join(network_analysis, op, by = "opcod") %>%
@@ -124,6 +124,35 @@ net %<>%
 myload(temporal_network_metrics, dir = dest_dir)
 temporal_network_metrics %<>%
   left_join(net, by = "station")
+
+mysave(temporal_network_metrics, dir = dest_dir, overwrite = TRUE)
+
+########################################
+#  Compute diet composition over time  #
+########################################
+cat("-----------------------------------\n")
+cat("Compute diet composition over time \n")
+cat("-----------------------------------\n")
+
+myload(network_metrics, dir = dest_dir)
+myload(op_analysis, dir = data_common)
+op <- op_analysis %>%
+  select(opcod, station)
+diet <- network_metrics %>%
+  select(opcod, diet_composition) %>%
+  left_join(op, by = "opcod") %>%
+  unnest(diet_composition)
+
+temporal_diet <- diet %>%
+  group_by(station, diet) %>%
+  summarise_at(vars(dplyr::matches("biomass", "rel_biomass")),
+  list(cv = ~sd(.) / mean(.), med = ~median(.))) %>%
+  group_by(station) %>%
+  nest()
+
+myload(temporal_network_metrics, dir = dest_dir)
+temporal_network_metrics %<>%
+  left_join(temporal_diet, by = "station")
 
 mysave(temporal_network_metrics, dir = dest_dir, overwrite = TRUE)
 
