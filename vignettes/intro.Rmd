@@ -67,8 +67,13 @@ According to the postdoc advertisement:
       - [ ] compute betalink: [ingnacio bartomeus](https://github.com/ibartomeus/betalink/tree/new_features)
       - [ ] trophic group: [cf legendre website](https://www.biologie.ens.fr/~legendre/n_w/n_w.html) 
   - [ ] network analysis:
-    - [x] Analyze ratio of species number in trophic group
-    - [x] Get species/class diet by network
+    - [ ] Add corrected weighted trophic lvl 
+- [ ] Analysis:
+  - [ ] Dig in the cv versus richness relationship by trophic group
+  - [ ] Productivity-diversity relationship
+  - [ ] Distance to source and river caracteristics
+  - [ ] Model by basin
+  - [ ] Produce a coherent html document with logic structure
 - [x] Fish datasets to generate
 - [ ] Assess quality of the dataset:
 
