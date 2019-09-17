@@ -266,6 +266,7 @@ network_analysis %<>%
 
 network_metrics <- network_analysis %>%
   dplyr::select(-metrics, -troph_level)
+
 mysave(network_metrics, dir = dest_dir, overwrite = TRUE)
 
 ##############################
@@ -382,6 +383,34 @@ net_diet %<>%
 
 network_metrics %<>%
   left_join(net_diet, by = "opcod")
+
+
+####################################
+#  Compute weighted trophic level  #
+####################################
+
+weighted_mean_trophic_lvl <- network_metrics %>%
+  select(opcod, composition) %>%
+  unnest(composition) %>%
+  group_by(opcod) %>%
+  summarise(w_trph_lvl_avg = sum(troph_level * biomass) / sum(biomass))
+network_metrics %<>%
+  left_join(weighted_mean_trophic_lvl, by = "opcod")
+
+# Disantengle weighted avg trophic richness and number of species 
+#formula <- y ~ x + I(x^2)
+#qplot(log(nbnode), w_trph_lvl_avg, data =  network_metrics, geom = "point") +
+  #geom_smooth(method = 'lm', formula = formula) +
+  #stat_poly_eq(
+    #formula = formula,
+    #eq.with.lhs = "italic(hat(y))~`=`~",
+    #aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    #parse = TRUE) +
+  #xylabs(x = "nbnode", y = "Avg trophic level")
+
+#mod <- lm(w_trph_lvl_avg ~ I(nbnode^2) , network_metrics)
+#par(mfrow = c(2,2))
+#plot(mod)
 
 mysave(network_metrics, dir = dest_dir, overwrite = TRUE)
 

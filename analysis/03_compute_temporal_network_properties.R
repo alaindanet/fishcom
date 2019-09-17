@@ -21,7 +21,7 @@ myload(network_metrics, dir = dest_dir)
 op_analysis %<>%
   dplyr::select(opcod, station, year)
 to_be_summarized <- c("nestedness", "connectance", "connectance_corrected", "nbnode",
-  "mean_troph_level", "mean_troph_level_corrected", "max_troph_level", "modularity", "modularity_corrected")
+  "mean_troph_level", "mean_troph_level_corrected", "max_troph_level", "modularity", "modularity_corrected", "w_trph_lvl_avg")
 com <- left_join(network_metrics, op_analysis, by = "opcod") %>%
   group_by(station) %>%
   rename(mean_troph_level = troph_level_avg,

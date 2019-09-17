@@ -1,0 +1,401 @@
+---
+title: "Stability and pressure"
+author: "Alain Danet"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Stability and pressure}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+mypath <- rprojroot::find_package_root_file
+data_common <- mypath("data")
+dest_dir <- mypath("data", "species")
+```
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.dim = c(10, 10),
+  echo = FALSE
+)
+library(tidyverse)
+library(magrittr)
+library(ggpmisc)
+library(cowplot)
+library(kableExtra)
+library(igraph)
+library(lavaan)
+library(NetIndices)
+library(tidygraph)
+library(car)
+library(sf)
+library(ggraph)
+library(lubridate)
+library(pander)
+source(mypath("R", "misc.R"))
+source(mypath("R", "plot_methods.R"))
+#devtools::load_all()
+theme_set(theme_alain())
+```
+
+```{r load dataset, include = FALSE}
+#myload(yearly_press_interp_mv_avg, dir = mypath("data-raw", "polluants"))
+myload(community_metrics, synchrony, temporal_press_polluants,
+  press_metrics, temporal_community_metrics, op_analysis,
+  dir = mypath("data"))
+myload(temporal_network_metrics, dir = mypath("data", "species"))
+
+```
+
+```{r prepare basin data}
+myload(the_8_hydrologic_basin, station_analysis, dir = mypath("data"))
+
+station_analysis %<>%
+  st_transform(crs = 2154)
+
+station_basin <- st_intersects(station_analysis, the_8_hydrologic_basin)
+station_analysis$basin <- purrr::map_chr(station_basin, function(x){
+  if (length(x) == 0) {
+   return(NA) 
+  }
+  the_8_hydrologic_basin[["CdBassinDC"]][x]
+})
+# Filter NA
+station_analysis %<>%
+  filter(!is.na(basin)) %>%
+  mutate(station = id) %>%
+  select(station, basin)
+st_geometry(station_analysis) <- NULL
+
+# How many station by basin:
+nb_st_basin <- station_analysis %>%
+  group_by(basin) %>%
+  summarise(nobs = n())
+```
+
+
+
+# Introduction
+
+The goal of this analysis is to link biomass stability to all environmental factors such as
+enrichment, pesticides, temperature through biological elements such as
+richness, composition and structure. 
+
+
+```{r}
+temporal_press_polluants %<>%
+  filter(!category %in% c(
+      "matieres azotees", "other", "matieres phosphorees", "matieres
+      organiques"))
+```
+
+```{r}
+mod <- lm(betadiv ~ log(richness_med), data = temporal_community_metrics)
+qplot(resid(mod), fitted(mod))
+qplot(log(richness_med), betadiv, data = temporal_community_metrics, geom = "point")
+temporal_community_metrics$betadiv_corrected <- resid(mod)
+```
+
+```{r}
+biomass_com <- temporal_community_metrics %>%
+  select(station, biomass_stab, richness_med, betadiv, simpson_med, pielou_med,
+  betadiv_corrected)
+biomass_com %<>%
+  left_join(rename(temporal_press_polluants, station = id), by = "station")
+biomass_com %<>% na.omit()
+biomass_com %<>% 
+  select(-cv_press, -press) %>%
+  spread(category, press_med) %>%
+  left_join(synchrony)
+net_com <- temporal_network_metrics %>%
+  select(station, connectance_corrected_med, modularity_corrected_med, mean_troph_level_corrected_med, w_trph_lvl_avg_med)
+```
+
+
+# SEM 
+
+## piecewiseSEM 
+
+```{r}
+library(piecewiseSEM)
+dsem <- biomass_com  %>%
+  mutate(log_rich = log10(richness_med)) %>%
+  left_join(net_com, by = "station") %>%
+  na.omit()
+
+model <- psem(
+  # Composition
+  lm(synchrony ~ log_rich + pielou_med + temperature + connectance_corrected_med +
+    w_trph_lvl_avg_med + betadiv_corrected, dsem),
+  lm(log10(cv_sp) ~ log_rich + pielou_med + temperature + connectance_corrected_med +
+    w_trph_lvl_avg_med + betadiv_corrected, dsem),
+  #lm(betadiv ~ log_rich + betadiv + pielou_med + temperature + connectance_corrected_med +
+    #w_trph_lvl_avg_med, dsem),
+  lm(log10(biomass_stab) ~ log_rich + pielou_med + connectance_corrected_med +
+    w_trph_lvl_avg_med + betadiv_corrected, dsem),
+  lm(log_rich ~ temperature + DBO + fungicides + herbicides + insecticides, dsem),
+  lm(connectance_corrected_med ~ temperature + DBO + fungicides + herbicides + insecticides, dsem),
+  lm(pielou_med ~ temperature + DBO + fungicides + herbicides + insecticides, dsem),
+  lm(w_trph_lvl_avg_med ~ temperature + DBO + fungicides + herbicides + insecticides, dsem),
+  lm(DBO ~ nitrates + phosphore + temperature + fungicides + herbicides + insecticides, dsem)
+  )
+test <- summary(model, .progressBar = F)
+test
+select(test$coefficients, -DF, -`Crit.Value`)
+```
+
+## Lavaan
+
+```{r}
+lav_data <- dsem %>%
+  mutate(log_cv_sp = log10(cv_sp),
+    log_biomass_stab = log10(biomass_stab)
+  )
+lav_formula <- " 
+  synchrony ~ log_rich + pielou_med + temperature + connectance_corrected_med + w_trph_lvl_avg_med + betadiv_corrected
+  log_cv_sp ~ log_rich + pielou_med + temperature + connectance_corrected_med + w_trph_lvl_avg_med + betadiv_corrected
+  log_biomass_stab ~ log_rich + pielou_med + connectance_corrected_med + w_trph_lvl_avg_med + betadiv_corrected
+  log_rich ~ temperature + DBO + fungicides + herbicides + insecticides
+  betadiv_corrected ~ temperature + DBO + fungicides + herbicides + insecticides
+  connectance_corrected_med ~ temperature + DBO + fungicides + herbicides + insecticides
+  pielou_med ~ temperature + DBO + fungicides + herbicides + insecticides
+  w_trph_lvl_avg_med ~ temperature + DBO + fungicides + herbicides + insecticides
+  DBO ~ nitrates + phosphore + fungicides + herbicides + insecticides
+  "
+lav_mod <- sem(lav_formula, lav_data)
+summary(lav_mod, standardized = TRUE)
+```
+
+```{r}
+ggsem <- function(fit, layout = "sugiyama") {
+
+  # Extract standardized parameters
+  params <- lavaan::standardizedSolution(fit)
+
+  # Edge properties
+  param_edges <- params %>% 
+    filter(op %in% c("=~", "~", "~~"), lhs != rhs, pvalue < .05) %>%
+    transmute(to = lhs,
+              from = rhs,
+              val = est.std,
+              type = dplyr::case_when(
+                op == "=~" ~ "loading",
+                op == "~"  ~ "regression",
+                op == "~~" ~ "correlation",
+                TRUE ~ NA_character_))
+
+  # Identify latent variables for nodes
+  latent_nodes <- param_edges %>% 
+    filter(type == "loading") %>% 
+    distinct(to) %>% 
+    transmute(metric = to, latent = TRUE)
+
+  # Node properties
+  param_nodes <- params %>% 
+    filter(lhs == rhs) %>% 
+    transmute(metric = lhs, e = est.std) %>% 
+    left_join(latent_nodes) %>% 
+    mutate(latent = if_else(is.na(latent), FALSE, latent))
+
+  # Complete Graph Object
+  param_graph <- tidygraph::tbl_graph(param_nodes, param_edges)
+
+  # Plot
+  ggraph(param_graph, layout = layout) +
+    # Latent factor Nodes
+    geom_node_point(aes(alpha = as.numeric(latent)),
+                                     shape = 16, size = 5) +
+    geom_node_point(aes(alpha = as.numeric(latent)),
+                                     shape = 16, size = 4, color = "white") +
+    # Observed Nodes
+    geom_node_point(aes(alpha = as.numeric(!latent)),
+                                     shape = 15, size = 5) +
+    geom_node_point(aes(alpha = as.numeric(!latent)),
+                                     shape = 15, size = 4, color = "white") +
+    # Regression Paths (and text)
+    geom_edge_link(aes(color = val, label = round(val, 2),
+                       alpha = as.numeric(type == "regression")),
+                   linetype = 1, angle_calc = "along", vjust = -.5,
+                   arrow = arrow(20, unit(.3, "cm"), type = "closed")) +
+    # Factor Loadings (no text)
+    geom_edge_link(aes(color = val, alpha = as.numeric(type == "loading")),
+                   linetype = 3, angle_calc = "along",
+                   arrow = arrow(20, unit(.3, "cm"), ends = "first", type = "closed")) +
+    # Correlation Paths (no text)
+    geom_edge_link(aes(color = val, alpha = as.numeric(type == "correlation")),
+                   linetype = 2, angle_calc = "along",
+                   arrow = arrow(20, unit(.3, "cm"), type = "closed", ends = "both")) +
+    # Node names
+    geom_node_text(aes(label = metric),
+                   nudge_y = .25, hjust = "inward") +
+    # Node residual error
+    geom_node_text(aes(label = sprintf("%.2f", e)),
+                   nudge_y = -.1, size = 3) +
+    # Scales and themes
+    scale_alpha(guide = FALSE, range = c(0, 1)) +
+    scale_edge_alpha(guide = FALSE, range = c(0, 1)) +
+    scale_edge_colour_gradient2(guide = FALSE, low = "red", mid = "darkgray", high = "green") +
+    scale_edge_linetype(guide = FALSE) +
+    scale_size(guide = FALSE) +
+    theme_graph()
+}
+
+ggsem(lav_mod)
+
+```
+
+### By basin
+
+```{r}
+lav_data %<>%
+  left_join(station_analysis, by = "station")
+
+lav_data_test <- filter(lav_data, basin %in% nb_st_basin[nb_st_basin$nobs > 61, ]$basin)
+
+# Since the group 1 and 3 are two small, I cut two basin 
+unique(lav_data$basin)
+lav_mod_basin <- sem(lav_formula, lav_data_test, group = "basin")
+summary(lav_mod_basin, standardized = TRUE)
+```
+
+```{r}
+lav_basin_list <- lav_data_test %>%
+  group_by(basin) %>%
+  nest() %>%
+  mutate(lav_mod = map(data, function(.data){ sem(lav_formula, .data)}),
+      plot_lav = map(lav_mod, function(lav){ ggsem(lav)})
+      )
+plot_grid(plotlist = lav_basin_list$plot_lav)
+```
+
+### Model with only community structure and stability
+
+```{r}
+lav_formula_str_stab <- " 
+  synchrony ~ log_rich + pielou_med + connectance_corrected_med + w_trph_lvl_avg_med + betadiv_corrected
+  log_cv_sp ~ log_rich + pielou_med + connectance_corrected_med + w_trph_lvl_avg_med + betadiv_corrected
+  log_biomass_stab ~ log_rich + pielou_med + connectance_corrected_med + w_trph_lvl_avg_med + betadiv_corrected
+  "
+
+lav_basin_str_stab_list <- lav_data %>%
+  group_by(basin) %>%
+  nest() %>%
+  mutate(lav_mod = map(data, function(.data){
+      out <- tryCatch(
+	{sem(lav_formula_str_stab, .data)},
+	error = function(cond) {return(NA)},
+	warning = function(cond) {return(NA)}
+      )
+      return(out)
+		       }),
+      plot_lav = map(lav_mod, function(lav){
+      out <- tryCatch(
+	{ggsem(lav)},
+	error = function(cond) {return(NA)},
+	warning = function(cond) {return(NA)}
+      )
+      return(out)
+})
+      )
+
+lav_basin_str_stab_list %<>%
+  mutate(class_plot = map_lgl(plot_lav, is.logical))%>%
+  filter(!class_plot)
+plot_grid(plotlist = lav_basin_str_stab_list$plot_lav)
+```
+
+
+
+# Appendix
+
+## Correlation
+
+### Press
+
+```{r}
+cor_press <- cor(select(dsem, temperature, herbicides, fungicides, insecticides, DBO))
+```
+
+
+### richness, simpson_med, pielou_med 
+
+```{r}
+kable(cor(select(dsem, richness_med, simpson_med, pielou_med)))
+```
+
+### Network metrics
+
+We removed modularity with is quite correlated with connectance.
+
+```{r}
+cors <- cor(select(dsem, richness_med, connectance_corrected_med, modularity_corrected_med, w_trph_lvl_avg_med))
+kable(cors)
+```
+
+## Individual relationship of the SEM 
+
+
+```{r}
+cv_sp_mod <- lm(cv_sp ~ log_rich + temperature + pielou_med + connectance_corrected_med + w_trph_lvl_avg_med + betadiv, dsem)
+car::vif(cv_sp_mod)
+```
+
+```{r}
+log_rich_mod <- lm(log_rich ~ temperature + DBO + fungicides + herbicides + insecticides, dsem)
+car::vif(log_rich_mod)
+```
+```{r}
+connect_mod <- lm(connectance_corrected_med ~ temperature + DBO + fungicides + herbicides + insecticides, dsem)
+car::vif(connect_mod)
+```
+
+
+```{r}
+dbo_mod <- lm(DBO ~ nitrates + phosphore, dsem)
+car::vif(dbo_mod)
+```
+
+```{r}
+
+formulas <- list(
+  "synchrony ~ log_rich + pielou_med + temperature + connectance_corrected_med + w_trph_lvl_avg_med",
+  "log_cv_sp ~ log_rich + pielou_med + temperature + connectance_corrected_med + w_trph_lvl_avg_med",
+  "betadiv ~ log_rich + pielou_med + temperature + connectance_corrected_med + w_trph_lvl_avg_med",
+  "log_biomass_stab ~ log_rich + pielou_med + connectance_corrected_med + w_trph_lvl_avg_med + betadiv",
+  "log_rich ~ temperature + DBO + fungicides + herbicides + insecticides",
+  "connectance_corrected_med ~ temperature + DBO + fungicides + herbicides + insecticides",
+  "pielou_med ~ temperature + DBO + fungicides + herbicides + insecticides",
+  "w_trph_lvl_avg_med ~ temperature + DBO + fungicides + herbicides + insecticides",
+  "DBO ~ nitrates + phosphore"
+  )
+test <- tibble(
+  formulas = formulas,
+  resp = map_chr(formulas, function(x){
+    all.vars(update(as.formula(x), .~0))
+		       }),
+  model = map(formulas, function(x) {
+  lm(formula = x, data = lav_data)
+  }) 
+)
+test %<>%
+  mutate(
+    diagnos = map(model, function (mod){
+      p <- recordPlot()
+      plot.new()
+      par(mfrow = c(1, 2))
+      plot(mod, which=c(2,1))
+      p
+  }
+      ),
+  )
+
+test$diagnos[[6]]
+test$diagnos[[8]]
+
+```
+
+
