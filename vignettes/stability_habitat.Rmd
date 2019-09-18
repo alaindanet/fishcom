@@ -34,6 +34,7 @@ library(ggraph)
 library(lubridate)
 #devtools::load_all()
 source(mypath("R", "plot_methods.R"))
+source(mypath("R", "misc.R"))
 theme_set(theme_alain())
 ```
 
@@ -43,10 +44,37 @@ theme_set(theme_alain())
 myload(temporal_network_metrics, dir = dest_dir)
 myload(temporal_community_metrics, temporal_station_desc, dir = data_common)
 myload(temporal_habitat_station, dir = data_common)
+myload(geo_station, dir = data_common)
 myload(synchrony, dir = data_common)
 ```
 
 ## Morphology
+
+### Community structure
+
+```{r}
+station_com <- left_join(
+  select(temporal_community_metrics, station, richness_med, pielou_med),
+  temporal_station_desc) %>%
+  left_join(select(temporal_network_metrics, station, connectance_corrected_med, w_trph_lvl_avg_med))
+stab_station <- station_com %>%
+  gather(carac, carac_value,
+   width_river_mean, avg_depth_station_mean) %>%
+  gather(com_str, com_value, richness_med, pielou_med, connectance_corrected_med, w_trph_lvl_avg_med)
+formula <- y ~ x #needed for stat_poly_eq
+qplot(carac_value, com_value, data =  stab_station, geom = "point") +
+  facet_grid(com_str~carac, scales = "free") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(y = "biomass_stab") +
+  xlab("River morpho-charasteristics")
+```
+
+### Stability
 
 ```{r}
 station_com <- left_join(
@@ -57,7 +85,55 @@ stab_station <- station_com %>%
    width_river_mean, avg_depth_station_mean) %>%
   gather(stability, stab, cv_com, synchrony, cv_sp)
 formula <- y ~ x #needed for stat_poly_eq
-qplot(value, stab, data =  stab_station, geom = "point") +
+qplot(log(value), stab, data =  stab_station, geom = "point") +
+  facet_grid(cols = vars(carac), rows = vars(stability), scales = "free_x") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(y = "biomass_stab") +
+  xlab("River morpho-charasteristics")
+```
+
+
+## Location 
+
+### Community structure
+
+```{r}
+station_geo <- left_join(
+  select(temporal_community_metrics, station, richness_med, pielou_med),
+  geo_station) %>%
+  left_join(select(temporal_network_metrics, station, connectance_corrected_med, w_trph_lvl_avg_med))
+stab_station <- station_geo %>%
+  gather(carac, carac_value, long, lat, source_dist, slope, alt) %>%
+  gather(com_str, com_value, richness_med, pielou_med, connectance_corrected_med, w_trph_lvl_avg_med)
+formula <- y ~ x #needed for stat_poly_eq
+qplot(carac_value, com_value, data =  stab_station, geom = "point") +
+  facet_grid(com_str~carac, scales = "free") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(y = "biomass_stab") +
+  xlab("River morpho-charasteristics")
+```
+
+### Stability
+
+```{r}
+station_com <- left_join(
+  select(synchrony, station, cv_com, synchrony, cv_sp),
+  geo_station)
+stab_station <- station_com %>%
+  gather(carac, carac_value, long, lat, source_dist, slope, alt) %>%
+  gather(stability, stab, cv_com, synchrony, cv_sp)
+formula <- y ~ x #needed for stat_poly_eq
+qplot(carac_value, stab, data =  stab_station, geom = "point") +
   facet_grid(cols = vars(carac), rows = vars(stability), scales = "free_x") +
   geom_smooth(method = 'lm') +
   stat_poly_eq(
@@ -71,7 +147,36 @@ qplot(value, stab, data =  stab_station, geom = "point") +
 
 ## Isolation, artificial modification  
 
+### Community structure
+
 ```{r}
+station_com <- left_join(
+  select(temporal_community_metrics, station, richness_med, pielou_med),
+  temporal_station_desc) %>%
+  left_join(select(temporal_network_metrics, station, connectance_corrected_med, w_trph_lvl_avg_med))
+stab_station <- station_com %>%
+  gather(carac, carac_value, instream_flow,
+    artificial_flow_variation, replenishment_flow) %>%
+  gather(com_str, com_value, richness_med, pielou_med, connectance_corrected_med, w_trph_lvl_avg_med)
+formula <- y ~ x #needed for stat_poly_eq
+qplot(carac_value, com_value, data =  stab_station, geom = "point") +
+  facet_grid(com_str~carac, scales = "free") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(y = "biomass_stab") +
+  xlab("River morpho-charasteristics")
+```
+
+### Stability
+
+```{r}
+station_com <- left_join(
+  select(synchrony, station, cv_com, synchrony, cv_sp),
+  temporal_station_desc)
 stab_station <- station_com %>%
   gather(carac, value, instream_flow,
     artificial_flow_variation, replenishment_flow) %>%
@@ -80,11 +185,39 @@ stab_station <- station_com %>%
 formula <- y ~ x #needed for stat_poly_eq
 qplot(value, stab, data =  stab_station, geom = "point") +
   facet_grid(cols = vars(carac), rows = vars(stability), scales = "free_x") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
   xylabs(y = "biomass_stab") +
   xlab("Isolation, artificial modification")
 ```
 
 ## Usage
+
+### Community structure
+
+```{r}
+stab_station <- station_com %>%
+  gather(carac, carac_value, channelled, resettlement,   
+  sailed_station, nautical_sports, dredging) %>%
+  gather(com_str, com_value, richness_med, pielou_med, connectance_corrected_med, w_trph_lvl_avg_med)
+formula <- y ~ x #needed for stat_poly_eq
+qplot(carac_value, com_value, data =  stab_station, geom = "point") +
+  facet_wrap(com_str~carac, scales = "free") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(y = "biomass_stab") +
+  xlab("River morpho-charasteristics")
+```
+
+### Stability
 
 ```{r}
 stab_station <- station_com %>%
@@ -94,6 +227,12 @@ stab_station <- station_com %>%
 formula <- y ~ x #needed for stat_poly_eq
 qplot(value, stab, data =  stab_station, geom = "point") +
   facet_grid(cols = vars(carac), rows = vars(stability), scales = "free_x") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
   xylabs(y = "biomass_stab") +
   xlab("Usage (nb occurence by year)")
 ```
@@ -121,6 +260,35 @@ qplot(value, cv_com, data =  stab_station, geom = "point") +
 ```
 
 ## Vegetation 
+
+### Community structure
+
+```{r}
+
+station_com <- left_join(
+  select(temporal_community_metrics, station, richness_med, pielou_med),
+  select(temporal_network_metrics, station, connectance_corrected_med, w_trph_lvl_avg_med)
+  )
+vegan_cv <- left_join(
+  station_com,
+  select(temporal_habitat_station, station, aqua_vg_shelter_med, edge_vg_med)) %>%
+  gather(veg, veg_value, aqua_vg_shelter_med, edge_vg_med) %>%
+  gather(com_str, com_value, richness_med, pielou_med, connectance_corrected_med, w_trph_lvl_avg_med)
+
+qplot(veg_value, com_value, data =  vegan_cv, geom = "boxplot") +
+  facet_grid(com_str ~ veg, scales = "free") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(y = "biomass_stab") +
+  xlab("River morpho-charasteristics")
+```
+
+
+### Stability
 
 ```{r}
 vegan_cv <- left_join(select(synchrony, station, cv_com, synchrony, cv_sp),

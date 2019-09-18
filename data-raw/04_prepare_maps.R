@@ -213,7 +213,9 @@ basin4 <- c(st_geometry(basin2), st_geometry(nord)) %>%
   mutate(basin_name = c("est", "sud", "ouest" , "nord"))
 plot(basin4)
 
-hydrologic_basin <- 
+the_8_hydrologic_basin <- basin
+hydrologic_basin <- basin4 
 mysave(hydrologic_basin, dir = mypath("data-raw", "fire_ssn"),
   overwrite = TRUE)
-
+mysave(the_8_hydrologic_basin, dir = mypath("data"),
+  overwrite = TRUE)

@@ -339,7 +339,7 @@ prepare_ssn <- function (grass_path = "/usr/lib/grass76/", mnt_path = NULL,
 
   # Compute slope from dem:
   if (slope) {
-    openSTARS::execGRASS("r.slope.aspect", flags = c("overwrite","quiet"),
+    rgrass7::execGRASS("r.slope.aspect", flags = c("overwrite","quiet"),
       parameters = list(
 	elevation = "dem",
 	slope = "slope"
@@ -348,6 +348,12 @@ prepare_ssn <- function (grass_path = "/usr/lib/grass76/", mnt_path = NULL,
       stat_rast = rep("mean", 2),
       attr_name_rast = c("avSlo", "avAlt")
     )
+    openSTARS::calc_sites() 
+    openSTARS::calc_attributes_sites_approx(sites_map = "sites",
+      input_attr_name = c("avSlo", "avAlt"),
+      output_attr_name = c("avSloA", "avAltA"),
+      stat = rep("mean", 2))
+
     if (!is.null(pred_path)) {
     openSTARS::calc_sites(pred_sites = paste0(pred_name, "_o"))
     openSTARS::calc_attributes_sites_approx(sites_map = "sites",
@@ -364,6 +370,7 @@ prepare_ssn <- function (grass_path = "/usr/lib/grass76/", mnt_path = NULL,
       openSTARS::calc_sites(pred_sites = paste0(pred_name, "_o"))
     } else {
       openSTARS::calc_sites()
+
     }
   }
 

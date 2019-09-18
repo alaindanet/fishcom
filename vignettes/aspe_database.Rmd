@@ -717,7 +717,7 @@ Almost all the informations are not filled, e.g. altitude, `distance_source`,
 geological type, land use,...
 
 ```{r}
-sampling_point %>%
+na_info <- sampling_point %>%
   select(distance_mer:temperature_moyenne_juillet) %>%
   summarise_all(list(~sum(is.na(.))))
 ```

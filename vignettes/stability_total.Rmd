@@ -2,7 +2,11 @@
 title: "Stability and pressure"
 author: "Alain Danet"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+  rmarkdown::html_vignette:
+    toc: true # table of content true
+    toc_depth: 3  # upto three depths of headings (specified by #, ## and ###)
+    number_sections: true
 vignette: >
   %\VignetteIndexEntry{Stability and pressure}
   %\VignetteEngine{knitr::rmarkdown}
@@ -151,6 +155,7 @@ select(test$coefficients, -DF, -`Crit.Value`)
 ## Lavaan
 
 ```{r}
+options(width = 100)
 lav_data <- dsem %>%
   mutate(log_cv_sp = log10(cv_sp),
     log_biomass_stab = log10(biomass_stab)
@@ -170,7 +175,7 @@ lav_mod <- sem(lav_formula, lav_data)
 summary(lav_mod, standardized = TRUE)
 ```
 
-```{r}
+```{r, fig.dim = c(10, 7)}
 ggsem <- function(fit, layout = "sugiyama") {
 
   # Extract standardized parameters
@@ -243,7 +248,6 @@ ggsem <- function(fit, layout = "sugiyama") {
     scale_size(guide = FALSE) +
     theme_graph()
 }
-
 ggsem(lav_mod)
 
 ```
@@ -262,7 +266,7 @@ lav_mod_basin <- sem(lav_formula, lav_data_test, group = "basin")
 summary(lav_mod_basin, standardized = TRUE)
 ```
 
-```{r}
+```{r, fig.dim = c(14, 10)}
 lav_basin_list <- lav_data_test %>%
   group_by(basin) %>%
   nest() %>%
@@ -274,7 +278,7 @@ plot_grid(plotlist = lav_basin_list$plot_lav)
 
 ### Model with only community structure and stability
 
-```{r}
+```{r, fig.dim = c(14, 10)}
 lav_formula_str_stab <- " 
   synchrony ~ log_rich + pielou_med + connectance_corrected_med + w_trph_lvl_avg_med + betadiv_corrected
   log_cv_sp ~ log_rich + pielou_med + connectance_corrected_med + w_trph_lvl_avg_med + betadiv_corrected
@@ -338,29 +342,32 @@ kable(cors)
 
 ## Individual relationship of the SEM 
 
+### Check for colinearity
 
 ```{r}
 cv_sp_mod <- lm(cv_sp ~ log_rich + temperature + pielou_med + connectance_corrected_med + w_trph_lvl_avg_med + betadiv, dsem)
-car::vif(cv_sp_mod)
+kable(car::vif(cv_sp_mod))
 ```
 
 ```{r}
 log_rich_mod <- lm(log_rich ~ temperature + DBO + fungicides + herbicides + insecticides, dsem)
-car::vif(log_rich_mod)
+kable(car::vif(log_rich_mod))
 ```
+
 ```{r}
 connect_mod <- lm(connectance_corrected_med ~ temperature + DBO + fungicides + herbicides + insecticides, dsem)
-car::vif(connect_mod)
-```
-
-
-```{r}
-dbo_mod <- lm(DBO ~ nitrates + phosphore, dsem)
-car::vif(dbo_mod)
+kable(car::vif(connect_mod))
 ```
 
 ```{r}
+dbo_mod <- lm(DBO ~ nitrates + phosphore + fungicides + herbicides + insecticides, dsem)
+kable(car::vif(dbo_mod))
+```
 
+### Check individual linear models
+
+
+```{r}
 formulas <- list(
   "synchrony ~ log_rich + pielou_med + temperature + connectance_corrected_med + w_trph_lvl_avg_med",
   "log_cv_sp ~ log_rich + pielou_med + temperature + connectance_corrected_med + w_trph_lvl_avg_med",
@@ -383,19 +390,17 @@ test <- tibble(
 )
 test %<>%
   mutate(
-    diagnos = map(model, function (mod){
+    diagnos = map2(model, resp, function (mod, titles){
       p <- recordPlot()
-      plot.new()
       par(mfrow = c(1, 2))
       plot(mod, which=c(2,1))
+      title(as.character(titles), line = -2, outer = TRUE)
       p
   }
       ),
   )
 
-test$diagnos[[6]]
-test$diagnos[[8]]
-
+test$diagnos
 ```
 
 
