@@ -1,0 +1,107 @@
+# Methods
+
+We describe our methods in this chapter.
+
+## Data collection
+
+
+## Network building
+
+
+### Metaweb
+
+
+```{r metaweb, fig.cap = "Metaweb representation (9 classes by fish species)"}
+library(igraph)
+library(NetIndices)
+myload(metaweb_analysis, dir = data_common)
+meta <- metaweb_analysis; rm(metaweb_analysis)
+
+g <- igraph::graph_from_adjacency_matrix(meta$metaweb, mode = "directed")
+
+# Define layout
+lay <- layout.fruchterman.reingold(g)
+# Compute trophic level
+dead_material <- c("det", "biof")
+lay[, 2] <- TrophInd(meta$metaweb, Dead = dead_material)$TL
+# Plot
+par(mar=rep(5, 4))
+plot.igraph(g,layout=lay,vertex.label=NA,vertex.size=2,edge.arrow.size=.5,edge.width=.5)
+```
+
+### Local networks 
+
+OMG, that is bautiful!
+
+```{r local-net, fig.cap = "An exemple of a local network"}
+myload(network_analysis, dir = mypath("data", "species"))
+myload(op_analysis, dir = data_common)
+net <- network_analysis %>%
+  dplyr::select(opcod, network) %>%
+  unnest() %>%
+  left_join(., dplyr::select(op_analysis, opcod, station, date)) 
+
+net_ex <- filter(net, station == unique(net$station) %>% sample(., 1))
+
+net_list <- net_ex %>%
+  dplyr::select(date, from, to) %>%
+  arrange(date) %>%
+  group_by(date) %>%
+  nest(.key = "network")
+
+size_analysis <- network_analysis %>%
+  dplyr::select(opcod, composition) %>%
+  filter(opcod %in% net_ex$opcod) %>%
+  unnest() %>%
+  left_join(select(net_ex, date, opcod) %>% distinct(opcod, date)) %>%
+  dplyr::select(date, biomass, species) %>%
+  arrange(date) %>%
+  group_by(date) %>%
+  nest() %>%
+  mutate(biomass = map(data, function(x){
+      val <- x$biomass
+      names(val) <- x$species 
+      val
+  }))
+
+net_list %<>%
+  left_join(dplyr::select(size_analysis, date, biomass))
+#Node position:
+node <- net_list$network %>% unlist(., use.names = FALSE) %>% unique
+test <- graph_from_adjacency_matrix(meta$metaweb) %>% as_data_frame %>%
+  mutate_all(list(~str_extract_all(., "[a-zA-Z]+", simplify = TRUE))) %>%
+  distinct(from, to)
+node_position <- create_layout(graph_from_data_frame(test), layout = "kk")$x
+names(node_position) <- create_layout(graph_from_data_frame(test), layout = "kk")$name
+#color:
+color <- set_color_species(node_list = node, species_list = NULL,
+  resource_list = NULL,
+  col_resource = NULL)
+
+## Graph -------------------------
+plot_temporal_network(
+  data = net_list,
+  net_var = network,
+  date = date,
+  x = node_position,
+  y = net_list[["y"]],
+  size = net_list[["biomass"]]
+)
+
+```
+
+This is super cool to see! =)
+
+## Environmental data 
+
+### Habitat
+
+### Pressure
+
+## Analysis
+
+### Network
+
+### Pressure
+
+

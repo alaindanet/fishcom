@@ -373,18 +373,24 @@ mylabel <- function() {
   ggplot2::as_labeller(c(
     connectance = "Connectance",
     connectance_corrected_med = "Median connectance",
+    connectance_corrected = "Connectance (corrected)",
     richness = "Number of nodes",
     max_troph_level = "Highest trophic level",
     mean_troph_level = "Average trophic level",
     mean_troph_level_med = "Median average trophic level",
+    mean_troph_level_corrected_med = "Median average trophic level",
     modularity = "Modularity",
+    modularity_corrected = "Modularity corrected",
     nestedness = "Nestedness",
     nbnode = "Number of nodes",
     nbnode_med = "Median number of nodes",
     richness_cv = "richness CV",
     richness_avg = "Average richness",
     richness_med = "Median richness",
-    betadiv = "Beta-diversity"
+    betadiv = "Beta-diversity",
+    synchrony = "Synchrony",
+    cv_sp = "Avg species CV",
+    biomass_stab = "Biomass stability (1/CV)"
     #betadiv = expression(bold(paste(beta, "-diversity", sep = "")))
     #see https://stackoverflow.com/questions/35524202/as-labeller-with-expression-in-ggplot2-facet-wrap?rq=1
       )
