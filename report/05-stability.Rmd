@@ -1,0 +1,319 @@
+## Stability of biomass
+
+```{r}
+myload(temporal_network_metrics, dir = mypath("data", "cl~/Documents/post-these/mnhn/fishcom/report/index.Rmdasses"))
+temporal_network_metrics_classes <- temporal_network_metrics
+myload(temporal_network_metrics, dir = dest_dir)
+myload(temporal_community_metrics, synchrony, op_analysis, dir = data_common)
+```
+
+
+### Some temporal series of biomass
+
+```{r}
+myload(community_metrics, dir = data_common)
+community_metrics %<>% left_join(select(op_analysis, opcod, station, date))
+station_high_low_stab <- temporal_community_metrics %>%
+  arrange(desc(biomass_stab)) %>%
+  slice(c(1:5, (n() - 4):(n() - 0))) %>%
+  select(station) %>%
+  unlist
+names(station_high_low_stab) <- rep(c("high", "low"), each = 5) 
+```
+
+```{r tmp-stab, fig.dim = c(10, 7), fig.cap = "The five lowest and highest biomass stability"}
+temporal_biomass <- community_metrics %>%
+  filter(station %in% station_high_low_stab) %>%
+  mutate(stab_status = ifelse(
+      station %in% station_high_low_stab[names(station_high_low_stab) == "low"],
+      "low", "high")) %>%
+  group_by(stab_status, station) %>%
+  nest() %>%
+  group_by(stab_status) %>%
+  mutate(id_stab = seq_along(station)) %>%
+  unnest()
+ggplot(temporal_biomass, aes(y = biomass, x = date)) +
+  geom_line() +
+  geom_point() +
+  facet_grid(id_stab ~ stab_status, scales = "free_y") +
+  labs(y = "Biomass (g)", x = "Date")
+```
+
+```{r}
+myload(network_analysis, dir = mypath("data", "classes"))
+test <- select(network_analysis, opcod, composition) %>%
+  unnest(composition)
+test2 <- get_sync_cv_mat(com_analysis = test, op_analysis = op_analysis)
+
+# TODO: Plot for the five stations the most and the less stable:
+plot_dyn_sp_biomass(sync = test2, station = 122, .log = TRUE)
+plot_dyn_sp_biomass(sync = test2, station = 21877, .log = TRUE)
+```
+
+```{r}
+high_div_station <- temporal_community_metrics %>%
+  arrange(desc(richness_med)) %>%
+  slice(1: 5) %>%
+  select(station) %>%
+  unlist
+```
+
+```{r tmp-richest, fig.dim = c(10, 7), fig.cap = "The five highest rich community."}
+label_stab <- filter(temporal_community_metrics,
+  station %in% high_div_station) %>%
+mutate(
+  x_pos = ymd_hms("2005-01-01T15:00:00"),
+  x_pos = as.Date(x_pos),
+  y_pos = 50000,
+  text = paste0("Stability: ", round(biomass_stab,2)),
+)
+ggplot(filter(community_metrics, station %in% high_div_station),
+  aes(y = biomass, x = date)) +
+  geom_line() +
+  geom_point() +
+  geom_text(data = label_stab, aes(x = x_pos, y = y_pos, label =
+      text), size = 6) +
+  facet_wrap( ~ station) + 
+  labs(y = "Biomass (g)", x = "Date")
+```
+
+```{r}
+myload(network_analysis, network_metrics, dir = dest_dir)
+high_div_troph_group <- network_metrics %>%
+  select(opcod, troph_group) %>%
+  unnest() %>%
+  mutate(troph_group = as.factor(troph_group)) %>%
+  left_join(select(op_analysis, opcod, station, date)) %>%
+  filter(station %in% high_div_station)
+```
+
+```{r, fig.dim = c(10, 7)}
+ggplot(high_div_troph_group,
+  aes(y = nbnode, x = date, color = troph_group)) +
+  geom_line() +
+  geom_point() +
+  geom_text(data = label_stab,
+    x = ymd_hms("2015-01-01T15:00:00"),
+    y = 3, aes(label =
+      text), size = 6, inherit.aes = FALSE) +
+  facet_wrap( ~ station) + 
+  labs(title = "The five richest station",
+  y = "Fish species richness", x = "Date")
+```
+
+```{r}
+highest_div_grp_3_station <- temporal_network_metrics_classes %>%
+  select(station, troph_group) %>%
+  unnest(troph_group) %>%
+  filter(troph_group == 3) %>%
+  arrange(desc(richness_avg)) %>%
+  slice(1:12) %>%
+  select(station) %>%
+  unlist()
+high_div_troph_group_3 <- network_metrics %>%
+  select(opcod, troph_group) %>%
+  unnest() %>%
+  mutate(troph_group = as.factor(troph_group)) %>%
+  left_join(select(op_analysis, opcod, station, date)) %>%
+  filter(station %in% highest_div_grp_3_station)
+```
+
+```{r, fig.dim = c(10, 7)}
+ggplot(high_div_troph_group_3,
+  aes(y = biomass, x = date, color = troph_group)) +
+  geom_line() +
+  geom_point() +
+  geom_text(data = filter(temporal_community_metrics, station %in% highest_div_grp_3_station),
+    x = ymd_hms("2015-01-01T15:00:00"),
+    y = 3, aes(label = paste0("Stability: ", round(biomass_stab, 2))),
+    size = 6, inherit.aes = FALSE) +
+  facet_wrap( ~ station) + 
+  labs(title = "The twelve richest station of superior predator",
+  y = "Fish species richness", x = "Date")
+```
+
+### Map stability
+
+```{r}
+myload(station_analysis, region_polygon, dir = data_common)
+stab <- temporal_community_metrics %>% 
+  select(station, biomass_stab)
+station_stab <- left_join(station_analysis, rename(stab, id = station)) %>%
+  filter(!is.na(biomass_stab))
+ggplot(data = region_polygon) +
+    geom_sf() +
+    geom_sf(data = station_stab, aes(color = log(biomass_stab)), size = 4) +
+    scale_color_gradient(low = "red", high = "green")
+```
+
+### Link biomass stability with community structure
+
+
+```{r stab-div-mult, fig.dim = c(10, 7), fig.cap = "Link between the stability of biomass and diversity"}
+biomass_com <- temporal_community_metrics %>%
+  left_join(select(synchrony, station, synchrony, cv_sp)) %>%
+  select(biomass_stab, synchrony, cv_sp, richness_cv, richness_med, betadiv) %>%
+  gather(diversity, div_value, richness_med, richness_cv, betadiv) %>%
+  gather(stability, stab_value, biomass_stab, synchrony, cv_sp)
+
+formula <- y ~ x #needed for stat_poly_eq
+qplot(div_value, stab_value, data =  biomass_com, geom = "point") +
+  facet_grid(stability ~ diversity, labeller = mylabel(), scales = "free") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(x = "Diversity", y = "Stability component")
+```
+
+
+
+```{r stab-net, fig.cap = "Link between biomass stability and network structure (median)"}
+# plot
+avg_network <- temporal_network_metrics %>%
+  select_at(vars(dplyr::matches("med|station")))
+biomass_stab_station <- temporal_community_metrics %>%
+  select(station, biomass_stab)
+stab_biomass_net_avg <- left_join(avg_network, biomass_stab_station) %>%
+  gather(metrics, values, colnames(select_at(., vars((dplyr::matches("med")))))) %>%
+  mutate(metrics = str_replace(metrics, "_med", "")) %>%
+  filter(metrics != "nbnode")
+
+# TODO: think about not facetting (list of plots ?)
+# Facet label:
+formula <- y ~ x #needed for stat_poly_eq
+p <- ggplot(stab_biomass_net_avg, aes(y = biomass_stab, x = values)) +
+  geom_point() +
+  facet_wrap(~ metrics, labeller = mylabel(), scales = "free_x") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(
+    x = "Median of the network indices",
+    y = "Biomass stability"
+  )
+p
+```
+
+
+
+```{r stab-comp, fig.cap = "Link between biomass stability by trophic group and total species richness (median)"}
+net_troph_group <- temporal_network_metrics_classes %>% 
+  unnest(troph_group) %>%
+  mutate(troph_group = as.factor(troph_group))
+net_troph_group %<>%
+  select_at(vars(dplyr::matches("_med|stab|station|troph_group"))) %>%
+  gather(metrics, values, colnames(select_at(., vars((dplyr::matches("med")))))) %>%
+  mutate(metrics = str_replace(metrics, "_med", ""))
+p <- ggplot(net_troph_group, aes(y = biomass_stab, x = values, color = troph_group)) +
+  geom_point() +
+  ggplot2::scale_fill_manual(
+    labels = troph_group_labeller(),
+    values = c("blue", "green", "red"),
+    name = "Trophic level"
+    ) +
+  facet_wrap(~metrics, labeller = mylabel(), scales = "free_x") +
+  geom_smooth(method = 'lm')+
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(
+    x = "network_med",
+    y = "biomass_stab"
+  )
+p
+```
+
+
+The Figure \@ref(fig:stab-comp) showed that medium trophic level part of the
+network had a positive stability-diversity relationship with while high
+trophic level had a negative one.  
+Furthermore, we see that high trophic level compartment had a highest stability
+than the medium compartment. In the same vein, the latter pattern is confirmed
+when looking at the richness by compartment instead of the total richness
+(Figure \@ref(fig:stab-comp2)).  
+
+
+```{r stab-comp2, fig.dim = c(10, 7), fig.cap = "Link between biomass stability and species richness by trophic group (median). (Classes network)"}
+net_troph_group <- temporal_network_metrics_classes %>% 
+  select(station, troph_group) %>%
+  unnest() %>%
+  filter(!is.na(troph_group)) %>%
+  mutate(troph_group = as.factor(troph_group))
+plot_stab_richness_troph_group <-
+  ggplot(net_troph_group, aes(y = log(biomass_stab), x = richness_avg)) +
+  geom_point() +
+  facet_grid(cols = vars(troph_group)) +
+  geom_smooth(method = 'lm')+
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(
+    x = "richness_avg",
+    y = "biomass_stab"
+  )
+plot_stab_richness_troph_group
+```
+ 
+One hypothesis to explain this opposite pattern might be a disequilibrium
+between the two compartment. We can imagine that each compartment can
+destabilize each other according to the part of the total biomass of total
+species richness that there are in each of them. The figure
+\@ref(fig:stab-comp-ratio) showed that the biomass stability of the medium
+compartment decreased with the increase of biomass and species number ratio in
+the high compartment and we observed the reverse for the high trophic
+compartment. It indicates that a trophic compartment is more stable when their
+relative biomass increases. 
+
+We are looking forward to fully understand why we observed this inverse
+relationship.
+
+```{r stab-comp-ratio, fig.cap = "Biomass stability and ratio of biomass and species number (top and bottom panel resp.) in the high trophic level (classes network) for the medium and high trophic group (resp. left and right panels)."}
+ratio_sp <- net_troph_group %>%
+  select(station, troph_group, richness_avg) %>%
+  spread(troph_group, richness_avg) %>%
+  mutate(sp_h_m = `3` / (`3` + `2`)) %>%
+  select(station, sp_h_m)
+
+ratio_bm <- net_troph_group %>%
+  select(station, troph_group, biomass_avg) %>%
+  spread(troph_group, biomass_avg) %>%
+  mutate(bm_h_m = `3` / (`3` + `2`)) %>%
+  select(station, bm_h_m)
+
+
+net_troph_group <- temporal_network_metrics_classes %>%
+  left_join(ratio_sp, by = "station") %>%
+  left_join(ratio_bm, by = "station") %>%
+  select(station, troph_group, sp_h_m, bm_h_m) %>%
+  unnest() %>%
+  filter(!is.na(troph_group), troph_group != 1) %>%
+  mutate(troph_group = as.factor(troph_group)) %>%
+  gather(ratio_troph, value, sp_h_m, bm_h_m)
+
+plot_stab_richness_troph_group <-
+  ggplot(net_troph_group, aes(y = log(biomass_stab), x = value)) +
+  geom_point() +
+  facet_grid(cols = vars(troph_group), rows = vars(ratio_troph), labeller =
+    troph_group_labeller()) +
+  geom_smooth(method = 'lm')+
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(
+    y = "biomass_stab"
+  ) + 
+    xlab("Ratio of biomass and species nb in high troph compartment compare to total")
+plot_stab_richness_troph_group
+```

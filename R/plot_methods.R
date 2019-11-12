@@ -92,7 +92,8 @@ net_list %<>%
 #Node position:
 node <- net_list$network %>% unlist(., use.names = FALSE) %>% unique
 try(
-test <- graph_from_adjacency_matrix(metaweb) %>% as_data_frame %>%
+test <- graph_from_adjacency_matrix(metaweb) %>% 
+  igraph::as_data_frame(.) %>%
   mutate_all(list(~str_extract_all(., "[a-zA-Z]+", simplify = TRUE))) %>%
   distinct(from, to)
 )
@@ -365,6 +366,44 @@ xylabs <- function (...) {
     )
 }
 
+#' Plot dynamic of biomass by station
+#'
+#' @param sync data.frame e.g. synchrony dataset, output from get_sync_cv_mat()
+#' @param station id of station
+#' @param .log logical transform biomass in log (e.g. log10())
+plot_dyn_sp_biomass <- function (sync = NULL, station = NULL, .log = FALSE) {
+
+  sync <- sync[sync$station == station, ] 
+
+  .data <- sync$data[[1]]
+
+  main_title <- paste0("Stab = ", round(1/(sync$cv_com), 2),", ", "Sync = ",
+    round(sync$synchrony, 2),", ", "CVsp = ", round(sync$cv_sp, 2))
+  
+  p <- .data %>%
+    mutate(label = if_else(date == max(date), as.character(species), NA_character_)) %>%
+  ggplot(aes(x = date, y = biomass, colour = species)) + 
+  geom_line(aes(linetype = as.factor(troph_group))) + 
+  labs(y = "Biomass (g)", x = "Sampling date",
+  title = main_title, subtitle = paste0("Station: ", station)) +
+  ggrepel::geom_label_repel(aes(label = label),
+                  nudge_x = 1,
+                  na.rm = TRUE)
+
+  #p <- ggplot(.data,
+    #aes(x = date, y = biomass, color = species)) +
+    #geom_line(aes(linetype = as.factor(troph_group))) +
+    #labs(y = "Biomass (g)", x = "Sampling date",
+      #title = main_title, subtitle = paste0("Station: ", station)
+    #)
+
+    if (.log) {
+      p <- p + scale_y_log10() 
+    }
+
+  return(p)
+}
+
 ###############
 #  Labellers  #
 ###############
@@ -374,11 +413,15 @@ mylabel <- function() {
     connectance = "Connectance",
     connectance_corrected_med = "Median connectance",
     connectance_corrected = "Connectance (corrected)",
-    richness = "Number of nodes",
+    richness = "Species richness",
     max_troph_level = "Highest trophic level",
     mean_troph_level = "Average trophic level",
+    mean_troph_level = "Average trophic level",
+    mean_troph_level_corrected = "Average trophic level (corrected)",
     mean_troph_level_med = "Median average trophic level",
     mean_troph_level_corrected_med = "Median average trophic level",
+    w_troph_lvl_corrected = "Weighted average trophic level (corrected)",
+    w_troph_lvl = "Weighted average trophic level",
     modularity = "Modularity",
     modularity_corrected = "Modularity corrected",
     nestedness = "Nestedness",
