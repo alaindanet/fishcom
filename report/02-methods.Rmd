@@ -68,7 +68,8 @@ net_list %<>%
   left_join(dplyr::select(size_analysis, date, biomass))
 #Node position:
 node <- net_list$network %>% unlist(., use.names = FALSE) %>% unique
-test <- graph_from_adjacency_matrix(meta$metaweb) %>% as_data_frame %>%
+test <- graph_from_adjacency_matrix(meta$metaweb) %>%
+  igraph::as_data_frame(.) %>%
   mutate_all(list(~str_extract_all(., "[a-zA-Z]+", simplify = TRUE))) %>%
   distinct(from, to)
 node_position <- create_layout(graph_from_data_frame(test), layout = "kk")$x
@@ -94,9 +95,115 @@ This is super cool to see! =)
 
 ## Environmental data 
 
-### Habitat
+### Habitat
+
+```{r}
+myload(temporal_station_desc, temporal_press_polluants, dir = data_common)
+myload(hab_analysis, geo_station, dir = data_common)
+
+habitat <- hab_analysis %>%
+  mutate_all(list(as.factor)) %>%
+  select(-opcod, -station, -aqua_vg)
+
+lvl <- c("null", "weak", "medium", "high")
+lvl_sinuosite <- c("straight", "sinuous", "very_sinuous", "meandering")
+lvl_shade <- c("clear", "quite_clear", "quite_covered", "covered")
+
+habitat_station <- hab_analysis %>%
+  select(-opcod, -aqua_vg, - shade, - sinuosite) %>%
+  mutate_if(is.character, list(~factor(., levels = lvl, ordered = TRUE))) %>%
+  left_join(select(hab_analysis, station, shade, sinuosite)) %>%
+  mutate(
+    shade = factor(shade, levels = lvl_shade, ordered = TRUE),
+    sinuosite = factor(sinuosite, levels = lvl_sinuosite, ordered = TRUE)) %>%
+  group_by(station) %>%
+  summarise_all(list(med = ~median(as.numeric(.), na.rm = TRUE))) %>%
+  left_join(select(temporal_station_desc, station, width_river_mean, avg_depth_station_mean))
+
+# Add alt, lat, etc...
+habitat_station %<>% 
+  left_join(geo_station, by = "station") %>%
+  select(-region_csp)
+# Add temp and flow
+flow_temp <- temporal_press_polluants %>%
+  filter(category %in% c("flow", "temperature", "DBO", "herbicides",
+      "fungicides", "insecticides", "nitrates", "phosphore")) %>%
+  rename(station = id) %>%
+  select(station, category, press_med) %>%
+  spread(category, press_med)
+
+habitat_station %<>%
+  left_join(flow_temp, by = "station")
+```
+
+```{r pca-hab, fig.dim = c(10, 7), fig.cap = "PCA over habitat description"}
+library(ade4)
+library(factoextra)
+pca_hab <- dudi.pca(as.data.frame(select(na.omit(habitat_station), -station)), scannf = FALSE, nf = 2, center = TRUE, scale = TRUE)
+
+eig_plot <- fviz_eig(pca_hab)
+pca_plot <- fviz_pca_var(pca_hab,
+    axes = c(1, 2),
+    col.var = "contrib", # Color by contributions to the PC
+    gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+    repel = TRUE     # Avoid text overlapping
+  )
+
+ggdraw(pca_plot) + 
+  draw_plot(eig_plot, x = .7, y = .95, hjust = 1, vjust = 1, width = 0.17, height = 0.25)
+```
+
+The PCA (Fig. \@ref(fig:pca-hab)) showed unsurprisingly that order of strahler, the
+depth, width of the river and distance to source and avg flow are closely
+linked. Altitude, slope and the amount of rocky shelter are also closely linked.
+Station of larger latitude had also higher DBO and phosphorus, higher annual
+mean temperature and more vegetation.  The first axis of the PCA (ordinate)
+discriminated station located far from the source (which are large, deep, with a
+big annual flow and high strahler order) from the shady station, which are
+sinuous, with a variety of habitat such as under bank and logjam.
+The second axis (abscissa) discriminated station in altitude with high slope,
+composed of rocky habitat from the ones that had higher average annual
+temperature located in the south, with more enrichment (DBO, nitrates,
+phosphorus) and that are more vegetated.
 
 ### Pressure
+
+
+#### Press category
+
+
+```{r press-units, fig.cap = "All the parameters collected together with their units"}
+# Put units to present all the parameters
+myload(polluant_units, dir = mypath("data-raw", "polluants", "naiades_data"))
+kable(polluant_units) %>%
+  kable_styling() %>%
+  scroll_box(width = "100%", height = "400px")
+```
+
+```{r press-cat, fig.cap = "Molecules of pressure by category together with their toxicity if relevant or available"}
+myload(press_cat, dir = mypath("data-raw", "polluants"))
+kable(arrange(press_cat, category)) %>%
+  kable_styling() %>%
+  scroll_box(width = "100%", height = "400px")
+```
+
+
+#### Press trough time
+
+
+```{r press-time, fig.cap = "Average press category over the station through time. The pesticides are expressed in Toxic Unit (TU)."}
+myload(press_metrics, dir = mypath("data"))
+ggplot(press_metrics, aes(y = press, x = year)) +
+  stat_summary(fun.y = "mean", geom = "line") +
+  stat_summary(geom="ribbon", fun.data=mean_cl_normal, colour=NA,alpha=0.1)+
+  facet_wrap(~category, scales = "free_y")
+```
+
+Most of the pressure decreased through time expect notably the nitrates and the
+temperature (Fig. \@ref(fig:press-time)). **Be careful, there are certainly a
+biais in temperature increase because the number of station that have been
+sampled. It would be nice to look at the tendency by station.**
+
 
 ## Analysis
 

@@ -1,7 +1,7 @@
 ## Stability of biomass
 
 ```{r}
-myload(temporal_network_metrics, dir = mypath("data", "cl~/Documents/post-these/mnhn/fishcom/report/index.Rmdasses"))
+myload(temporal_network_metrics, dir = mypath("data", "classes"))
 temporal_network_metrics_classes <- temporal_network_metrics
 myload(temporal_network_metrics, dir = dest_dir)
 myload(temporal_community_metrics, synchrony, op_analysis, dir = data_common)
@@ -9,6 +9,8 @@ myload(temporal_community_metrics, synchrony, op_analysis, dir = data_common)
 
 
 ### Some temporal series of biomass
+
+#### Total biomass  
 
 ```{r}
 myload(community_metrics, dir = data_common)
@@ -39,16 +41,148 @@ ggplot(temporal_biomass, aes(y = biomass, x = date)) +
   labs(y = "Biomass (g)", x = "Date")
 ```
 
-```{r}
-myload(network_analysis, dir = mypath("data", "classes"))
-test <- select(network_analysis, opcod, composition) %>%
-  unnest(composition)
-test2 <- get_sync_cv_mat(com_analysis = test, op_analysis = op_analysis)
+```{r more-stab-troph, fig.dim = c(10, 21), fig.cap = "The four station with the highest biomass stability. Dashed and solid lines represent respectively trophic species in the group 2 and 3."}
 
-# TODO: Plot for the five stations the most and the less stable:
-plot_dyn_sp_biomass(sync = test2, station = 122, .log = TRUE)
-plot_dyn_sp_biomass(sync = test2, station = 21877, .log = TRUE)
+myload(network_analysis, dir = mypath("data", "classes"))
+myload(trophic_level, trophic_class, dir = mypath("data"))
+source(mypath("R", "synchrony.R"))
+source(mypath("R", "local_network_build.R"))
+# Get biomass by sp node:
+net_sp_troph <- select(network_analysis, opcod, composition) %>%
+  unnest(composition)
+# Get synchrony and cv sp:
+sync_sp_troph <- get_sync_cv_mat(com_analysis = net_sp_troph, op_analysis = op_analysis) %>%
+  arrange(cv_com)
+# Get trophic lvl by node
+trophic_level %<>%
+  rename(species = sp_class) %>%
+  mutate( troph_group = get_size_class(trophic_level, NULL, troph_level,
+      trophic_class))
+
+plot_stab <- purrr::map(station_high_low_stab, function (x) {
+  p <- plot_dyn_sp_biomass(sync = sync_sp_troph, trophic_level = trophic_level, station = x, .log = TRUE)
+  p + theme(legend.position="none") 
+})
+plot_grid(plotlist = plot_stab, ncol = 2)
 ```
+
+```{r less-stab-troph, fig.dim = c(10, 7), fig.cap = "The four station with the lowest biomass stability. See caption of Figure for details."}
+plot_grid(plotlist = plot_stab[7:8], ncol = 2)
+```
+
+
+```{r mid-stab-troph, fig.dim = c(10, 7), fig.cap = "Four stations with medium biomass stability. See caption of Figure for details."}
+# Middle station 
+plot_stab <- purrr::map(sync_sp_troph$station[209:212], function (x) {
+  p <- plot_dyn_sp_biomass(sync = sync_sp_troph, trophic_level = trophic_level, station = x, .log = TRUE)
+  p + theme(legend.position="none") 
+})
+plot_grid(plotlist = plot_stab[1:4], ncol = 2)
+```
+
+
+```{r 75-stab-troph, fig.dim = c(10, 7), fig.cap = "Four stations with medium/low biomass stability. See caption of Figure for details."}
+# Third quater
+plot_stab <- purrr::map(sync_sp_troph$station[300:304], function (x) {
+  p <- plot_dyn_sp_biomass(sync = sync_sp_troph, trophic_level = trophic_level, station = x, .log = FALSE)
+  p + theme(legend.position="none") 
+})
+plot_grid(plotlist = plot_stab[1:4], ncol = 2)
+```
+
+```{r 25-stab-troph, fig.dim = c(10, 7), fig.cap = "Four stations with medium/low biomass stability. See caption of Figure for details."}
+# Third quater
+plot_stab <- purrr::map(sync_sp_troph$station[104:107], function (x) {
+  p <- plot_dyn_sp_biomass(sync = sync_sp_troph, trophic_level = trophic_level, station = x, .log = FALSE)
+  p + theme(legend.position="none") 
+})
+plot_grid(plotlist = plot_stab[1:10], ncol = 2)
+```
+
+### CV sp
+
+```{r abun-sp, fig.cap = "Species most abundant by trophic group."}
+# Sp the most abundant by group
+bm_sp_troph_grp <- net_sp_troph %>%
+  filter(!is.na(troph_group) & troph_group != 1) %>%
+  group_by(troph_group, sp_class) %>%
+  summarise(biomass = mean(biomass)) %>%
+  arrange(desc(biomass)) %>%
+  slice(1:20)
+  
+p_bm <- map(c(2, 3), .f = function(x) {
+  mylim <- sapply(c(min, max),
+    FUN = function(x) x(bm_sp_troph_grp$biomass))
+
+  .data <- bm_sp_troph_grp %>%
+    filter(troph_group == x)
+  if (x == 2) {
+    tmp_title <- paste("Medium trophic group (2)")
+  } else {
+    tmp_title <- paste("High trophic group (3)")
+  }
+
+  ggplot(data = .data, aes(x = sp_class, y = biomass)) +
+    geom_point() +
+    labs(x = "Trophic species", y = "Biomass (g)", title = tmp_title) +
+    ylim(mylim[1], mylim[2]) 
+
+})
+plot_grid(plotlist = p_bm, ncol = 2)
+```
+
+```{r}
+# I need:
+# - by species:
+#   - CV
+#   - Biomass 
+# - by Trophic group:
+#   - Species richness 
+#   - CV
+#   - biomass 
+
+# Species 
+
+## Variance by sp and station:
+var_sp <- sync_sp_troph %>%
+  select(station, var_sp) %>%
+  mutate(var_sp = map(var_sp, ~enframe(.x))) %>%
+  unnest(var_sp) %>%
+  rename(species = name, var_sp = value)
+## Average biomass by sp and station:
+avg_sp <- sync_sp_troph %>%
+  select(station, avg_sp) %>%
+  mutate(avg_sp = map(avg_sp, ~enframe(.x))) %>%
+  unnest(avg_sp) %>%
+  rename(species = name, avg_sp = value)
+## CV and biomass by sp and station  
+cv_bm_sp <- left_join(avg_sp, var_sp, by = c("station", "species")) %>%
+  mutate(cv = sqrt(var_sp) / avg_sp, var_sp = NULL) %>%
+  rename(bm = avg_sp)
+
+# By trophic group:
+
+## CV, biomass and div (ALREADY DONE!)
+cv_bm_div_troph_grp <- temporal_network_metrics_classes %>% 
+  select(station, troph_group) %>%
+  unnest(troph_group) %>%
+  filter(!is.na(troph_group) & troph_group != 1) %>%
+  rename(bm_st = biomass_avg, div_st = richness_avg, cv_st = biomass_cv) %>%
+  mutate(troph_group = as.factor(troph_group))
+```
+
+#### CV sp VS CV group 
+
+```{r}
+cv_sp_grp <- left_join(select(cv_bm_sp, -bm),
+  select(cv_bm_div_troph_grp, -biomass_stab), by = "station")
+
+ang9 <- cv_sp_grp %>%
+  filter(species == "ANG_9")
+
+```
+
+
 
 ```{r}
 high_div_station <- temporal_community_metrics %>%
@@ -302,7 +436,7 @@ net_troph_group <- temporal_network_metrics_classes %>%
 
 plot_stab_richness_troph_group <-
   ggplot(net_troph_group, aes(y = log(biomass_stab), x = value)) +
-  geom_point() +
+  geom_point(aes(color = richness_avg)) +
   facet_grid(cols = vars(troph_group), rows = vars(ratio_troph), labeller =
     troph_group_labeller()) +
   geom_smooth(method = 'lm')+
@@ -316,4 +450,5 @@ plot_stab_richness_troph_group <-
   ) + 
     xlab("Ratio of biomass and species nb in high troph compartment compare to total")
 plot_stab_richness_troph_group
+
 ```

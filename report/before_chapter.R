@@ -10,7 +10,7 @@ knitr::opts_chunk$set(
   fig.show = "hold",
   echo = FALSE,
   message = FALSE,
-  warnings = FALSE
+  warning = FALSE
 )
 
 library(MASS)

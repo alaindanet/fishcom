@@ -1,0 +1,82 @@
+## Productivity
+
+```{r}
+myload(temporal_network_metrics, dir = mypath("data", "classes"))
+temporal_network_metrics_classes <- temporal_network_metrics
+myload(temporal_network_metrics, dir = dest_dir)
+myload(temporal_community_metrics, synchrony, dir = data_common)
+```
+
+```{r prod-dist, fig.cap = "Median community biomass by station"}
+biomass_prod_station <- temporal_community_metrics %>%
+  select(station, biomass_med, richness_med) %>%
+  rename(biomass = biomass_med)
+
+plot_biomass_dist <- ggplot(biomass_prod_station, aes(x = biomass)) +
+  geom_histogram() +
+  labs(
+    x = "Median of biomass (g)",
+    y = "# of stations"
+  )
+plot_biomass_dist
+```
+
+There is no bistability in biomass distribution.
+
+```{r prod-net, fig.cap = "Median biomass versus their median network metrics by station."}
+avg_network <- temporal_network_metrics %>%
+  select_at(vars(dplyr::matches("med|station")))
+#colnames(temporal_network_metrics)
+biomass_prod_station <- temporal_community_metrics %>%
+  select(station, biomass_med, richness_med) %>%
+  rename(biomass = biomass_med)
+prod_biomass_net_avg <- left_join(avg_network, biomass_prod_station) %>%
+  gather(metrics, values, colnames(select_at(., vars((dplyr::matches("med")))))) %>%
+  mutate(metrics = str_replace(metrics, "_med", "")) %>%
+  filter(metrics != "nbnode")
+
+net_troph_group <- temporal_network_metrics_classes %>% 
+  select(station, troph_group) %>%
+  unnest() %>%
+  filter(!is.na(troph_group)) %>%
+  mutate(troph_group = as.factor(troph_group))
+# TODO: think about not facetting (list of plots ?)
+# Facet label:
+formula <- y ~ x #needed for stat_poly_eq
+plot_stab_biomass_net_avg <- ggplot(prod_biomass_net_avg, aes(y = biomass, x = values)) +
+  geom_point() +
+  facet_wrap(~metrics, labeller = mylabel(), scales = "free_x") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(
+    x = "Median of the network indices",
+    y = "Average Biomass"
+  )
+plot_stab_biomass_net_avg
+```
+
+
+
+### By trophic level 
+
+```{r, fig.cap="Biomass production and stability by trophic level", fig.dim = c(10, 7)}
+plot_prod_richness_troph_group <-
+  ggplot(net_troph_group, aes(y = biomass_avg, x = richness_avg)) +
+  geom_point() +
+  facet_grid(cols = vars(troph_group)) +
+  geom_smooth(method = 'lm')+
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(
+    x = "richness_avg",
+    y = "biomass_avg"
+  )
+plot_prod_richness_troph_group
+```
