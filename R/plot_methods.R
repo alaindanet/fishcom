@@ -370,12 +370,16 @@ xylabs <- function (...) {
 #'
 #' @param sync data.frame e.g. synchrony dataset, output from get_sync_cv_mat()
 #' @param station id of station
+#' @param trophic_level data.frame from data folder with trophic level and
+#' trophic class derived from the metaweb
 #' @param .log logical transform biomass in log (e.g. log10())
-plot_dyn_sp_biomass <- function (sync = NULL, station = NULL, .log = FALSE) {
+plot_dyn_sp_biomass <- function (sync = NULL, station = NULL, trophic_level = NULL, .log = FALSE) {
 
   sync <- sync[sync$station == station, ] 
 
-  .data <- sync$data[[1]]
+  .data <- sync$com_mat_date[[1]] %>%
+    gather(key = species, value = biomass, -date) %>%
+    left_join(trophic_level, by = "species")
 
   main_title <- paste0("Stab = ", round(1/(sync$cv_com), 2),", ", "Sync = ",
     round(sync$synchrony, 2),", ", "CVsp = ", round(sync$cv_sp, 2))
@@ -387,19 +391,14 @@ plot_dyn_sp_biomass <- function (sync = NULL, station = NULL, .log = FALSE) {
   labs(y = "Biomass (g)", x = "Sampling date",
   title = main_title, subtitle = paste0("Station: ", station)) +
   ggrepel::geom_label_repel(aes(label = label),
-                  nudge_x = 1,
-                  na.rm = TRUE)
+    size = 2.5, nudge_x = 1, na.rm = TRUE)
 
-  #p <- ggplot(.data,
-    #aes(x = date, y = biomass, color = species)) +
-    #geom_line(aes(linetype = as.factor(troph_group))) +
-    #labs(y = "Biomass (g)", x = "Sampling date",
-      #title = main_title, subtitle = paste0("Station: ", station)
-    #)
+  troph_grp_scale <- c("1" = "dotted", "2" = "dashed", "3" = "solid")
+  p <- p + scale_linetype_manual(values = troph_grp_scale)
 
-    if (.log) {
-      p <- p + scale_y_log10() 
-    }
+  if (.log) {
+    p <- p + scale_y_log10() 
+  }
 
   return(p)
 }
