@@ -199,64 +199,10 @@ source(mypath("R", "synchrony.R"))
 
 myload(community_analysis, op_analysis, dir = mypath("data"))
 
-com <- ungroup(community_analysis) %>%
-  left_join(select(op_analysis, opcod, station, date), by = "opcod") %>%
-  filter(!is.na(station)) %>%
-  select(station, date, species, biomass)
-
-# We will compute the variance of each species in each station, which
-# require that there is some obsversation
-filter_na <- com %>%
-  group_by(station, species) %>%
-  summarise(n = sum(!is.na(biomass)) / n()) %>%
-  mutate(to_rm = ifelse(n < 0.5, TRUE, FALSE)) %>%
-  select(-n)
-com %<>%
-  left_join(filter_na) %>%
-  filter(!to_rm) %>%
-  select(-to_rm)
-
-# Get 0 biomass when the species is absent of station
-# By station replicate complete species list observed:
-complete_com <- com %>%
-  group_by(station) %>%
-  summarise(
-    species = list(unique(species)),
-    date = list(unique(date))) %>%
-  mutate(comb = map2(species, date, function(sp, date){
-    test <- expand.grid(species = sp, date = date)
-    return(test)
-    })
-    ) %>%
-  unnest(comb)
-
-# Join and put biomass to 0 when no observed:
-complete_com %<>% left_join(com, by = c("station", "species", "date")) %>%
-  mutate(biomass = ifelse(is.na(biomass), 0, biomass))
-
-complete_com %<>%
-  group_by(station) %>%
-  nest()
-
-complete_com %<>%
-  mutate(
-    com_mat = purrr::map(data, function(x) spread(x, species, biomass)),
-    com_mat = purrr::map(com_mat, function(x) select(x, -date)),
-    com_mat = purrr::map(com_mat, as.matrix)
-  )
-
-synchrony <- complete_com %>%
-  mutate(
-    avg_sp = purrr::map(com_mat, colMeans),
-    cov_mat = purrr::map(com_mat, cov),
-    var_sp = purrr::map(cov_mat, diag),
-    synchrony = purrr::map_dbl(cov_mat, compute_synchrony),
-    cv_sp = purrr::map2_dbl(avg_sp, var_sp, compute_avg_cv_sp),
-    cv_com = compute_cv_com(synchrony = synchrony, cv_sp = cv_sp),
-    cv_classic = purrr::map2_dbl(cov_mat, com_mat, function(variance, biomass) {
-      sqrt(sum(variance)) / mean(rowSums(biomass))
-    })
-  )
+synchrony <- get_sync_cv_mat(com_analysis = community_analysis,
+  op_analysis = op_analysis,
+  presence_threshold = 0.5)
+synchrony[1,]$com_mat
 
 synchrony %<>%
   select(station, synchrony, cv_sp, cv_com, cv_classic)
