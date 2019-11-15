@@ -67,7 +67,7 @@ plot_grid(plotlist = plot_stab, ncol = 2)
 ```
 
 ```{r less-stab-troph, fig.dim = c(10, 7), fig.cap = "The four station with the lowest biomass stability. See caption of Figure for details."}
-plot_grid(plotlist = plot_stab[7:8], ncol = 2)
+plot_grid(plotlist = plot_stab[7:10], ncol = 2)
 ```
 
 
@@ -90,7 +90,7 @@ plot_stab <- purrr::map(sync_sp_troph$station[300:304], function (x) {
 plot_grid(plotlist = plot_stab[1:4], ncol = 2)
 ```
 
-```{r 25-stab-troph, fig.dim = c(10, 7), fig.cap = "Four stations with medium/low biomass stability. See caption of Figure for details."}
+```{r 25-stab-troph, fig.cap = "Four stations with medium/low biomass stability. See caption of Figure for details."}
 # Third quater
 plot_stab <- purrr::map(sync_sp_troph$station[104:107], function (x) {
   p <- plot_dyn_sp_biomass(sync = sync_sp_troph, trophic_level = trophic_level, station = x, .log = FALSE)
@@ -101,13 +101,15 @@ plot_grid(plotlist = plot_stab[1:10], ncol = 2)
 
 ### CV sp
 
-```{r abun-sp, fig.cap = "Species most abundant by trophic group."}
+```{r abun-sp, fig.dim = c(10, 7), fig.cap = "Species most abundant by trophic group."}
 # Sp the most abundant by group
 bm_sp_troph_grp <- net_sp_troph %>%
   filter(!is.na(troph_group) & troph_group != 1) %>%
+  group_by(troph_group, sp_class, opcod) %>%
+  mutate(rel_biomass = biomass / sum(biomass)) %>%
   group_by(troph_group, sp_class) %>%
-  summarise(biomass = mean(biomass)) %>%
-  arrange(desc(biomass)) %>%
+  summarise(sum_rel_bm = sum(rel_biomass), biomass = mean(biomass)) %>%
+  arrange(desc(sum_rel_bm)) %>%
   slice(1:20)
   
 p_bm <- map(c(2, 3), .f = function(x) {
@@ -171,18 +173,234 @@ cv_bm_div_troph_grp <- temporal_network_metrics_classes %>%
   mutate(troph_group = as.factor(troph_group))
 ```
 
-#### CV sp VS CV group 
+#### Diversity is not all
 
 ```{r}
-cv_sp_grp <- left_join(select(cv_bm_sp, -bm),
-  select(cv_bm_div_troph_grp, -biomass_stab), by = "station")
+library(ade4)
+library(factoextra)
+myload(habitat_pressure, dir = mypath("report"))
+```
 
-ang9 <- cv_sp_grp %>%
-  filter(species == "ANG_9")
+```{r}
+div_troph_grp <- cv_bm_div_troph_grp %>%
+  select(station, troph_group, cv_st) %>%
+  spread(key = troph_group, cv_st) %>%
+  rename(mid_cv = `2`, high_cv = `3`)
+
+hab_press_div <- left_join(habitat_pressure,
+  temporal_community_metrics[, c("station", "richness_med", "biomass_avg","biomass_stab")],
+  by = "station") %>%
+left_join(div_troph_grp, by = "station")
+pca_hab <- dudi.pca(as.data.frame(select(na.omit(hab_press_div), -station)), scannf = FALSE, nf = 3, center = TRUE, scale = TRUE)
+
+eig_plot <- fviz_eig(pca_hab)
+pca_plot <- fviz_pca_var(pca_hab,
+    axes = c(1, 2),
+    col.var = "contrib", # Color by contributions to the PC
+    gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+    repel = TRUE     # Avoid text overlapping
+  )
+
+ggdraw(pca_plot) + 
+  draw_plot(eig_plot, x = .9, y = .95, hjust = 1, vjust = 1, width = 0.17, height = 0.25)
+```
+
+```{r}
+m <- cor(as.matrix(select(na.omit(hab_press_div), -station)), method =
+  "spearman")
+corrplot::corrplot(m, order="hclust")
+```
+
+```{r, eval = FALSE}
+mod <- lm(high_cv ~ temperature + richness_med:temperature + DBO + lat + insecticides + herbicides + insecticides, hab_press_div)
+car::vif(mod)
+
+mod <- lm(mid_cv ~ richness_med + DBO + lat + temperature + insecticides + herbicides + insecticides, hab_press_div)
+car::vif(mod)
+```
+
+#### Assembly rules: richness and biomass distribution 
+
+One missing part was the fact that we do not know the assembly rules of the
+trophic group.
+
+
+```{r}
+cv_bm_div_troph_grp %>%
+  ggplot(aes(y = cv_st, x = div_st)) +
+  geom_point() +
+  facet_grid(cols = vars(troph_group))
+```
+
+```{r}
+sync_com_troph <- net_sp_troph %>%
+    rename(species = sp_class) %>%
+    filter(troph_group != 1) %>%
+    mutate(troph_group = as.factor(troph_group)) %>%
+    group_by(troph_group) %>%
+    nest() %>%
+    mutate(sync = map(data, ~get_sync_cv_mat(com_analysis = .x, op_analysis = op_analysis))) %>%
+    unnest(sync) %>%
+    mutate(sdt.dev = map_dbl(cov_mat, ~sqrt(sum(.x)))) %>%
+    select(troph_group, station, synchrony, cv_sp, cv_com, sdt.dev) %>%
+    left_join(cv_bm_div_troph_grp, by = c("station", "troph_group"))
+```
+
+```{r sd-avg-div}
+form <- y ~ x
+form2 <- y ~ Vmax * x / (Km + x)
+form3 <- y ~  a + exp(b * x) 
+fit <- stat_poly_eq(
+  formula = form2,
+  eq.with.lhs = "italic(hat(y))~`=`~",
+  aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+  parse = TRUE)
+
+ymax <- max(cv_bm_div_troph_grp$bm_st, sync_com_troph$sdt.dev)
+ymin <- min(cv_bm_div_troph_grp$bm_st, sync_com_troph$sdt.dev)
+p_bm <- cv_bm_div_troph_grp %>%
+  ggplot(aes(y = bm_st, x = div_st)) +
+  geom_point() +
+  geom_smooth(method = 'nls', formula = form3,
+   method.args = list(start = c(a = 0, b = 3)), se = F) +
+  #fit +
+  facet_grid(cols = vars(troph_group)) +
+  #scale_y_log10(limits = c(ymin, ymax)) +
+  labs(y = "Average biomass (g).", x = "Species richness")
+
+p_sd <- sync_com_troph %>%
+  ggplot(aes(x = div_st, y = sdt.dev)) +
+  geom_point() +
+  geom_smooth(method = 'lm') +
+  fit +
+  facet_grid(cols = vars(troph_group)) +
+  scale_y_log10(limits = c(ymin, ymax)) +
+  labs(y = "Standard deviation of biomass temporal data (g).", x = "Species richness")
+
+plot_grid(p_sd, p_bm, ncol = 1)
+```
+It seems that the relationship between the standard deviation and the number of
+species saturates for 10 species in medium trophic group while it saturates at 7
+for the high trophic group (Figure \@ref(fig:sd-avg-div)).
+
+To get opposite stability-diversity relationships in the different trophic
+group, it supposes that for medium trophic group, the avg biomass increases
+faster than the biomass standard deviation with increasing species richness. And
+the reverse for the high trophic group, i.e. that the standard deviation
+increases faster than the average biomass.
+
+A question: What are the determinant of the relationship beween avg/standard
+deviation and the number of species?
+
+Part of the solution
+
+```{r}
+formula <- y ~ x #needed for stat_poly_eq
+sync_com_troph %>%
+  ggplot(aes(x = bm_st, y = sdt.dev)) +
+  geom_point() +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  facet_grid(cols = vars(troph_group)) +
+  scale_y_log10() +
+  scale_x_log10() +
+  labs(y = "Standard deviation of biomass temporal data (g).", x = "Average
+      biomass (g)")
+```
+
+```{r}
 
 ```
 
 
+
+
+#### CV sp VS CV group
+
+There was a positive relationship between the species CV of the most abundant
+species in the high trophic group and the CV of the same high trophic group
+(Figure \@ref(fig:cv-sp-grp3), right panel). Interestingly, this relationship
+is less clear (however clearly present for some species) for the most abundant
+species in the medium trophic group (Figure \@ref(fig:cv-sp-grp2), right panel).
+
+```{r cv-sp-grp3, fig.dim = c(7, 21), fig.cap = "CV of the most abundant species in the high trophic group versus the CV of the different trophic groups"}
+cv_sp_grp <- left_join(select(cv_bm_sp, -bm),
+  select(cv_bm_div_troph_grp, -biomass_stab), by = "station")
+
+sp_grp3 <- bm_sp_troph_grp %>%
+  filter(troph_group == 3) %>%
+  arrange(desc(biomass))
+  
+cv_sp_grp %>%
+  filter(species %in% sp_grp3$sp_class[1:10]) %>%
+  ggplot(aes(x = cv_st, y = cv)) +
+  geom_point() +
+  facet_grid(cols = vars(troph_group), rows = vars(species), labeller = labeller(troph_group = troph_group_labeller())) +
+  labs(x = "CV of the trophic group", y = "CV of the species")
+```
+
+```{r cv-sp-grp2, fig.dim = c(7, 21), fig.cap = "CV of the most abundant species in the medium trophic group versus the CV of the different trophic groups"}
+sp_grp2 <- bm_sp_troph_grp %>%
+  filter(troph_group == 2) %>%
+  arrange(desc(biomass))
+  
+cv_sp_grp %>%
+  filter(species %in% sp_grp2$sp_class[1:10]) %>%
+  ggplot(aes(x = cv_st, y = cv)) +
+  geom_point() +
+  facet_grid(cols = vars(troph_group), rows = vars(species), labeller =
+    labeller(troph_group = troph_group_labeller())) +
+  labs(x = "CV of the trophic group", y = "CV of the species")
+```
+
+#### CVsp versus Biomass by trophic group
+
+```{r cv-sp-bm-grp3, fig.dim = c(7, 21), fig.cap = "CV of the most abundant species in the high trophic group versus the biomass of the different trophic groups"}
+cv_sp_grp %>%
+  filter(species %in% sp_grp3$sp_class[1:10]) %>%
+  ggplot(aes(x = bm_st, y = cv)) +
+  geom_point() +
+  facet_grid(cols = vars(troph_group), rows = vars(species), labeller = labeller(troph_group = troph_group_labeller()),
+    scales = "free_x") +
+  labs(x = "Biomass of the trophic group (g)", y = "CV of the species")
+
+```
+
+```{r cv-sp-bm-grp2, fig.dim = c(7, 21), fig.cap = "CV of the most abundant species in the medium trophic group versus the biomass of the different trophic groups"}
+cv_sp_grp %>%
+  filter(species %in% sp_grp2$sp_class[1:10]) %>%
+  ggplot(aes(x = bm_st, y = cv)) +
+  geom_point() +
+  facet_grid(cols = vars(troph_group), rows = vars(species), labeller = labeller(troph_group = troph_group_labeller()),
+    scales = "free_x") +
+  labs(x = "Biomass of the trophic group (g)", y = "CV of the species")
+```
+
+#### CVsp versus diversity by trophic group
+
+```{r cv-sp-div-grp3, fig.dim = c(7, 21), fig.cap = "CV of the most abundant species in the high trophic group versus the species richness in the different trophic groups."}
+cv_sp_grp %>%
+  filter(species %in% sp_grp3$sp_class[1:10]) %>%
+  ggplot(aes(x = div_st, y = cv)) +
+  geom_point() +
+  facet_grid(cols = vars(troph_group), rows = vars(species), labeller = labeller(troph_group = troph_group_labeller())) +
+  labs(x = "Species richness of the trophic group", y = "CV of the species")
+```
+
+```{r cv-sp-div-grp2, fig.dim = c(7, 21), fig.cap = "CV of the most abundant species in the medium trophic group versus the species richness in the different trophic groups."}
+cv_sp_grp %>%
+  filter(species %in% sp_grp2$sp_class[1:10]) %>%
+  ggplot(aes(x = div_st, y = cv)) +
+  geom_point() +
+  facet_grid(cols = vars(troph_group), rows = vars(species), labeller = labeller(troph_group = troph_group_labeller())) +
+  labs(x = "Species richness of the trophic group", y = "CV of the species")
+```
+
+#### Temporal dynamics in high diversity community 
 
 ```{r}
 high_div_station <- temporal_community_metrics %>%
@@ -263,22 +481,72 @@ ggplot(high_div_troph_group_3,
     size = 6, inherit.aes = FALSE) +
   facet_wrap( ~ station) + 
   labs(title = "The twelve richest station of superior predator",
-  y = "Fish species richness", x = "Date")
+  y = "Biomass of trophic group (g)", x = "Date")
 ```
+
+```{r}
+ggplot(high_div_troph_group_3,
+  aes(y = biomass, x = date, color = troph_group)) +
+  geom_line() +
+  geom_point() +
+  geom_text(data = filter(temporal_community_metrics, station %in% highest_div_grp_3_station),
+    x = ymd_hms("2015-01-01T15:00:00"),
+    y = 3, aes(label = paste0("Stability: ", round(biomass_stab, 2))),
+    size = 6, inherit.aes = FALSE) +
+  facet_wrap( ~ station) + 
+  labs(title = "The twelve richest station of superior predator",
+  y = "Biomass of trophic group (g)", x = "Date")
+```
+
 
 ### Map stability
 
-```{r}
+```{r map-stab, fig.cap = "Repartition of average biomass and biomass stability (logged)."}
 myload(station_analysis, region_polygon, dir = data_common)
 stab <- temporal_community_metrics %>% 
-  select(station, biomass_stab)
+  select(station, biomass_stab, biomass_avg)
 station_stab <- left_join(station_analysis, rename(stab, id = station)) %>%
   filter(!is.na(biomass_stab))
-ggplot(data = region_polygon) +
+map_stab <- ggplot(data = region_polygon) +
     geom_sf() +
     geom_sf(data = station_stab, aes(color = log(biomass_stab)), size = 4) +
-    scale_color_gradient(low = "red", high = "green")
+    scale_color_gradient(low = "red", high = "green") +
+    labs(title = "Biomass stability")
+
+map_bm <- ggplot(data = region_polygon) +
+    geom_sf() +
+    geom_sf(data = station_stab, aes(color = log(biomass_avg)), size = 4) +
+    scale_color_gradient(low = "red", high = "green") +
+    labs(title = "Average biomass (g)")
+
+plot_grid(map_stab, map_bm, ncol = 2)
 ```
+
+Biomass stability was lower in south-west of France (Figure
+\@ref{fig:map-stab}, left panel). Average fish biomass was lower in moutain
+region (Pyrénées, Alps, Massif Central; Figure \@ref{fig:map-stab}, right
+panel), generally close to the source.
+
+
+```{r map-st, fig.dim = c(7, 15), fig.cap = "Repartition of the average biomass, biomass stability and species diversity by trophic group, respectively medium and high for the left and right panel. All the metrics were logged."}
+tmp <- rename(cv_bm_div_troph_grp, id = station)
+station_troph_div <- left_join(station_analysis, tmp, by = "id")
+
+map_st_metrics <- purrr::map(c("bm_st", "div_st", "biomass_stab"), function (metric) {
+  station_troph_div[[metric]] <- log10(station_troph_div[[metric]])
+  ggplot(data = region_polygon) +
+    geom_sf() +
+    geom_sf(data = station_troph_div, aes_(color = as.name(metric)), size = 4) +
+    facet_grid(cols = vars(troph_group)) +
+    scale_color_gradient(low = "red", high = "green")
+  
+  })
+plot_grid(plotlist = map_st_metrics, ncol = 1)
+```
+
+The biomass in both trophic groups were lower in moutain area (Figure
+\@ref(map-st)), the same was true for species diversity. For stability, it is
+difficult to see a pattern.
 
 ### Link biomass stability with community structure
 
@@ -364,6 +632,7 @@ p <- ggplot(net_troph_group, aes(y = biomass_stab, x = values, color = troph_gro
   )
 p
 ```
+
 
 
 The Figure \@ref(fig:stab-comp) showed that medium trophic level part of the
