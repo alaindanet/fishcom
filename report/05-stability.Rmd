@@ -4,16 +4,245 @@
 myload(temporal_network_metrics, dir = mypath("data", "classes"))
 temporal_network_metrics_classes <- temporal_network_metrics
 myload(temporal_network_metrics, dir = dest_dir)
-myload(temporal_community_metrics, synchrony, op_analysis, dir = data_common)
+myload(community_metrics, temporal_community_metrics, synchrony, op_analysis, dir = data_common)
+myload(network_analysis, dir = mypath("data", "classes"))
+myload(trophic_level, trophic_class, dir = mypath("data"))
+source(mypath("R", "synchrony.R"))
+source(mypath("R", "local_network_build.R"))
 ```
+```{r}
+temporal_network_metrics_classes %>%
+  select(station, troph_group) %>%
+  unnest(troph_group) %>%
+  filter(troph_group != 1) %>%
+  mutate(troph_group = as.factor(troph_group)) 
+%>%
+  select(station, troph_group, biomass_cv, richness_avg, nbnode_med) %>%
+  gather(richness_type, div, richness_avg, nbnode_med) %>%
+  ggplot(aes(x = div, y = biomass_cv, color = troph_group)) +
+  facet_grid(cols = vars(richness_type), scales = "free_x") +
+  geom_point() +
+  stat_poly_eq(
+    formula = y ~ x,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  geom_smooth(method = "lm", formula = y ~ x) +
+  ggplot2::scale_color_manual(
+    labels = troph_group_labeller(),
+    values = c("blue", "green", "red"),
+    name = "Trophic level"
+    )
+```
+
+
+The stability of biomass is determined by the standard deviation and the average
+biomass of the community.
+
+### Decompose stability
+
+One missing part was the fact that we do not know the assembly rules of the
+trophic group.
+
+
+```{r}
+cv_bm_div_troph_grp <- temporal_network_metrics_classes %>% 
+  select(station, troph_group) %>%
+  unnest(troph_group) %>%
+  filter(!is.na(troph_group) & troph_group != 1) %>%
+  rename(bm_st = biomass_avg, div_st = richness_avg, cv_st = biomass_cv) %>%
+  mutate(troph_group = as.factor(troph_group))
+
+cv_bm_div_troph_grp %>%
+  ggplot(aes(y = cv_st, x = div_st)) +
+  geom_point() +
+  facet_grid(cols = vars(troph_group))
+```
+
+```{r}
+sync_com_troph <- network_analysis %>%
+  select(opcod, composition) %>%
+  unnest(composition) %>%
+  rename(species = sp_class) %>%
+  filter(troph_group != 1) %>%
+  mutate(troph_group = as.factor(troph_group)) %>%
+  group_by(troph_group) %>%
+  nest() %>%
+  mutate(sync = map(data, ~get_sync_cv_mat(com_analysis = .x, op_analysis = op_analysis))) %>%
+  unnest(sync) %>%
+  mutate(sdt.dev = map_dbl(cov_mat, ~sqrt(sum(.x)))) %>%
+  mutate(
+    contrib = purrr::pmap(
+      list(mat = com_mat, cv_com_tot = cv_com, cv_sp_tot = cv_sp, sync_tot = synchrony),
+      ~compute_sp_contrib(mat = ..1, cv_com_tot = ..2, cv_sp_tot = ..3, sync_tot = ..4)),
+    troph_sp_nb_med = map_dbl(com_mat, ~rowSums(.x != 0) %>% median),
+    troph_sp_nb_avg = map_dbl(com_mat, ~rowSums(.x != 0) %>% mean)
+      ) %>% 
+  select(troph_group, station, synchrony, cv_sp, cv_com, sdt.dev, contrib,
+    troph_sp_nb_avg, troph_sp_nb_med) %>%
+  left_join(cv_bm_div_troph_grp, by = c("station", "troph_group"))
+```
+
+```{r}
+sync_com_troph %>%
+  filter(troph_group != 1) %>%
+  select(station, troph_group, cv_com, troph_sp_nb_med) %>%
+  ggplot(aes(x = troph_sp_nb_med, y = 1/cv_com, color = troph_group)) +
+  geom_point() +
+  stat_poly_eq(
+    formula = y ~ x,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  geom_smooth(method = "lm", formula = y ~ x) +
+  ggplot2::scale_color_manual(
+    labels = troph_group_labeller(),
+    values = c("blue", "green", "red"),
+    name = "Trophic level"
+    )
+```
+
+
+```{r sd-avg-div}
+fit <- stat_poly_eq(
+  formula = y ~x,
+  eq.with.lhs = "italic(hat(y))~`=`~",
+  aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+  parse = TRUE)
+
+ymax <- max(cv_bm_div_troph_grp$bm_st, sync_com_troph$sdt.dev)
+ymin <- min(cv_bm_div_troph_grp$bm_st, sync_com_troph$sdt.dev)
+p_bm <- cv_bm_div_troph_grp %>%
+  ggplot(aes(y = bm_st, x = div_st)) +
+  geom_point() +
+  geom_smooth(method = 'loess', se = F) +
+  #fit +
+  facet_grid(cols = vars(troph_group)) +
+  scale_y_log10(limits = c(ymin, ymax)) +
+  labs(y = "Average biomass (g).", x = "Species richness")
+
+p_sd <- sync_com_troph %>%
+  ggplot(aes(x = div_st, y = sdt.dev)) +
+  geom_point() +
+  geom_smooth(method = 'loess', se = FALSE) +
+  facet_grid(cols = vars(troph_group)) +
+  scale_y_log10(limits = c(ymin, ymax)) +
+  labs(y = "Standard deviation of biomass temporal data (g).", x = "Species richness")
+
+plot_grid(p_sd, p_bm, ncol = 1)
+```
+It seems that the relationship between the standard deviation and the number of
+species saturates for 10 species in medium trophic group while it saturates at 7
+for the high trophic group (Figure \@ref(fig:sd-avg-div)).
+
+To get opposite stability-diversity relationships in the different trophic
+group, it supposes that for medium trophic group, the avg biomass increases
+faster than the biomass standard deviation with increasing species richness. And
+the reverse for the high trophic group, i.e. that the standard deviation
+increases faster than the average biomass.
+
+A question: What are the determinant of the relationship beween avg/standard
+deviation and the number of species?
+
+Part of the solution
+
+```{r}
+formula <- y ~ x #needed for stat_poly_eq
+sync_com_troph %>%
+  ggplot(aes(x = bm_st, y = sdt.dev)) +
+  geom_point() +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  facet_grid(cols = vars(troph_group)) +
+  scale_y_log10() +
+  scale_x_log10() +
+  labs(y = "Standard deviation of biomass temporal data (g).", x = "Average
+      biomass (g)")
+```
+
+```{r, fig.dim = c(7, 14)}
+sync_com_troph %>%
+  select(troph_group:cv_com, div_st) %>%
+  gather(comp, stab, synchrony:cv_com) %>%
+  ggplot(aes(x = div_st, y = stab)) +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(x = "Trophic species diversity", y = "Stability component") +
+  geom_point() +
+  facet_grid(rows = vars(comp), cols = vars(troph_group), scales = "free_y")
+```
+
+```{r, fig.dim = c(10, 7)}
+synchrony %>%
+  left_join(select(temporal_community_metrics, station, richness_med), by =
+    "station") %>%
+  gather(comp, stab, synchrony:cv_com) %>%
+  ggplot(aes(x = richness_med, y = stab)) +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(x = "Species diversity", y = "Stability component") +
+  geom_point() +
+  facet_grid(rows = vars(comp), scales = "free_y")
+```
+
+#### Contribution
+
+```{r}
+sync_com_troph %>%
+  unnest(contrib) %>%
+  group_by(troph_group, species) %>%
+  summarise(
+    sum_cbt_cv_com = sum(abs(cbt_cv_com)),
+    sum_cbt_cv_sp = sum(abs(cbt_cv_sp)),
+    sum_cbt_sync = sum(abs(cbt_sync))
+    ) %>%
+  arrange(desc(sum_cbt_cv_com)) %>%
+  slice(1:10) %>%
+  gather(comp, contrib, sum_cbt_cv_com:sum_cbt_sync) %>%
+  ggplot(aes(y = contrib, x = species)) +
+  geom_point() +
+  facet_grid(rows = vars(comp), cols = vars(troph_group), scales = "free_y")
+```
+
+```{r var-cbt, fig.dim = c(10, 7)}
+var_cbt <- sync_com_troph %>%
+  unnest(contrib) %>%
+  group_by(troph_group, station) %>%
+  summarise(
+    var_cbt_cv_com = var(cbt_cv_com),
+    var_cbt_cv_sp = var(cbt_cv_sp),
+    var_cbt_sync = var(cbt_sync)
+    ) %>%
+  gather(comp, contrib, var_cbt_cv_com:var_cbt_sync) %>%
+  left_join(select(cv_bm_div_troph_grp, station, troph_group, div_st),
+    by = c("station", "troph_group"))
+
+
+  var_cbt %<>%
+    nest() %>%
+    mutate(plot = map2(data, troph_group, function(.data, m_title){
+	.data %>%
+	ggplot(aes(y = contrib, x = div_st)) +
+	  geom_point() +
+	  scale_x_log10() +
+	  facet_wrap(facets = ~comp, scales = "free_y") +
+	  labs(title = paste0(m_title))
+}
+    )
+    )
+
+plot_grid(plotlist = var_cbt$plot, ncol = 2)
+```
+
 
 
 ### Some temporal series of biomass
 
-#### Total biomass  
+#### Total biomass
 
-```{r}
-myload(community_metrics, dir = data_common)
+```{r, fig.dim = c(10, 7)}
 community_metrics %<>% left_join(select(op_analysis, opcod, station, date))
 station_high_low_stab <- temporal_community_metrics %>%
   arrange(desc(biomass_stab)) %>%
@@ -43,10 +272,6 @@ ggplot(temporal_biomass, aes(y = biomass, x = date)) +
 
 ```{r more-stab-troph, fig.dim = c(10, 21), fig.cap = "The four station with the highest biomass stability. Dashed and solid lines represent respectively trophic species in the group 2 and 3."}
 
-myload(network_analysis, dir = mypath("data", "classes"))
-myload(trophic_level, trophic_class, dir = mypath("data"))
-source(mypath("R", "synchrony.R"))
-source(mypath("R", "local_network_build.R"))
 # Get biomass by sp node:
 net_sp_troph <- select(network_analysis, opcod, composition) %>%
   unnest(composition)
@@ -165,12 +390,6 @@ cv_bm_sp <- left_join(avg_sp, var_sp, by = c("station", "species")) %>%
 # By trophic group:
 
 ## CV, biomass and div (ALREADY DONE!)
-cv_bm_div_troph_grp <- temporal_network_metrics_classes %>% 
-  select(station, troph_group) %>%
-  unnest(troph_group) %>%
-  filter(!is.na(troph_group) & troph_group != 1) %>%
-  rename(bm_st = biomass_avg, div_st = richness_avg, cv_st = biomass_cv) %>%
-  mutate(troph_group = as.factor(troph_group))
 ```
 
 #### Diversity is not all
@@ -219,102 +438,6 @@ mod <- lm(mid_cv ~ richness_med + DBO + lat + temperature + insecticides + herbi
 car::vif(mod)
 ```
 
-#### Assembly rules: richness and biomass distribution 
-
-One missing part was the fact that we do not know the assembly rules of the
-trophic group.
-
-
-```{r}
-cv_bm_div_troph_grp %>%
-  ggplot(aes(y = cv_st, x = div_st)) +
-  geom_point() +
-  facet_grid(cols = vars(troph_group))
-```
-
-```{r}
-sync_com_troph <- net_sp_troph %>%
-    rename(species = sp_class) %>%
-    filter(troph_group != 1) %>%
-    mutate(troph_group = as.factor(troph_group)) %>%
-    group_by(troph_group) %>%
-    nest() %>%
-    mutate(sync = map(data, ~get_sync_cv_mat(com_analysis = .x, op_analysis = op_analysis))) %>%
-    unnest(sync) %>%
-    mutate(sdt.dev = map_dbl(cov_mat, ~sqrt(sum(.x)))) %>%
-    select(troph_group, station, synchrony, cv_sp, cv_com, sdt.dev) %>%
-    left_join(cv_bm_div_troph_grp, by = c("station", "troph_group"))
-```
-
-```{r sd-avg-div}
-form <- y ~ x
-form2 <- y ~ Vmax * x / (Km + x)
-form3 <- y ~  a + exp(b * x) 
-fit <- stat_poly_eq(
-  formula = form2,
-  eq.with.lhs = "italic(hat(y))~`=`~",
-  aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
-  parse = TRUE)
-
-ymax <- max(cv_bm_div_troph_grp$bm_st, sync_com_troph$sdt.dev)
-ymin <- min(cv_bm_div_troph_grp$bm_st, sync_com_troph$sdt.dev)
-p_bm <- cv_bm_div_troph_grp %>%
-  ggplot(aes(y = bm_st, x = div_st)) +
-  geom_point() +
-  geom_smooth(method = 'nls', formula = form3,
-   method.args = list(start = c(a = 0, b = 3)), se = F) +
-  #fit +
-  facet_grid(cols = vars(troph_group)) +
-  #scale_y_log10(limits = c(ymin, ymax)) +
-  labs(y = "Average biomass (g).", x = "Species richness")
-
-p_sd <- sync_com_troph %>%
-  ggplot(aes(x = div_st, y = sdt.dev)) +
-  geom_point() +
-  geom_smooth(method = 'lm') +
-  fit +
-  facet_grid(cols = vars(troph_group)) +
-  scale_y_log10(limits = c(ymin, ymax)) +
-  labs(y = "Standard deviation of biomass temporal data (g).", x = "Species richness")
-
-plot_grid(p_sd, p_bm, ncol = 1)
-```
-It seems that the relationship between the standard deviation and the number of
-species saturates for 10 species in medium trophic group while it saturates at 7
-for the high trophic group (Figure \@ref(fig:sd-avg-div)).
-
-To get opposite stability-diversity relationships in the different trophic
-group, it supposes that for medium trophic group, the avg biomass increases
-faster than the biomass standard deviation with increasing species richness. And
-the reverse for the high trophic group, i.e. that the standard deviation
-increases faster than the average biomass.
-
-A question: What are the determinant of the relationship beween avg/standard
-deviation and the number of species?
-
-Part of the solution
-
-```{r}
-formula <- y ~ x #needed for stat_poly_eq
-sync_com_troph %>%
-  ggplot(aes(x = bm_st, y = sdt.dev)) +
-  geom_point() +
-  geom_smooth(method = 'lm') +
-  stat_poly_eq(
-    formula = formula,
-    eq.with.lhs = "italic(hat(y))~`=`~",
-    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
-    parse = TRUE) +
-  facet_grid(cols = vars(troph_group)) +
-  scale_y_log10() +
-  scale_x_log10() +
-  labs(y = "Standard deviation of biomass temporal data (g).", x = "Average
-      biomass (g)")
-```
-
-```{r}
-
-```
 
 
 

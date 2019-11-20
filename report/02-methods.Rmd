@@ -134,6 +134,8 @@ flow_temp <- temporal_press_polluants %>%
 
 habitat_station %<>%
   left_join(flow_temp, by = "station")
+habitat_pressure <- habitat_station
+mysave(habitat_pressure, dir = mypath("report"), overwrite = TRUE)
 ```
 
 ```{r pca-hab, fig.dim = c(10, 7), fig.cap = "PCA over habitat description"}
@@ -208,6 +210,20 @@ sampled. It would be nice to look at the tendency by station.**
 ## Analysis
 
 ### Network
+
+### Stability
+
+#### Species contribution
+
+The species contribution to CV and synchrony have been computed, to identify
+which species are driving the relationship between CV and species richness.
+
+Species contribution to a metric can be computed as follow:
+
+$$
+C_k = CV_{-k} - CV
+$$
+
 
 ### Pressure
 

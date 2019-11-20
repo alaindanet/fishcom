@@ -114,3 +114,60 @@ get_sync_cv_mat <- function(com_analysis = NULL, op_analysis = NULL, presence_th
   return(synchrony)
 
 }
+
+#' Compute species contribution
+#'
+#' @param mat matrix of species biomass across time. The species are in column
+#' and the sampling date in rows 
+#' @param cv_com_tot dbl CV of the community with all the species 
+#' @param cv_sp_tot dbl Average CV of the species with all the species 
+#' @param sync_tot dbl synchrony of the species with all the species 
+#' @details contribution are computed as follow: C_k = M_{-t} -M 
+#' @value return a data.frame with species contribution to total cv, species cv
+#' and synchrony
+compute_sp_contrib <- function (
+  mat = NULL,
+  cv_com_tot = NULL,
+  cv_sp_tot = NULL,
+  sync_tot = NULL) {
+
+  stopifnot(is.matrix(mat))
+
+  if (ncol(mat) < 2) {
+   data.frame(
+     species = NA,
+     cv_com = NA,
+     cv_sp = NA,
+     sync = NA, 
+     cbt_cv_com = NA,
+     cbt_cv_sp = NA, 
+     cbt_sync = NA
+   ) 
+  }
+
+  sp <- colnames(mat)
+  # Loop over species
+  leave_one_out <- purrr::map_dfr(sp, function(x, mat) {
+    # Remove one species
+    tmp_mat <- mat[, colnames(mat) != x, drop = FALSE]
+    # Compute cv and synchrony
+    avg_sp <- colMeans(tmp_mat)
+    cov_mat <- cov(tmp_mat)
+    var_sp <- diag(cov_mat)
+    synchrony <- compute_synchrony(cov_mat)
+    cv_sp <- compute_avg_cv_sp(avg_sp, var_sp)
+    cv_com <- compute_cv_com(synchrony = synchrony, cv_sp = cv_sp)
+    # Save sp name, cv and synchrony
+    list(species = x, cv_com_sp = cv_com, cv_sp_sp = cv_sp, sync_sp = synchrony)
+  }, mat = mat)
+
+  # Compute contribution
+  contrib <- leave_one_out %>%
+    mutate(
+      cbt_cv_com = cv_com_sp - cv_com_tot,
+      cbt_cv_sp = cv_sp_sp - cv_sp_tot,
+      cbt_sync = sync_sp - sync_tot
+    )
+  contrib
+}
+

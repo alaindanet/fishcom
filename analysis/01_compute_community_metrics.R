@@ -202,9 +202,15 @@ myload(community_analysis, op_analysis, dir = mypath("data"))
 synchrony <- get_sync_cv_mat(com_analysis = community_analysis,
   op_analysis = op_analysis,
   presence_threshold = 0.5)
-synchrony[1,]$com_mat
 
 synchrony %<>%
-  select(station, synchrony, cv_sp, cv_com, cv_classic)
+  mutate(
+    contrib = purrr::pmap(
+      list(mat = com_mat, cv_com_tot = cv_com, cv_sp_tot = cv_sp, sync_tot = synchrony),
+      ~compute_sp_contrib(mat = ..1, cv_com_tot = ..2, cv_sp_tot = ..3, sync_tot = ..4))
+      )
+
+synchrony %<>%
+  select(station, synchrony, cv_sp, cv_com, cv_classic, contrib)
 
 mysave(synchrony, dir = mypath("data"), overwrite = TRUE)
