@@ -13,3 +13,5 @@ edeline_work
 data-raw
 data
 tests/output
+report/_book
+report/_bookdown_files
