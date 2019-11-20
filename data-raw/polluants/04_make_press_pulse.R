@@ -73,16 +73,17 @@ temp_flow_temp <- yearly_flow_press_interp_mv_avg %>%
   select(id, year, category,value_corrected) %>%
   rename(press = value_corrected)
 
-temp_flow_temp %<>%
-  filter(id %in% year_station$station) %>%
-  group_by(id) %>%
-  nest() %>%
-  left_join(rename(year_station, id = station), by = "id") %>%
-  mutate(sorted = map2(data, year_list, function (x, year_list) {
-      filter(x, year %in% c(min(year_list) - 1, year_list))
-})) %>%
-  select(-data, -year_list) %>%
-  unnest(sorted)
+# Because temperature has been measured only since 2006  
+#temp_flow_temp %<>%
+  #filter(id %in% year_station$station) %>%
+  #group_by(id) %>%
+  #nest() %>%
+  #left_join(rename(year_station, id = station), by = "id") %>%
+  #mutate(sorted = map2(data, year_list, function (x, year_list) {
+      #filter(x, year %in% c(min(year_list) - 1, year_list))
+#})) %>%
+  #select(-data, -year_list) %>%
+  #unnest(sorted)
 
 press_metrics %<>% bind_rows(temp_flow_temp)
 
