@@ -1,0 +1,202 @@
+---
+title: "Time series analysis"
+author: "Alain Danet"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Time series analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+mypath <- rprojroot::find_package_root_file
+data_common <- mypath("data")
+dest_dir <- mypath("data", "species")
+```
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.dim = c(10, 10),
+  echo = FALSE
+)
+library(tidyverse)
+library(ggpmisc)
+library(cowplot)
+library(kableExtra)
+library(magrittr)
+library(lubridate)
+library(jmotif)
+library(pander)
+source(mypath("R", "misc.R"))
+source(mypath("R", "plot_methods.R"))
+source(mypath("R", "press_methods.R"))
+theme_set(theme_alain())
+```
+
+```{r load dataset, include = FALSE}
+myload(community_metrics, op_analysis, dir = mypath("data"))
+community_metrics %<>% left_join(select(op_analysis, opcod, station, date))
+```
+
+```{r}
+ts_biomass  <- community_metrics %>%
+  select(station, date, biomass) %>%
+  mutate(station = as.character(station)) %>%
+  group_by(station) %>%
+  arrange(date) %>%
+  nest()
+
+ts_biomass %<>%
+  mutate(
+    zts = map(data, function(x) znorm(x$biomass, threshold = 0.01)),
+    paa = map(zts, ~paa(., 3)),
+    sax = map_chr(paa, ~series_to_string(., 3))
+  )
+```
+
+```{r}
+pattern_dist <- ts_biomass %>%
+  group_by(sax) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count))
+ggplot(ts_biomass, aes(x = sax)) +
+  geom_histogram(stat = "count")
+
+filter(pattern_dist, count > 10)
+```
+
+```{r}
+test <- ts_biomass %>%
+  filter(sax %in% c("cba", "bbb", "cab", "abc", "acb", "bca", "bac", "cbb")) %>%
+  group_by(sax) %>%
+  sample_n(10) %>%
+  mutate(
+    paa2 = map2(data, zts, function (x, zts) {
+      cbind(x[,1], zts)
+  }),
+    id_sta = as.character(seq(1,n()))
+
+  ) %>%
+  unnest(paa2)
+
+ggplot(test, aes(x = date, y = zts)) +
+  geom_line(aes(color = id_sta)) +
+  facet_wrap(~ sax)
+
+```
+
+```{r}
+myload(polluant_units, dir = mypath("data-raw", "polluants", "naiades_data"))
+
+myload(press_metrics, dir = mypath("data"))
+press_year <- press_metrics %>%
+  filter(category %in% c("fungicides", "herbicides", "insecticides", "DBO", "temperature"))
+
+biomass <- community_metrics %>%
+  mutate(
+    year = lubridate::year(date),
+    category = "biomass",
+    press = biomass 
+    ) %>%
+  select(station, year, category, press)
+press_biomass <- press_year %>%
+  bind_rows(rename(biomass, id = station)) %>%
+  na.omit()
+```
+
+```{r}
+samp_station <- sample(unique(press_biomass$id), 10)
+temp <- press_biomass %>%
+  mutate(id = as.character(id)) %>%
+  filter(id %in% samp_station)
+
+ggplot(temp, aes(y = press, x = year)) +
+  facet_wrap(~category, scales = "free_y") +
+  geom_line(aes(color = id))
+
+```
+
+```{r}
+test <- filter(community_metrics, station == 6268) %>%
+  mutate(year = year(date))
+diff(test$biomass) / diff(test$year)
+```
+
+```{r, eval = FALSE}
+derivative <- press_biomass %>%
+  group_by(id, category) %>%
+  arrange(year) %>%
+  nest() %>%
+  mutate(derivative = map(data, function (x) {
+      data.frame(
+	derivative = diff(x$press) / diff(x$year),
+	year = x$year[-1]
+      )
+  })) %>%
+  unnest(derivative) %>%
+  spread(category, derivative)
+```
+
+```{r, eval = FALSE}
+deriv_biomass <- derivative %>%
+  gather(category, derivative, DBO:temperature)
+ggplot(deriv_biomass, aes(x = derivative, y = biomass)) +
+  geom_point() +
+  facet_wrap(~ category, scales = "free_x") +
+  labs(x = "Derivative of press", y = "Derivative of biomass")
+```
+
+```{r, eval = FALSE}
+deriv_biomass_lag1 <- deriv_biomass %>%
+  group_by(id, category) %>%
+  mutate(derivative = c(derivative[-1], NA))
+ggplot(deriv_biomass_lag1, aes(x = derivative, y = biomass)) +
+  geom_point() +
+  facet_wrap(~ category, scales = "free_x") +
+  labs(x = "Derivative of press (lag 1 year)", y = "Derivative of biomass")
+```
+
+```{r, eval = FALSE}
+deriv_biomass_lag2 <- deriv_biomass %>%
+  group_by(id, category) %>%
+  mutate(derivative = c(derivative[-c(1, 2)], rep(NA, 2)))
+ggplot(deriv_biomass_lag2, aes(x = derivative, y = biomass)) +
+  geom_point() +
+  facet_wrap(~ category, scales = "free_x") +
+  labs(x = "Derivative of press (lag 2 years)", y = "Derivative of biomass")
+```
+
+```{r, eval = FALSE}
+deriv_biomass_lag3 <- deriv_biomass %>%
+  group_by(id, category) %>%
+  mutate(derivative = c(derivative[-seq(1, 3)], rep(NA, 3)))
+ggplot(deriv_biomass_lag3, aes(x = derivative, y = biomass)) +
+  geom_point() +
+  facet_wrap(~ category, scales = "free_x") +
+  labs(x = "Derivative of press (lag 3 years)", y = "Derivative of biomass")
+
+test <- deriv_biomass_lag3 %>%
+  spread(category, derivative) %>%
+  group_by(id) %>%
+  nest() %>%
+  mutate(corelation = map(data, function (x) {
+      x %<>% select(-year)
+      mat <- round(cor(na.omit(x)), 2)["biomass",]
+
+    return(as.data.frame(t(as.data.frame(mat))))
+  })) %>%
+  select(-data)
+
+cor_press <- test %>%
+  unnest(corelation)%>%
+  na.omit() %>%
+  select(-biomass) %>%
+  gather(category, corelation, DBO:temperature)
+
+ggplot(cor_press, aes(x = corelation)) +
+  geom_histogram() +
+  facet_wrap(~category)
+```
