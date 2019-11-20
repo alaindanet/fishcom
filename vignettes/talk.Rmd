@@ -24,7 +24,7 @@ library(NetIndices)
 library(tidygraph)
 library(ggraph)
 library(lubridate)
-devtools::load_all()
+#devtools::load_all()
 theme_set(theme_alain())
 
 mypath <- rprojroot::find_package_root_file
@@ -162,7 +162,7 @@ save_plot("~/Documents/thesis/talks/fishcom_fig/stab_troph_level.pdf", p2, base_
 ## Stability & diversity by trophic group
 
 ```{r}
-net_troph_group <- temporal_network_metrics %>% 
+net_troph_group <- temporal_network_metrics_classes %>% 
   select(station, troph_group) %>%
   unnest() %>%
   filter(!is.na(troph_group), troph_group != 1) %>%

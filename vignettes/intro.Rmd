@@ -69,6 +69,7 @@ According to the postdoc advertisement:
   - [ ] network analysis:
     - [ ] Add corrected weighted trophic lvl (unsuccess)
 - [ ] Analysis:
+  - [ ] CV by trophic group in the two types of networks 
   - [ ] Dig in the cv versus richness relationship by trophic group
   - [ ] Productivity-diversity relationship
   - [x] Distance to source and river caracteristics

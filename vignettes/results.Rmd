@@ -12,7 +12,8 @@ vignette: >
 ```{r}
 mypath <- rprojroot::find_package_root_file
 data_common <- mypath("data")
-dest_dir <- mypath("data", "species")
+dest_dir <- mypath("data", "classes")
+#dest_dir <- mypath("data", "species")
 ```
 
 
@@ -24,19 +25,46 @@ knitr::opts_chunk$set(
   echo = FALSE
 )
 library(tidyverse)
+library(magrittr)
 library(ggpmisc)
 library(cowplot)
 library(kableExtra)
-library(magrittr)
 library(igraph)
 library(NetIndices)
 library(tidygraph)
 library(ggraph)
 library(lubridate)
+library(sf)
 #devtools::load_all()
 source(mypath("R", "misc.R"))
 source(mypath("R", "plot_methods.R"))
 theme_set(theme_alain())
+```
+
+```{r prepare basin data}
+myload(the_8_hydrologic_basin, station_analysis, dir = mypath("data"))
+
+station_analysis %<>%
+  sf::st_transform(crs = 2154)
+
+station_basin <- st_intersects(station_analysis, the_8_hydrologic_basin)
+station_analysis$basin <- purrr::map_chr(station_basin, function(x){
+  if (length(x) == 0) {
+   return(NA) 
+  }
+  the_8_hydrologic_basin[["CdBassinDC"]][x]
+})
+# Filter NA
+station_analysis %<>%
+  filter(!is.na(basin)) %>%
+  mutate(station = id) %>%
+  select(station, basin)
+st_geometry(station_analysis) <- NULL
+
+# How many station by basin:
+nb_st_basin <- station_analysis %>%
+  group_by(basin) %>%
+  summarise(nobs = n())
 ```
 
 # Network exploration 
@@ -63,7 +91,7 @@ plot.igraph(g,layout=lay,vertex.label=NA,vertex.size=2,edge.arrow.size=.5,edge.w
 ## Local network
 
 ```{r}
-myload(network_analysis, dir = dest_dir)
+myload(network_analysis, dir = mypath("data", "species"))
 myload(op_analysis, dir = data_common)
 net <- network_analysis %>%
   dplyr::select(opcod, network) %>%
@@ -127,7 +155,7 @@ myload(temporal_network_metrics, dir = dest_dir)
 myload(temporal_community_metrics, dir = data_common)
 
 cor_avg <- temporal_network_metrics %>%
-  select_at(vars(matches("med"))) %>%
+  select_at(vars(dplyr::matches("med"))) %>%
   cor()
 #knitr::kable(cor_avg)
 as.data.frame(round(cor_avg,2)) %>%
@@ -135,25 +163,28 @@ as.data.frame(round(cor_avg,2)) %>%
 	  "black")))) %>%
   mutate(variable = colnames(.)) %>%
   select(variable, everything()) %>%
-  kable(format = "html", escape = F)
-
+  kable(format = "html", escape = F) %>%
+  kable_styling() %>%
+  scroll_box(width = "100%", height = "400px")
 ```
 
 ```{r}
 cor_cv <- temporal_network_metrics %>%
-  select_at(vars(matches("cv"))) %>%
+  select_at(vars(dplyr::matches("cv"))) %>%
   cor()
 as.data.frame(round(cor_cv,2)) %>%
   mutate_all(funs(cell_spec(., "html", color = ifelse(abs(.) > .65 & . != 1, "red",
 	  "black")))) %>%
   mutate(variable = colnames(.)) %>%
   select(variable, everything()) %>%
-  kable(format = "html", escape = F)
+  kable(format = "html", escape = F) %>%
+  kable_styling() %>%
+  scroll_box(width = "100%", height = "400px")
 ```
 
 ```{r}
 cor_med <- temporal_network_metrics %>%
-  select_at(vars(matches("med"))) %>%
+  select_at(vars(dplyr::matches("med"))) %>%
   cor()
 as.data.frame(round(cor_med,2)) %>%
   mutate_all(funs(cell_spec(., "html", color = ifelse(abs(.) > .65 & . != 1, "red",
@@ -183,16 +214,37 @@ qplot(diversity, biomass_stab, data =  biomass_com, geom = "point") +
   xylabs(x = "diversity", y = "biomass_stab")
 ```
 
+## By basin
+
+```{r}
+biomass_com <- temporal_community_metrics %>%
+  select(station, biomass_stab, richness_cv, richness_med, betadiv) %>%
+  gather(type, diversity, richness_med, richness_cv, betadiv) %>%
+  left_join(station_analysis, by = "station")
+formula <- y ~ x #needed for stat_poly_eq
+qplot(log(diversity), log(biomass_stab), data =  biomass_com, geom = "point") +
+  facet_wrap(type~basin, scales = "free") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(x = "diversity", y = "biomass_stab")
+```
+
+
+
 # Biomass and network structure
 
 ```{r, fig.dim = c(14, 7)}
 # plot
 avg_network <- temporal_network_metrics %>%
-  select_at(vars(matches("med|station")))
+  select_at(vars(dplyr::matches("med|station")))
 biomass_stab_station <- temporal_community_metrics %>%
   select(station, biomass_stab)
 stab_biomass_net_avg <- left_join(avg_network, biomass_stab_station) %>%
-  gather(metrics, values, colnames(select_at(., vars((matches("med")))))) %>%
+  gather(metrics, values, colnames(select_at(., vars((dplyr::matches("med")))))) %>%
   mutate(metrics = str_replace(metrics, "_med", "")) %>%
   filter(metrics != "nbnode")
 
@@ -226,7 +278,7 @@ richness <- temporal_community_metrics %>%
   select(station, richness_med) %>%
   rename(richness = richness_med)
 richness_net_avg <- left_join(avg_network, richness) %>%
-  gather(metrics, values, colnames(select_at(., vars((matches("med")))))) %>%
+  gather(metrics, values, colnames(select_at(., vars((dplyr::matches("med")))))) %>%
   mutate(metrics = str_replace(metrics, "_med", "")) %>%
   filter(metrics != "nbnode")
 p <- ggplot(richness_net_avg, aes(y = values, x = richness)) +
@@ -253,8 +305,8 @@ net_troph_group <- temporal_network_metrics %>%
   unnest(troph_group) %>%
   mutate(troph_group = as.factor(troph_group))
 net_troph_group %<>%
-  select_at(vars(matches("_med|stab|station|troph_group"))) %>%
-  gather(metrics, values, colnames(select_at(., vars((matches("med")))))) %>%
+  select_at(vars(dplyr::matches("_med|stab|station|troph_group"))) %>%
+  gather(metrics, values, colnames(select_at(., vars((dplyr::matches("med")))))) %>%
   mutate(metrics = str_replace(metrics, "_med", ""))
 p <- ggplot(net_troph_group, aes(y = biomass_stab, x = values, color = troph_group)) +
   geom_point() +
@@ -263,7 +315,7 @@ p <- ggplot(net_troph_group, aes(y = biomass_stab, x = values, color = troph_gro
     values = c("blue", "green", "red"),
     name = "Trophic level"
     ) +
-  facet_grid(cols = vars(metrics), labeller = mylabel(), scales = "free_x") +
+  facet_wrap(~metrics, labeller = mylabel(), scales = "free_x") +
   geom_smooth(method = 'lm')+
   stat_poly_eq(
     formula = formula,
@@ -316,7 +368,7 @@ net_troph_group <- temporal_network_metrics %>%
   filter(!is.na(troph_group)) %>%
   mutate(troph_group = as.factor(troph_group))
 plot_stab_richness_troph_group <-
-  ggplot(net_troph_group, aes(y = biomass_stab, x = richness_avg)) +
+  ggplot(net_troph_group, aes(y = log(biomass_stab), x = richness_avg)) +
   geom_point() +
   facet_grid(cols = vars(troph_group)) +
   geom_smooth(method = 'lm')+
@@ -339,9 +391,49 @@ with the number of species in its trophic level.
 We saw that biomass stability at highest decreased with richness. However, in
 average, the biomass at the higher trophic level seemed more stable.
 
+## Ratio sp in high trophic group and low trophic group
+
+```{r}
+ratio_sp <- net_troph_group %>%
+  select(station, troph_group, richness_avg) %>%
+  spread(troph_group, richness_avg) %>%
+  mutate(sp_h_m = `3` / (`3` + `2`)) %>%
+  select(station, sp_h_m)
+
+ratio_bm <- net_troph_group %>%
+  select(station, troph_group, biomass_avg) %>%
+  spread(troph_group, biomass_avg) %>%
+  mutate(bm_h_m = `3` / (`3` + `2`)) %>%
+  select(station, bm_h_m)
+
+net_troph_group <- temporal_network_metrics %>%
+  left_join(ratio_sp, by = "station") %>%
+  left_join(ratio_bm, by = "station") %>%
+  select(station, troph_group, sp_h_m, bm_h_m) %>%
+  unnest() %>%
+  filter(!is.na(troph_group), troph_group != 1) %>%
+  mutate(troph_group = as.factor(troph_group)) %>%
+  gather(ratio_troph, value, sp_h_m, bm_h_m)
+
+plot_stab_richness_troph_group <-
+  ggplot(net_troph_group, aes(y = log(biomass_stab), x = value)) +
+  geom_point() +
+  facet_grid(cols = vars(troph_group), rows = vars(ratio_troph)) +
+  geom_smooth(method = 'lm')+
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  xylabs(
+    y = "biomass_stab"
+  ) + 
+    xlab("Ratio of biomass and species nb in high troph lvl compare to total")
+plot_stab_richness_troph_group
+```
 
 
-### Correlation between stability of trophic level and  richness
+### Correlation between stability of trophic level and richness
 
 ```{r, eval = FALSE}
 correlation_troph_group <- net_troph_group %>%
@@ -363,7 +455,7 @@ ggpairs(correlation_troph_group)
 biomass_prod_station <- temporal_community_metrics %>%
   select(station, biomass_avg)
 prod_biomass_net_avg <- left_join(avg_network, biomass_prod_station) %>%
-  gather(metrics, values, colnames(select_at(., vars((matches("med")))))) %>%
+  gather(metrics, values, colnames(select_at(., vars((dplyr::matches("med")))))) %>%
   mutate(metrics = str_replace(metrics, "_med", "")) %>%
   filter(metrics != "nbnode")
 
@@ -426,8 +518,8 @@ station_high_low_modularity <- temporal_network_metrics %>%
   select(station) %>%
   unlist
 names(station_high_low_modularity) <- c("high", "low") 
-
 ```
+
 ```{r}
 # High modularity
 net_ex <- filter(net, station == station_high_low_modularity["high"])
@@ -514,8 +606,12 @@ high_div_station <- temporal_community_metrics %>%
 ```{r, fig.dim = c(10, 7)}
 label_stab <- filter(temporal_community_metrics,
   station %in% high_div_station) %>%
-mutate(x_pos = ymd_hms("2015-01-01T15:00:00"), y_pos = 5000,
-text = paste0("Stability: ", round(biomass_stab,2))) 
+mutate(
+  x_pos = ymd_hms("2015-01-01T15:00:00"),
+  x_pos = as.Date(x_pos),
+  y_pos = 5000,
+  text = paste0("Stability: ", round(biomass_stab,2)),
+)
 ggplot(filter(community_metrics, station %in% high_div_station),
   aes(y = biomass, x = date)) +
   geom_line() +
@@ -584,8 +680,6 @@ ggplot(high_div_troph_group_3,
 filter(high_div_troph_group_3, station == 1823) 
 ```
 
-###
-
 
 # Map Stability 
 
@@ -601,16 +695,17 @@ ggplot(data = region_polygon) +
     scale_color_gradient(low = "red", high = "green")
 ```
 
+
 # Persistence of the community
 
 ## Betadiv (abundance) and network properties
 
 ```{r}
 betadiv <- temporal_community_metrics %>%
-  select_at(vars(matches("station|betadiv")))
+  select_at(vars(dplyr::matches("station|betadiv")))
 stab_com_net <- left_join(avg_network, betadiv) %>%
-  gather(metrics, values, colnames(select_at(., vars((matches("med")))))) %>%
-  gather(betadiv, betadiv_val, colnames(select_at(., vars((matches("betadiv")))))) %>%
+  gather(metrics, values, colnames(select_at(., vars((dplyr::matches("med")))))) %>%
+  gather(betadiv, betadiv_val, colnames(select_at(., vars((dplyr::matches("betadiv")))))) %>%
   mutate(metrics = str_replace(metrics, "_med", "")) %>%
   filter(metrics != "nbnode")
 ```

@@ -23,15 +23,42 @@ knitr::opts_chunk$set(
   echo = FALSE
 )
 library(tidyverse)
+library(magrittr)
 library(ggpmisc)
 library(cowplot)
 library(kableExtra)
-library(magrittr)
 source(mypath("R", "misc.R"))
 source(mypath("R", "plot_methods.R"))
 #devtools::load_all()
 theme_set(theme_alain())
 ```
+
+# Explore variance of species
+
+```{r}
+myload(community_analysis, op_analysis, dir = mypath("data"))
+
+synchrony <- get_sync_cv_mat(com_analysis = community_analysis,
+  op_analysis = op_analysis,
+  presence_threshold = 0.5)
+```
+
+```{r}
+arrange(synchrony, cv_com)
+
+myload(network_analysis, dir = mypath("data", "classes"))
+test <- select(network_analysis, opcod, composition) %>%
+  unnest(composition)
+test2 <- get_sync_cv_mat(com_analysis = test, op_analysis = op_analysis)
+
+plot_dyn_sp_biomass(sync = test2, station = 122, .log = TRUE)
+plot_dyn_sp_biomass(sync = test2, station = 21877, .log = TRUE)
+
+```
+
+
+
+# Synchrony and community metrics 
 
 ```{r load dataset, include = FALSE}
 myload(synchrony, temporal_community_metrics, dir = mypath("data"))

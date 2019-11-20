@@ -43,7 +43,7 @@ theme_set(theme_alain())
 ```{r load dataset, include = FALSE}
 #myload(yearly_press_interp_mv_avg, dir = mypath("data-raw", "polluants"))
 myload(community_metrics, synchrony, temporal_press_polluants,
-  temporal_evt_press, temporal_community_metrics, op_analysis,
+  press_metrics, temporal_community_metrics, op_analysis,
   dir = mypath("data"))
 
 ```
@@ -63,6 +63,15 @@ kable(polluant_units)
 ```{r}
 myload(press_cat, dir = mypath("data-raw", "polluants"))
 kable(press_cat)
+```
+
+## Press trough time
+
+```{r}
+ggplot(press_metrics, aes(y = press, x = year)) +
+  stat_summary(fun.y = "mean", geom = "line") +
+  stat_summary(geom="ribbon", fun.data=mean_cl_normal, colour=NA,alpha=0.1)+
+  facet_wrap(~category, scales = "free_y")
 ```
 
 
@@ -87,13 +96,12 @@ as.data.frame(round(m, 2)) %>%
 library(ade4)
 library(factoextra)
 
-
 res.pca <- dudi.pca(na.omit(select(var_values, -id)),
   scannf = FALSE,   # Hide scree plot
   nf = 5            # Number of components kept in the results
 )
 
-fviz_eig(res.pca)
+eig_plot <- fviz_eig(res.pca)
 ```
 
 ```{r}
@@ -105,7 +113,7 @@ pca_plot <- lapply(list(c(1,2), c(1, 3), c(3, 2)), function (axes) {
     repel = TRUE     # Avoid text overlapping
   )
 })
-plot_grid(plotlist = pca_plot)
+plot_grid(pca_plot[[1]], pca_plot[[2]], pca_plot[[3]], eig_plot)
 ```
 
 
@@ -128,7 +136,6 @@ biomass_com <- temporal_community_metrics %>%
 biomass_com %<>%
   left_join(rename(temporal_press_polluants, station = id), by = "station")
 biomass_com %<>% na.omit()
-
 
 pca_press_data <- biomass_com %>%
   select(station, richness_med, category, press) %>%
@@ -159,8 +166,6 @@ plot_grid(plotlist = pca_plot)
 
 # Press and stability
 
-
-
 ```{r}
 p1 <- ggplot(biomass_com, aes(x = press, y = log(biomass_stab))) +
   geom_point() +
@@ -185,12 +190,11 @@ mod_press_data <- biomass_com %>%
 model <- lm(log10(biomass_stab) ~ .*richness_med,
   select(mod_press_data, -station))
 pander(summary(model))
-par(mfrow = c(2,2))
-plot(model)
+#par(mfrow = c(2,2))
+#plot(model)
 ```
 ```{r}
-model$coefficients[["richness_med"]]
-summary.lm
+#model$coefficients[["richness_med"]]
 coeff <- broom::tidy(model) %>%
   mutate(
     ci5 = estimate - 1.96 * std.error,
@@ -210,8 +214,8 @@ Does temperature increase species richness which in turn decreases biomass
 stability? Does the effects of species richness are an artefact of temperature?
 
 ```{r}
-formula <- y ~ x + I(x^2) + I(x^3)
-p1 <- ggplot(mod_press_data, aes(x = temperature, y = richness_med)) +
+formula <- y ~ x 
+p1 <- ggplot(mod_press_data, aes(x = temperature, y = log(richness_med))) +
   geom_smooth(method = 'lm', formula = formula) +
   geom_point() +
   stat_poly_eq(
@@ -225,12 +229,48 @@ p1
 
 
 ```{r}
-vif_mod <- car::vif(model)
-kable(vif_mod)
+car::vif(model)
+#kable(vif_mod)
+model <- lm(log10(biomass_stab) ~ .,
+  select(mod_press_data, -station, -richness_med))
+pander(summary(model))
+car::vif(model)
 ```
 
 ```{r}
-cor(na.omit(select(mod_press_data, -station, -biomass_stab)), method = "spearman")
+cor(na.omit(select(mod_press_data, -station, -biomass_stab)), method = "spearman") %>%
+  round(., 2)
+```
+
+### Structural Equation Modeling
+
+```{r}
+options(width = 120)
+
+cat_to_rm <- c("mes", "disolved_oxygen",
+  "matieres organiques", "ph", "flow", "industry", "pcb",
+  "micropolluants organiques", "micropolluants mineraux", "hap")
+library(piecewiseSEM)
+dsem <- biomass_com %>%
+  select(station, biomass_stab, richness_med, category, press) %>%
+  filter(!category %in% cat_to_rm) %>%
+  spread(category, press) %>%
+  na.omit()
+
+model <- psem(
+  lm(log(biomass_stab) ~ richness_med * (DBO + fungicides + herbicides + insecticides + temperature), dsem),
+  lm(richness_med ~ temperature + DBO + fungicides + herbicides + insecticides, dsem),
+  lm(DBO ~ nitrates * phosphore, dsem),
+  richness_med %~~% temperature,
+  nitrates %~~% phosphore
+  )
+summary(model, .progressBar = F)
+#hist(biomass_com$richness_med, breaks = seq(0, 25))
+model2 <- psem(
+  lm(log(biomass_stab) ~ richness_med + DBO + fungicides + herbicides + insecticides + temperature, dsem),
+  lm(richness_med ~ temperature, dsem)
+  )
+summary(model2, .progressBar = F)
 ```
 
 
@@ -277,6 +317,7 @@ plot(model)
 ### Persistance of biomass composition
 
 ```{r}
+options(width = 80)
 p1 <- ggplot(biomass_com, aes(x = press, y = log10(1/(betadiv)))) +
   geom_point() +
   facet_wrap(~ category, scales = "free_x") +
@@ -455,12 +496,44 @@ ggplot(stab_biomass_net_med, aes(y = biomass_stab, x = values)) +
 mod_press_data <- stab_biomass_net_med %>%
   spread(metrics, values)
 
-model <- lm(log(biomass_stab) ~ richness*.,
-  select(mod_press_data, -station)) 
+model <- lm(log(biomass_stab) ~ .,
+  select(mod_press_data, -station, -richness, -connectance)) 
+pander(summary(model))
+car::vif(model)
+par(mfrow = c(2,2))
+plot(model)
+```
+
+
+
+## With synchrony
+
+### Synchrony
+
+```{r}
+mod_sync_net <- synchrony %>%
+  left_join(mod_press_data)
+model <- lm(synchrony ~ .,
+  select(mod_sync_net, synchrony, connectance_corrected, max_troph_level,
+     modularity, nestedness, richness))
+car::vif(model)
 pander(summary(model))
 par(mfrow = c(2,2))
 plot(model)
+```
 
+### CV_sp
+
+```{r}
+mod_sync_net <- synchrony %>%
+  left_join(mod_press_data)
+model <- lm(log10(cv_sp) ~ .,
+  select(mod_sync_net, cv_sp, connectance_corrected, max_troph_level,
+     modularity, nestedness, richness))
+car::vif(model)
+pander(summary(model))
+par(mfrow = c(2,2))
+plot(model)
 ```
 
 # Distribution of biomass by trophic level
@@ -497,8 +570,6 @@ compute_troph_lvl_moment <- function(
 troph_lvl_moment <- compute_troph_lvl_moment(troph_bm)%>%
   left_join(select(op_analysis, station, opcod, date)) %>%
   filter(! cwv < 0.01)
-
-
 ggplot(select(troph_lvl_moment, -opcod, -tot_weight, -date) %>% gather(moment, value, cwm:cws),
   aes(x = value)) +
   geom_histogram() +
@@ -533,19 +604,42 @@ ggplot(biomass_moment, aes(x = value, y = log10(tot_weight))) +
   geom_point(aes(color = station))
 
 ```
+```{r}
+samp_opcod <- sample(troph_bm[["opcod"]], 12)
+dist_troph_bm <- troph_bm %>% 
+  left_join(select(op_analysis, station, opcod, date)) %>%
+  filter(opcod %in% samp_opcod)
+
+temp_moments <- troph_lvl_moment  %>%
+  filter(opcod %in% samp_opcod) %>%
+  select(opcod, cwm:cws) %>%
+  mutate(troph_level = 3.5, biomass = 20) %>%
+  mutate_at(vars(starts_with("cw")), ~round(., 2)) %>%
+  mutate(label = paste("M = ", cwm, "\nV = ", cwv, "\nK = ", cwk , "\nS = ", cws))
+
+ggplot(dist_troph_bm, aes(x = troph_level, weight = log10(biomass))) +
+  geom_histogram() +
+  facet_wrap(~opcod) +
+  labs(x = "Trophic level", y = "Log10 of Biomass") +
+  geom_text(data = temp_moments, aes(x = troph_level, y = biomass, label = label))
+```
+
 
 ```{r}
 stab_moment <- troph_lvl_moment %>%
   gather(moment, value, cwm:cws) %>%
   group_by(station, moment) %>%
-  summarise(med = median(value)) %>%
-  left_join(temporal_community_metrics %>%
-  select(station, biomass_stab, richness_med, betadiv))
+  summarise(med = median(value), cv = sd(value) / mean(value)) %>%
+  left_join(synchrony %>%
+  select(station, cv_com, cv_sp, synchrony)) %>%
+  gather(sync, value, cv_com, cv_sp, synchrony)
 
-ggplot(stab_moment, aes(x = med, y = biomass_stab)) +
-  facet_wrap(~moment, scales = "free_x") +
-  geom_point()
-  
+ggplot(stab_moment, aes(x = med, y = value)) +
+  facet_grid(sync~moment, scales = "free_x") +
+  geom_point() +
+  labs(title = "Stability metrics versus the moment of biomass distribution by
+    trophic level"
+  )
 ```
 
 ```{r}
@@ -558,8 +652,42 @@ dist_troph_bm <- troph_bm %>%
 ggplot(dist_troph_bm, aes(x = troph_level, weight = log10(biomass))) +
   geom_histogram() +
   facet_wrap(~opcod)
+```
 
+### Coefficients of variation
 
+```{r}
+moment_model_biomass <- stab_moment %>%
+  ungroup() %>%
+  gather(metric, med_cv, med, cv) %>%
+  unite(moment, metric, moment, metric,sep= "_") %>%
+  spread(moment, med_cv) %>%
+  spread(sync, value) %>%
+  select(-station)
+
+model <- lm(1/cv_com ~ .,
+  select(moment_model_biomass, -matches("med"), -cv_sp, -synchrony))
+pander(summary(model))
+car::vif(model) #Too much colinearity
+
+model <- lm(log10(1/cv_com) ~ .,
+  select(moment_model_biomass, -matches("med"), -cv_sp, -synchrony))
+car::vif(model) # ok
+pander(summary(model))
+par(mfrow = c(2,2))
+plot(model)
+
+```
+
+### Median 
+
+```{r}
+model <- lm(log10(1/cv_com) ~ .,
+  select(moment_model_biomass, -matches("cv_cw"), -med_cws, -synchrony, -cv_sp))
+car::vif(model) # ok
+pander(summary(model))
+par(mfrow = c(2,2))
+plot(model)
 ```
 
 
@@ -633,12 +761,6 @@ ggplot(stab_moment, aes(x = med, y = biomass_stab)) +
     aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
     parse = TRUE) +
   geom_point()
-
-#library("PearsonDS")
-#moments <- c(mean = 3.3,variance = .2,skewness = -0.7, kurtosis = 1.75)
-#rpearson(10, moments = moments)
-#plot(function(x) dpearson(x, moments), -4.5, 4.5)
-  
 ```
 
 ```{r}
@@ -684,11 +806,12 @@ mod_tot_troph_dist <- troph_level_dist %>%
   spread(moment, value) %>%
   select(biomass_stab, biomass_cwk_cv:richness_cwv_med)
 
-cor(mod_tot_troph_dist)
+#cor(mod_tot_troph_dist)
 
-model <- lm(log10(biomass_stab) ~ ., select(mod_tot_troph_dist,
-    -biomass_cws_med, - richness_cwm_med, -biomass_cwv_med)) 
-car::vif(model)
+#model <- lm(log10(biomass_stab) ~ ., select(mod_tot_troph_dist,
+    #-biomass_cws_med, - richness_cwm_med, -biomass_cwv_med)) 
+#car::vif(model)
+#pander(model)
 ```
 
 
@@ -713,52 +836,42 @@ plot_grid(plotlist = pca_plot)
 
 ```{r}
 samp_opcod <- sample(troph_bm[["opcod"]], 12)
-dist_troph_bm <- troph_bm %>% 
+dist_troph_div <- troph_div %>% 
   left_join(select(op_analysis, station, opcod, date)) %>%
   filter(opcod %in% samp_opcod)
 
-temp_moments <- troph_lvl_moment  %>%
+temp_moments <- troph_div_moment  %>%
   filter(opcod %in% samp_opcod) %>%
   select(opcod, cwm:cws) %>%
-  mutate(troph_level = 3.5, biomass = 20) %>%
+  mutate(troph_level = 3.5, richness = 4) %>%
   mutate_at(vars(starts_with("cw")), ~round(., 2)) %>%
   mutate(label = paste("M = ", cwm, "\nV = ", cwv, "\nK = ", cwk , "\nS = ", cws))
 
-ggplot(dist_troph_bm, aes(x = troph_level, weight = log10(biomass))) +
+ggplot(dist_troph_div, aes(x = troph_level, weight = richness)) +
   geom_histogram() +
   facet_wrap(~opcod) +
   labs(x = "Trophic level", y = "Log10 of Biomass") +
-  geom_text(data = temp_moments, aes(x = troph_level, y = biomass, label = label))
+  geom_text(data = temp_moments, aes(x = troph_level, y = richness, label = label))
 ```
 
 ```{r}
+myload(temporal_network_metrics, dir = mypath("data", "classes"))
+network_metrics
+diet <- temporal_network_metrics %>%
+  unnest(data) %>%
+  select(station, diet, rel_biomass_med)
 
+press <- temporal_press_polluants %>%
+  filter(!category %in% cat_to_rm, category != "NA") %>%
+  select(id, category, press) %>%
+  rename(station = id)
+
+press_diet <- left_join(diet, press, by = "station")
+
+ggplot(press_diet, aes(x = press, y = log10(rel_biomass_med))) +
+  facet_grid(diet ~ category, scales = "free_x") +
+  geom_point()
 ```
 
 
-# Structural Equation Modeling
-
-```{r}
-library(piecewiseSEM)
-dsem <- biomass_com %>%
-  select(station, biomass_stab, richness_med, category, press) %>%
-  #filter(!category %in% cat_to_rm) %>%
-  spread(category, press) %>%
-  na.omit()
-
-model <- psem(
-  lm(log(biomass_stab) ~ richness_med * (DBO + fungicides + herbicides + insecticides + temperature), dsem),
-  glm(richness_med ~ temperature + DBO + fungicides + herbicides + insecticides, "gaussian", dsem),
-  lm(DBO ~ nitrates * phosphore, dsem),
-  richness_med %~~% temperature,
-  nitrates %~~% phosphore
-  )
-summary(model, .progressBar = F)
-hist(biomass_com$richness_med, breaks = seq(0, 25))
-model2 <- psem(
-  lm(log(biomass_stab) ~ richness_med + DBO + fungicides + herbicides + insecticides + temperature, dsem),
-  lm(richness_med ~ temperature, dsem)
-  )
-summary(model2, .progressBar = F)
-```
 
