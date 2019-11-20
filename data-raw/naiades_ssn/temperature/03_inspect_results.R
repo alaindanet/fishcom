@@ -54,26 +54,42 @@ interpolation %<>%
 })
   )
   
+test <- interpolation %>%
+  unnest(prediction) %>%
+  select(id, year, value, value.predSE) %>%
+  mutate(year = as.integer(year)) %>%
+  group_by(id, year) %>%
+  summarise(n = n())
+summary(test$n)
+
 yearly_temp_press_interp_mv_avg <- interpolation %>%
   unnest(prediction) %>%
-  select(id, year, value, value.predSE)
+  select(id, year, value, value.predSE) %>%
+  group_by(id, year) %>%
+  arrange(value.predSE) %>%
+  slice(1) %>%
+  ungroup() %>%
+  na.omit()
 
 cv_temp_press_interp_mv_avg <- interpolation %>%
   unnest(cross_v) %>%
-  select(-ssn, -prediction)
+  select(-ssn, -prediction) %>%
+  group_by(basin, year) %>%
+  arrange(RMSPE) %>%
+  slice(1) %>%
+  ungroup()
 
 mysave(yearly_temp_press_interp_mv_avg, cv_temp_press_interp_mv_avg,
   dir = mypath("data-raw", "naiades_temperatures"), overwrite = TRUE)
 
 myload(yearly_temp_press_interp_mv_avg, dir = mypath("data-raw", "naiades_temperatures"))
 
-
 myload(yearly_avg_temp, dir = mypath("data-raw", "naiades_temperatures"))
 dist_yearly_avg_temp <- yearly_avg_temp %>%
   summarise(min = min(value, na.rm = TRUE), max = max(value, na.rm = TRUE))
 
 # Filter abberant values:
-options(mc.cores = 15)
+options(mc.cores = 3)
 library(parallel)
 yearly_temp_press_interp_mv_avg$value_corrected <- mcMap(
   function (x, distri) {

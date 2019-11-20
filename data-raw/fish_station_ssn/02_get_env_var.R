@@ -38,7 +38,7 @@ myload(ssn, dir = mypath("data-raw", "fish_station_ssn"))
 ssn_df <- getSSNdata.frame(ssn) 
 ssn_df %<>%
   as_tibble() %>%
-  dplyr::select(station, upDist, avSloA, avAltA)
+  dplyr::select(station, avSloA, avAltA)
 
 # Collect latitude and longitude 
 myload(station_analysis, dir = mypath("data"))
@@ -52,6 +52,27 @@ ids <- st_drop_geometry(station_analysis) %>%
 
 geo_station <- cbind(ids, st_coordinates(station_analysis)) %>%
   left_join(ssn_df) %>%
-  rename(long = X, lat = Y, source_dist = upDist, slope = avSloA, alt = avAltA)
+  rename(long = X, lat = Y, slope = avSloA, alt = avAltA)
+
+# Add rht attributes
+myload(attr_rht, dir = mypath("data-raw"))
+attr_rht %<>%
+  dplyr::select(id_drain, d_source, strahler, region_csp) %>%
+  rename(ID_DRAIN = id_drain)
+rht %<>%
+  left_join(attr_rht, by = "ID_DRAIN")
+
+match_station_rht <- match_pt_line(
+  station_analysis, rht, start_buffer = 25, inc_buffer = 100)
+
+station_analysis$ID_DRAIN <-
+  rht$ID_DRAIN[unlist(match_station_rht)]
+station_analysis %<>%
+  left_join(st_drop_geometry(rht), by = "ID_DRAIN") %>%
+  dplyr::select(station, d_source, strahler, region_csp)
+
+geo_station %<>%
+  left_join(station_analysis, by = "station") %>%
+  dplyr::select(-geometry)
 
 mysave(geo_station, dir = mypath("data"), overwrite = TRUE)

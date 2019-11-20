@@ -105,7 +105,7 @@ summary(trophic_level)
 ## Split trophic level in three classes:
 trophic_class <- split_in_classes(trophic_level$troph_level, class_method = "percentile",
   nb_class = 3, round_limits = FALSE)
-mysave(trophic_class, dir = dest_dir, overwrite = TRUE)
+mysave(trophic_level, trophic_class, dir = data_common, overwrite = TRUE)
 
 ## Assign trophic group to each node  
 trophic_level %<>%
@@ -115,14 +115,20 @@ trophic_level %<>%
 
 ## Assign to each network its trophic group:
 source('../analysis/misc/parallel_setup.R')
+
+#if (!is.null(options("network.type")) & options("network.type") == "species") {
+  #var_chr <- "species"
+#} else {
+  var_chr <- "sp_class"
+#}
 network_analysis %<>%
   mutate(
-  composition = furrr::future_map(composition, function (compo, troph_group){
+  composition = furrr::future_map(composition, function (compo, troph_group, var2join){
     if ("troph_group" %in% colnames(network_analysis)) {
       compo %<>% select(-troph_group)
     }
-    left_join(compo, troph_group, by = "sp_class")
-}, troph_group = trophic_level))
+    left_join(compo, troph_group, by = var2join)
+}, troph_group = trophic_level, var2join = var_chr))
 
 ## Compute trophic level by species:
 if (!is.null(options("network.type")) & options("network.type") == "species") {
