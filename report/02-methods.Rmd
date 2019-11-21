@@ -5,6 +5,8 @@ We describe our methods in this chapter.
 ## Data collection
 
 
+
+
 ## Network building
 
 
@@ -209,6 +211,88 @@ sampled. It would be nice to look at the tendency by station.**
 
 ## Analysis
 
+### Community 
+
+Community composition were analyzed thanks to [NMDS](https://jonlefcheck.net/2012/10/24/nmds-tutorial-in-r/). 
+
+```{r}
+myload(community_metrics, temporal_community_metrics, synchrony, op_analysis, dir = data_common)
+myload(community_analysis, dir = data_common)
+myload(network_analysis, dir = mypath("data", "classes"))
+myload(habitat_pressure, dir = mypath("report"))
+```
+
+```{r}
+com <- ungroup(community_analysis) %>%
+  select(opcod, species, biomass) %>%
+  spread(species, biomass) %>%
+  left_join(op_analysis[, c("opcod", "station")], by = "opcod") %>%
+  mutate_all(list(~ ifelse(is.na(.), 0, .))) %>%
+  select(-opcod) %>%
+  group_by(station) %>%
+  summarise_all(list(median))
+
+com_mat <- as.matrix(com[, names(com) != "station"]) 
+```
+
+```{r}
+library(vegan)
+
+nmds <- metaMDS(com_mat, k=3, trymax = 100)
+
+stressplot(nmds)
+plot(nmds)
+ordiplot(nmds,type="n")
+orditorp(nmds,display="species",col="gray",air=0.01)
+```
+
+```{r}
+# Add habitat
+match_st <- match(habitat_pressure$station, com$station)
+habitat <- habitat_pressure[order(match_st), ]
+match_st_com <- match(temporal_community_metrics$station, com$station)
+com_metrics <- temporal_community_metrics[order(match_st_com), ]
+
+ordisurf(nmds,habitat$alt,main="",col="forestgreen")
+```
+
+```{r}
+
+hab_var <- c("temperature", "alt", "lat", "flow", "width_river_mean", "DBO")
+par(mfrow = c(2,3))
+for (i in seq_along(hab_var)) {
+  ordisurf(nmds, habitat[[hab_var[i]]], main = hab_var[i], col = "brown")
+}
+
+```
+
+```{r}
+com_var <- c("richness_med", "biomass_stab", "biomass_med")
+par(mfrow = c(2,2))
+for (i in seq_along(com_var)) {
+  ordisurf(nmds, com_metrics[[com_var[i]]], main = com_var[i], col =
+    "forestgreen")
+}
+```
+
+```{r basin-st}
+station_analysis <- get_basin_station(sf_obj = TRUE)
+plot(station_analysis[,"basin"])
+# How many station by basin:
+nb_st_basin <- station_analysis %>%
+  group_by(basin) %>%
+  summarise(nobs = n())
+```
+
+```{r basin-com}
+match_st_basin <- match(station_analysis$station, com$station)
+st_basin <- station_analysis[order(match_st_basin), ]
+
+ordiplot(nmds,type="n")
+orditorp(nmds,display="species",col="red",air=0.01)
+ordihull(nmds, groups = st_basin[["basin"]], draw="polygon",col="grey90",label=F)
+```
+
 ### Network
 
 ### Stability
@@ -221,10 +305,97 @@ which species are driving the relationship between CV and species richness.
 Species contribution to a metric can be computed as follow:
 
 $$
-C_k = CV_{-k} - CV
+C_{k} = CV_{-k} - CV
 $$
 
 
 ### Pressure
 
 
+### Time series classification  
+
+
+```{r load dataset, include = FALSE}
+library(jmotif)
+myload(community_metrics, op_analysis, dir = mypath("data"))
+community_metrics %<>% left_join(select(op_analysis, opcod, station, date))
+```
+
+```{r}
+ts_biomass  <- community_metrics %>%
+  select(station, date, biomass) %>%
+  mutate(station = as.character(station)) %>%
+  group_by(station) %>%
+  arrange(date) %>%
+  nest()
+
+ts_biomass %<>%
+  mutate(
+    zts = map(data, function(x) znorm(x$biomass, threshold = 0.01)),
+    paa = map(zts, ~paa(., 3)),
+    sax = map_chr(paa, ~series_to_string(., 3))
+  )
+
+biomass_ts_sax <- ts_biomass 
+mysave(biomass_ts_sax, dir = mypath("data"), overwrite = TRUE)
+```
+
+```{r}
+pattern_dist <- ts_biomass %>%
+  group_by(sax) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count))
+ggplot(ts_biomass, aes(x = sax)) +
+  geom_histogram(stat = "count")
+```
+
+```{r}
+test <- ts_biomass %>%
+  filter(sax %in% c("cba", "bbb", "cab", "abc", "acb", "bca", "bac", "cbb")) %>%
+  group_by(sax) %>%
+  sample_n(10) %>%
+  mutate(
+    paa2 = map2(data, zts, function (x, zts) {
+      cbind(x[,1], zts)
+  }),
+    id_sta = as.character(seq(1,n()))
+
+  ) %>%
+  unnest(paa2)
+
+ggplot(test, aes(x = date, y = zts)) +
+  geom_line(aes(color = id_sta)) +
+  facet_wrap(~ sax)
+
+```
+
+```{r}
+myload(polluant_units, dir = mypath("data-raw", "polluants", "naiades_data"))
+
+myload(press_metrics, dir = mypath("data"))
+press_year <- press_metrics %>%
+  filter(category %in% c("fungicides", "herbicides", "insecticides", "DBO", "temperature"))
+
+biomass <- community_metrics %>%
+  mutate(
+    year = lubridate::year(date),
+    category = "biomass",
+    press = biomass 
+    ) %>%
+  select(station, year, category, press)
+press_biomass <- press_year %>%
+  bind_rows(rename(biomass, id = station)) %>%
+  na.omit()
+```
+
+```{r}
+samp_station <- sample(unique(press_biomass$id), 10)
+temp <- press_biomass %>%
+  mutate(id = as.character(id)) %>%
+  filter(id %in% samp_station)
+
+ggplot(temp, aes(y = press, x = year)) +
+  facet_wrap(~category, scales = "free_y") +
+  geom_line(aes(color = id))
+
+```

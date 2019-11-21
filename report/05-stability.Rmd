@@ -8,19 +8,25 @@ myload(community_metrics, temporal_community_metrics, synchrony, op_analysis, di
 myload(network_analysis, dir = mypath("data", "classes"))
 myload(trophic_level, trophic_class, dir = mypath("data"))
 source(mypath("R", "synchrony.R"))
+source(mypath("R", "geo_methods.R"))
 source(mypath("R", "local_network_build.R"))
 ```
 ```{r}
-temporal_network_metrics_classes %>%
+st_basin <- get_basin_station() 
+myload(region_polygon, dir = mypath("data"))
+stab_div_basin <- temporal_network_metrics_classes %>%
   select(station, troph_group) %>%
   unnest(troph_group) %>%
   filter(troph_group != 1) %>%
-  mutate(troph_group = as.factor(troph_group)) 
-%>%
-  select(station, troph_group, biomass_cv, richness_avg, nbnode_med) %>%
-  gather(richness_type, div, richness_avg, nbnode_med) %>%
-  ggplot(aes(x = div, y = biomass_cv, color = troph_group)) +
-  facet_grid(cols = vars(richness_type), scales = "free_x") +
+  mutate(troph_group = as.factor(troph_group)) %>%
+  select(station, troph_group, biomass_stab, richness_avg) %>%
+  left_join(st_basin, by = "station") %>%
+  filter(!is.na(basin))
+
+# By basin
+p_stab_div_basin <- ggplot(stab_div_basin,
+  aes(x = richness_avg, y = biomass_stab, color = troph_group)) +
+  facet_wrap(~basin, ncol = 4) +
   geom_point() +
   stat_poly_eq(
     formula = y ~ x,
@@ -32,7 +38,64 @@ temporal_network_metrics_classes %>%
     labels = troph_group_labeller(),
     values = c("blue", "green", "red"),
     name = "Trophic level"
-    )
+  )
+# Total
+p_stab_div_tot <-  ggplot(stab_div_basin,
+  aes(x = richness_avg, y = biomass_stab, color = troph_group)) +
+  geom_point() +
+  stat_poly_eq(
+    formula = y ~ x,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  geom_smooth(method = "lm", formula = y ~ x) +
+  ggplot2::scale_color_manual(
+    labels = troph_group_labeller(),
+    values = c("blue", "green", "red"),
+    name = "Trophic level"
+  )
+
+plot_grid(p_stab_div_basin, p_stab_div_tot, nrow = 2)
+
+```
+
+```{r}
+myload(biomass_ts_sax, dir = mypath("data"))
+p_bbb_stab_div <- stab_div_basin %>%
+  mutate(station = as.character(station)) %>%
+  left_join(biomass_ts_sax[, c("station", "sax")], by = "station") %>%
+  filter(sax == "bbb") %>%
+  ggplot(aes(x = richness_avg, y = biomass_stab, color = troph_group)) +
+  geom_point() +
+  stat_poly_eq(
+    formula = y ~ x,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  geom_smooth(method = "lm", formula = y ~ x) +
+  ggplot2::scale_color_manual(
+    labels = troph_group_labeller(),
+    values = c("blue", "green", "red"),
+    name = "Trophic level"
+  )
+
+station_map <- get_basin_station(sf_obj = TRUE) %>%
+  mutate(station = as.character(station)) %>%
+  left_join(biomass_ts_sax[, c("station", "sax")], by = "station") %>%
+  mutate(type = ifelse(sax == "bbb", "stable", "unstable")) %>%
+  select(type)
+
+p_bbb_map <- ggplot(region_polygon) +
+  geom_sf() +
+  geom_sf(data = station_map, aes(color = type))
+#plot(station_map, pch = 16)
+
+plot_grid(p_bbb_stab_div, p_bbb_map, ncol = 2)
+```
+
+```{r temp-grp}
+myload(habitat_pressure, dir = mypath("report"))
+
 ```
 
 
@@ -40,9 +103,6 @@ The stability of biomass is determined by the standard deviation and the average
 biomass of the community.
 
 ### Decompose stability
-
-One missing part was the fact that we do not know the assembly rules of the
-trophic group.
 
 
 ```{r}
@@ -53,10 +113,6 @@ cv_bm_div_troph_grp <- temporal_network_metrics_classes %>%
   rename(bm_st = biomass_avg, div_st = richness_avg, cv_st = biomass_cv) %>%
   mutate(troph_group = as.factor(troph_group))
 
-cv_bm_div_troph_grp %>%
-  ggplot(aes(y = cv_st, x = div_st)) +
-  geom_point() +
-  facet_grid(cols = vars(troph_group))
 ```
 
 ```{r}
@@ -756,8 +812,6 @@ p <- ggplot(net_troph_group, aes(y = biomass_stab, x = values, color = troph_gro
 p
 ```
 
-
-
 The Figure \@ref(fig:stab-comp) showed that medium trophic level part of the
 network had a positive stability-diversity relationship with while high
 trophic level had a negative one.  
@@ -815,7 +869,6 @@ ratio_bm <- net_troph_group %>%
   spread(troph_group, biomass_avg) %>%
   mutate(bm_h_m = `3` / (`3` + `2`)) %>%
   select(station, bm_h_m)
-
 
 net_troph_group <- temporal_network_metrics_classes %>%
   left_join(ratio_sp, by = "station") %>%
