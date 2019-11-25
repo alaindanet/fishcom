@@ -93,8 +93,43 @@ p_bbb_map <- ggplot(region_polygon) +
 plot_grid(p_bbb_stab_div, p_bbb_map, ncol = 2)
 ```
 
-```{r temp-grp}
+```{r}
 myload(habitat_pressure, dir = mypath("report"))
+```
+
+```{r bimod-stab-div, fig.cap = "Relationship between stability and diversity by spliting dataset in two according to an environmental variable. The threshold for the dataset split is the median of the environmental variable."}
+plot_bin_stab_div <- function (env = NULL) {
+
+  habitat_pressure$env_bin <- ifelse(
+    habitat_pressure[[env]] < median(habitat_pressure[[env]], na.rm = TRUE),
+    "inf", "sup")
+  habitat_pressure <- na.omit(habitat_pressure[, c("station", "env_bin")])
+  habitat_pressure %>%
+    left_join(stab_div_basin, by = "station") %>%
+    ggplot(aes(x = richness_avg, y = biomass_stab, color = troph_group)) +
+    geom_point() +
+    facet_grid(cols = vars(env_bin)) +
+    stat_poly_eq(
+      formula = y ~ x,
+      eq.with.lhs = "italic(hat(y))~`=`~",
+      aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+      parse = TRUE) +
+    geom_smooth(method = "lm", formula = y ~ x) +
+    ggplot2::scale_color_manual(
+      labels = troph_group_labeller(),
+      values = c("blue", "green", "red"),
+      name = "Trophic level"
+    ) +
+  labs(title = env, x = "Average species richness", y = "Biomass stability")
+}
+
+#width_river_mean avg_depth_station_mean
+env <- c("width_river_mean", "avg_depth_station_mean", "lat", "long",
+  "temperature", "flow", "d_source", "DBO")
+mult_plot_stab_div_bin <- map(env, ~plot_bin_stab_div(env = .x))
+plot_bin_stab_div(env = "width_river_mean")
+
+plot_grid(plotlist = mult_plot_stab_div_bin)
 
 ```
 

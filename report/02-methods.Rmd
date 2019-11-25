@@ -140,6 +140,9 @@ habitat_pressure <- habitat_station
 mysave(habitat_pressure, dir = mypath("report"), overwrite = TRUE)
 ```
 
+
+### Relationship between environmental variables
+
 ```{r pca-hab, fig.dim = c(10, 7), fig.cap = "PCA over habitat description"}
 library(ade4)
 library(factoextra)
@@ -169,6 +172,27 @@ The second axis (abscissa) discriminated station in altitude with high slope,
 composed of rocky habitat from the ones that had higher average annual
 temperature located in the south, with more enrichment (DBO, nitrates,
 phosphorus) and that are more vegetated.
+
+#### Distribution of environmental variables
+
+```{r dist-env, fig.cap = "Histogram of the station average environmental values through time."}
+
+habitat_pressure %>%
+  select(station, width_river_mean:temperature) %>%
+  gather(env_var, value, width_river_mean:temperature) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram() +
+  facet_wrap(facets = ~ env_var, ncol = 3, scales = "free")
+```
+
+
+The figure \@ref[fig:dist-env] shows that, taking the environmental values one
+by one, there was no apparent bimodality for habitat description such as
+altitude, slope, distance from source, strahler order, river width and depth, flow, temperature.
+However, variables such as latitude, insecticides, fungicides, herbicides
+displayed bimodality. Those bimodalities will be helpful to test relationship
+between stability and diversity for different subset of the dataset and so, test
+the robustness of the relationship.
 
 ### Pressure
 

@@ -69,12 +69,13 @@ According to the postdoc advertisement:
   - [ ] network analysis:
     - [ ] Add corrected weighted trophic lvl (unsuccess)
 - [ ] Analysis:
-  - [ ] CV by trophic group in the two types of networks 
-  - [ ] Dig in the cv versus richness relationship by trophic group
-  - [ ] Productivity-diversity relationship
+  - [x] CV by trophic group in the two types of networks 
+  - [x] Dig in the cv versus richness relationship by trophic group
+  - [x] Productivity-diversity relationship
   - [x] Distance to source and river caracteristics
   - [x] Model by basin
-  - [ ] Produce a coherent html document with logic structure
+  - [x] Produce a coherent html document with logic structure
+  - [x] stab div by habitat type
 - [x] Fish datasets to generate
 - [ ] Assess quality of the dataset:
 
