@@ -378,8 +378,9 @@ plot_dyn_sp_biomass <- function (sync = NULL, station = NULL, trophic_level = NU
   sync <- sync[sync$station == station, ] 
 
   .data <- sync$com_mat_date[[1]] %>%
-    gather(key = species, value = biomass, -date) %>%
-    left_join(trophic_level, by = "species")
+    gather(key = species, value = biomass, -date) 
+  #%>%
+    #left_join(trophic_level, by = "species")
 
   main_title <- paste0("Stab = ", round(1/(sync$cv_com), 2),", ", "Sync = ",
     round(sync$synchrony, 2),", ", "CVsp = ", round(sync$cv_sp, 2))

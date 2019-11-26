@@ -3,7 +3,6 @@
 
 ## Network description 
 
-
 ```{r net-cor-med, fig.cap = "Correlation between network indices (median over the temporal series). "}
 # Get network metrics
 myload(temporal_network_metrics, dir = mypath("data", "classes"))

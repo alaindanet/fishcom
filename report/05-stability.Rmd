@@ -11,6 +11,7 @@ source(mypath("R", "synchrony.R"))
 source(mypath("R", "geo_methods.R"))
 source(mypath("R", "local_network_build.R"))
 ```
+
 ```{r}
 st_basin <- get_basin_station() 
 myload(region_polygon, dir = mypath("data"))
@@ -56,7 +57,6 @@ p_stab_div_tot <-  ggplot(stab_div_basin,
   )
 
 plot_grid(p_stab_div_basin, p_stab_div_tot, nrow = 2)
-
 ```
 
 ```{r}
@@ -130,14 +130,47 @@ mult_plot_stab_div_bin <- map(env, ~plot_bin_stab_div(env = .x))
 plot_bin_stab_div(env = "width_river_mean")
 
 plot_grid(plotlist = mult_plot_stab_div_bin)
-
 ```
 
+The relationship between stability and species diversity (Figure
+\@ref(fig:bimod-stab-div)) seemed to work only in station far from the source
+(which are deeper, hotter, wider, fig. \@ref(fig:pca-hab))). It should be the
+place where the ANG is the most present. The ANG were effectively more abundant
+in the latter station (Figure: \@ref(fig:ang-map-bio)).
+
+```{r ang-map-bio}
+ang_bm <- network_analysis %>%
+  left_join(select(op_analysis, opcod, station), by = "opcod") %>%
+  unnest(composition) %>%
+  mutate(species = str_extract(sp_class, "[A-Z]{1,3}")) %>%
+  filter(species == "ANG") %>%
+  group_by(station) %>%
+  summarise(biomass = mean(biomass))
+  
+mult_plot_ang_env <- map(env, function(x) {
+
+  habitat_pressure$env <- habitat_pressure[[x]]
+
+  ang_bm %>%
+    left_join(habitat_pressure[, c("station", "env")], by = "station") %>%
+    ggplot(aes(x = env, y = biomass)) +
+    geom_point() +
+    stat_poly_eq(
+      formula = y ~ x,
+      eq.with.lhs = "italic(hat(y))~`=`~",
+      aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+      parse = TRUE) +
+    geom_smooth(method = "loess", formula = y ~ x) +
+    scale_y_log10() +
+    labs(x = x, y = "Average biomass of ANG (g)")
+
+  })
+plot_grid(plotlist = mult_plot_ang_env)
+```
 
 The stability of biomass is determined by the standard deviation and the average
 biomass of the community.
 
-### Decompose stability
 
 
 ```{r}
@@ -147,15 +180,16 @@ cv_bm_div_troph_grp <- temporal_network_metrics_classes %>%
   filter(!is.na(troph_group) & troph_group != 1) %>%
   rename(bm_st = biomass_avg, div_st = richness_avg, cv_st = biomass_cv) %>%
   mutate(troph_group = as.factor(troph_group))
-
 ```
 
 ```{r}
-sync_com_troph <- network_analysis %>%
+sync_com_troph_without_ang <- network_analysis %>%
   select(opcod, composition) %>%
   unnest(composition) %>%
   rename(species = sp_class) %>%
-  filter(troph_group != 1) %>%
+  mutate(ang_logic = ifelse(!is.na(str_match(species, "ANG")[,1] == "ANG"),
+      TRUE, FALSE)) %>%
+  filter(troph_group != 1, ang_logic != TRUE) %>%
   mutate(troph_group = as.factor(troph_group)) %>%
   group_by(troph_group) %>%
   nest() %>%
@@ -171,15 +205,19 @@ sync_com_troph <- network_analysis %>%
       ) %>% 
   select(troph_group, station, synchrony, cv_sp, cv_com, sdt.dev, contrib,
     troph_sp_nb_avg, troph_sp_nb_med) %>%
-  left_join(cv_bm_div_troph_grp, by = c("station", "troph_group"))
+  left_join(stab_div_basin, by = c("station", "troph_group"))
 ```
 
-```{r}
-sync_com_troph %>%
+```{r stab-ang}
+sync_com_troph_without_ang %>%
+  mutate(stab_without_ang = 1/cv_com) %>%
+  rename(stab_with_ang = biomass_stab) %>%
   filter(troph_group != 1) %>%
-  select(station, troph_group, cv_com, troph_sp_nb_med) %>%
-  ggplot(aes(x = troph_sp_nb_med, y = 1/cv_com, color = troph_group)) +
+  select(station, troph_group, richness_avg, stab_with_ang, stab_without_ang) %>% 
+  gather(stab_type, stab, stab_with_ang, stab_without_ang) %>%
+  ggplot(aes(x = richness_avg, y = stab, color = troph_group)) +
   geom_point() +
+  facet_grid(cols = vars(stab_type)) +
   stat_poly_eq(
     formula = y ~ x,
     eq.with.lhs = "italic(hat(y))~`=`~",
@@ -191,6 +229,41 @@ sync_com_troph %>%
     values = c("blue", "green", "red"),
     name = "Trophic level"
     )
+```
+
+### Decompose stability
+
+
+```{r}
+sync_com_troph <- network_analysis %>%
+  select(opcod, composition) %>%
+  unnest(composition) %>%
+  mutate(species = str_extract(sp_class, "[A-Z]{1,3}")) %>%
+  select(-sp_class) %>%
+  filter(troph_group != 1) %>%
+  mutate(troph_group = as.factor(troph_group)) %>%
+  group_by(opcod, troph_group, species) %>%
+  summarise(
+    troph_level = sum(troph_level * biomass /sum(biomass)),
+    biomass = sum(biomass)
+  ) %>%
+  group_by(troph_group) %>%
+  nest() %>%
+  mutate(sync = map(data, ~get_sync_cv_mat(com_analysis = .x, op_analysis = op_analysis))) %>%
+  unnest(sync) %>%
+  mutate(sdt.dev = map_dbl(cov_mat, ~sqrt(sum(.x)))) %>%
+  mutate(
+    contrib = purrr::pmap(
+      list(mat = com_mat, cv_com_tot = cv_com, cv_sp_tot = cv_sp, sync_tot = synchrony),
+      ~compute_sp_contrib(mat = ..1, cv_com_tot = ..2, cv_sp_tot = ..3, sync_tot = ..4)),
+    troph_sp_nb_med = map_dbl(com_mat, ~rowSums(.x != 0) %>% median),
+    troph_sp_nb_avg = map_dbl(com_mat, ~rowSums(.x != 0) %>% mean)
+      ) %>% 
+  select(troph_group, station, synchrony, cv_sp, cv_com, sdt.dev, contrib,
+    troph_sp_nb_avg, troph_sp_nb_med) %>%
+  left_join(select(temporal_community_metrics, station, richness_avg,
+      biomass_avg), by = "station") %>%
+  rename(bm_st = biomass_avg, div_st = richness_avg)
 ```
 
 
@@ -237,6 +310,7 @@ deviation and the number of species?
 
 Part of the solution
 
+
 ```{r}
 formula <- y ~ x #needed for stat_poly_eq
 sync_com_troph %>%
@@ -280,22 +354,48 @@ synchrony %>%
 
 #### Contribution
 
-```{r}
-sync_com_troph %>%
+```{r cbt-top, fig.cap = "Contribution of species to the different facets of stability. Positive contribution values mean that the species contributes negatively to the metric."}
+top_contrib_sp <- sync_com_troph %>%
   unnest(contrib) %>%
+  group_by(station, troph_group) %>%
+  mutate(cbt_cv_com_n = cbt_cv_com / sd(cbt_cv_com)) %>%
   group_by(troph_group, species) %>%
   summarise(
-    sum_cbt_cv_com = sum(abs(cbt_cv_com)),
-    sum_cbt_cv_sp = sum(abs(cbt_cv_sp)),
-    sum_cbt_sync = sum(abs(cbt_sync))
+    avg_cbt_cv_com_n = mean(cbt_cv_com_n),
+    avg_cbt_cv_com = mean(cbt_cv_com),
+    avg_cbt_cv_sp = mean(cbt_cv_sp),
+    avg_cbt_sync = mean(cbt_sync),
+    avg_abs_cbt_cv_com = mean(abs(cbt_cv_com))
     ) %>%
-  arrange(desc(sum_cbt_cv_com)) %>%
-  slice(1:10) %>%
-  gather(comp, contrib, sum_cbt_cv_com:sum_cbt_sync) %>%
-  ggplot(aes(y = contrib, x = species)) +
-  geom_point() +
-  facet_grid(rows = vars(comp), cols = vars(troph_group), scales = "free_y")
+  arrange(desc(abs(avg_cbt_cv_com_n))) %>%
+  slice(1:10)
+
+p_top_contrib_sp <- map(c(2, 3), function(x){
+
+  mask <- top_contrib_sp$troph_group == x 
+  top_sp <- unique(top_contrib_sp[mask,]$species)
+
+  sync_com_troph %>%
+    unnest(contrib) %>%
+    group_by(station, troph_group) %>%
+    mutate(cbt_cv_com_n = cbt_cv_com / sd(cbt_cv_com)) %>%
+    filter(species %in% top_sp, troph_group == x) %>%
+    gather(comp, contrib, cbt_cv_com_n, cbt_cv_com:cbt_sync) %>%
+    ggplot(aes(y = contrib, x = species)) +
+    geom_violin() +
+    facet_grid(rows = vars(comp), scales = "free_y") +
+    labs(title = x)
+    })
+plot_grid(plotlist = p_top_contrib_sp)
 ```
+
+The figure \@ref(fig:cbt-top), left panel) shows that for the trophic group 2, LOF, GOU and
+VAI were the species that contributes the most to the the CV of the community
+and to its components (CVsp and synchrony). For the 3 trophic group (Figure
+\@ref(fig:cbt-top), right panel), the ANG and CHE contribute the most to
+stability and its facets. Interestingly, the contribution of the species to
+the community CV were quite asymetric toward positive values, meaning that
+species tend to stabilize more than destabilize communities. 
 
 ```{r var-cbt, fig.dim = c(10, 7)}
 var_cbt <- sync_com_troph %>%
@@ -318,7 +418,7 @@ var_cbt <- sync_com_troph %>%
 	ggplot(aes(y = contrib, x = div_st)) +
 	  geom_point() +
 	  scale_x_log10() +
-	  facet_wrap(facets = ~comp, scales = "free_y") +
+	  facet_grid(rows = vars(comp), scales = "free_y") +
 	  labs(title = paste0(m_title))
 }
     )
@@ -327,6 +427,39 @@ var_cbt <- sync_com_troph %>%
 plot_grid(plotlist = var_cbt$plot, ncol = 2)
 ```
 
+#### Statistical averaging
+
+```{r}
+pielou <- network_analysis %>%
+  select(opcod, composition) %>%
+  unnest(composition) %>%
+  mutate(species = str_extract(sp_class, "[A-Z]{1,3}")) %>%
+  select(-sp_class) %>%
+  filter(troph_group != 1) %>%
+  mutate(troph_group = as.factor(troph_group)) %>%
+  group_by(opcod, troph_group, species) %>%
+  summarise(
+    troph_level = sum(troph_level * biomass /sum(biomass)),
+    biomass = sum(biomass)
+  ) %>%
+  group_by(troph_group, opcod) %>%
+  mutate(rel_bm = biomass / sum(biomass)) %>%
+  summarise(
+    richness = n(),
+    shannon = diversity(biomass, index = "shannon"),
+    pielou = shannon / log(n())
+  )
+
+pielou %>%
+  left_join(select(op_analysis, station, opcod), by = "opcod") %>%
+  group_by(station, troph_group) %>%
+  summarise(richness_avg = mean(richness), pielou_med = median(pielou)) %>%
+  ggplot(aes(x = richness_avg, y = pielou_med)) +
+  geom_point() +
+  facet_grid(~troph_group)
+
+
+```
 
 
 ### Some temporal series of biomass
@@ -372,7 +505,7 @@ sync_sp_troph <- get_sync_cv_mat(com_analysis = net_sp_troph, op_analysis = op_a
 # Get trophic lvl by node
 trophic_level %<>%
   rename(species = sp_class) %>%
-  mutate( troph_group = get_size_class(trophic_level, NULL, troph_level,
+  mutate(troph_group = get_size_class(trophic_level, NULL, troph_level,
       trophic_class))
 
 plot_stab <- purrr::map(station_high_low_stab, function (x) {

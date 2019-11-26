@@ -177,12 +177,20 @@ phosphorus) and that are more vegetated.
 
 ```{r dist-env, fig.cap = "Histogram of the station average environmental values through time."}
 
-habitat_pressure %>%
+dist_env <- habitat_pressure %>%
   select(station, width_river_mean:temperature) %>%
-  gather(env_var, value, width_river_mean:temperature) %>%
+  gather(env_var, value, width_river_mean:temperature) 
+med_dist_env <- dist_env %>%
+  group_by(env_var) %>%
+  summarise(value = median(value, na.rm = TRUE))
+
+dist_env %>%
   ggplot(aes(x = value)) +
   geom_histogram() +
+  geom_vline(data = med_dist_env, aes(xintercept = value), color = "red", size =
+    2) +
   facet_wrap(facets = ~ env_var, ncol = 3, scales = "free")
+
 ```
 
 
