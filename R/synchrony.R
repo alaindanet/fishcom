@@ -106,7 +106,7 @@ get_sync_cv_mat <- function(com_analysis = NULL, op_analysis = NULL, presence_th
 })
     )
 
-  # To get biomass ans troph information:
+  # To get biomass and troph information:
   if (troph) {
     synchrony$data <- troph_data$data
   }
@@ -134,15 +134,16 @@ compute_sp_contrib <- function (
   stopifnot(is.matrix(mat))
 
   if (ncol(mat) < 2) {
-   data.frame(
-     species = NA,
-     cv_com = NA,
-     cv_sp = NA,
-     sync = NA, 
-     cbt_cv_com = NA,
-     cbt_cv_sp = NA, 
-     cbt_sync = NA
-   ) 
+   return(
+     data.frame(species = NA,
+       cv_com = NA,
+       cv_sp = NA,
+       sync = NA, 
+       cbt_cv_com = NA,
+       cbt_cv_sp = NA, 
+       cbt_sync = NA
+     ) 
+     )
   }
 
   sp <- colnames(mat)
@@ -164,9 +165,9 @@ compute_sp_contrib <- function (
   # Compute contribution
   contrib <- leave_one_out %>%
     mutate(
-      cbt_cv_com = cv_com_sp - cv_com_tot,
-      cbt_cv_sp = cv_sp_sp - cv_sp_tot,
-      cbt_sync = sync_sp - sync_tot
+      cbt_cv_com = cv_com_tot - cv_com_sp,
+      cbt_cv_sp = cv_sp_tot - cv_sp_sp,
+      cbt_sync = sync_tot - sync_sp
     )
   contrib
 }

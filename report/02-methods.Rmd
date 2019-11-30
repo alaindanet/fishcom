@@ -5,6 +5,18 @@ We describe our methods in this chapter.
 ## Data collection
 
 
+### Fish length
+
+```{r, fig.cap = "Distribution of fish length. Red, green and black respectively locate the median, the mean and the 200mm threshold."}
+myload(length_analysis, dir = mypath("data"))
+length_analysis %>%
+  ggplot(aes(x = length)) +
+  geom_histogram() +
+  geom_vline(xintercept = median(length_analysis$length, na.rm = TRUE), color = "red") +
+  geom_vline(xintercept = mean(length_analysis$length, na.rm = TRUE), color = "green") +
+  geom_vline(xintercept = 200, color = "black")
+```
+
 
 
 ## Network building
@@ -120,7 +132,7 @@ habitat_station <- hab_analysis %>%
     sinuosite = factor(sinuosite, levels = lvl_sinuosite, ordered = TRUE)) %>%
   group_by(station) %>%
   summarise_all(list(med = ~median(as.numeric(.), na.rm = TRUE))) %>%
-  left_join(select(temporal_station_desc, station, width_river_mean, avg_depth_station_mean))
+  left_join(select(temporal_station_desc, station, width_river_mean, avg_depth_station_mean, width_river_cv, avg_depth_station_cv))
 
 # Add alt, lat, etc...
 habitat_station %<>% 
@@ -130,12 +142,18 @@ habitat_station %<>%
 flow_temp <- temporal_press_polluants %>%
   filter(category %in% c("flow", "temperature", "DBO", "herbicides",
       "fungicides", "insecticides", "nitrates", "phosphore")) %>%
-  rename(station = id) %>%
+  rename(station = id) 
+flow_temp_med <- flow_temp %>%
+  mutate(category = str_c(category, "_med")) %>%
   select(station, category, press_med) %>%
   spread(category, press_med)
+flow_temp_cv <- flow_temp %>%
+  mutate(category = str_c(category, "_cv")) %>%
+  select(station, category, cv_press) %>%
+  spread(category, cv_press)
 
 habitat_station %<>%
-  left_join(flow_temp, by = "station")
+  left_join(left_join(flow_temp_med, flow_temp_cv, by = "station"), by = "station")
 habitat_pressure <- habitat_station
 mysave(habitat_pressure, dir = mypath("report"), overwrite = TRUE)
 ```
@@ -143,10 +161,10 @@ mysave(habitat_pressure, dir = mypath("report"), overwrite = TRUE)
 
 ### Relationship between environmental variables
 
-```{r pca-hab, fig.dim = c(10, 7), fig.cap = "PCA over habitat description"}
+```{r pca-hab, fig.dim = c(7, 21), fig.cap = "PCA over habitat description"}
 library(ade4)
 library(factoextra)
-pca_hab <- dudi.pca(as.data.frame(select(na.omit(habitat_station), -station)), scannf = FALSE, nf = 2, center = TRUE, scale = TRUE)
+pca_hab <- dudi.pca(as.data.frame(select(na.omit(habitat_station), -station)), scannf = FALSE, nf = 3, center = TRUE, scale = TRUE)
 
 eig_plot <- fviz_eig(pca_hab)
 pca_plot <- fviz_pca_var(pca_hab,
@@ -155,9 +173,23 @@ pca_plot <- fviz_pca_var(pca_hab,
     gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
     repel = TRUE     # Avoid text overlapping
   )
-
-ggdraw(pca_plot) + 
+pca_plot12 <- ggdraw(pca_plot) +
   draw_plot(eig_plot, x = .7, y = .95, hjust = 1, vjust = 1, width = 0.17, height = 0.25)
+
+pca_plot13 <- fviz_pca_var(pca_hab,
+    axes = c(1, 3),
+    col.var = "contrib", # Color by contributions to the PC
+    gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+    repel = TRUE     # Avoid text overlapping
+  )
+
+pca_plot23 <- fviz_pca_var(pca_hab,
+    axes = c(2, 3),
+    col.var = "contrib", # Color by contributions to the PC
+    gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+    repel = TRUE     # Avoid text overlapping
+  )
+plot_grid(pca_plot12, pca_plot13, pca_plot23, ncol = 1)
 ```
 
 The PCA (Fig. \@ref(fig:pca-hab)) showed unsurprisingly that order of strahler, the
@@ -173,13 +205,20 @@ composed of rocky habitat from the ones that had higher average annual
 temperature located in the south, with more enrichment (DBO, nitrates,
 phosphorus) and that are more vegetated.
 
+```{r}
+dev.off()
+m <- cor(as.matrix(select(na.omit(habitat_station), -station)), method = "spearman")
+corrplot::corrplot(m, order="hclust", type = "upper", diag = FALSE)
+```
+
+
 #### Distribution of environmental variables
 
 ```{r dist-env, fig.cap = "Histogram of the station average environmental values through time."}
 
 dist_env <- habitat_pressure %>%
-  select(station, width_river_mean:temperature) %>%
-  gather(env_var, value, width_river_mean:temperature) 
+  select(station, width_river_mean:temperature_cv) %>%
+  gather(env_var, value, width_river_mean:temperature_cv) 
 med_dist_env <- dist_env %>%
   group_by(env_var) %>%
   summarise(value = median(value, na.rm = TRUE))
@@ -201,6 +240,43 @@ However, variables such as latitude, insecticides, fungicides, herbicides
 displayed bimodality. Those bimodalities will be helpful to test relationship
 between stability and diversity for different subset of the dataset and so, test
 the robustness of the relationship.
+
+```{r split-rivers, fig.dim = c(7, 12)}
+hab_type <- habitat_pressure %>%
+  mutate(high_bin = ifelse(alt > median(alt), TRUE, FALSE),
+  wide_bin = ifelse(width_river_mean > median(width_river_mean), TRUE, FALSE),
+  hab_type = map2_chr(high_bin, wide_bin, function(high, wide){
+    if (high) {
+      if (wide) {
+	"high_wide"
+      } else {
+	"high_narrow"
+      }
+    } else {
+      if (wide) {
+	"low_wide"
+      } else {
+	"low_narrow"
+      }
+    }
+      
+      })
+  ) %>%
+mutate(hab_type = map_chr(high_bin, ~ifelse(.x, "high", "low"))) %>%
+select(station, hab_type)
+
+hab_type_pca <- hab_type[hab_type$station %in% na.omit(habitat_station)$station, ]
+match_st <- match(hab_type_pca$station, na.omit(habitat_station)$station)
+hab_type_pca <- hab_type_pca[order(match_st), ]
+
+pca_cat_river <- fviz_pca_ind(pca_hab, label="none", habillage=hab_type_pca$hab_type,
+  , ellipse.type = "convex",
+             addEllipses=TRUE, ellipse.level=0.95)
+plot_grid(pca_plot, pca_cat_river, ncol = 1)
+mysave(hab_type, dir = mypath("report"), overwrite = TRUE)
+```
+
+
 
 ### Pressure
 
@@ -267,7 +343,7 @@ com <- ungroup(community_analysis) %>%
 com_mat <- as.matrix(com[, names(com) != "station"]) 
 ```
 
-```{r}
+```{r, echo = FALSE}
 library(vegan)
 
 nmds <- metaMDS(com_mat, k=3, trymax = 100)
@@ -284,18 +360,14 @@ match_st <- match(habitat_pressure$station, com$station)
 habitat <- habitat_pressure[order(match_st), ]
 match_st_com <- match(temporal_community_metrics$station, com$station)
 com_metrics <- temporal_community_metrics[order(match_st_com), ]
-
-ordisurf(nmds,habitat$alt,main="",col="forestgreen")
 ```
 
-```{r}
-
-hab_var <- c("temperature", "alt", "lat", "flow", "width_river_mean", "DBO")
-par(mfrow = c(2,3))
+```{r, fig.dim = c(7, 14)}
+hab_var <- c("temperature_med", "temperature_cv", "alt", "lat", "flow_med", "flow_cv", "width_river_mean", "width_river_cv", "DBO_med", "DBO_cv")
+par(mfrow = c(5,2))
 for (i in seq_along(hab_var)) {
   ordisurf(nmds, habitat[[hab_var[i]]], main = hab_var[i], col = "brown")
 }
-
 ```
 
 ```{r}
@@ -317,13 +389,72 @@ nb_st_basin <- station_analysis %>%
 ```
 
 ```{r basin-com}
+dev.off()
 match_st_basin <- match(station_analysis$station, com$station)
-st_basin <- station_analysis[order(match_st_basin), ]
+st_basin <- station_analysis[order(match_st_basin), ] %>%
+  mutate(basin = ifelse(is.na(basin), "INCONNU", basin))
+
 
 ordiplot(nmds,type="n")
 orditorp(nmds,display="species",col="red",air=0.01)
-ordihull(nmds, groups = st_basin[["basin"]], draw="polygon",col="grey90",label=F)
+# See https://www.davidzeleny.net/anadat-r/doku.php/en:ordiagrams_examples
+u_basin  <- unique(st_basin[["basin"]])
+for (i in seq_along(u_basin)) {
+  ordihull(nmds, groups = st_basin[["basin"]],
+ show.group = u_basin[i], col = i, draw = 'polygon', label = T)
+}
 ```
+
+```{r}
+match_st <- match(hab_type$station, com$station)
+hab_type <- hab_type[order(match_st), ]
+ordiplot(nmds,type="points", choices = c(1, 2))
+orditorp(nmds,display="species",col="red",air=0.01)
+u_hab  <- unique(hab_type[["hab_type"]])
+for (i in seq_along(u_hab)) {
+  ordihull(nmds, groups = hab_type[["hab_type"]], alpha = .1,
+ show.group = u_hab[i], col = i, draw = 'polygon', label = T)
+}
+```
+
+```{r}
+st_basin <- get_basin_station() 
+myload(region_polygon, dir = mypath("data"))
+myload(temporal_network_metrics, dir = mypath("data", "classes"))
+temporal_network_metrics_classes <- temporal_network_metrics
+stab_div_basin <- temporal_network_metrics_classes %>%
+  select(station, troph_group) %>%
+  unnest(troph_group) %>%
+  filter(troph_group != 1) %>%
+  mutate(troph_group = as.factor(troph_group)) %>%
+  select(station, troph_group, biomass_stab, richness_avg) %>%
+  left_join(st_basin, by = "station") %>%
+  filter(!is.na(basin))
+stab_div_basin %>%
+  left_join(hab_type, by = "station") %>%
+  left_join(habitat_pressure[,c("station", "temperature_med", "DBO_med")],
+    by = "station") %>%
+  gather(variable, value, temperature_med, DBO_med) %>%
+  ggplot(aes(x = richness_avg, y = value)) +
+  geom_point() +
+  facet_grid(cols = vars(troph_group), rows = vars(variable), scales = "free_y") +
+  stat_poly_eq(
+    formula = y ~ x,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  geom_smooth(method = "lm", formula = y ~ x) +
+  ggplot2::scale_color_manual(
+    labels = troph_group_labeller(),
+    values = c("blue", "green", "red"),
+    name = "Trophic level"
+    ) +
+  #scale_y_log10() +
+  scale_x_log10() +
+  labs(title = "Stability - Div by habitat type",
+    x = "Average species richness (log10)", y = "Biomass stability (log10)")
+```
+
 
 ### Network
 
@@ -337,20 +468,24 @@ which species are driving the relationship between CV and species richness.
 Species contribution to a metric can be computed as follow:
 
 $$
-C_{k} = CV_{-k} - CV
+C_{k} = X - X_{-k}
 $$
+
+It means that a negative $C_k$ correspond to a negative contribution of the
+species $k$ to $X$.
 
 
 ### Pressure
 
 
-### Time series classification  
+### Time series classification
 
 
-```{r load dataset, include = FALSE}
+```{r load dataset}
 library(jmotif)
 myload(community_metrics, op_analysis, dir = mypath("data"))
-community_metrics %<>% left_join(select(op_analysis, opcod, station, date))
+community_metrics  <-   
+  left_join(community_metrics, op_analysis[, c("opcod", "station", "date")], by = "opcod")
 ```
 
 ```{r}

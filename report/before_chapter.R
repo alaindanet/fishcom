@@ -4,10 +4,10 @@ data_common <- mypath("data")
 dest_dir <- mypath("data", "species")
 
 knitr::opts_chunk$set(
-  cache = TRUE,
+  cache = FALSE,
   collapse = TRUE,
   comment = "#>",
-  fig.dim = c(10, 10),
+  fig.dim = c(7, 7),
   fig.show = "hold",
   echo = FALSE,
   message = FALSE,
@@ -24,6 +24,7 @@ library(sf)
 library(ggraph)
 library(lubridate)
 library(pander)
+library(broom)
 source(mypath("R", "misc.R"))
 source(mypath("R", "plot_methods.R"))
 source(mypath("R", "geo_methods.R"))
