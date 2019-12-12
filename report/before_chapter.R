@@ -4,7 +4,7 @@ data_common <- mypath("data")
 dest_dir <- mypath("data", "species")
 
 knitr::opts_chunk$set(
-  cache = FALSE,
+  cache = TRUE,
   collapse = TRUE,
   comment = "#>",
   fig.dim = c(7, 7),

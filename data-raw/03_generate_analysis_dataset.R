@@ -80,6 +80,67 @@ op_analysis %<>%
 
 mysave(op_analysis, dir = mypath("data"), overwrite = TRUE)
 
+#################
+#  Sub dataset  #
+#################
+
+# No holes dataset
+
+sep_y <- op_analysis %>%
+  group_by(station) %>%
+  dplyr::arrange(date) %>%
+  dplyr::mutate(
+    point = seq(1, length(station)),
+    sample_sep = c(NA, year[-1] - year[-length(station)])
+    ) %>%
+  dplyr::arrange(station) 
+
+sep_y %>%
+  summarise(sep_1y = sum(sample_sep == 1, na.rm = TRUE)) %>%
+  summary(.)
+
+check <- TRUE
+while (check) {
+
+op_analysis_wo_holes <- sep_y %>%
+  filter(is.na(sample_sep) | sample_sep == 1) %>%
+  mutate(point_sep = c(NA, point[-1] - point[-length(station)])) %>%
+  filter(point_sep %in% c(NA, 1)) %>%
+  filter(n() >= 10)
+
+check_data <- op_analysis_wo_holes %>%
+  dplyr::arrange(date) %>%
+  dplyr::mutate(
+    point = seq(1, length(station)),
+    sample_sep = c(NA, year[-1] - year[-length(station)]),
+    point_sep = c(NA, point[-1] - point[-length(station)])
+    )
+
+mask <- which(check_data$sample_sep > 1 | check_data$point_sep > 1 )
+
+if (length(mask) < 1) {
+
+  check <- FALSE
+
+}
+
+sep_y <- check_data
+
+}
+
+## Last check
+stopifnot(
+  length(which(sep_y$sample_sep > 1 | sep_y$point_sep > 1)) == 0
+  )
+stopifnot("station" %in% group_vars(sep_y)) #necessary to run the last test
+stopifnot(
+  nrow(filter(sep_y, n() >= 10)) == nrow(sep_y)
+)
+
+op_analysis_wo_holes <- sep_y 
+mysave(op_analysis_wo_holes, dir = mypath("data"), overwrite = TRUE)
+
+
 ########################
 #  Environmental data  #
 ########################
