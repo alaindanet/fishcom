@@ -62,7 +62,7 @@ op_cv_length <- op_clean %>%
   )
 test_too_different <- op_clean %>%
   left_join(op_cv_length, by = "station") %>%
-  mutate(out = ifelse(length_sourced > median + .3 * median, TRUE, FALSE))
+  mutate(out = ifelse(length_sourced > median + .3 * median | length_sourced < median - .3 * median, TRUE, FALSE))
 filter(test_too_different, out == TRUE) %>%
   filter(protocol != "complete") %>%
   arrange(station)
@@ -84,8 +84,11 @@ mysave(op_analysis, dir = mypath("data"), overwrite = TRUE)
 #  Sub dataset  #
 #################
 
-# No holes dataset
+myload(op_analysis, dir = mypath("data"))
 
+#-----------------
+# No holes dataset
+#-----------------
 sep_y <- op_analysis %>%
   group_by(station) %>%
   dplyr::arrange(date) %>%
@@ -140,6 +143,36 @@ stopifnot(
 op_analysis_wo_holes <- sep_y 
 mysave(op_analysis_wo_holes, dir = mypath("data"), overwrite = TRUE)
 
+#--------------------
+# Overlapping station
+#--------------------
+op_analysis %>%
+  group_by(station) %>%
+  summarise(
+    start_year = min(year), end_year = max(year),
+    med_year = median(year)) %>%
+  gather(type, value, start_year:med_year) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram() +
+  facet_grid(cols = vars(type))
+
+op_analysis_wo_holes %>%
+  group_by(station) %>%
+  summarise(
+    start_year = min(year), end_year = max(year),
+    med_year = median(year)) %>%
+  gather(type, value, start_year:med_year) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram() +
+  facet_grid(cols = vars(type))
+
+# Select between 1995 and 2005:
+op_analysis_ov <- op_analysis %>%
+  filter(year <= 2007) %>%
+  group_by(station) %>%
+  filter(n() >= 10)
+
+mysave(op_analysis_ov, dir = mypath("data"), overwrite = TRUE)
 
 ########################
 #  Environmental data  #

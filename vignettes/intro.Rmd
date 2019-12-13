@@ -71,16 +71,15 @@ According to the postdoc advertisement:
 - [ ] Analysis:
   - [ ] generate clean subsets of data:
     - [ ] overlapping / without holes
-    - [ ] non overlapping / without holes
+    - [x] non overlapping / without holes
     - [ ] overlapping / with holes
     - [ ] non overlapping / with holes
-  - [x] CV by trophic group in the two types of networks 
-  - [x] Dig in the cv versus richness relationship by trophic group
-  - [x] Productivity-diversity relationship
-  - [x] Distance to source and river characteristics
-  - [x] Model by basin
-  - [x] Produce a coherent html document with logic structure
-  - [x] stab div by habitat type
+  - [ ] increase explained variance of the PCA:
+    - [ ] Separate med and variance
+    - [ ] Remove some variables such as phosphore and nitrate
+    - [ ] Rm lat and long
+  - [ ] Pielou: use relative biomass; add div taxo?
+  - [ ] SEM: add resources
 - [x] Fish datasets to generate
 - [ ] Assess quality of the dataset:
 

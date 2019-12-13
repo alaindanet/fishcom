@@ -335,23 +335,35 @@ com <- ungroup(community_analysis) %>%
   select(opcod, species, biomass) %>%
   spread(species, biomass) %>%
   left_join(op_analysis[, c("opcod", "station")], by = "opcod") %>%
+  filter(!is.na(station)) %>%
   mutate_all(list(~ ifelse(is.na(.), 0, .))) %>%
   select(-opcod) %>%
   group_by(station) %>%
   summarise_all(list(median))
 
-com_mat <- as.matrix(com[, names(com) != "station"]) 
+com_mat <- as.matrix(com[, names(com) != "station"])
+rownames(com_mat)  <- com$station 
+
+order_st <- match(temporal_community_metrics$station, com$station) 
+tps_com_met <- temporal_community_metrics[order(order_st),] 
+ 
 ```
 
 ```{r, echo = FALSE}
 library(vegan)
 
 nmds <- metaMDS(com_mat, k=3, trymax = 100)
-
 stressplot(nmds)
 plot(nmds)
+mysave(nmds, dir = mypath("report"), overwrite = TRUE)
+
+bluefunc <- colorRampPalette(c("lightyellow", "darkred"))
 ordiplot(nmds,type="n")
 orditorp(nmds,display="species",col="gray",air=0.01)
+orditorp(nmds, display="sites",
+  col= bluefunc(5)[findInterval(tps_com_met$richness_avg, seq(2,6))],
+  # cex = scale(tps_com_met$biomass_med, center = FALSE),
+  air=0.01, pch = "+")
 ```
 
 ```{r}

@@ -1424,6 +1424,7 @@ What are the contributions of environment and trophic level on the shape of the 
    - Groups: habitat 
    - Replicate for productivity
 4. Test for different datasets
+   - factorise calcultation of temporal metrics
 
 
 ```{r}
@@ -1463,12 +1464,16 @@ net_sem <- temporal_network_metrics %>%
   select(station, connectance_corrected_med, w_trph_lvl_avg_med) %>%
   rename(c_c = connectance_corrected_med,
     t_lvl = w_trph_lvl_avg_med)
-
+composition_axis <- nmds$points %>%
+  as_tibble %>%
+  mutate(station = as.integer(dimnames(nmds$points)[[1]]))
+  
 dsem <- biomass_sem  %>%
   mutate(log_rich = log10(richness_med)) %>%
   left_join(net_sem, by = "station") %>%
   left_join(habitat_sem, by = "station") %>%
   left_join(st_basin, by = "station") %>%
+  left_join(composition_axis, by = "station") %>%
   na.omit()
 
 lav_data <- dsem %>%
@@ -1484,7 +1489,7 @@ library(lavaan)
 options(width = 100)
 
 #log_stab ~ log_sync + log_cv_sp
-lav_formula <- " 
+lav_formula <- "
   log_sync ~ log_rich + piel + alt + c_c + t_lvl + beta_bin_c
   log_cv_sp ~ log_rich + piel + c_c + t_lvl + beta_bin_c
   log_rich ~ alt + width 
@@ -1505,36 +1510,87 @@ standardizedsolution(lav_mod) %>%
 ggsem(lav_mod)
 ```
 
+### Piecewiese SEM
+
 ```{r}
 library(lme4)
 library(nlme)
 library(piecewiseSEM)
 ```
 
+#### Stability
 
 ```{r, fig.cap = "The basic SEM"}
-corsem <- psem(
-  lme(log_sync ~ log_rich + piel + alt + c_c + t_lvl + beta_bin_c, random = ~ 1 | basin, data = lav_data),
-  lme(log_cv_sp ~ log_rich + piel + c_c + t_lvl + beta_bin_c, random = ~ 1 | basin, data = lav_data),
-  lme(log_rich ~ alt + width, random = ~ 1 | basin, data = lav_data),
-  lme(piel ~ alt + width, random = ~ 1 | basin, data = lav_data),
-  lme(c_c ~ alt + width, random = ~ 1 | basin, data = lav_data),
-  lme(t_lvl ~ alt + width, random = ~ 1 | basin, data = lav_data),
-  lme(beta_bin_c ~ alt + width, random = ~ 1 | basin, data = lav_data),
-  lm(log_stab ~ log_cv_sp + log_sync, data = lav_data)
-)
+  corsem <- psem(
+    lme(log_sync ~ log_rich + piel + alt + c_c + t_lvl + beta_bin_c, random = ~ 1 | basin, data = lav_data),
+    lme(log_cv_sp ~ log_rich + piel + c_c + t_lvl + beta_bin_c, random = ~ 1 | basin, data = lav_data),
+    lme(log_rich ~ alt + width, random = ~ 1 | basin, data = lav_data),
+    lme(piel ~ alt + width, random = ~ 1 | basin, data = lav_data),
+    lme(c_c ~ alt + width, random = ~ 1 | basin, data = lav_data),
+    lme(t_lvl ~ alt + width, random = ~ 1 | basin, data = lav_data),
+    lme(beta_bin_c ~ alt + width, random = ~ 1 | basin, data = lav_data),
+    lm(log_stab ~ log_cv_sp + log_sync, data = lav_data)
+  )
 output <- summary(corsem, .progressBar = F)
 output$coefficients %>%
   kable() %>%
   kable_styling() %>%
   scroll_box(width = "100%", height = "400px")
+
 source(mypath("R", "plot_methods.R"))
 ggpiecewisesem(output)
 ```
 
+```{r}
+compute_psem <- function(.data) {
+  corsem <- psem(
+    lme(log_sync ~ log_rich + piel + alt + c_c + t_lvl + beta_bin_c + MDS2, random = ~ 1 | basin, data = .data),
+    lme(log_cv_sp ~ log_rich + piel + c_c + t_lvl + beta_bin_c + MDS2, random = ~ 1 | basin, data = .data),
+    lme(log_rich ~ alt + width, random = ~ 1 | basin, data = .data),
+    lme(MDS2 ~ alt + width, random = ~ 1 | basin, data = .data),
+    lme(piel ~ alt + width, random = ~ 1 | basin, data = .data),
+    lme(c_c ~ alt + width, random = ~ 1 | basin, data = .data),
+    lme(t_lvl ~ alt + width, random = ~ 1 | basin, data = .data),
+    lme(beta_bin_c ~ alt + width, random = ~ 1 | basin, data = .data),
+    lm(log_stab ~ log_cv_sp + log_sync, data = .data)
+  )
+  output <- summary(corsem, .progressBar = F)
+
+  output
+}
+test <- compute_psem(lav_data)
+ggpiecewisesem(test)
+```
+
+```{r sensitivity, eval = FALSE}
+myload(op_analysis_wo_holes, op_analysis_ov, dir = mypath("data"))
+
+# Compute stability, network metrics, etc with the new datasets
+
+# Compute SEMs
+map(list(), compute_psem)
+
+# Plot
+
+```
+
+```{r}
+lav_data %>%
+  ggplot(aes(x = log_rich, y = MDS1)) +
+  geom_point() +
+  labs(x = "Log of species richness", y = "Axis of composition")
+
+```
+
+
+
+#### Productivity
+
+
 ```{r, fig.cap = "Biomass"}
 prod_sem <- psem(
-  lme(prod ~ log_rich + piel + c_c + t_lvl + beta_bin_c, random = ~ 1 | basin, data = lav_data),
+  lme(prod ~ log_rich + piel + c_c + t_lvl + beta_bin_c + MDS2, random = ~ 1 | basin, data = lav_data),
+  lme(MDS2 ~ alt + width, random = ~ 1 | basin, data = lav_data),
   lme(log_rich ~ alt + width, random = ~ 1 | basin, data = lav_data),
   lme(piel ~ alt + width, random = ~ 1 | basin, data = lav_data),
   lme(c_c ~ alt + width, random = ~ 1 | basin, data = lav_data),
@@ -1550,6 +1606,10 @@ sumup_prod$coefficients %>%
 
 ```{r}
 ggpiecewisesem(sumup_prod)
+```
+
+```{r colin_prod}
+car::vif(lme(prod ~ log_rich + piel + c_c + t_lvl + beta_bin_c + MDS2, random = ~ 1 | basin, data = lav_data))
 ```
 
 
