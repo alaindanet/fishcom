@@ -211,6 +211,67 @@ m <- cor(as.matrix(select(na.omit(habitat_station), -station)), method = "spearm
 corrplot::corrplot(m, order="hclust", type = "upper", diag = FALSE)
 ```
 
+#### Separate Med and CV pressure
+
+```{r pca-med-cv, fig.cap="PCA with Avg or CV variables"}
+hab_med <- habitat_pressure %>%
+  select_at(vars(matches("med|mean")))
+hab_cv <- habitat_pressure %>%
+  select_at(vars(matches("_cv"))) %>%
+  select(-width_river_cv, -avg_depth_station_cv, -nitrates_cv, -phosphore_cv)
+
+plot_pca <- function (.data, title = NULL) {
+
+  if (is.null(title)){
+  title <- paste0("PCA - ",
+      ifelse(any(!is.na(str_match(names(.data), "_cv"))), "CV",
+      "Median"))
+  }
+
+
+  pca_hab <- dudi.pca(as.data.frame(na.omit(.data)), scannf = FALSE, nf = 3, center = TRUE, scale = TRUE) 
+  eig_plot <- fviz_eig(pca_hab)
+  pca_plot <- fviz_pca_var(pca_hab,
+    axes = c(1, 2),
+    col.var = "contrib", # Color by contributions to the PC
+    gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+    title = title,
+    repel = TRUE # Avoid text overlapping
+  )
+  pca_plot12 <- ggdraw(pca_plot) +
+    draw_plot(eig_plot, x = .7, y = .95, hjust = 1, vjust = 1, width = 0.17, height = 0.25)
+  pca_plot12
+  }
+plot_pca_med_cv <- map(list(hab_med, hab_cv), plot_pca)
+plot_grid(plotlist = plot_pca_med_cv, labels = "AUTO")
+```
+
+#### Separate according to physical habitat, climate, enrichment
+
+```{r pca-evt}
+phys_var <- c( "width_river_mean", "avg_depth_station_mean",
+   "slope", "alt", "d_source", "strahler")
+#"width_river_cv", "avg_depth_station_cv", "under_bank_med", "hole_pit_med",
+#"long", "lat","logjam_stumps_med", "edge_vg_med",
+#"rock_shelter_med", "aqua_vg_shelter_med", "shade_med", "sinuosite_med",
+climate_var <- c("flow_med", "temperature_med", "flow_cv", "temperature_cv") 
+pressure_var <- c( "fungicides_cv", "herbicides_cv",
+  "insecticides_cv",  "fungicides_med",
+  "herbicides_med", "insecticides_med")
+#, "nitrates_med", "phosphore_med","nitrates_cv", "phosphore_cv","DBO_med", "DBO_cv"
+hab_physical <- habitat_pressure[, names(habitat_pressure) %in% phys_var]
+hab_climate <- habitat_pressure[, names(habitat_pressure) %in% climate_var]
+hab_pressure <- habitat_pressure[, names(habitat_pressure) %in% pressure_var]
+
+
+p_pca_clim_phy_press <- map2(
+  list(hab_physical, hab_climate, hab_pressure),
+  c("Physical", "Climate", "Pressure"),
+  plot_pca)
+plot_grid(plotlist = p_pca_clim_phy_press, labels = "AUTO")
+```
+
+
 
 #### Distribution of environmental variables
 
@@ -361,9 +422,10 @@ bluefunc <- colorRampPalette(c("lightyellow", "darkred"))
 ordiplot(nmds,type="n")
 orditorp(nmds,display="species",col="gray",air=0.01)
 orditorp(nmds, display="sites",
-  col= bluefunc(5)[findInterval(tps_com_met$richness_avg, seq(2,6))],
-  # cex = scale(tps_com_met$biomass_med, center = FALSE),
-  air=0.01, pch = "+")
+  col= bluefunc(15)[findInterval(tps_com_met$richness_avg, seq(1,15))],
+   cex = findInterval(log10(tps_com_met$biomass_med), seq(1, 4, 1))/2,
+  air=0.01, pch = "+", labels = "+")
+
 ```
 
 ```{r}

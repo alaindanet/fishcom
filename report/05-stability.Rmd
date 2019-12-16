@@ -1428,6 +1428,7 @@ What are the contributions of environment and trophic level on the shape of the 
 
 
 ```{r}
+myload(nmds, dir = mypath("report"))
 
 ```
 
@@ -1458,7 +1459,8 @@ biomass_sem <- temporal_community_metrics %>%
     prod = biomass_med 
   )
 habitat_sem <- habitat_pressure %>% 
-  select(station, alt, width_river_mean) %>%
+  select(station, lat, alt, width_river_mean, DBO_med, DBO_cv, flow_med, flow_cv,
+    temperature_med, temperature_cv) %>%
   rename(width = width_river_mean)
 net_sem <- temporal_network_metrics %>%
   select(station, connectance_corrected_med, w_trph_lvl_avg_med) %>%
@@ -1473,7 +1475,7 @@ dsem <- biomass_sem  %>%
   left_join(net_sem, by = "station") %>%
   left_join(habitat_sem, by = "station") %>%
   left_join(st_basin, by = "station") %>%
-  left_join(composition_axis, by = "station") %>%
+  #left_join(composition_axis, by = "station") %>%
   na.omit()
 
 lav_data <- dsem %>%
@@ -1500,6 +1502,7 @@ lav_formula <- "
   log_cv_sp ~~ log_sync
   "
 lav_mod <- sem(lav_formula, lav_data)
+
 standardizedsolution(lav_mod) %>%
   kable() %>%
   kable_styling() %>%
@@ -1521,17 +1524,41 @@ library(piecewiseSEM)
 #### Stability
 
 ```{r, fig.cap = "The basic SEM"}
-  corsem <- psem(
-    lme(log_sync ~ log_rich + piel + alt + c_c + t_lvl + beta_bin_c, random = ~ 1 | basin, data = lav_data),
-    lme(log_cv_sp ~ log_rich + piel + c_c + t_lvl + beta_bin_c, random = ~ 1 | basin, data = lav_data),
-    lme(log_rich ~ alt + width, random = ~ 1 | basin, data = lav_data),
-    lme(piel ~ alt + width, random = ~ 1 | basin, data = lav_data),
-    lme(c_c ~ alt + width, random = ~ 1 | basin, data = lav_data),
-    lme(t_lvl ~ alt + width, random = ~ 1 | basin, data = lav_data),
-    lme(beta_bin_c ~ alt + width, random = ~ 1 | basin, data = lav_data),
-    lm(log_stab ~ log_cv_sp + log_sync, data = lav_data)
-  )
-output <- summary(corsem, .progressBar = F)
+build_stab_sem <- function (evt = NULL, com = NULL, stab_comp = NULL, stab = NULL,  .data = NULL) {
+
+  rs <- map(list(evt = evt, com = com, stab_comp = stab_comp), ~paste(.x, collapse = " + "))
+  stab_eq <- paste(stab, rs[["stab_comp"]], sep = " ~ ")
+  stab_comp_eq <- map_chr(stab_comp, ~ paste(.x, rs[["com"]], sep = " ~ "))
+  com_eq <- map_chr(com, ~paste(.x, rs[["evt"]], sep = " ~ "))
+
+
+  formulas <- map(c(stab_eq, stab_comp_eq, com_eq), as.formula)
+
+  output <- vector("list", length = length(formulas))
+
+  output[[1]] <- lm(as.formula(stab_eq), data = .data)
+
+  lmer_models <- map(formulas[2:length(formulas)],~lme(fixed = .x, random = ~ 1 | basin, data = .data))
+  lmer_models_c <- map2(lmer_models, formulas[2:length(formulas)],
+    function (.model, .formula){
+      .model$call$fixed <- as.call((.formula))
+      return(.model)
+  }) 
+
+  output[2:length(output)] <- lmer_models_c
+  return(output)
+
+} 
+
+#undebug(build_stab_sem)
+corsem <- build_stab_sem(
+  evt = c("alt", "width", "DBO_med", "temperature_med"),
+  com = c("log_rich", "piel", "c_c", "t_lvl", "beta_bin_c"),
+  stab_comp = c("log_sync", "log_cv_sp"),
+  stab = c("log_stab"),
+  .data = lav_data)
+
+output <- summary(as.psem(corsem), .progressBar = F)
 output$coefficients %>%
   kable() %>%
   kable_styling() %>%
@@ -1540,18 +1567,26 @@ output$coefficients %>%
 source(mypath("R", "plot_methods.R"))
 ggpiecewisesem(output)
 ```
+```{r}
+
+car::vif(lme(log_sync ~ log_rich + piel + alt + c_c + t_lvl + beta_bin_c, random = ~ 1 | basin, data = lav_data))
+car::vif(lme(log_sync ~ alt + width + temperature_med + DBO_med + flow_med, random = ~ 1 | basin, data = lav_data))
+```
+
 
 ```{r}
 compute_psem <- function(.data) {
   corsem <- psem(
-    lme(log_sync ~ log_rich + piel + alt + c_c + t_lvl + beta_bin_c + MDS2, random = ~ 1 | basin, data = .data),
-    lme(log_cv_sp ~ log_rich + piel + c_c + t_lvl + beta_bin_c + MDS2, random = ~ 1 | basin, data = .data),
-    lme(log_rich ~ alt + width, random = ~ 1 | basin, data = .data),
-    lme(MDS2 ~ alt + width, random = ~ 1 | basin, data = .data),
-    lme(piel ~ alt + width, random = ~ 1 | basin, data = .data),
-    lme(c_c ~ alt + width, random = ~ 1 | basin, data = .data),
-    lme(t_lvl ~ alt + width, random = ~ 1 | basin, data = .data),
-    lme(beta_bin_c ~ alt + width, random = ~ 1 | basin, data = .data),
+    lme(temperature_med ~ alt, random = ~ 1 | basin, data = .data),
+    lme(log_rich ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = .data),
+    lme(piel ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = .data),
+    lme(c_c ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = .data),
+    lme(t_lvl ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = .data),
+    lme(beta_bin_c ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = .data),
+    lme(log_sync ~ log_rich + piel + alt + c_c + t_lvl + beta_bin_c,
+      random = ~ 1 | basin, data = .data),
+    lme(log_cv_sp ~ log_rich + piel + c_c + t_lvl +
+    beta_bin_c, random = ~ 1 | basin, data = .data),
     lm(log_stab ~ log_cv_sp + log_sync, data = .data)
   )
   output <- summary(corsem, .progressBar = F)
@@ -1561,6 +1596,13 @@ compute_psem <- function(.data) {
 test <- compute_psem(lav_data)
 ggpiecewisesem(test)
 ```
+
+- Main results:
+  - Richness destabilizes communities 
+  - Turnover destabilizes communities, latter increased by enrichment
+  - Trophic level decreased CV but increase species synchrony!:
+  - Connectance!
+
 
 ```{r sensitivity, eval = FALSE}
 myload(op_analysis_wo_holes, op_analysis_ov, dir = mypath("data"))
