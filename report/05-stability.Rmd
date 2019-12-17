@@ -1600,7 +1600,7 @@ ggpiecewisesem(test)
 - Main results:
   - Richness destabilizes communities 
   - Turnover destabilizes communities, latter increased by enrichment
-  - Trophic level decreased CV but increase species synchrony!:
+  - Trophic level decreased CV but increase species synchrony!
   - Connectance!
 
 
@@ -1616,28 +1616,18 @@ map(list(), compute_psem)
 
 ```
 
-```{r}
-lav_data %>%
-  ggplot(aes(x = log_rich, y = MDS1)) +
-  geom_point() +
-  labs(x = "Log of species richness", y = "Axis of composition")
-
-```
-
-
-
 #### Productivity
 
 
 ```{r, fig.cap = "Biomass"}
 prod_sem <- psem(
-  lme(prod ~ log_rich + piel + c_c + t_lvl + beta_bin_c + MDS2, random = ~ 1 | basin, data = lav_data),
-  lme(MDS2 ~ alt + width, random = ~ 1 | basin, data = lav_data),
-  lme(log_rich ~ alt + width, random = ~ 1 | basin, data = lav_data),
-  lme(piel ~ alt + width, random = ~ 1 | basin, data = lav_data),
-  lme(c_c ~ alt + width, random = ~ 1 | basin, data = lav_data),
-  lme(t_lvl ~ alt + width, random = ~ 1 | basin, data = lav_data),
-  lme(beta_bin_c ~ alt + width, random = ~ 1 | basin, data = lav_data)
+  lme(temperature_med ~ alt, random = ~ 1 | basin, data = lav_data),
+  lme(log_rich ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = lav_data),
+  lme(piel ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = lav_data),
+  lme(c_c ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = lav_data),
+  lme(t_lvl ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = lav_data),
+  lme(beta_bin_c ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = lav_data),
+  lme(prod ~ log_rich + piel + c_c + t_lvl + beta_bin_c + DBO_med + temperature_med, random = ~ 1 | basin, data = lav_data)
 )
 sumup_prod <- summary(prod_sem, .progressBar = F)
 sumup_prod$coefficients %>%
@@ -1651,7 +1641,7 @@ ggpiecewisesem(sumup_prod)
 ```
 
 ```{r colin_prod}
-car::vif(lme(prod ~ log_rich + piel + c_c + t_lvl + beta_bin_c + MDS2, random = ~ 1 | basin, data = lav_data))
+car::vif(lme(prod ~ log_rich + piel + c_c + t_lvl + beta_bin_c + temperature_med + DBO_med, random = ~ 1 | basin, data = lav_data))
 ```
 
 
