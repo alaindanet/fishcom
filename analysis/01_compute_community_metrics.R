@@ -11,6 +11,7 @@ library(vegan)
 mypath <- rprojroot::find_package_root_file
 source(mypath("R", "misc.R"))
 source(mypath("R", "community_methods.R"))
+source(mypath("R", "community_analysis.R"))
 #devtools::load_all()
 
 # Cores
@@ -139,16 +140,16 @@ mysave(community_metrics, dir = data_common, overwrite = TRUE)
 myload(community_analysis, op_analysis, dir = mypath("data"))
 
 # Compute beta-diversity 
-com <- left_join(ungroup(community_analysis),
-  select(op_analysis, opcod, station, date), by = "opcod") %>%
-  filter(!is.na(station)) %>%
-  select(station, date, species, nind) %>%
+com <- community_analysis %>%
+  ungroup() %>%
+  left_join(op_analysis, by = "opcod") %>%
+  filter(!(is.na(station) | is.na(opcod))) %>%
+  dplyr::select(station, date, species, nind) %>%
   group_by(station, date, species) %>%
   summarise(nind = sum(nind)) %>%
   group_by(station) %>%
   arrange(date) %>%
   nest()
-
 ## build community matrices
 com %<>%
   mutate(
@@ -173,18 +174,18 @@ betadiv <- com %>%
     betadiv_bin_diag = furrr::future_map_dbl(com, compute_betadiv, binary = TRUE, time_to_time = TRUE)
   )
 
+mysave(betadiv, dir = data_common, overwrite = TRUE)
 
 ############################################
 #  Compute temporal community description  #
 ############################################
 # Compute mean and cv of richness
-myload(community_metrics, op_analysis, dir = mypath("data"))
+myload(community_metrics, op_analysis, betadiv, dir = mypath("data"))
 
-com <- left_join(community_metrics, op_analysis, by = c("opcod")) %>%
-  select(station, richness, nind, biomass, pielou, simpson) %>%
-  group_by(station) %>%
-  summarise_at(c("richness", "nind", "biomass", "pielou", "simpson"),
-    list(avg = mean, cv =~ sd(.) / mean(.), med = median, stab = ~mean(.) / sd(.)))
+com <- summarise_com_over_time(
+  op = op_analysis,
+  com = community_metrics
+)
 
 com <- left_join(com, select(betadiv, -data, -com), by = "station")
 

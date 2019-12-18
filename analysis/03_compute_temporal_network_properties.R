@@ -16,20 +16,17 @@ devtools::load_all()
 #  Temporal network characteristics  #
 ######################################
 
+source(mypath("R", "community_analysis.R"))
 myload(op_analysis, metaweb_analysis, dir = data_common)
 myload(network_metrics, dir = dest_dir)
-op_analysis %<>%
-  dplyr::select(opcod, station, year)
-to_be_summarized <- c("nestedness", "connectance", "connectance_corrected", "nbnode",
-  "mean_troph_level", "mean_troph_level_corrected", "max_troph_level", "modularity", "modularity_corrected", "w_trph_lvl_avg")
-com <- left_join(network_metrics, op_analysis, by = "opcod") %>%
-  group_by(station) %>%
-  rename(mean_troph_level = troph_level_avg,
-    max_troph_level = troph_length) %>%
-  summarise_at(to_be_summarized,
-    funs(cv = sd(.) / mean(.), med = median))
+temporal_network_metrics <- summarise_network_over_time(
+  op = op_analysis,
+  network = network_metrics,
+  metrics = c("nestedness", "connectance", "connectance_corrected", "nbnode",
+    "mean_troph_level", "mean_troph_level_corrected", "max_troph_level",
+    "modularity", "modularity_corrected", "w_trph_lvl_avg")
+)
 
-temporal_network_metrics <- com
 mysave(temporal_network_metrics, dir = dest_dir, overwrite = TRUE)
 
 ###############################################
@@ -41,37 +38,11 @@ cat("---------------------------------------------\n")
 
 myload(op_analysis, metaweb_analysis, dir = data_common)
 myload(network_metrics, network_analysis, dir = dest_dir)
-
-op <- op_analysis %>% dplyr::select(opcod, station, year)
-net <- left_join(network_analysis, op, by = "opcod") %>%
-  ungroup()
-rm(op_analysis, network_analysis)
-
-net %<>% dplyr::select(station, troph_group) %>%
-  unnest()
-biomass_variation <- net %>%
-  group_by(station, troph_group) %>%
-  summarise_all(funs(avg = mean, cv = sd(.) / mean(.), stab = mean(.) / sd(.)))
-## Be careful, at which point we compute biomass cv by trophic group. Each group
-## should have at least 5 observations to get a reliable variance. This is
-## especially true for trophic group 1 (lowest) which is often absent from the
-## dataset
-check_obs <- net %>%
-  group_by(station, troph_group) %>%
-  summarise(nobs = n()) %>%
-  mutate(enough_obs = ifelse(nobs >= 5, TRUE, FALSE))
-
-filter(biomass_variation, is.na(troph_group))
-## Let's put values to NA when there is not enough observations:
-biomass_variation %<>%
-  left_join(., check_obs, by = c("station", "troph_group")) %>%
-  mutate_at(vars(biomass_avg:nbnode_stab), funs(if_else(enough_obs, ., NA_real_))) %>%
-  select_at(vars(dplyr::matches("biomass|richness_avg|station|troph_group")))
-
-## Merge with temporal_network_metrics
-biomass_variation %<>%
-  group_by(station) %>%
-  nest(.key = "troph_group")
+debug(summarise_bm_troph_over_time)
+biomass_variation <- summarise_bm_troph_over_time(
+  op = op_analysis,
+  network = network_analysis 
+)
 
 myload(temporal_network_metrics, dir = dest_dir)
 ## Check if troph_group already exist:
