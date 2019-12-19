@@ -93,3 +93,114 @@ gather_press_to_category <- function(press = NULL, polluant_units = NULL, var_to
     press
 }
 
+#' Format press
+#'
+#'
+#'
+format_press_polluant <- function (press = NULL, polluant_units = NULL, press_cat = NULL) {
+
+  press %<>%
+    dplyr::group_by(id, year, parameter) %>%
+    dplyr::arrange(value.predSE) %>%
+    dplyr::slice(1)
+
+
+  press %<>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(parameter = as.character(parameter)) %>%
+    dplyr::left_join(press_cat, by = "parameter")
+  missing_cat <- dplyr::filter(press, is.na(category))
+  stopifnot(nrow(missing_cat) == 0)
+  # Move aluminium which is more a polluant than acidification
+  press %<>%
+    dplyr::mutate(
+      category = ifelse(parameter == "aluminium", "micropolluants mineraux", category),
+      category = ifelse(parameter == "ph", "ph", category) 
+    )
+  # Keep only phosphore total:
+  press %<>%
+    dplyr::mutate(
+      category = ifelse(parameter == "phosphore_total", "phosphore", category)
+    )
+  # Matières organiques
+  press %<>%
+    dplyr::mutate(
+      category = ifelse(parameter == "dbo5", "DBO", category),
+      category = ifelse(parameter == "oxygene_dissous", "disolved_oxygen", category)
+    )
+
+  press_cleaned <- press %>%
+    dplyr::select(id, year, parameter, value_corrected, direction, category, ld50_fish) %>%
+    dplyr::rename(press = value_corrected)
+
+  press_metrics <- gather_press_to_category(
+    press = press_cleaned,
+    polluant_units = polluant_units,
+    var_to_sum = c("press"),
+    group_var = c("id", "category", "year"))
+
+  return(press_metrics)
+
+}
+
+#' Get temperature and flow metrics
+#'
+#'
+get_temp_flow_metrics <- function (flow = NULL, temp = NULL) {
+
+  temp_flow_temp <- flow %>%
+    dplyr::mutate(category = "flow") %>%
+    dplyr::bind_rows(dplyr::mutate(temp, category = "temperature")) %>%
+    select(id, year, category,value_corrected) %>%
+    rename(press = value_corrected)
+
+  return(temp_flow_temp)
+
+}
+
+compute_temporal_press <- function (press_metrics = NULL, temp_flow_metrics = NULL, .op = NULL) {
+
+  year_station <- .op %>%
+    dplyr::group_by(station) %>%
+    dplyr::summarise(year_list = list(unique(year)))
+
+
+  # Put temperature aside bc of temperature data is begining in 2006:
+  # Summarise data over 2006-2018 
+  temp <- dplyr::filter(temp_flow_metrics, category == "temperature")
+  temporal_temp <- temp %>% 
+    dplyr::filter(id %in% year_station$station) %>%
+    dplyr::group_by(id, category) %>%
+    dplyr::summarise(
+      press_med = median(press, na.rm = TRUE),
+      cv_press = sd(press, na.rm = TRUE) / mean(press, na.rm = TRUE),
+      press = mean(press, na.rm = TRUE)
+    )
+
+  press_metrics %<>%
+    dplyr::bind_rows(dplyr::filter(temp_flow_metrics, category != "temperature"))
+
+  # Select press years corresponding to years sampled in press metrics
+  press_metrics %<>%
+    dplyr::filter(id %in% year_station$station) %>%
+    dplyr::group_by(id) %>%
+    tidyr::nest() %>%
+    dplyr::left_join(dplyr::rename(year_station, id = station), by = "id") %>%
+    dplyr::mutate(sorted = purrr::map2(data, year_list, function (x, year_list) {
+	dplyr::filter(x, year %in% c(min(year_list) - 1, year_list))
+	})) %>%
+    dplyr::select(-data, -year_list) %>%
+    tidyr::unnest(sorted)
+
+  temporal_press_polluants <- press_metrics %>% 
+    dplyr::group_by(id, category) %>%
+    dplyr::summarise(
+      press_med = median(press, na.rm = TRUE),
+      cv_press = sd(press, na.rm = TRUE) / mean(press, na.rm = TRUE),
+      press = mean(press, na.rm = TRUE)
+    )
+
+  return(temporal_press_polluants)
+
+}
+
