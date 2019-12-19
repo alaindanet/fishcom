@@ -38,7 +38,6 @@ cat("---------------------------------------------\n")
 
 myload(op_analysis, metaweb_analysis, dir = data_common)
 myload(network_metrics, network_analysis, dir = dest_dir)
-debug(summarise_bm_troph_over_time)
 biomass_variation <- summarise_bm_troph_over_time(
   op = op_analysis,
   network = network_analysis 

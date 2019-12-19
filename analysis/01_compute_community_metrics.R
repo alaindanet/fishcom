@@ -107,23 +107,24 @@ evenness <- community_analysis %>%
     group_by(opcod) %>%
     nest() %>%
     mutate(
-    pielou = furrr::future_map(data, function(.data) {
-      .data %<>% spread(species, nind) %>%
-	mutate_if(is.integer, list(~replace(.,is.na(.), as.integer(0))))
+      pielou = furrr::future_map(data, function(.data) {
+	.data %<>% spread(species, nind) %>%
+	  mutate_if(is.integer, list(~replace(.,is.na(.), as.integer(0))))
 
-      richness <- vegan::specnumber(.data)
+	richness <- vegan::specnumber(.data)
 
-      if (richness == 1) {
-	pielou <- 0
-	simpson <- 0
-      } else {
-	pielou <- vegan::diversity(.data) / log(richness)
-	simpson <- vegan::diversity(.data, index = "simpson")
-      }
+	if (richness == 1) {
+	  pielou <- 0
+	  simpson <- 0
+	} else {
+	  pielou <- vegan::diversity(.data) / log(richness)
+	  simpson <- vegan::diversity(.data, index = "simpson")
+	}
 
-      out <- tibble( pielou = pielou, simpson = simpson)
-      return(out)
-    })
+	out <- tibble( pielou = pielou, simpson = simpson)
+	return(out)
+}
+      )
     )
 
 evenness %<>%
@@ -139,40 +140,8 @@ mysave(community_metrics, dir = data_common, overwrite = TRUE)
 ############################
 myload(community_analysis, op_analysis, dir = mypath("data"))
 
-# Compute beta-diversity 
-com <- community_analysis %>%
-  ungroup() %>%
-  left_join(op_analysis, by = "opcod") %>%
-  filter(!(is.na(station) | is.na(opcod))) %>%
-  dplyr::select(station, date, species, nind) %>%
-  group_by(station, date, species) %>%
-  summarise(nind = sum(nind)) %>%
-  group_by(station) %>%
-  arrange(date) %>%
-  nest()
-## build community matrices
-com %<>%
-  mutate(
-    com = furrr::future_map2(data, station, function(x, y) {
-
-      x %<>% spread(species, nind) %>%
-	mutate_if(is.integer, list(~replace(.,is.na(.), as.integer(0)))) %>%
-	arrange(date) %>%
-	select(-date)
-      x
-}
-    )
-  )
-#
-# Here I take the overall mean of differences between years but could be an idea
-# to consider the mean of dissimilarity year to year (i.e. the diagonal values)
-betadiv <- com %>%
-  mutate(
-    betadiv = furrr::future_map_dbl(com, compute_betadiv),
-    betadiv_bin = furrr::future_map_dbl(com, compute_betadiv, binary = TRUE),
-    betadiv_diag = furrr::future_map_dbl(com, compute_betadiv, time_to_time = TRUE),
-    betadiv_bin_diag = furrr::future_map_dbl(com, compute_betadiv, binary = TRUE, time_to_time = TRUE)
-  )
+# Compute beta-diversity
+betadiv <- compute_temporal_betadiv(.op = op_analysis, com = community_analysis)
 
 mysave(betadiv, dir = data_common, overwrite = TRUE)
 
@@ -200,18 +169,6 @@ source(mypath("R", "synchrony.R"))
 
 myload(community_analysis, op_analysis, dir = mypath("data"))
 
-synchrony <- get_sync_cv_mat(com_analysis = community_analysis,
-  op_analysis = op_analysis,
-  presence_threshold = 0.5)
-
-synchrony %<>%
-  mutate(
-    contrib = purrr::pmap(
-      list(mat = com_mat, cv_com_tot = cv_com, cv_sp_tot = cv_sp, sync_tot = synchrony),
-      ~compute_sp_contrib(mat = ..1, cv_com_tot = ..2, cv_sp_tot = ..3, sync_tot = ..4))
-      )
-
-synchrony %<>%
-  select(station, synchrony, cv_sp, cv_com, cv_classic, contrib)
+synchrony <- compute_com_synchrony(.op = op_analysis, com = community_analysis)
 
 mysave(synchrony, dir = mypath("data"), overwrite = TRUE)

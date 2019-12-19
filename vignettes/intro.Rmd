@@ -72,14 +72,14 @@ According to the postdoc advertisement:
   - [ ] generate clean subsets of data:
     - [ ] overlapping / without holes
     - [x] non overlapping / without holes
-    - [ ] overlapping / with holes
-    - [ ] non overlapping / with holes
-  - [ ] increase explained variance of the PCA:
+    - [x] overlapping / with holes
+    - [x] non overlapping / with holes
+  - [x] increase explained variance of the PCA:
     - [ ] Separate med and variance
     - [ ] Remove some variables such as phosphore and nitrate
     - [ ] Rm lat and long
   - [ ] Pielou: use relative biomass; add div taxo?
-  - [ ] SEM: add resources
+  - [x] SEM: add resources
 - [x] Fish datasets to generate
 - [ ] Assess quality of the dataset:
 

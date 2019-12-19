@@ -2,7 +2,6 @@
 #                               Manipulate press                               #
 ################################################################################
 
-
 gather_press_to_category <- function(press = NULL, polluant_units = NULL, var_to_sum = NULL, group_var = NULL, ld_weighting = TRUE) {
 
   # Polluants avg by those categories and weighted by their ld_50:
