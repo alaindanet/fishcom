@@ -138,6 +138,7 @@ habitat_station <- hab_analysis %>%
 habitat_station %<>% 
   left_join(geo_station, by = "station") %>%
   select(-region_csp)
+
 # Add temp and flow
 flow_temp <- temporal_press_polluants %>%
   filter(category %in% c("flow", "temperature", "DBO", "herbicides",

@@ -7,7 +7,7 @@ myload(temporal_network_metrics, dir = dest_dir)
 myload(community_metrics, temporal_community_metrics, synchrony, op_analysis, dir = data_common)
 myload(network_analysis, dir = mypath("data", "classes"))
 myload( trophic_level, trophic_class, dir = mypath("data"))
-myload(hab_type, dir = mypath("report"))
+myload(hab_type, habitat_pressure, dir = mypath("report"))
 source(mypath("R", "synchrony.R"))
 source(mypath("R", "geo_methods.R"))
 source(mypath("R", "local_network_build.R"))
@@ -797,8 +797,6 @@ cv_sp_div_troph %>%
   facet_grid(cols = vars(troph_group), rows = vars(hab_type))
 ```
 
-
-
 ### Some temporal series of biomass
 
 #### Total biomass
@@ -1428,7 +1426,6 @@ What are the contributions of environment and trophic level on the shape of the 
 
 
 ```{r}
-myload(nmds, dir = mypath("report"))
 
 ```
 
@@ -1440,78 +1437,17 @@ the network on the functioning and the stability of the trophic network
 
 
 ```{r}
-
-```
-
-```{r}
-mod <- lm(betadiv_bin ~ log(richness_med), data = temporal_community_metrics)
-temporal_community_metrics$beta_bin_c <- resid(mod)
-```
-
-
-```{r}
-biomass_sem <- temporal_community_metrics %>%
-  select(station, biomass_stab, biomass_med, richness_med, pielou_med,
-  beta_bin_c) %>%
-  left_join(select(synchrony, station, synchrony, cv_sp), by = "station") %>%
-  rename(sync = synchrony,
-    piel = pielou_med,
-    prod = biomass_med 
-  )
-habitat_sem <- habitat_pressure %>% 
-  select(station, lat, alt, width_river_mean, DBO_med, DBO_cv, flow_med, flow_cv,
-    temperature_med, temperature_cv) %>%
-  rename(width = width_river_mean)
-net_sem <- temporal_network_metrics %>%
-  select(station, connectance_corrected_med, w_trph_lvl_avg_med) %>%
-  rename(c_c = connectance_corrected_med,
-    t_lvl = w_trph_lvl_avg_med)
-composition_axis <- nmds$points %>%
-  as_tibble %>%
-  mutate(station = as.integer(dimnames(nmds$points)[[1]]))
-  
-dsem <- biomass_sem  %>%
-  mutate(log_rich = log10(richness_med)) %>%
-  left_join(net_sem, by = "station") %>%
-  left_join(habitat_sem, by = "station") %>%
-  left_join(st_basin, by = "station") %>%
-  #left_join(composition_axis, by = "station") %>%
-  na.omit()
-
-lav_data <- dsem %>%
-  mutate(
-    log_sync = log10(sync), 
-    log_cv_sp = log10(cv_sp),
-    log_stab = log10(biomass_stab)
+myload(nmds, dir = mypath("report"))
+lav_data <- compute_sem_dataset(
+  com = temporal_community_metrics,
+  network = temporal_network_metrics, 
+  hab_press = habitat_pressure, 
+  sync = synchrony,
+  nmds = nmds,
+  basin = st_basin 
   )
 ```
 
-```{r, eval = FALSE}
-library(lavaan)
-options(width = 100)
-
-#log_stab ~ log_sync + log_cv_sp
-lav_formula <- "
-  log_sync ~ log_rich + piel + alt + c_c + t_lvl + beta_bin_c
-  log_cv_sp ~ log_rich + piel + c_c + t_lvl + beta_bin_c
-  log_rich ~ alt + width 
-  piel ~ alt + width
-  c_c ~ alt + width
-  t_lvl ~ alt + width
-  beta_bin_c ~ alt + width
-  log_cv_sp ~~ log_sync
-  "
-lav_mod <- sem(lav_formula, lav_data)
-
-standardizedsolution(lav_mod) %>%
-  kable() %>%
-  kable_styling() %>%
-  scroll_box(width = "100%", height = "400px")
-```
-
-```{r, eval = FALSE, fig.dim = c(10, 7), fig.cap = "Lavaan SEM"}
-ggsem(lav_mod)
-```
 
 ### Piecewiese SEM
 
@@ -1523,7 +1459,7 @@ library(piecewiseSEM)
 
 #### Stability
 
-```{r, fig.cap = "The basic SEM"}
+```{r, eval = FALSE, fig.cap = "The basic SEM"}
 build_stab_sem <- function (evt = NULL, com = NULL, stab_comp = NULL, stab = NULL,  .data = NULL) {
 
   rs <- map(list(evt = evt, com = com, stab_comp = stab_comp), ~paste(.x, collapse = " + "))
@@ -1567,34 +1503,41 @@ output$coefficients %>%
 source(mypath("R", "plot_methods.R"))
 ggpiecewisesem(output)
 ```
-```{r}
+```{r, eval = FALSE}
 
 car::vif(lme(log_sync ~ log_rich + piel + alt + c_c + t_lvl + beta_bin_c, random = ~ 1 | basin, data = lav_data))
 car::vif(lme(log_sync ~ alt + width + temperature_med + DBO_med + flow_med, random = ~ 1 | basin, data = lav_data))
 ```
 
+```{r}
+library(nlme)
+library(piecewiseSEM)
+
+st_basin <- get_basin_station()
+myload(nmds, dir = mypath("report"))
+
+# Compute stability, network metrics, etc with the new datasets
+com_data <- compute_community_temporal_analysis(.op = op_analysis, dest_dir = mypath("data", "species"))
+
+# Compute sem dataset 
+sem_data <- compute_sem_dataset(
+  com = com_data[["tps_com"]],
+  network = com_data[["tps_net"]], 
+  hab_press = habitat_pressure, 
+  sync = com_data[["sync"]],
+  nmds = nmds,
+  basin = st_basin 
+  )
+
+# Compute SEMs
+sem <- compute_stab_sem(.data = sem_data,
+  random_effect = as.formula("~1|basin"))
+
+```
+
 
 ```{r}
-compute_psem <- function(.data) {
-  corsem <- psem(
-    lme(temperature_med ~ alt, random = ~ 1 | basin, data = .data),
-    lme(log_rich ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = .data),
-    lme(piel ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = .data),
-    lme(c_c ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = .data),
-    lme(t_lvl ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = .data),
-    lme(beta_bin_c ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = .data),
-    lme(log_sync ~ log_rich + piel + alt + c_c + t_lvl + beta_bin_c,
-      random = ~ 1 | basin, data = .data),
-    lme(log_cv_sp ~ log_rich + piel + c_c + t_lvl +
-    beta_bin_c, random = ~ 1 | basin, data = .data),
-    lm(log_stab ~ log_cv_sp + log_sync, data = .data)
-  )
-  output <- summary(corsem, .progressBar = F)
-
-  output
-}
-test <- compute_psem(lav_data)
-ggpiecewisesem(test)
+ggpiecewisesem(sem)
 ```
 
 - Main results:
@@ -1605,15 +1548,27 @@ ggpiecewisesem(test)
 
 
 ```{r sensitivity, eval = FALSE}
-myload(op_analysis_wo_holes, op_analysis_ov, dir = mypath("data"))
+myload(op_analysis, op_analysis_wo_holes, op_analysis_ov, dir = mypath("data"))
 
-# Compute stability, network metrics, etc with the new datasets
+sem_l_data <- map(list(full = op_analysis, wo_holes = op_analysis_wo_holes, ov = op_analysis_ov),
+  ~build_dataset_get_sem_coefficient(
+    .op = .x,
+    dest_dir = mypath("data", "species"))
+)
 
-# Compute SEMs
-map(list(), compute_psem)
+sem_results <- map(sem_l_data,
+  ~.x$coefficients[-ncol(.x$coefficients)]) %>%
+  enframe() %>%
+  rename(dataset = name) %>%
+  unnest(value)
 
-# Plot
-
+# Reformat
+colnames(sem_results) <- str_to_lower(colnames(sem_results))
+sem_results %>%
+  mutate(r_p = str_c(response, predictor, sep = "~")) %>%
+  ggplot(aes(x = r_p, y = std.estimate)) +
+  geom_point(aes(color = dataset)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 #### Productivity

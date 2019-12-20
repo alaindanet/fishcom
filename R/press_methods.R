@@ -204,3 +204,7 @@ compute_temporal_press <- function (press_metrics = NULL, temp_flow_metrics = NU
 
 }
 
+compute_temporal_habitat <- function (.op = NULL ) {
+
+
+}
