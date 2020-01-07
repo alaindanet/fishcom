@@ -81,14 +81,19 @@ summarise_com_over_time <- function (
   op = NULL,
   com = NULL
 ) {
-  com %<>%
+
+    if ("station" %in% names(com)) {
+     com$station <- NULL
+    }
+
+  output <- com %>%
     dplyr::left_join(op, by = c("opcod")) %>%
     dplyr::filter(!(is.na(station) | is.na(opcod))) %>%
     dplyr::select(station, richness, nind, biomass, pielou, simpson) %>%
     dplyr::group_by(station) %>%
     dplyr::summarise_at(c("richness", "nind", "biomass", "pielou", "simpson"),
       list(avg = mean, cv =~ sd(.) / mean(.), med = median, stab = ~mean(.) / sd(.)))
-  return(com)
+  return(output)
 }
 
 #' Compute temporal beta-diversity
@@ -157,7 +162,9 @@ compute_com_synchrony <- function (.op = NULL, com = NULL) {
 
   return(synchrony)
 } 
-
+#'
+#'
+#'
 compute_community_temporal_analysis <- function(.op = NULL, dest_dir = NULL) {
 
   output <- vector("list", length = 4)
@@ -211,3 +218,35 @@ compute_community_temporal_analysis <- function(.op = NULL, dest_dir = NULL) {
   return(output)
 
 }
+
+
+#' Compute community matrix 
+#'
+#' 
+#' @param com community_analysis
+#'
+#'
+compute_com_mat <- function (.op = NULL, com = NULL) {
+
+  com <- community_analysis %>%
+    dplyr::select(opcod, species, biomass) %>%
+    dplyr::left_join(op_analysis[, c("opcod", "station")], by = "opcod") %>%
+    dplyr::filter(!is.na(station)) %>%
+    dplyr::group_by(station) %>%
+    tidyr::nest() %>%
+    mutate(data = map(data, function (.data) {
+	.data %<>%
+	  tidyr::spread(species, biomass) %>%
+	  dplyr::select(-opcod) %>%
+	  dplyr::mutate_all(list(~ ifelse(is.na(.), 0, .))) %>%
+	  dplyr::summarise_all(list(median))
+	return(.data)
+    }))
+  
+  com %<>%
+    tidyr::unnest(data) %>%
+    dplyr::mutate_all(list(~ ifelse(is.na(.), 0, .)))
+
+  return(com)
+
+} 

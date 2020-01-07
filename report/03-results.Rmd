@@ -12,7 +12,8 @@ myload(temporal_community_metrics, synchrony, dir = data_common)
 
 cor_avg <- temporal_network_metrics %>%
   select_at(vars(dplyr::matches("med"))) %>%
-  cor()
+  na.omit %>%
+  cor(., method = "spearman")
 #knitr::kable(cor_avg)
 as.data.frame(round(cor_avg,2)) %>%
   mutate_all(funs(cell_spec(., "html", color = ifelse(abs(.) > .65 & . != 1, "red",
@@ -25,7 +26,9 @@ as.data.frame(round(cor_avg,2)) %>%
 ```{r net-cor-cv, fig.cap="Correlation between network indices (CV over the temporal series). "}
 cor_cv <- temporal_network_metrics %>%
   select_at(vars(dplyr::matches("cv"))) %>%
-  cor()
+  na.omit %>%
+  cor(., method = "spearman")
+
 as.data.frame(round(cor_cv,2)) %>%
   mutate_all(funs(cell_spec(., "html", color = ifelse(abs(.) > .65 & . != 1, "red",
 	  "black")))) %>%

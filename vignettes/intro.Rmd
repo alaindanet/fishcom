@@ -70,6 +70,7 @@ According to the postdoc advertisement:
     - [ ] Add corrected weighted trophic lvl (unsuccess)
 - [ ] Analysis:
   - [ ] generate clean subsets of data:
+    - [ ] strategy: select period with the more overlap in dataset
     - [ ] overlapping / without holes
     - [x] non overlapping / without holes
     - [x] overlapping / with holes
@@ -80,6 +81,14 @@ According to the postdoc advertisement:
     - [ ] Rm lat and long
   - [ ] Pielou: use relative biomass; add div taxo?
   - [x] SEM: add resources
+  - [ ] SEM:
+    - [ ] Press: regroup physical and climate
+    - [ ] Nivx trophiques non pondérés
+    - [ ] Two axis: press and physical; avg & variance
+    - [ ] Link temperature - DBO
+  - [ ] Core/peripherical species:
+    - [ ] # year occurrence by species
+    - [ ] reanalyze data with and without peripherical species
 - [x] Fish datasets to generate
 - [ ] Assess quality of the dataset:
 

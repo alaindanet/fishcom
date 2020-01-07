@@ -50,7 +50,7 @@ compute_sem_dataset <- function (
   # Habitat -----------------------------------------------------------------
   habitat_sem <- hab_press %>% 
     select(station, lat, alt, width_river_mean, DBO_med, DBO_cv, flow_med, flow_cv,
-      temperature_med, temperature_cv) %>%
+      temperature_med, temperature_cv, med_evt1, med_evt2, cv_evt1, cv_evt2, med_press1, med_press2, cv_press1, cv_press2) %>%
   rename(width = width_river_mean)
 
   # Network -----------------------------------------------------------------
@@ -84,16 +84,17 @@ compute_sem_dataset <- function (
 #'
 compute_stab_sem <- function(.data, random_effect = "~ 1 | basin") {
   corsem <- piecewiseSEM::psem(
-    nlme::lme(temperature_med ~ alt, random =  ~ 1 | basin, data = .data),
-    nlme::lme(log_rich ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = .data),
-    nlme::lme(piel ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = .data),
-    nlme::lme(c_c ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = .data),
-    nlme::lme(t_lvl ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = .data),
-    nlme::lme(beta_bin_c ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = .data),
-    nlme::lme(log_sync ~ log_rich + piel + alt + c_c + t_lvl + beta_bin_c,
+    nlme::lme(log_rich ~ med_evt1 + med_evt2 + cv_evt1 + cv_evt2 + med_press1 +
+      med_press2 + cv_press1 + cv_press2,  random = ~ 1 | basin, data = .data),
+    nlme::lme(piel ~ med_evt1 + med_evt2 + cv_evt1 + cv_evt2 + med_press1 +
+      med_press2 + cv_press1 + cv_press2, random = ~ 1 | basin, data = .data),
+    nlme::lme(c_c ~ med_evt1 + med_evt2 + cv_evt1 + cv_evt2 + med_press1 + med_press2 + cv_press1 + cv_press2, random = ~ 1 | basin, data = .data),
+    nlme::lme(t_lvl ~ med_evt1 + med_evt2 + cv_evt1 + cv_evt2 + med_press1 + med_press2 + cv_press1 + cv_press2, random = ~ 1 | basin, data = .data),
+    nlme::lme(beta_bin_c ~ med_evt1 + med_evt2 + cv_evt1 + cv_evt2 + med_press1 + med_press2 + cv_press1 + cv_press2, random = ~ 1 | basin, data = .data),
+    nlme::lme(log_sync ~ log_rich + piel + c_c + t_lvl + beta_bin_c + med_evt1 + med_evt2 + cv_evt1 + cv_evt2 + med_press1 + med_press2 + cv_press1 + cv_press2,
       random = ~ 1 | basin, data = .data),
     nlme::lme(log_cv_sp ~ log_rich + piel + c_c + t_lvl +
-      beta_bin_c, random = ~ 1 | basin, data = .data),
+      beta_bin_c + med_evt1 + med_evt2 + cv_evt1 + cv_evt2 + med_press1 + med_press2 + cv_press1 + cv_press2, random = ~ 1 | basin, data = .data),
     lm(log_stab ~ log_cv_sp + log_sync, data = .data)
   )
   output <- summary(corsem, .progressBar = F)

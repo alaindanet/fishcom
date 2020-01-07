@@ -154,9 +154,9 @@ flow_temp_cv <- flow_temp %>%
   spread(category, cv_press)
 
 habitat_station %<>%
-  left_join(left_join(flow_temp_med, flow_temp_cv, by = "station"), by = "station")
+  left_join(left_join(flow_temp_med, flow_temp_cv, by = "station"), by = "station") %>%
+  filter(station %in% op_analysis$station)
 habitat_pressure <- habitat_station
-mysave(habitat_pressure, dir = mypath("report"), overwrite = TRUE)
 ```
 
 
@@ -272,12 +272,129 @@ p_pca_clim_phy_press <- map2(
 plot_grid(plotlist = p_pca_clim_phy_press, labels = "AUTO")
 ```
 
+####
+
+```{r pca-evt-press-med-cv}
+evt_var_mean <- c("flow_med", "temperature_med", "width_river_mean",
+  "avg_depth_station_mean", "slope", "alt", "d_source", "strahler")
+evt_var_cv <- c("flow_cv", "temperature_cv", "width_river_cv",
+  "avg_depth_station_cv")
+
+press_var_cv <- c("fungicides_cv", "herbicides_cv", "insecticides_cv", "DBO_cv")
+press_var_med <- c("fungicides_med", "herbicides_med",
+  "insecticides_med","DBO_med")
+
+#, "nitrates_med", "phosphore_med","nitrates_cv", "phosphore_cv", "DBO_cv"
+hab_evt <- habitat_pressure[, names(habitat_pressure) %in% c(evt_var_mean,
+  evt_var_cv)]
+hab_press <- habitat_pressure[, names(habitat_pressure) %in% c(press_var_med,
+  press_var_cv)]
+
+
+p_pca_clim_phy_press <- map2(
+  list(hab_evt, hab_press),
+  c("EVT", "Pressure"),
+  plot_pca)
+plot_grid(plotlist = p_pca_clim_phy_press, labels = "AUTO")
+```
+
+####
+
+```{r}
+hab_mean <- habitat_pressure[, names(habitat_pressure) %in% c(evt_var_mean , press_var_med)]
+hab_cv <- habitat_pressure[, names(habitat_pressure) %in% c(evt_var_cv, press_var_cv)]
+
+p_pca_clim_phy_press <- map2(
+  list(hab_mean, hab_cv),
+  c("Med", "Cv"),
+  plot_pca)
+plot_grid(plotlist = p_pca_clim_phy_press, labels = "AUTO")
+```
+
+####
+
+```{r}
+pca_pressure <- habitat_pressure[, names(habitat_pressure) %in% c(evt_var_mean, evt_var_cv, press_var_med, press_var_cv, "station")] %>% 
+  na.omit
+hab_evt_mean <- pca_pressure[, names(pca_pressure) %in% evt_var_mean]
+hab_evt_cv <- pca_pressure[, names(pca_pressure) %in% evt_var_cv]
+hab_press_mean <- pca_pressure[, names(pca_pressure) %in% press_var_med]
+hab_press_cv <- pca_pressure[, names(pca_pressure) %in% press_var_cv]
+
+p_pca_clim_phy_press <- map2(
+  list(hab_evt_mean, hab_evt_cv, hab_press_mean, hab_press_cv),
+  c("Med evt", "Cv evt", "Med press", "Cv press"),
+  plot_pca)
+plot_grid(plotlist = p_pca_clim_phy_press, labels = "AUTO")
+```
+
+```{r}
+pca_clim_phy_press <- map(
+  list(hab_evt_mean, hab_evt_cv, hab_press_mean, hab_press_cv),
+  function(.data) dudi.pca(as.data.frame(na.omit(.data)), scannf = FALSE, nf = 3, center = TRUE, scale = TRUE))
+
+names(pca_clim_phy_press) <- c("med_evt", "cv_evt", "med_press", "cv_press")
+```
+
+#### Rotate PCA axis
+
+```{r}
+pca_rotated <- map2( 
+  list(hab_evt_mean, hab_evt_cv, hab_press_mean, hab_press_cv),
+  c("Med evt", "Cv evt", "Med press", "Cv press"),
+  function(.data, title) {
+    .data %<>% na.omit
+    pca <- dudi.pca(as.data.frame(.data), scannf = FALSE, nf = 2, center = TRUE, scale = TRUE)
+    pca_rotated <- psych::principal(.data, rotate="varimax", nfactors=2,
+      scores=TRUE)
+
+    return(list(normal = pca, rotated = pca_rotated))
+  
+  })
+names(pca_rotated) <- c("med_evt", "cv_evt", "med_press", "cv_press")
+
+test <- vector(mode = "list", length = 4)
+for (i in seq_along(names(pca_rotated))) {
+
+  s.corcircle(
+    pca_rotated[[i]]$rotated$loadings[1:nrow(pca_rotated[[i]]$rotated$loadings),], xax = 1,
+    yax = 2)
+  rotated_plot <- recordPlot()
+
+   pca_plot <- fviz_pca_var(pca_rotated[[i]]$normal,
+      axes = c(1, 2),
+      col.var = "contrib", # Color by contributions to the PC
+      gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+      repel = TRUE # Avoid text overlapping
+    )
+
+  test[[i]] <- plot_grid(rotated_plot, pca_plot)
+  rm(rotated_plot)
+
+}
+plot_grid(plotlist=test)
+mysave(pca_rotated, dir = mypath("report"), overwrite = TRUE)
+```
+
+```{r add pca axis to habitat pressure}
+
+test <- map(pca_rotated, function(.pca) .pca$rotated$scores)
+axis_names <- paste0(rep(names(pca_rotated), each = 2), c("1", "2"))
+test2 <- do.call(cbind, test)
+colnames(test2) <- axis_names
+rotated_axis_st <- cbind(pca_pressure[, "station"], test2) 
+
+habitat_pressure %<>%
+  left_join(rotated_axis_st, by = "station")
+
+mysave(habitat_pressure, dir = mypath("report"), overwrite = TRUE)
+```
+
 
 
 #### Distribution of environmental variables
 
 ```{r dist-env, fig.cap = "Histogram of the station average environmental values through time."}
-
 dist_env <- habitat_pressure %>%
   select(station, width_river_mean:temperature_cv) %>%
   gather(env_var, value, width_river_mean:temperature_cv) 
@@ -305,6 +422,7 @@ the robustness of the relationship.
 
 ```{r split-rivers, fig.dim = c(7, 12)}
 hab_type <- habitat_pressure %>%
+  filter(station %in% op_analysis$station) %>%
   mutate(high_bin = ifelse(alt > median(alt), TRUE, FALSE),
   wide_bin = ifelse(width_river_mean > median(width_river_mean), TRUE, FALSE),
   hab_type = map2_chr(high_bin, wide_bin, function(high, wide){
@@ -392,33 +510,19 @@ myload(network_analysis, dir = mypath("data", "classes"))
 myload(habitat_pressure, dir = mypath("report"))
 ```
 
-```{r}
-com <- ungroup(community_analysis) %>%
-  select(opcod, species, biomass) %>%
-  spread(species, biomass) %>%
-  left_join(op_analysis[, c("opcod", "station")], by = "opcod") %>%
-  filter(!is.na(station)) %>%
-  mutate_all(list(~ ifelse(is.na(.), 0, .))) %>%
-  select(-opcod) %>%
-  group_by(station) %>%
-  summarise_all(list(median))
-
-com_mat <- as.matrix(com[, names(com) != "station"])
-rownames(com_mat)  <- com$station 
-
-order_st <- match(temporal_community_metrics$station, com$station) 
-tps_com_met <- temporal_community_metrics[order(order_st),] 
- 
-```
 
 ```{r, echo = FALSE}
 library(vegan)
 
-nmds <- metaMDS(com_mat, k=3, trymax = 100)
+myload(nmds, com_mat, dir = mypath("report"))
+
+
 stressplot(nmds)
 plot(nmds)
-mysave(nmds, dir = mypath("report"), overwrite = TRUE)
 
+order_st <- match(temporal_community_metrics$station, com_mat$station) 
+tps_com_met <- temporal_community_metrics[order(order_st),] 
+ 
 bluefunc <- colorRampPalette(c("lightyellow", "darkred"))
 ordiplot(nmds,type="n")
 orditorp(nmds,display="species",col="gray",air=0.01)
@@ -426,14 +530,14 @@ orditorp(nmds, display="sites",
   col= bluefunc(15)[findInterval(tps_com_met$richness_avg, seq(1,15))],
    cex = findInterval(log10(tps_com_met$biomass_med), seq(1, 4, 1))/2,
   air=0.01, pch = "+", labels = "+")
-
 ```
 
 ```{r}
 # Add habitat
-match_st <- match(habitat_pressure$station, com$station)
-habitat <- habitat_pressure[order(match_st), ]
-match_st_com <- match(temporal_community_metrics$station, com$station)
+habitat_press  <- filter(habitat_pressure, station %in% com_mat$station)
+match_st <- match(habitat_press$station, com_mat$station)
+habitat <- habitat_press[order(match_st), ]
+match_st_com <- match(temporal_community_metrics$station, com_mat$station)
 com_metrics <- temporal_community_metrics[order(match_st_com), ]
 ```
 
@@ -455,7 +559,9 @@ for (i in seq_along(com_var)) {
 ```
 
 ```{r basin-st}
-station_analysis <- get_basin_station(sf_obj = TRUE)
+station_analysis <- get_basin_station(sf_obj = TRUE) %>%
+  filter(station %in% com_mat$station)
+
 plot(station_analysis[,"basin"])
 # How many station by basin:
 nb_st_basin <- station_analysis %>%
@@ -465,10 +571,10 @@ nb_st_basin <- station_analysis %>%
 
 ```{r basin-com}
 dev.off()
-match_st_basin <- match(station_analysis$station, com$station)
-st_basin <- station_analysis[order(match_st_basin), ] %>%
+match_st_basin <- match(station_analysis$station, com_mat$station)
+st_basin <- 
+  station_analysis[order(match_st_basin), ] %>%
   mutate(basin = ifelse(is.na(basin), "INCONNU", basin))
-
 
 ordiplot(nmds,type="n")
 orditorp(nmds,display="species",col="red",air=0.01)
@@ -481,7 +587,7 @@ for (i in seq_along(u_basin)) {
 ```
 
 ```{r}
-match_st <- match(hab_type$station, com$station)
+match_st <- match(hab_type$station, com_mat$station)
 hab_type <- hab_type[order(match_st), ]
 ordiplot(nmds,type="points", choices = c(1, 2))
 orditorp(nmds,display="species",col="red",air=0.01)
@@ -564,7 +670,7 @@ community_metrics  <-
 ```
 
 ```{r}
-ts_biomass  <- community_metrics %>%
+ts_biomass <- community_metrics %>%
   select(station, date, biomass) %>%
   mutate(station = as.character(station)) %>%
   group_by(station) %>%

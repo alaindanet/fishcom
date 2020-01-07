@@ -172,3 +172,15 @@ myload(community_analysis, op_analysis, dir = mypath("data"))
 synchrony <- compute_com_synchrony(.op = op_analysis, com = community_analysis)
 
 mysave(synchrony, dir = mypath("data"), overwrite = TRUE)
+
+##################
+#  Compute nmds  #
+##################
+source(mypath("R", "community_analysis.R"))
+
+com_mat <- compute_com_mat(.op = op_analysis, com = ungroup(community_analysis))
+com <- select(com_mat, -station)
+com <- round(com[, colSums(com != 0) > 0])
+
+nmds <- vegan::metaMDS(com, k=3, trymax = 200)
+mysave(nmds, com_mat, dir = mypath("report"), overwrite = TRUE)

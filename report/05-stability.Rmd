@@ -1443,7 +1443,7 @@ lav_data <- compute_sem_dataset(
   network = temporal_network_metrics, 
   hab_press = habitat_pressure, 
   sync = synchrony,
-  nmds = nmds,
+  nmds = NULL,
   basin = st_basin 
   )
 ```
@@ -1525,7 +1525,7 @@ sem_data <- compute_sem_dataset(
   network = com_data[["tps_net"]], 
   hab_press = habitat_pressure, 
   sync = com_data[["sync"]],
-  nmds = nmds,
+  nmds = NULL,
   basin = st_basin 
   )
 
