@@ -332,48 +332,51 @@ plot_grid(plotlist = p_pca_clim_phy_press, labels = "AUTO")
 pca_clim_phy_press <- map(
   list(hab_evt_mean, hab_evt_cv, hab_press_mean, hab_press_cv),
   function(.data) dudi.pca(as.data.frame(na.omit(.data)), scannf = FALSE, nf = 3, center = TRUE, scale = TRUE))
-
 names(pca_clim_phy_press) <- c("med_evt", "cv_evt", "med_press", "cv_press")
 ```
 
 #### Rotate PCA axis
 
-```{r}
-pca_rotated <- map2( 
-  list(hab_evt_mean, hab_evt_cv, hab_press_mean, hab_press_cv),
-  c("Med evt", "Cv evt", "Med press", "Cv press"),
-  function(.data, title) {
-    .data %<>% na.omit
-    pca <- dudi.pca(as.data.frame(.data), scannf = FALSE, nf = 2, center = TRUE, scale = TRUE)
-    pca_rotated <- psych::principal(.data, rotate="varimax", nfactors=2,
-      scores=TRUE)
 
-    return(list(normal = pca, rotated = pca_rotated))
-  
-  })
-names(pca_rotated) <- c("med_evt", "cv_evt", "med_press", "cv_press")
+```{r, fig.show = "hide"}
+pca_rotated <- compute_rotated_pca(
+  data_list = list(hab_evt_mean, hab_evt_cv, hab_press_mean, hab_press_cv),
+  titles = c("med_evt", "cv_evt", "med_press", "cv_press")
+)
 
-test <- vector(mode = "list", length = 4)
-for (i in seq_along(names(pca_rotated))) {
+test <- plot_rotated_pca(pca_rotated) 
 
-  s.corcircle(
-    pca_rotated[[i]]$rotated$loadings[1:nrow(pca_rotated[[i]]$rotated$loadings),], xax = 1,
-    yax = 2)
-  rotated_plot <- recordPlot()
-
-   pca_plot <- fviz_pca_var(pca_rotated[[i]]$normal,
-      axes = c(1, 2),
-      col.var = "contrib", # Color by contributions to the PC
-      gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-      repel = TRUE # Avoid text overlapping
-    )
-
-  test[[i]] <- plot_grid(rotated_plot, pca_plot)
-  rm(rotated_plot)
-
-}
-plot_grid(plotlist=test)
 mysave(pca_rotated, dir = mypath("report"), overwrite = TRUE)
+```
+
+```{r pca_rotated_plot}
+plot_grid(plotlist=test)
+```
+
+
+#### Rotate PCA axis 2
+
+```{r pca-data, fig.show = "hide"}
+evt_var_mean_ok <-  c(evt_var_mean, "DBO_med")
+evt_var_cv_ok <-  c(evt_var_cv, "DBO_cv")
+pca_pressure <- habitat_pressure[, names(habitat_pressure) %in% c(evt_var_mean_ok, evt_var_cv_ok, "station")] %>% 
+  na.omit
+
+pca_list <- map(list(evt_var_mean_ok, evt_var_cv_ok), function (.var) {
+  pca_pressure[, names(pca_pressure) %in% .var]
+})
+names(pca_list) <- c("evt_med", "evt_cv")
+
+pca_rotated <- compute_rotated_pca(
+  data_list = pca_list,
+  titles = names(pca_list)  
+)
+
+pca_rotated_plot <- plot_rotated_pca(pca_rotated = pca_rotated)
+```
+
+```{r pca_env_ok}
+plot_grid(plotlist = pca_rotated_plot, ncol = 1)
 ```
 
 ```{r add pca axis to habitat pressure}
@@ -634,6 +637,81 @@ stab_div_basin %>%
   scale_x_log10() +
   labs(title = "Stability - Div by habitat type",
     x = "Average species richness (log10)", y = "Biomass stability (log10)")
+```
+
+#### Species occurence
+
+
+```{r}
+myload(community_analysis, dir = data_common)
+
+com <- community_analysis %>%
+  dplyr::select(opcod, species, biomass) %>%
+  dplyr::left_join(op_analysis[, c("opcod", "station")], by = "opcod") %>%
+  dplyr::filter(!is.na(station)) %>%
+  dplyr::group_by(station) %>%
+  tidyr::nest() %>%
+  mutate(data = map(data, function (.data) {
+      .data %<>%
+	tidyr::spread(species, biomass) %>%
+	dplyr::select(-opcod) %>%
+	dplyr::mutate_all(list(~ ifelse(is.na(.), 0, .))) %>%
+	dplyr::summarise_all(list(~ sum(. != 0) / n()))
+      return(.data)
+      }
+    )
+  )
+occurence_sp_st <- com %>%
+  unnest() 
+%>%
+  dplyr::mutate_if(is.double, list(~ ifelse(is.na(.), 0, .)))
+
+med_occ <- occurence_sp_st %>%
+  dplyr::summarise_if(is.double, list(~median(., na.rm = TRUE))) %>%
+  gather(sp, med_occ, everything()) 
+
+med_occ %>%
+  ggplot(aes(x = med_occ)) +
+  geom_histogram()
+
+```
+
+```{r}
+sp_per <- med_occ[med_occ$med_occ < .30,]$sp 
+
+threshold_occ <- c(.10, .30, .50, .80)
+com_wo_per  <- map(threshold_occ, ~ rm_sp_from_com(com = community_analysis, sp_to_rm =
+    med_occ[med_occ$med_occ < .x,]$sp))
+names(com_wo_per) <- threshold_occ 
+
+com_data <- list(total = community_analysis)
+com_data <- c(com_data, com_wo_per)
+
+res_sync_per <- map2(com_data, names(com_data), function (.data, .names) {
+
+  sync <- compute_com_synchrony(
+    .op = op_analysis,
+    com = .data)
+  sync$type <- .names 
+  sync$biomass_stab <- 1 / sync$cv_com
+  return(sync)
+
+})
+
+test <- do.call(rbind, res_sync_per)
+
+test %>%
+  ggplot(aes(x = richness_med, y = biomass_stab)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  stat_poly_eq(
+    formula = y ~ x,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  geom_smooth(method = "lm", formula = y ~ x) +
+  facet_grid(cols = vars(type))
+
 ```
 
 

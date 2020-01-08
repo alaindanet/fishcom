@@ -1425,10 +1425,6 @@ What are the contributions of environment and trophic level on the shape of the 
    - factorise calcultation of temporal metrics
 
 
-```{r}
-
-```
-
 ## P2: Evt and network structure conjointly drives fonctioning and stability of fish communities
 
 
@@ -1509,7 +1505,7 @@ car::vif(lme(log_sync ~ log_rich + piel + alt + c_c + t_lvl + beta_bin_c, random
 car::vif(lme(log_sync ~ alt + width + temperature_med + DBO_med + flow_med, random = ~ 1 | basin, data = lav_data))
 ```
 
-```{r}
+```{r, fig.dim = c(10, 7), echo = FALSE, fig.cap = "SEM for stability"}
 library(nlme)
 library(piecewiseSEM)
 
@@ -1533,23 +1529,18 @@ sem_data <- compute_sem_dataset(
 sem <- compute_stab_sem(.data = sem_data,
   random_effect = as.formula("~1|basin"))
 
-```
-
-
-```{r}
 ggpiecewisesem(sem)
 ```
 
 - Main results:
   - Richness destabilizes communities 
-  - Turnover destabilizes communities, latter increased by enrichment
+  - 
   - Trophic level decreased CV but increase species synchrony!
   - Connectance!
 
 
-```{r sensitivity, eval = FALSE}
+```{r sensitivity, fig.dim = c(14, 7), fig.cap = "Sensivity analysis with different dataset"}
 myload(op_analysis, op_analysis_wo_holes, op_analysis_ov, dir = mypath("data"))
-
 sem_l_data <- map(list(full = op_analysis, wo_holes = op_analysis_wo_holes, ov = op_analysis_ov),
   ~build_dataset_get_sem_coefficient(
     .op = .x,
@@ -1574,29 +1565,23 @@ sem_results %>%
 #### Productivity
 
 
-```{r, fig.cap = "Biomass"}
-prod_sem <- psem(
-  lme(temperature_med ~ alt, random = ~ 1 | basin, data = lav_data),
-  lme(log_rich ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = lav_data),
-  lme(piel ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = lav_data),
-  lme(c_c ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = lav_data),
-  lme(t_lvl ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = lav_data),
-  lme(beta_bin_c ~ alt + width + temperature_med + DBO_med, random = ~ 1 | basin, data = lav_data),
-  lme(prod ~ log_rich + piel + c_c + t_lvl + beta_bin_c + DBO_med + temperature_med, random = ~ 1 | basin, data = lav_data)
-)
-sumup_prod <- summary(prod_sem, .progressBar = F)
-sumup_prod$coefficients %>%
+```{r, fig.cap = "Coefficients of the SEM of biomass"}
+
+prod_sem <- compute_prod_sem(.data = sem_data)
+
+prod_sem$coefficients %>%
   kable() %>%
   kable_styling() %>%
   scroll_box(width = "100%", height = "400px")
 ```
 
 ```{r}
-ggpiecewisesem(sumup_prod)
+ggpiecewisesem(prod_sem)
 ```
 
-```{r colin_prod}
-car::vif(lme(prod ~ log_rich + piel + c_c + t_lvl + beta_bin_c + temperature_med + DBO_med, random = ~ 1 | basin, data = lav_data))
+```{r colin_prod, fig.cap = "Colinearity check for total biomass"}
+car::vif(lme(prod ~ log_rich + piel + c_c + t_lvl + beta_bin_c + evt_med1 + evt_med2 + evt_cv1 + evt_cv2, random = ~ 1 | basin, data = sem_data)) %>%
+  enframe %>%
+  kable
 ```
-
 

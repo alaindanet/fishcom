@@ -91,6 +91,7 @@ According to the postdoc advertisement:
     - [ ] reanalyze data with and without peripherical species
 - [x] Fish datasets to generate
 - [ ] Assess quality of the dataset:
+- [ ] Function to compute fast network metrics:
 
 ## Analysis road map
 

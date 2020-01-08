@@ -1,6 +1,14 @@
 ################################################################################
 #                        Functions to compute synchrony                        #
 ################################################################################
+
+compute_sp_nb_from_com_mat <- function (com_mat = NULL) {
+
+  rowSums(com_mat != 0)
+
+}
+
+
 compute_avg_cv_sp <- function(biomass, variance) {
   #Check that the species are in the same order in the vector:
   stopifnot(names(biomass) == names(variance))
@@ -23,7 +31,7 @@ compute_synchrony <- function(cov_mat) {
   return(phi)
 }
 
-get_sync_cv_mat <- function(com_analysis = NULL, op_analysis = NULL, presence_threshold = 0.5) {
+get_sync_cv_mat <- function(com_analysis = NULL, op_analysis = NULL, presence_threshold = 0.1) {
 
   # If it is network data, change the "species" colum
   stopifnot(any(c("species", "sp_class") %in% names(com_analysis)))
@@ -95,6 +103,8 @@ get_sync_cv_mat <- function(com_analysis = NULL, op_analysis = NULL, presence_th
 
   synchrony <- complete_com %>%
     dplyr::mutate(
+      richness = purrr::map(com_mat, compute_sp_nb_from_com_mat),
+      richness_med = purrr::map_dbl(richness, median),
       avg_sp = purrr::map(com_mat, colMeans),
       cov_mat = purrr::map(com_mat, cov),
       var_sp = purrr::map(cov_mat, diag),

@@ -1,5 +1,18 @@
 # Turn community analyze steps into functions 
 
+#' Remove species from community and network
+#' 
+#' @param 
+#' @param com community_analysis
+rm_sp_from_com <- function (com = NULL, sp_to_rm = NULL) {
+
+  com %<>%
+    filter(!species %in% sp_to_rm)
+
+  return(com)
+
+}
+
 
 #' Summarise network metrics over time
 #'
@@ -17,7 +30,7 @@ summarise_network_over_time <- function (op = NULL, network = NULL,
     dplyr::select(opcod, station, year)
 
   com <- op %>%
-    dplyr::left_join(network_metrics, by = "opcod") %>%
+    dplyr::left_join(network, by = "opcod") %>%
     dplyr::group_by(station) %>%
     dplyr::rename(mean_troph_level = troph_level_avg,
       max_troph_level = troph_length) %>%
@@ -158,7 +171,7 @@ compute_com_synchrony <- function (.op = NULL, com = NULL) {
     )
 
   synchrony %<>%
-    dplyr::select(station, synchrony, cv_sp, cv_com, cv_classic, contrib)
+    dplyr::select(station, richness_med, synchrony, cv_sp, cv_com, cv_classic, contrib)
 
   return(synchrony)
 } 
