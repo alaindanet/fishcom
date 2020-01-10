@@ -642,7 +642,7 @@ stab_div_basin %>%
 #### Species occurence
 
 
-```{r}
+```{r sp-occ}
 myload(community_analysis, dir = data_common)
 
 com <- community_analysis %>%
@@ -663,8 +663,6 @@ com <- community_analysis %>%
   )
 occurence_sp_st <- com %>%
   unnest() 
-%>%
-  dplyr::mutate_if(is.double, list(~ ifelse(is.na(.), 0, .)))
 
 med_occ <- occurence_sp_st %>%
   dplyr::summarise_if(is.double, list(~median(., na.rm = TRUE))) %>%
@@ -676,13 +674,15 @@ med_occ %>%
 
 ```
 
-```{r}
+###### Species peripherical globally
+
+```{r stab-sp-occ, fig.dim = c(10, 7), fig.cap = "Relationship between biomass stability and species richness without peripherical species."}
 sp_per <- med_occ[med_occ$med_occ < .30,]$sp 
 
 threshold_occ <- c(.10, .30, .50, .80)
 com_wo_per  <- map(threshold_occ, ~ rm_sp_from_com(com = community_analysis, sp_to_rm =
     med_occ[med_occ$med_occ < .x,]$sp))
-names(com_wo_per) <- threshold_occ 
+names(com_wo_per) <- threshold_occ
 
 com_data <- list(total = community_analysis)
 com_data <- c(com_data, com_wo_per)
@@ -713,6 +713,81 @@ test %>%
   facet_grid(cols = vars(type))
 
 ```
+
+```{r}
+test %>%
+  select(richness_med, biomass_stab, synchrony, cv_sp, type) %>%
+  gather(stab, value, biomass_stab, synchrony, cv_sp) %>%
+  ggplot(aes(x = log10(richness_med), y = value)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  stat_poly_eq(
+    formula = y ~ x,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  geom_smooth(method = "lm", formula = y ~ x) +
+  facet_grid(cols = vars(type), rows = vars(stab))
+
+```
+
+###### Species peripherical by station 
+
+```{r}
+
+threshold_occ <- c(0, .10, .30, .60, .90)
+
+res_sync_occ_st <- map_dfr(threshold_occ, function (.threshold) {
+    
+  # List of sp to rm
+  sp_to_rm <- occurence_sp_st %>%
+    gather(sp, occ, -station) %>%
+    group_by(station) %>%
+    filter(occ < .threshold) %>%
+    summarise(sp2 = list(unique(sp)))
+
+  # Rm species by station
+  truncated_com <- community_analysis %>%
+    left_join(select(op_analysis, opcod, station), by = "opcod") %>%
+    filter(!is.na(station)) %>%
+    group_by(station) %>%
+    nest() %>%
+    left_join(sp_to_rm, by = "station") %>%
+    mutate(
+      output = map2(data, sp2, function (.data, sp_vec) {
+	rm_sp_from_com(com = .data, sp_to_rm = sp_vec)
+  })
+      ) %>%
+  unnest(output) %>%
+  select(-station)
+
+  sync <- compute_com_synchrony(
+    .op = op_analysis,
+    com = truncated_com)
+
+  sync$type <- .threshold 
+  sync$biomass_stab <- 1 / sync$cv_com
+
+  return(sync)
+    }) 
+
+res_sync_occ_st %>%
+  select(richness_med, biomass_stab, synchrony, cv_sp, type) %>%
+  gather(stab, value, biomass_stab, synchrony, cv_sp) %>%
+  ggplot(aes(x = richness_med, y = value)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  stat_poly_eq(
+    formula = y ~ x,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  geom_smooth(method = "lm", formula = y ~ x) +
+  facet_grid(cols = vars(type), rows = vars(stab))
+```
+
+Removing the peripherical species nor at the global scale neither at the station
+scale do not affect the stability-diversity relationship. 
 
 
 ### Network

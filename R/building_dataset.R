@@ -410,3 +410,65 @@ keep_most_complete_sampling <- function (station = NULL, threshold = 270) {
   }
  return(station)
 }
+
+#' Filter fish op to get op dataset without holes
+#' 
+#'
+#'
+get_op_wo_holes <- function (.op = NULL) {
+
+  sep_y <- .op %>%
+    group_by(station) %>%
+    dplyr::arrange(date) %>%
+    dplyr::mutate(
+      point = seq(1, length(station)),
+      sample_sep = c(NA, year[-1] - year[-length(station)])
+      ) %>%
+    dplyr::arrange(station) 
+
+  check <- TRUE
+  while (check) {
+
+    op_analysis_wo_holes <- sep_y %>%
+      filter(is.na(sample_sep) | sample_sep == 1) %>%
+      mutate(point_sep = c(NA, point[-1] - point[-length(station)])) %>%
+      filter(point_sep %in% c(NA, 1)) %>%
+      filter(n() >= 10)
+
+    check_data <- op_analysis_wo_holes %>%
+      dplyr::arrange(date) %>%
+      dplyr::mutate(
+	point = seq(1, length(station)),
+	sample_sep = c(NA, year[-1] - year[-length(station)]),
+	point_sep = c(NA, point[-1] - point[-length(station)])
+      )
+
+      mask <- which(check_data$sample_sep > 1 | check_data$point_sep > 1 )
+
+      if (length(mask) < 1) {
+
+	check <- FALSE
+
+      }
+
+      sep_y <- check_data
+
+  }
+
+  ## Last check
+  stopifnot(
+    length(which(sep_y$sample_sep > 1 | sep_y$point_sep > 1)) == 0
+  )
+  stopifnot("station" %in% group_vars(sep_y)) #necessary to run the last test
+  stopifnot(
+    nrow(filter(sep_y, n() >= 10)) == nrow(sep_y)
+  )
+
+  sep_y %<>% ungroup()
+
+  message(".op had ", length(unique(.op$station)), " stations.")
+  message("filtered dataset contains ", length(unique(sep_y$station)), " stations.")
+
+  return(sep_y)
+
+}
