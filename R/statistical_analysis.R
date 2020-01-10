@@ -177,23 +177,24 @@ compute_rotated_pca <- function(data_list = NULL, titles = NULL) {
 #'
 plot_rotated_pca <- function (pca_rotated = NULL) {
 
-  test <- vector(mode = "list", length = 4)
+  test <- vector(mode = "list", length = length(names(pca_rotated)))
+  names(test) <- names(pca_rotated)
   for (i in seq_along(names(pca_rotated))) {
 
-    s.corcircle(
+    ade4::s.corcircle(
       pca_rotated[[i]]$rotated$loadings[1:nrow(pca_rotated[[i]]$rotated$loadings),], xax = 1,
       yax = 2)
-    rotated_plot <- recordPlot()
+    rotated_plot <- grDevices::recordPlot()
 
-    pca_plot <- fviz_pca_var(pca_rotated[[i]]$normal,
+    pca_plot <- factoextra::fviz_pca_var(pca_rotated[[i]]$normal,
       axes = c(1, 2),
       col.var = "contrib", # Color by contributions to the PC
       gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
       repel = TRUE # Avoid text overlapping
     )
 
-    test[[i]] <- plot_grid(rotated_plot, pca_plot)
-    rm(rotated_plot)
+    test[[i]]$rotated <- rotated_plot
+    test[[i]]$normal <- pca_plot
 
   }
   return(test)

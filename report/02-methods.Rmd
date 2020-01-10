@@ -115,48 +115,13 @@ This is super cool to see! =)
 myload(temporal_station_desc, temporal_press_polluants, dir = data_common)
 myload(hab_analysis, geo_station, dir = data_common)
 
-habitat <- hab_analysis %>%
-  mutate_all(list(as.factor)) %>%
-  select(-opcod, -station, -aqua_vg)
 
-lvl <- c("null", "weak", "medium", "high")
-lvl_sinuosite <- c("straight", "sinuous", "very_sinuous", "meandering")
-lvl_shade <- c("clear", "quite_clear", "quite_covered", "covered")
-
-habitat_station <- hab_analysis %>%
-  select(-opcod, -aqua_vg, - shade, - sinuosite) %>%
-  mutate_if(is.character, list(~factor(., levels = lvl, ordered = TRUE))) %>%
-  left_join(select(hab_analysis, station, shade, sinuosite)) %>%
-  mutate(
-    shade = factor(shade, levels = lvl_shade, ordered = TRUE),
-    sinuosite = factor(sinuosite, levels = lvl_sinuosite, ordered = TRUE)) %>%
-  group_by(station) %>%
-  summarise_all(list(med = ~median(as.numeric(.), na.rm = TRUE))) %>%
-  left_join(select(temporal_station_desc, station, width_river_mean, avg_depth_station_mean, width_river_cv, avg_depth_station_cv))
-
-# Add alt, lat, etc...
-habitat_station %<>% 
-  left_join(geo_station, by = "station") %>%
-  select(-region_csp)
-
-# Add temp and flow
-flow_temp <- temporal_press_polluants %>%
-  filter(category %in% c("flow", "temperature", "DBO", "herbicides",
-      "fungicides", "insecticides", "nitrates", "phosphore")) %>%
-  rename(station = id) 
-flow_temp_med <- flow_temp %>%
-  mutate(category = str_c(category, "_med")) %>%
-  select(station, category, press_med) %>%
-  spread(category, press_med)
-flow_temp_cv <- flow_temp %>%
-  mutate(category = str_c(category, "_cv")) %>%
-  select(station, category, cv_press) %>%
-  spread(category, cv_press)
-
-habitat_station %<>%
-  left_join(left_join(flow_temp_med, flow_temp_cv, by = "station"), by = "station") %>%
-  filter(station %in% op_analysis$station)
-habitat_pressure <- habitat_station
+habitat_pressure <- build_habitat_pressure_dataset(
+  .habitat_analysis = hab_analysis,
+  .tmp_press = temporal_press_polluants,
+  .tmp_st_desc = temporal_station_desc,
+  .geo_st = geo_station 
+)
 ```
 
 
@@ -350,7 +315,7 @@ mysave(pca_rotated, dir = mypath("report"), overwrite = TRUE)
 ```
 
 ```{r pca_rotated_plot}
-plot_grid(plotlist=test)
+plot_grid(plotlist = test)
 ```
 
 

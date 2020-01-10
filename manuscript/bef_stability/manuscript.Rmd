@@ -1,0 +1,204 @@
+---
+title: Species richness destabilizes trophic communities in freshwater ecosystems
+author: Alain Danet, Maud Mouchet, Elisa Thébault and Colin Fontaine
+date: \today 
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+    math: katex
+---
+
+```{r}
+mypath <- rprojroot::find_package_root_file
+data_common <- mypath("data")
+dest_dir <- mypath("data", "species")
+
+knitr::opts_chunk$set(
+  cache = FALSE,
+  collapse = TRUE,
+  comment = "#>",
+  fig.dim = c(7, 7),
+  fig.show = "hold",
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+
+library(tidyverse)
+library(magrittr)
+library(cowplot)
+source(mypath("R", "misc.R"))
+source(mypath("R", "plot_methods.R"))
+source(mypath("R", "community_analysis.R"))
+source(mypath("R", "community_methods.R"))
+source(mypath("R", "statistical_analysis.R"))
+theme_set(theme_alain())
+```
+
+
+# Abstract
+
+# Introduction 
+
+# Methods
+
+## Community
+
+```{r}
+myload(
+  temporal_community_metrics,
+  dir = mypath("data")
+)
+
+myload( temporal_network_metrics, dir = mypath("data", "classes"))
+temporal_network_metrics_classes <- temporal_network_metrics
+rm(temporal_network_metrics)
+
+stab_troph <- temporal_network_metrics_classes %>%
+  select(station, troph_group) %>%
+  unnest(troph_group) %>%
+  filter(troph_group != 1) %>%
+  mutate(troph_group = as.factor(troph_group)) %>%
+  select(station, troph_group, biomass_stab, richness_avg)
+```
+
+## Habitat and environment
+
+```{r}
+myload(
+  hab_analysis,
+  temporal_station_desc,
+  temporal_press_polluants,
+  geo_station,
+  dir = mypath("data")
+)
+habitat_pressure <- build_habitat_pressure_dataset(
+  .habitat_analysis = hab_analysis,
+  .tmp_press = temporal_press_polluants,
+  .tmp_st_desc = temporal_station_desc,
+  .geo_st = geo_station 
+)
+```
+
+```{r, fig.show = "hide"}
+evt_var_mean <- c("flow_med", "temperature_med", "width_river_mean",
+  "avg_depth_station_mean", "slope", "alt", "d_source", "strahler")
+evt_var_cv <- c("flow_cv", "temperature_cv", "width_river_cv",
+  "avg_depth_station_cv")
+evt_var_mean_ok <-  c(evt_var_mean, "DBO_med")
+evt_var_cv_ok <-  c(evt_var_cv, "DBO_cv")
+pca_pressure <- habitat_pressure[, names(habitat_pressure) %in% c(evt_var_mean_ok, evt_var_cv_ok, "station")] %>%
+  na.omit
+
+pca_list <- map(list(evt_var_mean_ok, evt_var_cv_ok), function (.var) {
+  pca_pressure[, names(pca_pressure) %in% .var]
+})
+names(pca_list) <- c("evt_med", "evt_cv")
+
+pca_rotated <- compute_rotated_pca(
+  data_list = pca_list,
+  titles = names(pca_list)  
+)
+
+pca_rotated_plot <- plot_rotated_pca(pca_rotated = pca_rotated)
+names(pca_rotated_plot)
+```
+
+## Statistical analysis
+
+### SEM
+
+```{r}
+library(nlme)
+library(piecewiseSEM)
+
+st_basin <- get_basin_station()
+myload(nmds, habitat_pressure, dir = mypath("report"))
+
+# Compute stability, network metrics, etc with ;he new datasets
+com_data <- compute_community_temporal_analysis(.op = op_analysis, dest_dir = mypath("data", "species"))
+
+# Compute sem dataset 
+sem_data <- compute_sem_dataset(
+  com = com_data[["tps_com"]],
+  network = com_data[["tps_net"]], 
+  hab_press = habitat_pressure, 
+  sync = com_data[["sync"]],
+  nmds = NULL,
+  basin = st_basin 
+  )
+
+# Compute SEMs
+stab_sem <- compute_stab_sem(.data = sem_data,
+  random_effect = as.formula("~1|basin"))
+
+bm_sem <- compute_prod_sem(.data = sem_data,
+  random_effect = as.formula("~1|basin"))
+
+library(ggraph)
+p_stab_sem <- ggpiecewisesem(stab_sem)
+p_bm_sem <- ggpiecewisesem(stab_sem)
+```
+
+
+
+# Results
+
+## Diversity has a destabilizing effect on community  
+
+```{r s-div, fig.dim = c(7,3)}
+# Plot left  
+p_stab_div <- temporal_community_metrics %>%
+  ggplot(aes(x = richness_med, y = biomass_stab))+
+  geom_smooth(method = "lm") +
+  geom_point() +
+  labs(x = "Median species richness", y = "Biomass stability")
+
+# Right plot
+p_stab_div_troph <- stab_div_troph %>%
+  ggplot(aes(x = richness_avg, y = biomass_stab)) +
+  geom_point(aes(color = troph_group)) +
+  geom_smooth(method = "lm") +
+  ggplot2::scale_color_manual(
+    labels = troph_group_labeller(),
+    values = c("blue", "green", "red"),
+    name = "Trophic group"
+  ) +
+  labs(x = "Average species richness", y = "Biomass stability")
+
+plot_grid(p_stab_div, p_stab_div_troph, ncol = 2, rel_widths = c(.4, .6))
+```
+
+## Drivers of total biomass and stability
+
+```{r sem, fig.dim = c(10,6)}
+#https://tex.stackexchange.com/questions/20496/drawing-different-tikz-shapes-parameterized-by-data-from-a-file?rq=1
+#https://tex.stackexchange.com/questions/83888/how-to-plot-data-from-a-csv-file-using-tikz-and-csvsimple
+plot_grid(
+  plot_grid(pca_rotated_plot$evt_med$rotated,
+  pca_rotated_plot$evt_cv$rotated),
+  p_stab_sem,
+  p_bm_sem, labels = "AUTO"
+)
+```
+
+- Habitat:
+  - Median:
+    - Axis1 (river width, dist source, strahler)
+    - Axis2 (DBO, slope)
+  - CV: 
+    - Axis1 (temperature cv, flow cv)
+    - Axis2 (width)
+
+- Community structure: 
+  - Richness decreases synchrony but increases CV
+  - Trophic level increases synchrony but decreases CV
+  - Betadiv increases CV
+
+- Stability component:
+  - CV is the main driver of stability 
+
+# Discussion
+
+# References
