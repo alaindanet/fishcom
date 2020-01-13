@@ -21,7 +21,6 @@ stab_div_troph <- temporal_network_metrics_classes %>%
 ```{r}
 synchrony %>%
   left_join(hab_type, by = "station") %>%
-  left_join(select(temporal_community_metrics, station, richness_med), by = "station") %>%
   ggplot(aes(x = richness_med, y = 1/cv_com)) +
   geom_point() +
   geom_smooth(method = "auto") +
@@ -30,17 +29,17 @@ synchrony %>%
 
 ```{r}
 synchrony %>%
-  left_join(hab_type, by = "station") %>%
-  left_join(select(temporal_community_metrics, station, richness_med), by = "station") %>%
-  ggplot(aes(x = richness_med, y = 1/cv_com)) +
+  gather(rich_type, richness, richness_tot, richness_med) %>%
+  ggplot(aes(x = log10(richness), y = log10(1/cv_com))) +
   geom_point() +
-  geom_smooth(method = "auto")
+  geom_smooth(method = "lm") +
+  facet_grid(cols = vars(rich_type))
 ```
 
 
 
 ```{r}
-st_basin <- get_basin_station() 
+st_basin <- get_basin_station()
 myload(region_polygon, dir = mypath("data"))
 stab_div_basin <- temporal_network_metrics_classes %>%
   select(station, troph_group) %>%

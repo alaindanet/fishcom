@@ -167,11 +167,12 @@ compute_com_synchrony <- function (.op = NULL, com = NULL) {
     dplyr::mutate(
       contrib = purrr::pmap(
 	list(mat = com_mat, cv_com_tot = cv_com, cv_sp_tot = cv_sp, sync_tot = synchrony),
-	~compute_sp_contrib(mat = ..1, cv_com_tot = ..2, cv_sp_tot = ..3, sync_tot = ..4))
+	~compute_sp_contrib(mat = ..1, cv_com_tot = ..2, cv_sp_tot = ..3, sync_tot = ..4)),
+      richness_tot = map_dbl(com_mat, ~ncol(.x))
     )
 
   synchrony %<>%
-    dplyr::select(station, richness_med, synchrony, cv_sp, cv_com, cv_classic, contrib)
+    dplyr::select(station, richness_med, synchrony, cv_sp, cv_com, cv_classic, contrib, richness_tot)
 
   return(synchrony)
 } 
@@ -247,7 +248,7 @@ compute_com_mat <- function (.op = NULL, com = NULL) {
     dplyr::filter(!is.na(station)) %>%
     dplyr::group_by(station) %>%
     tidyr::nest() %>%
-    mutate(data = map(data, function (.data) {
+    dplyr::mutate(data = purrr::map(data, function (.data) {
 	.data %<>%
 	  tidyr::spread(species, biomass) %>%
 	  dplyr::select(-opcod) %>%

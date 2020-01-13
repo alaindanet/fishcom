@@ -15,7 +15,7 @@ data_common <- mypath("data")
 dest_dir <- mypath("data", "species")
 
 knitr::opts_chunk$set(
-  cache = FALSE,
+  cache = TRUE,
   collapse = TRUE,
   comment = "#>",
   fig.dim = c(7, 7),
@@ -33,6 +33,10 @@ source(mypath("R", "plot_methods.R"))
 source(mypath("R", "community_analysis.R"))
 source(mypath("R", "community_methods.R"))
 source(mypath("R", "statistical_analysis.R"))
+source(mypath("R", "press_methods.R"))
+source(mypath("R", "geo_methods.R"))
+source(mypath("R", "synchrony.R"))
+
 theme_set(theme_alain())
 ```
 
@@ -40,6 +44,18 @@ theme_set(theme_alain())
 # Abstract
 
 # Introduction 
+
+- Research questions:
+  - What are the effects of the community structure on total biomass and stability ? 
+    1. What are the effects of species richness on total biomass and stability ?
+      - effect of species richness
+      - effect of trophic group
+    2. What are the effects of the community structure on total biomass and stability ?
+      - What is the relative effect of the environment relative to the community
+	structure ?
+      - What is the effect of the community structure on the different
+	parts of the stability + total biomass?
+	- Effect of horizontal and vertical diversity
 
 # Methods
 
@@ -107,14 +123,13 @@ names(pca_rotated_plot)
 
 ## Statistical analysis
 
-### SEM
-
-```{r}
+```{r get-data}
 library(nlme)
 library(piecewiseSEM)
 
 st_basin <- get_basin_station()
 myload(nmds, habitat_pressure, dir = mypath("report"))
+myload(op_analysis, dir = mypath("data"))
 
 # Compute stability, network metrics, etc with ;he new datasets
 com_data <- compute_community_temporal_analysis(.op = op_analysis, dest_dir = mypath("data", "species"))
@@ -128,6 +143,24 @@ sem_data <- compute_sem_dataset(
   nmds = NULL,
   basin = st_basin 
   )
+```
+
+
+### Relationship between stability and species richness 
+
+```{r}
+stab_div_mod <- lme(data = sem_data,
+  fixed = biomass_stab ~ richness_med,
+  random = ~ 1 | basin/(alt + width)
+)
+rsquared(stab_div_mod, method = "nagelkerke")
+
+```
+
+
+### SEM
+
+```{r}
 
 # Compute SEMs
 stab_sem <- compute_stab_sem(.data = sem_data,
@@ -145,7 +178,7 @@ p_bm_sem <- ggpiecewisesem(stab_sem)
 
 # Results
 
-## Diversity has a destabilizing effect on community  
+## Species richness has a destabilizing effect on community  
 
 ```{r s-div, fig.dim = c(7,3)}
 # Plot left  

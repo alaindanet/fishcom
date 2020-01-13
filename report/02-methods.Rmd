@@ -130,7 +130,7 @@ habitat_pressure <- build_habitat_pressure_dataset(
 ```{r pca-hab, fig.dim = c(7, 21), fig.cap = "PCA over habitat description"}
 library(ade4)
 library(factoextra)
-pca_hab <- dudi.pca(as.data.frame(select(na.omit(habitat_station), -station)), scannf = FALSE, nf = 3, center = TRUE, scale = TRUE)
+pca_hab <- dudi.pca(as.data.frame(select(na.omit(habitat_pressure), -station)), scannf = FALSE, nf = 3, center = TRUE, scale = TRUE)
 
 eig_plot <- fviz_eig(pca_hab)
 pca_plot <- fviz_pca_var(pca_hab,
@@ -173,7 +173,7 @@ phosphorus) and that are more vegetated.
 
 ```{r}
 dev.off()
-m <- cor(as.matrix(select(na.omit(habitat_station), -station)), method = "spearman")
+m <- cor(as.matrix(select(na.omit(habitat_pressure), -station)), method = "spearman")
 corrplot::corrplot(m, order="hclust", type = "upper", diag = FALSE)
 ```
 
@@ -389,8 +389,7 @@ between stability and diversity for different subset of the dataset and so, test
 the robustness of the relationship.
 
 ```{r split-rivers, fig.dim = c(7, 12)}
-hab_type <- habitat_pressure %>%
-  filter(station %in% op_analysis$station) %>%
+hab_type <- na.omit(habitat_pressure) %>%
   mutate(high_bin = ifelse(alt > median(alt), TRUE, FALSE),
   wide_bin = ifelse(width_river_mean > median(width_river_mean), TRUE, FALSE),
   hab_type = map2_chr(high_bin, wide_bin, function(high, wide){
@@ -410,11 +409,11 @@ hab_type <- habitat_pressure %>%
       
       })
   ) %>%
-mutate(hab_type = map_chr(high_bin, ~ifelse(.x, "high", "low"))) %>%
-select(station, hab_type)
+  mutate(hab_type = map_chr(high_bin, ~ifelse(.x, "high", "low"))) %>%
+  select(station, hab_type)
 
-hab_type_pca <- hab_type[hab_type$station %in% na.omit(habitat_station)$station, ]
-match_st <- match(hab_type_pca$station, na.omit(habitat_station)$station)
+hab_type_pca <- hab_type[hab_type$station %in% na.omit(habitat_pressure)$station, ]
+match_st <- match(hab_type_pca$station, na.omit(habitat_pressure)$station)
 hab_type_pca <- hab_type_pca[order(match_st), ]
 
 pca_cat_river <- fviz_pca_ind(pca_hab, label="none", habillage=hab_type_pca$hab_type,
@@ -698,7 +697,7 @@ test %>%
 
 ###### Species peripherical by station 
 
-```{r}
+```{r, fig.dim = c(10, 7)}
 
 threshold_occ <- c(0, .10, .30, .60, .90)
 
@@ -737,9 +736,9 @@ res_sync_occ_st <- map_dfr(threshold_occ, function (.threshold) {
     }) 
 
 res_sync_occ_st %>%
-  select(richness_med, biomass_stab, synchrony, cv_sp, type) %>%
-  gather(stab, value, biomass_stab, synchrony, cv_sp) %>%
-  ggplot(aes(x = richness_med, y = value)) +
+  select(richness_tot, richness_med, biomass_stab, type) %>%
+  gather(rich_type, richness, richness_med, richness_tot) %>%
+  ggplot(aes(x = richness, y = biomass_stab)) +
   geom_point() +
   geom_smooth(method = "lm") +
   stat_poly_eq(
@@ -748,7 +747,7 @@ res_sync_occ_st %>%
     aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
     parse = TRUE) +
   geom_smooth(method = "lm", formula = y ~ x) +
-  facet_grid(cols = vars(type), rows = vars(stab))
+  facet_grid(cols = vars(type), rows = vars(rich_type))
 ```
 
 Removing the peripherical species nor at the global scale neither at the station
