@@ -86,7 +86,7 @@ mysave(community_analysis, dir = data_common, overwrite = TRUE)
 #  Compute community metrics  #
 ###############################
 # Summary information by fishing operation such as richness, biomass
-myload(community_analysis, dir = mypath("data"))
+myload(op_analysis, community_analysis, dir = mypath("data"))
 
 com <- community_analysis %>%
   group_by(opcod) %>%
@@ -101,31 +101,27 @@ com <- community_analysis %>%
 ######################
 
 evenness <- community_analysis %>%
-    select(opcod, species, nind) %>%
+    select(opcod, species, biomass) %>%
     group_by(opcod, species) %>%
-    summarise(nind = sum(nind)) %>%
+    summarise(biomass = sum(biomass)) %>%
     group_by(opcod) %>%
     nest() %>%
     mutate(
-      pielou = furrr::future_map(data, function(.data) {
-	.data %<>% spread(species, nind) %>%
-	  mutate_if(is.integer, list(~replace(.,is.na(.), as.integer(0))))
-
-	richness <- vegan::specnumber(.data)
-
-	if (richness == 1) {
-	  pielou <- 0
-	  simpson <- 0
-	} else {
-	  pielou <- vegan::diversity(.data) / log(richness)
-	  simpson <- vegan::diversity(.data, index = "simpson")
+      sp_vector = furrr::future_map(data,
+	function (.data) {
+	  .data %<>% spread(species, biomass) 
+	  stopifnot(nrow(.data) == 1)
+	  return(unlist(.data))
 	}
-
-	out <- tibble( pielou = pielou, simpson = simpson)
-	return(out)
-}
-      )
+	),
+      rel_bm = furrr::future_map(sp_vector,
+	function(.data) {
+	  return(.data / sum(.data))
+	}
+	),
+      pielou = furrr::future_map(rel_bm, compute_pielou_simpson)
     )
+
 
 evenness %<>%
   unnest(pielou) %>% 

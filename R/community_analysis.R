@@ -120,9 +120,9 @@ compute_temporal_betadiv <- function (.op = NULL, com = NULL) {
     dplyr::ungroup() %>%
     dplyr::left_join(.op, by = "opcod") %>%
     dplyr::filter(!(is.na(station) | is.na(opcod))) %>%
-    dplyr::select(station, date, species, nind) %>%
+    dplyr::select(station, date, species, biomass) %>%
     dplyr::group_by(station, date, species) %>%
-    dplyr::summarise(nind = sum(nind)) %>%
+    dplyr::summarise(biomass = sum(biomass)) %>%
     dplyr::group_by(station) %>%
     dplyr::arrange(date) %>%
     tidyr::nest()
@@ -131,8 +131,9 @@ compute_temporal_betadiv <- function (.op = NULL, com = NULL) {
     dplyr::mutate(
       com = furrr::future_map2(data, station, function(x, y) {
 
-	x %<>% tidyr::spread(species, nind) %>%
-	  dplyr::mutate_if(is.integer, list(~replace(.,is.na(.), as.integer(0)))) %>%
+	x %<>%
+	  tidyr::spread(species, biomass) %>%
+	  dplyr::mutate_at(vars(-date), list(~replace(.,is.na(.), as.integer(0)))) %>%
 	  dplyr::arrange(date) %>%
 	  dplyr::select(-date)
 	x
@@ -242,7 +243,7 @@ compute_community_temporal_analysis <- function(.op = NULL, dest_dir = NULL) {
 #'
 compute_com_mat <- function (.op = NULL, com = NULL) {
 
-  com <- community_analysis %>%
+  com %<>%
     dplyr::select(opcod, species, biomass) %>%
     dplyr::left_join(op_analysis[, c("opcod", "station")], by = "opcod") %>%
     dplyr::filter(!is.na(station)) %>%
@@ -264,3 +265,20 @@ compute_com_mat <- function (.op = NULL, com = NULL) {
   return(com)
 
 } 
+
+#' Compute Pielou and simpson
+#'
+#' @param .data a vector of species abundance/biomass 
+#'
+compute_pielou_simpson <- function(.data) {
+  richness <- vegan::specnumber(.data)
+  if (richness == 1) {
+    pielou <- 0
+    simpson <- 0
+  } else {
+    pielou <- vegan::diversity(.data) / log(richness)
+    simpson <- vegan::diversity(.data, index = "simpson")
+  }
+  out <- tibble( pielou = pielou, simpson = simpson)
+  return(out)
+}

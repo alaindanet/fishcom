@@ -21,6 +21,14 @@ length_analysis %>%
 
 ## Network building
 
+- A metaweb was built:
+  - less computational intensive
+
+When you do a metaweb, you kind of consider that you have one type of community
+in terms of species interaction:
+  - Trophic lvl is defined at the metaweb lvl, different from the realized
+    metaweb
+
 
 ### Metaweb
 
@@ -753,6 +761,18 @@ res_sync_occ_st %>%
 Removing the peripherical species nor at the global scale neither at the station
 scale do not affect the stability-diversity relationship. 
 
+#### Description of horizontal Community structure 
+
+- Pielou computed on biomass:
+  - pielou does not depend on total biomass (same value if computed on raw
+    biomass or relattive biomass)
+
+- Binary betadiversity computed on biomass:
+  - betadiversity-bin is the same if computed on biomass or individual number 
+  - betadiversity-bin computed on biomass is correlated at .72 with the one
+    computed with individual numbers.
+
+- Species richness
 
 ### Network
 

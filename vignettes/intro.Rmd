@@ -70,25 +70,14 @@ According to the postdoc advertisement:
     - [ ] Add corrected weighted trophic lvl (unsuccess)
 - [ ] Analysis:
   - [ ] generate clean subsets of data:
-    - [ ] strategy: select period with the more overlap in dataset
-    - [ ] overlapping / without holes
-    - [x] non overlapping / without holes
-    - [x] overlapping / with holes
-    - [x] non overlapping / with holes
-  - [x] increase explained variance of the PCA:
-    - [ ] Separate med and variance
-    - [ ] Remove some variables such as phosphore and nitrate
-    - [ ] Rm lat and long
-  - [ ] Pielou: use relative biomass; add div taxo?
-  - [x] SEM: add resources
+    - [ ] improve algo: symetry of op removal
+  - [ ] PCA: mettre tout dans la même PCA
+  - [x] Pielou: use relative biomass; add div taxo?
   - [ ] SEM:
-    - [ ] Press: regroup physical and climate
+    - [x] Press: regroup physical and climate
     - [ ] Nivx trophiques non pondérés
-    - [ ] Two axis: press and physical; avg & variance
-    - [ ] Link temperature - DBO
-  - [ ] Core/peripherical species:
-    - [ ] # year occurrence by species
-    - [ ] reanalyze data with and without peripherical species
+    - [x] One PCA
+  - [x] Core/peripherical species:
 - [x] Fish datasets to generate
 - [ ] Assess quality of the dataset:
 - [ ] Function to compute fast network metrics:
