@@ -225,18 +225,18 @@ build_habitat_pressure_dataset <- function (
 
   # Transform the qualitative data from character to ordered factor
   habitat <- .habitat_analysis %>%
-    mutate_all(list(as.factor)) %>%
-    select(-opcod, -station, -aqua_vg)
+    dplyr::mutate_all(list(as.factor)) %>%
+    dplyr::select(-opcod, -station, -aqua_vg)
 
   lvl <- c("null", "weak", "medium", "high")
   lvl_sinuosite <- c("straight", "sinuous", "very_sinuous", "meandering")
   lvl_shade <- c("clear", "quite_clear", "quite_covered", "covered")
 
   habitat_station <- .habitat_analysis %>%
-    select(-opcod, -aqua_vg, - shade, - sinuosite) %>%
-    mutate_if(is.character, list(~factor(., levels = lvl, ordered = TRUE))) %>%
-    left_join(select(hab_analysis, station, shade, sinuosite)) %>%
-    mutate(
+    dplyr::select(-opcod, -aqua_vg, - shade, - sinuosite) %>%
+    dplyr::mutate_if(is.character, list(~factor(., levels = lvl, ordered = TRUE))) %>%
+    dplyr::left_join(dplyr::select(hab_analysis, station, shade, sinuosite)) %>%
+    dplyr::mutate(
       shade = factor(shade, levels = lvl_shade, ordered = TRUE),
       sinuosite = factor(sinuosite, levels = lvl_sinuosite, ordered = TRUE)
     )
@@ -244,34 +244,34 @@ build_habitat_pressure_dataset <- function (
   # Compute avg over the studied period 
   habitat_station %<>%
     group_by(station) %>%
-    summarise_all(list(med = ~median(as.numeric(.), na.rm = TRUE)))
+    dplyr::summarise_all(list(med = ~median(as.numeric(.), na.rm = TRUE)))
 
 
   # Add alt, lat, etc...
   habitat_station %<>% 
-    left_join(.geo_st, by = "station") %>%
-    select(-region_csp) %>%
-    left_join(select(.tmp_st_desc, station, width_river_mean,
+    dplyr::left_join(.geo_st, by = "station") %>%
+    dplyr::select(-region_csp) %>%
+    dplyr::left_join(dplyr::select(.tmp_st_desc, station, width_river_mean,
 	avg_depth_station_mean, width_river_cv, avg_depth_station_cv))
 
   # Add temp and flow
   flow_temp <- .tmp_press %>%
-    filter(category %in% c("flow", "temperature", "DBO", "herbicides",
+    dplyr::filter(category %in% c("flow", "temperature", "DBO", "herbicides",
 	"fungicides", "insecticides", "nitrates", "phosphore")) %>%
-  rename(station = id)
+  dplyr::rename(station = id)
 
   # Get Med and cv for press
   flow_temp_med <- flow_temp %>%
-    mutate(category = str_c(category, "_med")) %>%
-    select(station, category, press_med) %>%
-    spread(category, press_med)
+    dplyr::mutate(category = str_c(category, "_med")) %>%
+    dplyr::select(station, category, press_med) %>%
+    tidyr::spread(category, press_med)
   flow_temp_cv <- flow_temp %>%
-    mutate(category = str_c(category, "_cv")) %>%
-    select(station, category, cv_press) %>%
-    spread(category, cv_press)
+    dplyr::mutate(category = str_c(category, "_cv")) %>%
+    dplyr::select(station, category, cv_press) %>%
+    tidyr::spread(category, cv_press)
 
   habitat_station %<>%
-    left_join(left_join(flow_temp_med, flow_temp_cv, by = "station"), by = "station")
+    dplyr::left_join(dplyr::left_join(flow_temp_med, flow_temp_cv, by = "station"), by = "station")
 
   return(habitat_station)
 }

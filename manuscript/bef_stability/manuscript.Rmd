@@ -27,6 +27,7 @@ knitr::opts_chunk$set(
 
 library(tidyverse)
 library(magrittr)
+library(ggeffects)
 library(cowplot)
 source(mypath("R", "misc.R"))
 source(mypath("R", "plot_methods.R"))
@@ -62,21 +63,18 @@ theme_set(theme_alain())
 ## Community
 
 ```{r}
-myload(
-  temporal_community_metrics,
-  dir = mypath("data")
-)
+myload(temporal_community_metrics, dir = mypath("data"))
 
-myload( temporal_network_metrics, dir = mypath("data", "classes"))
+myload(temporal_network_metrics, dir = mypath("data", "classes"))
 temporal_network_metrics_classes <- temporal_network_metrics
-rm(temporal_network_metrics)
+myload(temporal_network_metrics, dir = mypath("data", "species"))
 
-stab_troph <- temporal_network_metrics_classes %>%
-  select(station, troph_group) %>%
+stab_div_troph <- temporal_network_metrics %>%
+  dplyr::select(station, troph_group) %>%
   unnest(troph_group) %>%
   filter(troph_group != 1) %>%
   mutate(troph_group = as.factor(troph_group)) %>%
-  select(station, troph_group, biomass_stab, richness_avg)
+  dplyr::select(station, troph_group, biomass_stab, richness_med)
 ```
 
 ## Habitat and environment
@@ -99,26 +97,17 @@ habitat_pressure <- build_habitat_pressure_dataset(
 
 ```{r, fig.show = "hide"}
 evt_var_mean <- c("flow_med", "temperature_med", "width_river_mean",
-  "avg_depth_station_mean", "slope", "alt", "d_source", "strahler")
+  "avg_depth_station_mean", "slope", "alt", "d_source", "strahler", "DBO_med")
 evt_var_cv <- c("flow_cv", "temperature_cv", "width_river_cv",
-  "avg_depth_station_cv")
-evt_var_mean_ok <-  c(evt_var_mean, "DBO_med")
-evt_var_cv_ok <-  c(evt_var_cv, "DBO_cv")
-pca_pressure <- habitat_pressure[, names(habitat_pressure) %in% c(evt_var_mean_ok, evt_var_cv_ok, "station")] %>%
+  "avg_depth_station_cv", "DBO_cv")
+pca_pressure <- habitat_pressure[, names(habitat_pressure) %in% c(evt_var_mean, evt_var_cv, "station")] %>%
   na.omit
 
-pca_list <- map(list(evt_var_mean_ok, evt_var_cv_ok), function (.var) {
-  pca_pressure[, names(pca_pressure) %in% .var]
-})
-names(pca_list) <- c("evt_med", "evt_cv")
-
 pca_rotated <- compute_rotated_pca(
-  data_list = pca_list,
-  titles = names(pca_list)  
+  .data = pca_pressure[, !names(pca_pressure) %in% "station"],
+  naxis = 5 
 )
 
-pca_rotated_plot <- plot_rotated_pca(pca_rotated = pca_rotated)
-names(pca_rotated_plot)
 ```
 
 ## Statistical analysis
@@ -148,14 +137,33 @@ sem_data <- compute_sem_dataset(
 
 ### Relationship between stability and species richness 
 
-```{r}
+$$
+S_i = \beta_0 + \beta_Rx_{Ri} + \epsilon_{ij}
+$$
+
+```{r mod-div-total}
+ctrl <- lmeControl(opt='optim')
 stab_div_mod <- lme(data = sem_data,
-  fixed = biomass_stab ~ richness_med,
-  random = ~ 1 | basin/(alt + width)
+  fixed = log_stab ~ log_rich,
+  random = ~ 1 + log_rich | basin,
+  control = ctrl 
 )
-rsquared(stab_div_mod, method = "nagelkerke")
+#stab_div_colin <- car::vif(stab_div_mod)
+stab_div_sum <- piecewiseSEM::rsquared(stab_div_mod, method = "nagelkerke")
+```
+
+```{r predict}
+pred <- ggpredict(stab_div_mod, terms = c("log_rich"), type = "fe")
+stab_div_pred <- pred %>%
+  as_tibble() %>%
+  rename(
+    log_stab = predicted,
+    log_rich = x,
+    basin = group
+  )
 
 ```
+
 
 
 ### SEM
@@ -171,7 +179,7 @@ bm_sem <- compute_prod_sem(.data = sem_data,
 
 library(ggraph)
 p_stab_sem <- ggpiecewisesem(stab_sem)
-p_bm_sem <- ggpiecewisesem(stab_sem)
+p_bm_sem <- ggpiecewisesem(bm_sem)
 ```
 
 
@@ -180,24 +188,36 @@ p_bm_sem <- ggpiecewisesem(stab_sem)
 
 ## Species richness has a destabilizing effect on community  
 
-```{r s-div, fig.dim = c(7,3)}
+```{r s-div, fig.dim = c(10,5)}
+label_rsq <- "paste(
+  \"Conditional italic(R) ^ 2 == \", round(stab_div_sum$Conditional, 2),
+  \", Marginal italic(R) ^ 2 == \", round(stab_div_sum$Marginal, 2))"
 # Plot left  
-p_stab_div <- temporal_community_metrics %>%
-  ggplot(aes(x = richness_med, y = biomass_stab))+
-  geom_smooth(method = "lm") +
+p_stab_div <- sem_data %>%
+  ggplot(aes(x = log_rich, y = log_stab))+
   geom_point() +
-  labs(x = "Median species richness", y = "Biomass stability")
+  #scale_x_log10() + scale_y_log10() +
+  labs(x = "Median species richness (Log 10)", y = " Biomass stability (Log 10)") +
+  geom_line(data = stab_div_pred) +
+  geom_ribbon(data = stab_div_pred, aes(ymin = conf.low, ymax = conf.high), fill
+  = "grey20", alpha = .5) +
+  annotate("text", x = 1.0, y = .8, label = paste(
+  " Marg. R^2 = ", round(stab_div_sum$Marginal, 2),
+  ", Cond. R^2 = ", round(stab_div_sum$Conditional, 2)
+  )
+    )
 
 # Right plot
 p_stab_div_troph <- stab_div_troph %>%
-  ggplot(aes(x = richness_avg, y = biomass_stab)) +
-  geom_point(aes(color = troph_group)) +
-  geom_smooth(method = "lm") +
+  ggplot(aes(x = richness_med, y = biomass_stab, color = troph_group)) +
+  geom_point() +
+  geom_smooth(method = "lm" ) +
   ggplot2::scale_color_manual(
     labels = troph_group_labeller(),
     values = c("blue", "green", "red"),
     name = "Trophic group"
   ) +
+  scale_x_log10() + scale_y_log10() +
   labs(x = "Average species richness", y = "Biomass stability")
 
 plot_grid(p_stab_div, p_stab_div_troph, ncol = 2, rel_widths = c(.4, .6))
@@ -205,24 +225,37 @@ plot_grid(p_stab_div, p_stab_div_troph, ncol = 2, rel_widths = c(.4, .6))
 
 ## Drivers of total biomass and stability
 
-```{r sem, fig.dim = c(10,6)}
-#https://tex.stackexchange.com/questions/20496/drawing-different-tikz-shapes-parameterized-by-data-from-a-file?rq=1
-#https://tex.stackexchange.com/questions/83888/how-to-plot-data-from-a-csv-file-using-tikz-and-csvsimple
-plot_grid(
-  plot_grid(pca_rotated_plot$evt_med$rotated,
-  pca_rotated_plot$evt_cv$rotated),
-  p_stab_sem,
-  p_bm_sem, labels = "AUTO"
+```{r, fig.show = "hide"}
+axis_pair <- list(c(1,2), c(1,3), c(2,3), c(1, 4), c(2, 4), c(3,4), c(4,5))
+p_l_rot <- map(axis_pair, 
+  function (axis)
+    pca_rotated_plot <- plot_rotated_pca(
+      pca_rotated = pca_rotated,
+      axis = axis 
+    )
 )
 ```
 
-- Habitat:
-  - Median:
-    - Axis1 (river width, dist source, strahler)
-    - Axis2 (DBO, slope)
-  - CV: 
-    - Axis1 (temperature cv, flow cv)
-    - Axis2 (width)
+
+```{r sem-plot, fig.dim = c(10,10)}
+#https://tex.stackexchange.com/questions/20496/drawing-different-tikz-shapes-parameterized-by-data-from-a-file?rq=1
+#https://tex.stackexchange.com/questions/83888/how-to-plot-data-from-a-csv-file-using-tikz-and-csvsimple
+to_plot <- c(1, 6, 7)
+plot_grid(
+  plot_grid(plotlist = map(p_l_rot[to_plot], ~.x$rotated),
+      ncol = length(to_plot), labels = LETTERS[1]),
+  plot_grid(p_stab_sem, p_bm_sem, labels = LETTERS[2:3]),
+  ncol = 1,
+  rel_heights = c(.4, .6)
+)
+```
+
+- Habitat: (+ / -)
+  - RC 1: width & depth & flow med, d source, strahler 	/
+  - RC 2: T°C med 					/ slope, alt 
+  - RC 3: 						/ flow CV, DBO med
+  - RC 4: river width med, depth med 			/
+  - RC 5: DBO CV 					/
 
 - Community structure: 
   - Richness decreases synchrony but increases CV

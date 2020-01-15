@@ -45,13 +45,13 @@ compute_sem_dataset <- function (
   # Composition
   composition_axis <- nmds$points %>%
     as_tibble %>%
-    mutate(station = as.integer(dimnames(nmds$points)[[1]]))
+    dplyr::mutate(station = as.integer(dimnames(nmds$points)[[1]]))
 
   # Habitat -----------------------------------------------------------------
   habitat_sem <- hab_press %>% 
-    select(station, lat, alt, width_river_mean, DBO_med, DBO_cv, flow_med, flow_cv,
-      temperature_med, temperature_cv, evt_med1, evt_med2, evt_cv1, evt_cv2) %>%
-  rename(width = width_river_mean)
+    dplyr::select(station, lat, alt, width_river_mean, DBO_med, DBO_cv, flow_med, flow_cv,
+      temperature_med, temperature_cv, RC1, RC2, RC3, RC4, RC5) %>%
+    dplyr::rename(width = width_river_mean)
 
   # Network -----------------------------------------------------------------
   net_sem <- network %>%
@@ -84,15 +84,15 @@ compute_sem_dataset <- function (
 #'
 compute_stab_sem <- function(.data, random_effect = "~ 1 | basin") {
   corsem <- piecewiseSEM::psem(
-    nlme::lme(log_rich ~ evt_med1 + evt_med2 + evt_cv1 + evt_cv2,  random = ~ 1 | basin, data = .data),
-    nlme::lme(piel ~ evt_med1 + evt_med2 + evt_cv1 + evt_cv2, random = ~ 1 | basin, data = .data),
-    nlme::lme(c_c ~ evt_med1 + evt_med2 + evt_cv1 + evt_cv2, random = ~ 1 | basin, data = .data),
-    nlme::lme(t_lvl ~ evt_med1 + evt_med2 + evt_cv1 + evt_cv2, random = ~ 1 | basin, data = .data),
-    nlme::lme(beta_bin_c ~ evt_med1 + evt_med2 + evt_cv1 + evt_cv2, random = ~ 1 | basin, data = .data),
-    nlme::lme(log_sync ~ log_rich + piel + c_c + t_lvl + beta_bin_c + evt_med1 + evt_med2 + evt_cv1 + evt_cv2,
+    nlme::lme(log_rich ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
+    nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+    nlme::lme(c_c ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+    nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+    nlme::lme(beta_bin_c ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+    nlme::lme(log_sync ~ log_rich + piel + c_c + t_lvl + beta_bin_c + RC1 + RC2 + RC3 + RC4 + RC5,
       random = ~ 1 | basin, data = .data),
     nlme::lme(log_cv_sp ~ log_rich + piel + c_c + t_lvl +
-      beta_bin_c + evt_med1 + evt_med2 + evt_cv1 + evt_cv2, random = ~ 1 | basin, data = .data),
+      beta_bin_c + RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
     lm(log_stab ~ log_cv_sp + log_sync, data = .data)
   )
   output <- summary(corsem, .progressBar = F)
@@ -106,12 +106,12 @@ compute_stab_sem <- function(.data, random_effect = "~ 1 | basin") {
 #'
 compute_prod_sem <- function(.data, random_effect = "~ 1 | basin") {
   corsem <- piecewiseSEM::psem(
-    nlme::lme(log_rich ~ evt_med1 + evt_med2 + evt_cv1 + evt_cv2,  random = ~ 1 | basin, data = .data),
-    nlme::lme(piel ~ evt_med1 + evt_med2 + evt_cv1 + evt_cv2, random = ~ 1 | basin, data = .data),
-    nlme::lme(c_c ~ evt_med1 + evt_med2 + evt_cv1 + evt_cv2, random = ~ 1 | basin, data = .data),
-    nlme::lme(t_lvl ~ evt_med1 + evt_med2 + evt_cv1 + evt_cv2, random = ~ 1 | basin, data = .data),
-    nlme::lme(beta_bin_c ~ evt_med1 + evt_med2 + evt_cv1 + evt_cv2, random = ~ 1 | basin, data = .data),
-    nlme::lme(prod ~ log_rich + piel + c_c + t_lvl + beta_bin_c + evt_med1 + evt_med2 + evt_cv1 + evt_cv2,
+    nlme::lme(log_rich ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
+    nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+    nlme::lme(c_c ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+    nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+    nlme::lme(beta_bin_c ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+    nlme::lme(prod ~ log_rich + piel + c_c + t_lvl + beta_bin_c + RC1 + RC2 + RC3 + RC4 + RC5,
       random = ~ 1 | basin, data = .data)
   )
   output <- summary(corsem, .progressBar = F)
@@ -148,54 +148,40 @@ build_dataset_get_sem_coefficient <- function (.op = NULL, dest_dir = NULL) {
 
 #' Compute PCA and rotated PCA over a list of dataset
 #'
-#' @param data_list list of data.frame
-#' @param titles character vector of list names
+#' @param .data data.frame
+#' @param naxis integer number of axis to keep. default to 2  
 #'
-compute_rotated_pca <- function(data_list = NULL, titles = NULL) {
-
-  pca_rotated <- purrr::map2( 
-    data_list,
-    titles,
-    function(.data, title) {
+compute_rotated_pca <- function(.data = NULL, naxis = 2) {
       .data %<>% na.omit
-      pca <- ade4::dudi.pca(as.data.frame(.data), scannf = FALSE, nf = 2, center = TRUE, scale = TRUE)
-      pca_rotated <- psych::principal(.data, rotate="varimax", nfactors=2,
+      pca <- ade4::dudi.pca(as.data.frame(.data), scannf = FALSE, nf = naxis, center = TRUE, scale = TRUE)
+      pca_rotated <- psych::principal(.data, rotate="varimax", nfactors = naxis,
 	scores=TRUE)
 
       return(list(normal = pca, rotated = pca_rotated))
-  
-  })
-  names(pca_rotated) <- titles 
+  }
 
-  return(pca_rotated)
-
-}
 
 #' Compute plots from pca_rotated 
 #'
 #' @param pca_rotated list. The output of compute_rotated_pca.
+#' @param axis integer vector of length 2 (x and y resp.).
 #'
-plot_rotated_pca <- function (pca_rotated = NULL) {
+plot_rotated_pca <- function (pca_rotated = NULL, axis = c(1,2)) {
 
-  test <- vector(mode = "list", length = length(names(pca_rotated)))
-  names(test) <- names(pca_rotated)
-  for (i in seq_along(names(pca_rotated))) {
-
-    ade4::s.corcircle(
-      pca_rotated[[i]]$rotated$loadings[1:nrow(pca_rotated[[i]]$rotated$loadings),], xax = 1,
-      yax = 2)
-    rotated_plot <- grDevices::recordPlot()
-
-    pca_plot <- factoextra::fviz_pca_var(pca_rotated[[i]]$normal,
-      axes = c(1, 2),
-      col.var = "contrib", # Color by contributions to the PC
-      gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-      repel = TRUE # Avoid text overlapping
-    )
-
-    test[[i]]$rotated <- rotated_plot
-    test[[i]]$normal <- pca_plot
-
-  }
-  return(test)
+ {
+   adegraphics::adegpar()$plabels
+   ade4::s.corcircle(
+    pca_rotated$rotated$loadings[1:nrow(pca_rotated$rotated$loadings),], xax = axis[1],
+    yax = axis[2], box = TRUE)
+  mtext(paste0("RC ", axis[1]), side = 1, adj = .5, line = -1)
+  mtext(paste0("RC ", axis[2]), side = 2, adj = .5, line = -5)
+  rotated_plot <- grDevices::recordPlot()
+ }
+  pca_plot <- factoextra::fviz_pca_var(pca_rotated$normal,
+    axes = axis,
+    col.var = "contrib", # Color by contributions to the PC
+    gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+    repel = TRUE # Avoid text overlapping
+  )
+  return(list(rotated = rotated_plot, normal = pca_plot))
 }

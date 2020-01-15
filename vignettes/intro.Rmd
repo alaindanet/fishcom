@@ -17,41 +17,11 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Post-doc objectives
+# Analysis 
 
-According to the postdoc advertisement:
+## The TODO list 
 
-1. Characterize the temporal stability of the studied communities
-2. Disentangle the drivers of stability and to understand how trophic and
-   community structures influence stability
-
-## Priority
-
-1. Obtain networks and indicators DONE!
-2. Perturbation identification
-3. Pulses identification (ex. extreme summer of 2003) 
-3. Traits and phylogeny
-   - See `fish_trait` zotero collection 
-   - See those authors (from Maud):
-     - Christine Argillier (Irstea Aix/Provence)
-     - Thierry Oberdorff (Toulouse ?)
-     - Bernard Hugueny (IRD, Toulouse)
-   - Ask to (by Maud):
-     - Sébastien Brosse
-     - Sébastien Villégier
-4. Effects of perturbation
-   - Coreids project (cf Maud)
-
-## Immediate objectives
-
-- [ ] map station and pressure to RHT:
-  - [ ] Station
-  - [ ] Water quality
 - [ ] Environmental data
-  - [x] temporal flow and quality
-  - [x] Pressure data (Olivier Dezerald & Philippe Usseglio-Polatera):
-  - [x] Temperature data
-  - [x] ONDE for etiage: from 2012 to 2018 
   - [x] ROE for obstacle:
     - [ ] To explore
   - [x] ADES for map of rock types
@@ -71,7 +41,7 @@ According to the postdoc advertisement:
 - [ ] Analysis:
   - [ ] generate clean subsets of data:
     - [ ] improve algo: symetry of op removal
-  - [ ] PCA: mettre tout dans la même PCA
+  - [x] PCA: mettre tout dans la même PCA
   - [x] Pielou: use relative biomass; add div taxo?
   - [ ] SEM:
     - [x] Press: regroup physical and climate
@@ -96,6 +66,31 @@ percentile of the distribution of the quantitative perturbations.
 We need to map of the perturbation to a common spatial dataset together with
 the sampled station. We will map all the data to the RHT (Réseau Hydrologique
 théorique).
+
+# Post-doc objectives
+
+According to the postdoc advertisement:
+
+1. Characterize the temporal stability of the studied communities
+2. Disentangle the drivers of stability and to understand how trophic and
+   community structures influence stability
+
+## Priority
+
+1. Obtain networks and indicators DONE!
+2. Perturbation identification
+3. Pulses identification (ex. extreme summer of 2003) 
+3. Traits and phylogeny
+   - See `fish_trait` zotero collection 
+   - See those authors (from Maud):
+     - Christine Argillier (Irstea Aix/Provence)
+     - Thierry Oberdorff (Toulouse ?)
+     - Bernard Hugueny (IRD, Toulouse)
+   - Ask to (by Maud):
+     - Sébastien Brosse
+     - Sébastien Villégier
+4. Effects of perturbation
+   - Coreids project (cf Maud)
 
 # Temporal stability and diversity 
 

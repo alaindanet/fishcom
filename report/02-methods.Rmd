@@ -123,7 +123,6 @@ This is super cool to see! =)
 myload(temporal_station_desc, temporal_press_polluants, dir = data_common)
 myload(hab_analysis, geo_station, dir = data_common)
 
-
 habitat_pressure <- build_habitat_pressure_dataset(
   .habitat_analysis = hab_analysis,
   .tmp_press = temporal_press_polluants,
@@ -185,180 +184,41 @@ m <- cor(as.matrix(select(na.omit(habitat_pressure), -station)), method = "spear
 corrplot::corrplot(m, order="hclust", type = "upper", diag = FALSE)
 ```
 
-#### Separate Med and CV pressure
+#### 1 rotated PCA
 
-```{r pca-med-cv, fig.cap="PCA with Avg or CV variables"}
-hab_med <- habitat_pressure %>%
-  select_at(vars(matches("med|mean")))
-hab_cv <- habitat_pressure %>%
-  select_at(vars(matches("_cv"))) %>%
-  select(-width_river_cv, -avg_depth_station_cv, -nitrates_cv, -phosphore_cv)
-
-plot_pca <- function (.data, title = NULL) {
-
-  if (is.null(title)){
-  title <- paste0("PCA - ",
-      ifelse(any(!is.na(str_match(names(.data), "_cv"))), "CV",
-      "Median"))
-  }
-
-
-  pca_hab <- dudi.pca(as.data.frame(na.omit(.data)), scannf = FALSE, nf = 3, center = TRUE, scale = TRUE) 
-  eig_plot <- fviz_eig(pca_hab)
-  pca_plot <- fviz_pca_var(pca_hab,
-    axes = c(1, 2),
-    col.var = "contrib", # Color by contributions to the PC
-    gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-    title = title,
-    repel = TRUE # Avoid text overlapping
-  )
-  pca_plot12 <- ggdraw(pca_plot) +
-    draw_plot(eig_plot, x = .7, y = .95, hjust = 1, vjust = 1, width = 0.17, height = 0.25)
-  pca_plot12
-  }
-plot_pca_med_cv <- map(list(hab_med, hab_cv), plot_pca)
-plot_grid(plotlist = plot_pca_med_cv, labels = "AUTO")
-```
-
-#### Separate according to physical habitat, climate, enrichment
-
-```{r pca-evt}
-phys_var <- c( "width_river_mean", "avg_depth_station_mean",
-   "slope", "alt", "d_source", "strahler")
-#"width_river_cv", "avg_depth_station_cv", "under_bank_med", "hole_pit_med",
-#"long", "lat","logjam_stumps_med", "edge_vg_med",
-#"rock_shelter_med", "aqua_vg_shelter_med", "shade_med", "sinuosite_med",
-climate_var <- c("flow_med", "temperature_med", "flow_cv", "temperature_cv") 
-pressure_var <- c( "fungicides_cv", "herbicides_cv",
-  "insecticides_cv",  "fungicides_med",
-  "herbicides_med", "insecticides_med")
-#, "nitrates_med", "phosphore_med","nitrates_cv", "phosphore_cv","DBO_med", "DBO_cv"
-hab_physical <- habitat_pressure[, names(habitat_pressure) %in% phys_var]
-hab_climate <- habitat_pressure[, names(habitat_pressure) %in% climate_var]
-hab_pressure <- habitat_pressure[, names(habitat_pressure) %in% pressure_var]
-
-
-p_pca_clim_phy_press <- map2(
-  list(hab_physical, hab_climate, hab_pressure),
-  c("Physical", "Climate", "Pressure"),
-  plot_pca)
-plot_grid(plotlist = p_pca_clim_phy_press, labels = "AUTO")
-```
-
-####
-
-```{r pca-evt-press-med-cv}
+```{r}
 evt_var_mean <- c("flow_med", "temperature_med", "width_river_mean",
-  "avg_depth_station_mean", "slope", "alt", "d_source", "strahler")
+  "avg_depth_station_mean", "slope", "alt", "d_source", "strahler", "DBO_med")
 evt_var_cv <- c("flow_cv", "temperature_cv", "width_river_cv",
-  "avg_depth_station_cv")
-
-press_var_cv <- c("fungicides_cv", "herbicides_cv", "insecticides_cv", "DBO_cv")
-press_var_med <- c("fungicides_med", "herbicides_med",
-  "insecticides_med","DBO_med")
-
-#, "nitrates_med", "phosphore_med","nitrates_cv", "phosphore_cv", "DBO_cv"
-hab_evt <- habitat_pressure[, names(habitat_pressure) %in% c(evt_var_mean,
-  evt_var_cv)]
-hab_press <- habitat_pressure[, names(habitat_pressure) %in% c(press_var_med,
-  press_var_cv)]
-
-
-p_pca_clim_phy_press <- map2(
-  list(hab_evt, hab_press),
-  c("EVT", "Pressure"),
-  plot_pca)
-plot_grid(plotlist = p_pca_clim_phy_press, labels = "AUTO")
-```
-
-####
-
-```{r}
-hab_mean <- habitat_pressure[, names(habitat_pressure) %in% c(evt_var_mean , press_var_med)]
-hab_cv <- habitat_pressure[, names(habitat_pressure) %in% c(evt_var_cv, press_var_cv)]
-
-p_pca_clim_phy_press <- map2(
-  list(hab_mean, hab_cv),
-  c("Med", "Cv"),
-  plot_pca)
-plot_grid(plotlist = p_pca_clim_phy_press, labels = "AUTO")
-```
-
-####
-
-```{r}
-pca_pressure <- habitat_pressure[, names(habitat_pressure) %in% c(evt_var_mean, evt_var_cv, press_var_med, press_var_cv, "station")] %>% 
-  na.omit
-hab_evt_mean <- pca_pressure[, names(pca_pressure) %in% evt_var_mean]
-hab_evt_cv <- pca_pressure[, names(pca_pressure) %in% evt_var_cv]
-hab_press_mean <- pca_pressure[, names(pca_pressure) %in% press_var_med]
-hab_press_cv <- pca_pressure[, names(pca_pressure) %in% press_var_cv]
-
-p_pca_clim_phy_press <- map2(
-  list(hab_evt_mean, hab_evt_cv, hab_press_mean, hab_press_cv),
-  c("Med evt", "Cv evt", "Med press", "Cv press"),
-  plot_pca)
-plot_grid(plotlist = p_pca_clim_phy_press, labels = "AUTO")
-```
-
-```{r}
-pca_clim_phy_press <- map(
-  list(hab_evt_mean, hab_evt_cv, hab_press_mean, hab_press_cv),
-  function(.data) dudi.pca(as.data.frame(na.omit(.data)), scannf = FALSE, nf = 3, center = TRUE, scale = TRUE))
-names(pca_clim_phy_press) <- c("med_evt", "cv_evt", "med_press", "cv_press")
-```
-
-#### Rotate PCA axis
-
-
-```{r, fig.show = "hide"}
-pca_rotated <- compute_rotated_pca(
-  data_list = list(hab_evt_mean, hab_evt_cv, hab_press_mean, hab_press_cv),
-  titles = c("med_evt", "cv_evt", "med_press", "cv_press")
-)
-
-test <- plot_rotated_pca(pca_rotated) 
-
-mysave(pca_rotated, dir = mypath("report"), overwrite = TRUE)
-```
-
-```{r pca_rotated_plot}
-plot_grid(plotlist = test)
-```
-
-
-#### Rotate PCA axis 2
-
-```{r pca-data, fig.show = "hide"}
-evt_var_mean_ok <-  c(evt_var_mean, "DBO_med")
-evt_var_cv_ok <-  c(evt_var_cv, "DBO_cv")
-pca_pressure <- habitat_pressure[, names(habitat_pressure) %in% c(evt_var_mean_ok, evt_var_cv_ok, "station")] %>% 
+  "avg_depth_station_cv", "DBO_cv")
+pca_pressure <- habitat_pressure[, names(habitat_pressure) %in% c(evt_var_mean, evt_var_cv, "station")] %>%
   na.omit
 
-pca_list <- map(list(evt_var_mean_ok, evt_var_cv_ok), function (.var) {
-  pca_pressure[, names(pca_pressure) %in% .var]
-})
-names(pca_list) <- c("evt_med", "evt_cv")
-
 pca_rotated <- compute_rotated_pca(
-  data_list = pca_list,
-  titles = names(pca_list)  
+  .data = pca_pressure[, !names(pca_pressure) %in% "station"],
+  naxis = 5 
 )
 
-pca_rotated_plot <- plot_rotated_pca(pca_rotated = pca_rotated)
+axis_pair <- list(c(1,2), c(1,3), c(2,3), c(1, 4), c(2, 4), c(3,4), c(4,5))
+p_l_rot <- map(axis_pair, 
+  function (axis)
+    pca_rotated_plot <- plot_rotated_pca(
+      pca_rotated = pca_rotated,
+      axis = axis 
+    )
+)
+to_plot <- c(1, 6, 7)
+plot_grid(plotlist = c(
+    map(p_l_rot[to_plot], ~.x$rotated),
+    map(p_l_rot[to_plot], ~.x$normal)
+    ), ncol = length(to_plot))
 ```
 
-```{r pca_env_ok}
-plot_grid(plotlist = pca_rotated_plot, ncol = 1)
-```
 
 ```{r add pca axis to habitat pressure}
 
-test <- map(pca_rotated, function(.pca) .pca$rotated$scores)
-axis_names <- paste0(rep(names(pca_rotated), each = 2), c("1", "2"))
-test2 <- do.call(cbind, test)
-colnames(test2) <- axis_names
-rotated_axis_st <- cbind(pca_pressure[, "station"], test2) 
+test <- pca_rotated$rotated$scores
+rotated_axis_st <- cbind(pca_pressure[, "station"], test) 
 
 habitat_pressure %<>%
   left_join(rotated_axis_st, by = "station")
