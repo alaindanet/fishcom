@@ -611,7 +611,7 @@ get_basin_station <- function (sf_obj = FALSE) {
   station_basin <- sf::st_intersects(station_analysis, the_8_hydrologic_basin)
   station_analysis$basin <- purrr::map_chr(station_basin, function(x){
     if (length(x) == 0) {
-      return(NA) 
+      return(NA)
     }
     the_8_hydrologic_basin[["NomDistric"]][x]
     })

@@ -64,6 +64,7 @@ theme_set(theme_alain())
 
 ```{r}
 myload(temporal_community_metrics, dir = mypath("data"))
+st_basin <- get_basin_station(sf_obj = FALSE)
 
 myload(temporal_network_metrics, dir = mypath("data", "classes"))
 temporal_network_metrics_classes <- temporal_network_metrics
@@ -73,8 +74,11 @@ stab_div_troph <- temporal_network_metrics %>%
   dplyr::select(station, troph_group) %>%
   unnest(troph_group) %>%
   filter(troph_group != 1) %>%
-  mutate(troph_group = as.factor(troph_group)) %>%
-  dplyr::select(station, troph_group, biomass_stab, richness_med)
+  mutate(troph_group = as.factor(troph_group),
+    log_rich = log10(richness_med),
+    log_stab = log10(biomass_stab)) %>%
+  dplyr::select(station, troph_group, biomass_stab, richness_med, log_rich, log_stab) %>%
+  dplyr::left_join(st_basin, by = "station")
 ```
 
 ## Habitat and environment
@@ -116,7 +120,6 @@ pca_rotated <- compute_rotated_pca(
 library(nlme)
 library(piecewiseSEM)
 
-st_basin <- get_basin_station()
 myload(nmds, habitat_pressure, dir = mypath("report"))
 myload(op_analysis, dir = mypath("data"))
 
@@ -141,6 +144,8 @@ $$
 S_i = \beta_0 + \beta_Rx_{Ri} + \epsilon_{ij}
 $$
 
+with $i$ being the station $i$.
+
 ```{r mod-div-total}
 ctrl <- lmeControl(opt='optim')
 stab_div_mod <- lme(data = sem_data,
@@ -148,11 +153,10 @@ stab_div_mod <- lme(data = sem_data,
   random = ~ 1 + log_rich | basin,
   control = ctrl 
 )
-#stab_div_colin <- car::vif(stab_div_mod)
-stab_div_sum <- piecewiseSEM::rsquared(stab_div_mod, method = "nagelkerke")
-```
+#stab_div_colin <- car::vif(stab_div_mod) not use if one response
+stab_div_sum <- piecewiseSEM::rsquared(stab_div_mod, method = "nagelkerke") %>%
+  mutate_at(vars(Conditional, Marginal), ~round(., 2))
 
-```{r predict}
 pred <- ggpredict(stab_div_mod, terms = c("log_rich"), type = "fe")
 stab_div_pred <- pred %>%
   as_tibble() %>%
@@ -160,6 +164,27 @@ stab_div_pred <- pred %>%
     log_stab = predicted,
     log_rich = x,
     basin = group
+  )
+```
+
+```{r mod-div-troph}
+stab_troph_mod <- lme(data = na.omit(stab_div_troph),
+  fixed = log_stab ~ log_rich * troph_group,
+  random = ~ 1 + log_rich * troph_group | basin,
+  control = ctrl 
+)
+
+#stab_div_colin <- car::vif(stab_troph_mod) not use if one response
+stab_troph_sum <- piecewiseSEM::rsquared(stab_troph_mod, method = "nagelkerke") %>%
+  mutate_at(vars(Conditional, Marginal), ~round(., 2))
+
+pred_troph_mod <- ggpredict(stab_troph_mod, terms = c("log_rich", "troph_group"), type = "fe")
+stab_troph_pred <- pred_troph_mod %>%
+  as_tibble() %>%
+  rename(
+    log_stab = predicted,
+    log_rich = x,
+    troph_group = group
   )
 
 ```
@@ -189,9 +214,6 @@ p_bm_sem <- ggpiecewisesem(bm_sem)
 ## Species richness has a destabilizing effect on community  
 
 ```{r s-div, fig.dim = c(10,5)}
-label_rsq <- "paste(
-  \"Conditional italic(R) ^ 2 == \", round(stab_div_sum$Conditional, 2),
-  \", Marginal italic(R) ^ 2 == \", round(stab_div_sum$Marginal, 2))"
 # Plot left  
 p_stab_div <- sem_data %>%
   ggplot(aes(x = log_rich, y = log_stab))+
@@ -201,24 +223,26 @@ p_stab_div <- sem_data %>%
   geom_line(data = stab_div_pred) +
   geom_ribbon(data = stab_div_pred, aes(ymin = conf.low, ymax = conf.high), fill
   = "grey20", alpha = .5) +
-  annotate("text", x = 1.0, y = .8, label = paste(
-  " Marg. R^2 = ", round(stab_div_sum$Marginal, 2),
-  ", Cond. R^2 = ", round(stab_div_sum$Conditional, 2)
-  )
-    )
+  annotate("text", x = 1.0, y = .8, label = make_label_rsq(rsq = stab_div_sum),
+    parse = TRUE)
 
 # Right plot
 p_stab_div_troph <- stab_div_troph %>%
-  ggplot(aes(x = richness_med, y = biomass_stab, color = troph_group)) +
+  ggplot(aes(x = log_rich, y = log_stab, color = troph_group)) +
   geom_point() +
-  geom_smooth(method = "lm" ) +
   ggplot2::scale_color_manual(
     labels = troph_group_labeller(),
     values = c("blue", "green", "red"),
     name = "Trophic group"
   ) +
-  scale_x_log10() + scale_y_log10() +
-  labs(x = "Average species richness", y = "Biomass stability")
+  geom_line(data = stab_troph_pred) +
+  geom_ribbon(data = stab_troph_pred,
+    aes(ymin = conf.low, ymax = conf.high),
+    alpha = .5) +
+  annotate("text", x = 0.8, y = .8, label = make_label_rsq(rsq = stab_troph_sum),
+    parse = TRUE) +
+  #scale_x_log10() + scale_y_log10() +
+  labs(x = "Median species richness", y = "Biomass stability")
 
 plot_grid(p_stab_div, p_stab_div_troph, ncol = 2, rel_widths = c(.4, .6))
 ```

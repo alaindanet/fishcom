@@ -609,3 +609,28 @@ ggpiecewisesem <- function(fit, layout = "sugiyama") {
     scale_size(guide = FALSE) +
     theme_graph()
 }
+
+################################################################################
+#                                 Plot labels                                  #
+################################################################################
+
+#' Make label for Rsq
+#'
+#' @param rsq output from piecewieseSEM::rsquared
+#'
+make_label_rsq <- function(rsq = NULL) {
+
+  rsq_cond <- round(rsq$Conditional, 2)
+  rsq_marg <- round(rsq$Marginal, 2)
+
+  tmp <- "paste(
+  \"Marginal \",  italic(R) ^ 2, \" = \", marg, \", \",
+  \"Conditional \", italic(R) ^ 2, \" = \", cond 
+  )"
+  
+  str_replace_all(tmp, c(
+      "cond" = as.character(rsq_cond),
+      "marg" = as.character(rsq_marg))
+  )
+}
+
