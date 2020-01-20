@@ -39,7 +39,7 @@ compute_sem_dataset <- function (
     dplyr::left_join(sync, by = "station") %>%
     dplyr::rename(sync = synchrony,
       piel = pielou_med,
-      prod = biomass_med 
+      prod = biomass_med
     )
 
   # Composition
@@ -72,7 +72,8 @@ compute_sem_dataset <- function (
       log_rich = log10(richness_med),
       log_sync = log10(sync), 
       log_cv_sp = log10(cv_sp),
-      log_stab = log10(biomass_stab)
+      log_stab = log10(biomass_stab),
+      log_bm = log10(prod)
     )
   return(dsem)
 

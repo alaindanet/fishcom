@@ -634,3 +634,9 @@ make_label_rsq <- function(rsq = NULL) {
   )
 }
 
+
+get_min_max <- function (l, var_chr) {
+
+  vec <- purrr::map(l, ~.x[[var_chr]]) %>% unlist
+  c(min = min(vec, na.rm = TRUE), max = max(vec, na.rm =TRUE))
+  }

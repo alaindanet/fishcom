@@ -15,7 +15,7 @@ data_common <- mypath("data")
 dest_dir <- mypath("data", "species")
 
 knitr::opts_chunk$set(
-  cache = TRUE,
+  cache = FALSE,
   collapse = TRUE,
   comment = "#>",
   fig.dim = c(7, 7),
@@ -76,8 +76,9 @@ stab_div_troph <- temporal_network_metrics %>%
   filter(troph_group != 1) %>%
   mutate(troph_group = as.factor(troph_group),
     log_rich = log10(richness_med),
+    log_bm = log10(biomass_med),
     log_stab = log10(biomass_stab)) %>%
-  dplyr::select(station, troph_group, biomass_stab, richness_med, log_rich, log_stab) %>%
+  dplyr::select(station, troph_group, biomass_stab, richness_med, log_rich, log_stab, log_bm, biomass_med) %>%
   dplyr::left_join(st_basin, by = "station")
 ```
 
@@ -141,18 +142,28 @@ sem_data <- compute_sem_dataset(
 ### Relationship between stability and species richness 
 
 $$
-S_i = \beta_0 + \beta_Rx_{Ri} + \epsilon_{ij}
+\Log_{10}(S_i) = \beta_0 + \beta_R\Log_{10}(x_{Ri}) + \epsilon_{ij}
+$$
+
+$$
+S_i = 10^(\beta_0 + \beta_R\Log_{10}(x_{Ri}) + \epsilon_{ij})
+$$
+
+$$
+S_i = 10^(\beta_0) \times 10^(\beta_R\Log(x_{Ri})) * 10^(\epsilon_{ij})
 $$
 
 with $i$ being the station $i$.
 
 ```{r mod-div-total}
+library(lme4)
 ctrl <- lmeControl(opt='optim')
-stab_div_mod <- lme(data = sem_data,
-  fixed = log_stab ~ log_rich,
-  random = ~ 1 + log_rich | basin,
-  control = ctrl 
+ctrl_lmer <- lmerControl(optCtrl = list(method = 'optim'))
+stab_div_mod <- lmer(data = sem_data,
+  #control = ctrl_lmer,
+  formula = log_stab ~ log_rich + (1 | basin)
 )
+stopifnot(!isSingular(stab_div_mod, tol = 1e-05))
 #stab_div_colin <- car::vif(stab_div_mod) not use if one response
 stab_div_sum <- piecewiseSEM::rsquared(stab_div_mod, method = "nagelkerke") %>%
   mutate_at(vars(Conditional, Marginal), ~round(., 2))
@@ -165,20 +176,40 @@ stab_div_pred <- pred %>%
     log_rich = x,
     basin = group
   )
+
+#
+bm_div_mod <- lme(data = sem_data,
+  fixed = log_bm ~ log_rich,
+  random = ~ 1 + log_rich | basin,
+  control = ctrl 
+)
+bm_div_sum <- piecewiseSEM::rsquared(bm_div_mod, method = "nagelkerke") %>%
+  mutate_at(vars(Conditional, Marginal), ~round(., 2))
+
+pred <- ggpredict(bm_div_mod, terms = c("log_rich"), type = "fe")
+#plot(pred, add.data = TRUE)
+bm_div_pred <- pred %>%
+  as_tibble() %>%
+  rename(
+    log_bm = predicted,
+    log_rich = x,
+    basin = group
+  )
 ```
 
 ```{r mod-div-troph}
 stab_troph_mod <- lme(data = na.omit(stab_div_troph),
-  fixed = log_stab ~ log_rich * troph_group,
-  random = ~ 1 + log_rich * troph_group | basin,
-  control = ctrl 
+  fixed = log_stab ~ log_rich + troph_group + log_rich:troph_group,
+  random = ~ 1 | basin,
+  control = ctrl
 )
 
-#stab_div_colin <- car::vif(stab_troph_mod) not use if one response
+stab_troph_colin <- car::vif(stab_troph_mod)
 stab_troph_sum <- piecewiseSEM::rsquared(stab_troph_mod, method = "nagelkerke") %>%
   mutate_at(vars(Conditional, Marginal), ~round(., 2))
 
 pred_troph_mod <- ggpredict(stab_troph_mod, terms = c("log_rich", "troph_group"), type = "fe")
+plot(pred_troph_mod, add.data = TRUE)
 stab_troph_pred <- pred_troph_mod %>%
   as_tibble() %>%
   rename(
@@ -187,9 +218,27 @@ stab_troph_pred <- pred_troph_mod %>%
     troph_group = group
   )
 
+# Productivity and troph group
+
+bm_troph_mod <- lme(data = na.omit(stab_div_troph),
+  fixed = log_bm ~ log_rich * troph_group,
+  random = ~ 1 + log_rich * troph_group | basin,
+  control = ctrl 
+)
+
+bm_troph_sum <- piecewiseSEM::rsquared(bm_troph_mod, method = "nagelkerke") %>%
+  mutate_at(vars(Conditional, Marginal), ~round(., 2))
+
+pred_troph_mod <- ggpredict(bm_troph_mod, terms = c("log_rich", "troph_group"), type = "fe")
+#plot(pred_troph_mod, add.data = TRUE)
+bm_troph_pred <- pred_troph_mod %>%
+  as_tibble() %>%
+  rename(
+    log_bm = predicted,
+    log_rich = x,
+    troph_group = group
+  )
 ```
-
-
 
 ### SEM
 
@@ -213,16 +262,20 @@ p_bm_sem <- ggpiecewisesem(bm_sem)
 
 ## Species richness has a destabilizing effect on community  
 
-```{r s-div, fig.dim = c(10,5)}
+```{r p-s-div}
+lim_log_stab <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_stab")
+lim_log_rich <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_rich")
+filter(stab_div_troph, log_rich < 0)
 # Plot left  
 p_stab_div <- sem_data %>%
   ggplot(aes(x = log_rich, y = log_stab))+
   geom_point() +
-  #scale_x_log10() + scale_y_log10() +
+  ylim(lim_log_stab) +
+  xlim(lim_log_rich) +
   labs(x = "Median species richness (Log 10)", y = " Biomass stability (Log 10)") +
   geom_line(data = stab_div_pred) +
   geom_ribbon(data = stab_div_pred, aes(ymin = conf.low, ymax = conf.high), fill
-  = "grey20", alpha = .5) +
+  = "grey20", alpha = .2) +
   annotate("text", x = 1.0, y = .8, label = make_label_rsq(rsq = stab_div_sum),
     parse = TRUE)
 
@@ -235,17 +288,70 @@ p_stab_div_troph <- stab_div_troph %>%
     values = c("blue", "green", "red"),
     name = "Trophic group"
   ) +
+  ylim(lim_log_stab) +
+  xlim(lim_log_rich) +
   geom_line(data = stab_troph_pred) +
   geom_ribbon(data = stab_troph_pred,
-    aes(ymin = conf.low, ymax = conf.high),
-    alpha = .5) +
+    aes(ymin = conf.low, ymax = conf.high, color = NULL, group = troph_group),
+    alpha = .2) +
   annotate("text", x = 0.8, y = .8, label = make_label_rsq(rsq = stab_troph_sum),
     parse = TRUE) +
   #scale_x_log10() + scale_y_log10() +
-  labs(x = "Median species richness", y = "Biomass stability")
+  labs(x = "Median species richness (Log 10)", y = " Biomass stability (Log 10)")
 
-plot_grid(p_stab_div, p_stab_div_troph, ncol = 2, rel_widths = c(.4, .6))
+p_stab <- plot_grid(p_stab_div, p_stab_div_troph, ncol = 2, rel_widths = c(.4, .6))
 ```
+
+```{r p-p-div}
+lim_log_bm <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_bm")
+
+p_bm_div <- sem_data %>%
+  ggplot(aes(x = log_rich, y = log_bm))+
+  geom_point() +
+  ylim(lim_log_bm) +
+  xlim(lim_log_rich) +
+  labs(x = "Median species richness (Log 10)", y = " Total biomass(Log 10)") +
+  geom_line(data = bm_div_pred) +
+  geom_ribbon(data = bm_div_pred, aes(ymin = conf.low, ymax = conf.high), fill
+  = "grey20", alpha = .2) +
+  annotate("text", x = 1.0, y = 5, label = make_label_rsq(rsq = bm_div_sum),
+    parse = TRUE)
+
+p_bm_div_troph <- stab_div_troph %>%
+  ggplot(aes(x = log_rich, y = log_bm, color = troph_group)) +
+  geom_point() +
+  ylim(lim_log_bm) +
+  xlim(lim_log_rich) +
+  ggplot2::scale_color_manual(
+    labels = troph_group_labeller(),
+    values = c("blue", "green", "red"),
+    name = "Trophic group"
+  ) +
+  geom_line(data = bm_troph_pred) +
+  geom_ribbon(data = bm_troph_pred,
+    aes(ymin = conf.low, ymax = conf.high, color = NULL, group = troph_group),
+    alpha = .2) +
+  annotate("text", x = 0.8, y = 5, label = make_label_rsq(rsq = bm_troph_sum),
+    parse = TRUE) +
+  #scale_x_log10() + scale_y_log10() +
+  labs(x = "Median species richness (Log 10)", y = "Total biomass (Log 10)")
+
+p_bm <- plot_grid(p_bm_div, p_bm_div_troph, ncol = 2, rel_widths = c(.4, .6))
+```
+
+```{r psbm, fig.dim = c(10,5)}
+plot_grid(p_stab, p_bm, ncol = 1)
+```
+
+- Stability:
+  - decreases with richness
+  - is higher for higher trophic group
+  - increases and decreases with richness for the lower and higher trophic group
+    respectively
+
+- richness on stab:
+  - globally negative
+  -  
 
 ## Drivers of total biomass and stability
 
@@ -281,13 +387,35 @@ plot_grid(
   - RC 4: river width med, depth med 			/
   - RC 5: DBO CV 					/
 
-- Community structure: 
-  - Richness decreases synchrony but increases CV
-  - Trophic level increases synchrony but decreases CV
-  - Betadiv increases CV
+- Stability:
+  - Stability component:
+    - CV is the main driver of stability:
+  - Community structure: 
+    - Richness decreases synchrony but increases CV
+    - Trophic level increases synchrony but decreases CV
+    - Betadiv increases CV
+  - Habitat/Env:
+    - very weak to no direct effect on stability
+      - direct: CV_sp dec with increasing RC3, cad enrichment and flow_cv decrease.  
+    - indirectly affect stability by modulating community structure
 
-- Stability component:
-  - CV is the main driver of stability 
+- Total biomass:
+  - Community structure:
+    - Richness increased total biomass / had the bigger effect
+    - Even community deceased total biomass
+    - Species turnover decreased total biomass  
+    - Connectance increased biomass
+  - Habitat/Env:
+    - very weak to no direct effect on total biomass 
+    - Effect of environment is thus mediated by the community structure
+
+- Main outcome
+
+- Latex:
+  - csv:
+    - https://tex.stackexchange.com/questions/178904/use-datatool-to-read-a-row-from-a-csv-file-then-use-the-variables-in-the-docume
+    - https://tex.stackexchange.com/questions/40901/datatool-getting-a-specific-value-given-the-value-of-another-column
+  - path: 
 
 # Discussion
 

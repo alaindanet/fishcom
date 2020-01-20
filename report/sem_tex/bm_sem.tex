@@ -1,0 +1,101 @@
+\documentclass{article}
+\def\xcolorversion{2.00}
+\def\xkeyvalversion{1.8}
+
+\usepackage[version=0.96]{pgf}
+\usepackage{tikz}
+\usetikzlibrary{arrows,shapes,snakes,automata,backgrounds,petri}
+\usepackage[latin1]{inputenc}
+\usepackage{verbatim}
+
+\begin{document}
+
+\begin{comment}
+:Title: A Petri-net for Hagen
+:Slug: nodetutorial
+:Tags: Manual, Petri net, Graphs
+
+This example is from the tutorial: A Petri-net for Hagen.
+
+| Author: Till Tantau
+| Source: The PGF/TikZ manual
+
+\end{comment}
+
+\begin{tikzpicture}[node distance=4cm,->,>=stealth',bend angle=45,auto]
+
+  \tikzstyle{place}=[circle,thick,draw=blue!75,fill=blue!20,minimum
+  size=6mm,text centered, inner sep=2pt, text width = 2cm]
+  \tikzstyle{red place}=[place,draw=red!75,fill=red!20]
+  \tikzstyle{transition}=[rectangle,thick,draw=black!75,
+  			  fill=black!20,minimum size=4mm]
+
+  \tikzstyle{every label}=[red]
+
+    % Evt 
+    \node [place] (rc3)  {RC3};
+    \node [place] (rc2) [left of=rc3] {RC2};
+    \node [place] (rc1) [left of=rc2] {RC1};
+    \node [place] (rc4) [right of=rc3] {RC4};
+    \node [place] (rc5) [right of=rc4] {RC5};
+
+   %Community structure 
+    \node [place] (rich) [below of=rc3] {Species richness};
+    \node [place] (piel) [left of=rich] {Pielou};
+    \node [place] (beta)  [left of=piel] {$\beta$-diversity};
+    \node [place] (troph) [right of=rich] {Trophic level};
+    \node [place] (c)  [right of=troph] {Connectance};
+
+    %bmility
+    \node [place] (bm)  [below of=rich] {Total biomass};
+
+    \path 
+	(rc3) edge node[anchor=south,above]{$SC_n=0$} (piel)
+	(rc3) edge node[anchor=south,above]{$SC_n\neq 0$} (rich)
+	(rc3) edge node[anchor=south,above]{$SC_n\neq 0$} (beta)
+	(rc3) edge (troph)
+	(rc3) edge (c)
+	(rc3) edge (bm)
+
+	(rc2) edge (piel)
+	(rc2) edge (rich)
+	(rc2) edge (beta)
+	(rc2) edge (troph)
+	(rc2) edge (c)
+	(rc2) edge (bm)
+
+	(rc1) edge (piel)
+	(rc1) edge (rich)
+	(rc1) edge (beta)
+	(rc1) edge (troph)
+	(rc1) edge (c)
+	(rc1) edge (bm)
+
+	(rc4) edge (piel)
+	(rc4) edge (rich)
+	(rc4) edge (beta)
+	(rc4) edge (troph)
+	(rc4) edge (c)
+	(rc4) edge (bm)
+
+	(rc5) edge (piel)
+	(rc5) edge (rich)
+	(rc5) edge (beta)
+	(rc5) edge (troph)
+	(rc5) edge (c)
+	(rc5) edge (bm)
+	;
+
+    \path 
+	(piel)  edge (bm)
+	(rich)  edge (bm)
+	(beta)  edge (bm)
+	(troph) edge (bm)
+	(c) edge (bm)
+	(bm) edge (bm)
+	;
+
+
+\end{tikzpicture}
+
+\end{document}

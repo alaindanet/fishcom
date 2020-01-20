@@ -1,0 +1,64 @@
+\documentclass{article}
+\def\xcolorversion{2.00}
+\def\xkeyvalversion{1.8}
+
+\usepackage[version=0.96]{pgf}
+\usepackage{tikz}
+\usetikzlibrary{arrows,shapes,snakes,automata,backgrounds,petri}
+\usepackage[latin1]{inputenc}
+\usepackage{verbatim}
+
+\begin{document}
+
+\begin{comment}
+:Title: A Petri-net for Hagen
+:Slug: nodetutorial
+:Tags: Manual, Petri net, Graphs
+
+This example is from the tutorial: A Petri-net for Hagen.
+
+| Author: Till Tantau
+| Source: The PGF/TikZ manual
+
+\end{comment}
+
+\begin{tikzpicture}[node distance=3.3cm,>=stealth',bend angle=45,auto]
+
+  \tikzstyle{place}=[circle,thick,draw=blue!75,fill=blue!20,minimum
+  size=6mm,text centered, inner sep=2pt, text width = 2cm]
+  \tikzstyle{red place}=[place,draw=red!75,fill=red!20]
+  \tikzstyle{transition}=[rectangle,thick,draw=black!75,
+  			  fill=black!20,minimum size=4mm]
+
+  \tikzstyle{every label}=[red]
+
+  \begin{scope}
+    % First net
+    \node [place] (evt) {Environment};
+    \node [place] (com) [below of=evt] {Community structure}
+      edge [pre]                            (evt);
+    \node [place] (stab)  [below of=com] {Biomass\\\
+	stability}
+      edge [pre]                            (com)
+      edge [pre, bend left]                            (evt);
+
+  \end{scope}
+
+  \begin{scope}[xshift=6cm]
+    % Second net
+    \node [place] (evt1) {Environment};
+    \node [place] (com1) [below of=evt1] {Community structure}
+      edge [pre]                            (evt1);
+    \node [place] (bm)  [below of=com1] {Total biomass}
+      edge [pre]                            (com1)
+      edge [pre, bend right]                (evt1);
+  \end{scope}
+
+  \begin{pgfonlayer}{background}
+    \filldraw [line width=2cm,join=round,black!10]
+      (evt.north  -| stab.east)  rectangle (stab.south  -| stab.west)
+      (evt1.north -| bm.east) rectangle (bm.south -| bm.west);
+  \end{pgfonlayer}
+\end{tikzpicture}
+
+\end{document}
