@@ -2,6 +2,88 @@
 
 We describe our methods in this chapter.
 
+## Describe datasets
+
+### Community and network datas
+
+- \*\_analysis (data in general by species and fishing operation):
+  - community_analysis:
+    - by species and by fishing operation:
+      - number of individuals
+      - mean length   
+      - sum of biomass
+  - network_analysis:
+    - by fishing operation:
+      - data:
+	-length, class and species of each individual
+      - network:
+	- feeding link between species in the igraph::graph_from_data_frame()
+	  format
+	- from to: the "from" is eaten by "to", i.e. the biomass goes "from" "to"
+      - composition (by opcod and by species):
+	- troph_level: trophic level of the species
+	- biomass: species biomass
+	- troph_group: high (group 3) or low predator (group 2)
+
+- \*\_metrics (metrics by fishing operation):
+  - community_metrics:
+    - richness: species richness
+    - nind: number of individuals
+    - biomass: sum of biomass
+    - sp_vector: named vector of species biomass (name corresponding to species)
+    - rel_bm: named vector of relative species biomass (name corresponding to species)
+    - pielou: pielou index on biomass distribution of species
+    - simpson: simpson index on biomass distribution of species
+  - network_metrics:
+    - from data to troph_group: see network_analysis
+    - nestedness: network index
+    - modul_guimera: guimera modularity index
+    - diet_overlap: matrix of diet overlap between species pair 
+    - avg_diet_overlap: mean diet overlap between species pair
+    - connectance: network index 
+    - nbnode: nb of nodes in the network (i.e. species or species classes plus
+      resources as detrivor, zooplankton, phytoplankton)
+    - compartiment: compartimentation index of the network 
+    - troph_level_avg: mean trophic level of the network  
+    - troph_length: trophic length of the network
+    - modularity: modeularity of the network
+    - connectance_corrected: residuals of the relationship between connectance
+      and nbnode
+    - modularity_corrected: cf above
+    - troph_level_avg_corrected: cf above 
+    - mean_troph_level_corrected: cf above
+    - w_trph_lvl_avg: mean trophic level of the network WEIGHTED by biomass
+
+
+- temporal\_\*\_metrics (metrics summarised by station):
+  - temporal_community_metrics (cf community_metrics for the index):
+    - \*\_avg: mean of the index  
+    - \*\_cv: cv of the index
+    - \*\_med: median of the index 
+    - \*\_stab: stab of the index (i.e. 1/cv)
+    - betadiv\_\*: $\beta$-diversity 
+      - betadiv: mean dissimilarity between year for species composition
+      - \*\_bin: binary species composition (0 or 1)
+      - \*\_diag: dissimilarity between year to year (diagonal of the
+	dissimilarity matrix)
+  - temporal_network_metrics (cf network_metrics for the index):
+    - same principle than for temporal_community_metrics
+    - troph_group
+
+### Station data
+
+- op_analysis:
+  - protocol_type: type of fishing (complete or partial)
+  - opcod: id of the fishing operation
+  - date: date (YYYY-MM-DD) of the fishing operation
+  - station: id of the station
+  - protocol: protocole name (complete, partial_by_point, partial_over_bank)
+  - surface: surface sampled
+  - nb_sp: number of the species sampled for the fishing operation
+  - nb_ind: number of the individuals sampled for the fishing operation
+  - year: year at which the fishing operation was done  
+  - length_sourced: length of river fished
+
 ## Data collection
 
 
@@ -421,7 +503,7 @@ for (i in seq_along(u_basin)) {
 }
 ```
 
-```{r}
+```{r, eval = FALSE}
 match_st <- match(hab_type$station, com_mat$station)
 hab_type <- hab_type[order(match_st), ]
 ordiplot(nmds,type="points", choices = c(1, 2))
@@ -668,7 +750,7 @@ community_metrics  <-
 
 ```{r}
 ts_biomass <- community_metrics %>%
-  select(station, date, biomass) %>%
+  dplyr::select(station, date, biomass) %>%
   mutate(station = as.character(station)) %>%
   group_by(station) %>%
   arrange(date) %>%
@@ -684,6 +766,7 @@ ts_biomass %<>%
 biomass_ts_sax <- ts_biomass 
 mysave(biomass_ts_sax, dir = mypath("data"), overwrite = TRUE)
 ```
+
 
 ```{r}
 pattern_dist <- ts_biomass %>%

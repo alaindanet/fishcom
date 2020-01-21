@@ -9,7 +9,7 @@ output:
     math: katex
 ---
 
-```{r}
+```{r, echo = FALSE}
 mypath <- rprojroot::find_package_root_file
 data_common <- mypath("data")
 dest_dir <- mypath("data", "species")
@@ -117,7 +117,7 @@ pca_rotated <- compute_rotated_pca(
 
 ## Statistical analysis
 
-```{r get-data}
+```{r get-data, cache = TRUE}
 library(nlme)
 library(piecewiseSEM)
 
@@ -197,7 +197,7 @@ bm_div_pred <- pred %>%
   )
 ```
 
-```{r mod-div-troph}
+```{r mod-div-troph, fig.show = "hide"}
 stab_troph_mod <- lme(data = na.omit(stab_div_troph),
   fixed = log_stab ~ log_rich + troph_group + log_rich:troph_group,
   random = ~ 1 | basin,
@@ -265,7 +265,6 @@ p_bm_sem <- ggpiecewisesem(bm_sem)
 ```{r p-s-div}
 lim_log_stab <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_stab")
 lim_log_rich <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_rich")
-filter(stab_div_troph, log_rich < 0)
 # Plot left  
 p_stab_div <- sem_data %>%
   ggplot(aes(x = log_rich, y = log_stab))+

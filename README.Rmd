@@ -96,6 +96,8 @@ The following metrics are summarised by station in `community_metrics`:
 The network data lives in the `network_analysis` and contains the following
 metrics:
 
+#####
+
 - connectance
 - number of nodes
 - modularity and modules 

@@ -17,3 +17,5 @@ tests/output
 report/_book
 report/_main.Rmd
 report/_bookdown_files
+manuscript/bef_stability/manuscript_cache
+manuscript/bef_stability/manuscript_files
