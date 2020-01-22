@@ -89,7 +89,7 @@ We describe our methods in this chapter.
 
 ### Fish length
 
-```{r, fig.cap = "Distribution of fish length. Red, green and black respectively locate the median, the mean and the 200mm threshold."}
+```{r, fig.dim = c(4, 4), fig.cap = "Distribution of fish length. Red, green and black respectively locate the median, the mean and the 200mm threshold."}
 myload(length_analysis, dir = mypath("data"))
 length_analysis %>%
   ggplot(aes(x = length)) +
@@ -197,7 +197,81 @@ plot_temporal_network(
 
 This is super cool to see! =)
 
-## Environmental data 
+### Network caracteristics  
+
+```{r}
+myload(temporal_network_metrics, dir = mypath("data", "classes"))
+temporal_network_metrics_classes <- temporal_network_metrics
+myload(temporal_network_metrics, dir = dest_dir)
+myload(temporal_community_metrics, synchrony, dir = data_common)
+```
+
+```{r net-cor-med, fig.cap = "Correlation between network indices (median over the temporal series). "}
+# Get network metrics
+
+
+cor_avg <- temporal_network_metrics %>%
+  select_at(vars(dplyr::matches("med"))) %>%
+  na.omit %>%
+  cor(., method = "spearman")
+#knitr::kable(cor_avg)
+as.data.frame(round(cor_avg,2)) %>%
+  mutate_all(funs(cell_spec(., "html", color = ifelse(abs(.) > .65 & . != 1, "red",
+	  "black")))) %>%
+  mutate(variable = colnames(.)) %>%
+  select(variable, everything()) %>%
+  kable(format = "html", escape = F) %>%
+  kable_styling() %>%
+  scroll_box(width = "100%", height = "400px")
+```
+
+```{r net-cor-cv, fig.cap="Correlation between network indices (CV over the temporal series). "}
+cor_cv <- temporal_network_metrics %>%
+  select_at(vars(dplyr::matches("cv"))) %>%
+  na.omit %>%
+  cor(., method = "spearman")
+
+as.data.frame(round(cor_cv,2)) %>%
+  mutate_all(funs(cell_spec(., "html", color = ifelse(abs(.) > .65 & . != 1, "red",
+	  "black")))) %>%
+  mutate(variable = colnames(.)) %>%
+  select(variable, everything()) %>%
+  kable(format = "html", escape = F) %>%
+  kable_styling() %>%
+  scroll_box(width = "100%", height = "400px")
+
+```
+
+```{r}
+library(ade4)
+library(factoextra)
+
+net_ind <- temporal_network_metrics %>%
+  left_join(select(temporal_community_metrics, station, richness_med)) %>%
+  select_at(vars(dplyr::matches("med")))
+
+res.pca <- dudi.pca(na.omit(net_ind),
+  scannf = FALSE,   # Hide scree plot
+  nf = 5            # Number of components kept in the results
+)
+eig_plot <- fviz_eig(res.pca)
+```
+
+```{r}
+pca_plot <- lapply(list(c(1,2), c(1, 3), c(3, 2)), function (axes) {
+  fviz_pca_var(res.pca,
+    axes = axes,
+    col.var = "contrib", # Color by contributions to the PC
+    gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+    repel = TRUE     # Avoid text overlapping
+  )
+})
+
+plot_grid(eig_plot, pca_plot[[1]], pca_plot[[2]], pca_plot[[3]], labels =
+  "AUTO")
+```
+
+## Environmental data
 
 ### Habitat
 
@@ -216,7 +290,12 @@ habitat_pressure <- build_habitat_pressure_dataset(
 
 ### Relationship between environmental variables
 
-```{r pca-hab, fig.dim = c(7, 21), fig.cap = "PCA over habitat description"}
+```{r, fig.cap = "Spearman correlation between environmental variables."}
+m <- cor(as.matrix(select(na.omit(habitat_pressure), -station)), method = "spearman")
+corrplot::corrplot(m, order="hclust", type = "upper", diag = FALSE)
+```
+
+```{r pca-hab, fig.dim = c(10, 7), fig.cap = "PCA over habitat description"}
 library(ade4)
 library(factoextra)
 pca_hab <- dudi.pca(as.data.frame(select(na.omit(habitat_pressure), -station)), scannf = FALSE, nf = 3, center = TRUE, scale = TRUE)
@@ -244,7 +323,7 @@ pca_plot23 <- fviz_pca_var(pca_hab,
     gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
     repel = TRUE     # Avoid text overlapping
   )
-plot_grid(pca_plot12, pca_plot13, pca_plot23, ncol = 1)
+plot_grid(pca_plot12, pca_plot13, pca_plot23, ncol = 3)
 ```
 
 The PCA (Fig. \@ref(fig:pca-hab)) showed unsurprisingly that order of strahler, the
@@ -260,15 +339,8 @@ composed of rocky habitat from the ones that had higher average annual
 temperature located in the south, with more enrichment (DBO, nitrates,
 phosphorus) and that are more vegetated.
 
-```{r}
-dev.off()
-m <- cor(as.matrix(select(na.omit(habitat_pressure), -station)), method = "spearman")
-corrplot::corrplot(m, order="hclust", type = "upper", diag = FALSE)
-```
 
-#### 1 rotated PCA
-
-```{r}
+```{r, fig.show = "hide"}
 evt_var_mean <- c("flow_med", "temperature_med", "width_river_mean",
   "avg_depth_station_mean", "slope", "alt", "d_source", "strahler", "DBO_med")
 evt_var_cv <- c("flow_cv", "temperature_cv", "width_river_cv",
@@ -289,12 +361,16 @@ p_l_rot <- map(axis_pair,
       axis = axis 
     )
 )
+```
+
+```{r}
 to_plot <- c(1, 6, 7)
 plot_grid(plotlist = c(
     map(p_l_rot[to_plot], ~.x$rotated),
     map(p_l_rot[to_plot], ~.x$normal)
-    ), ncol = length(to_plot))
+    ), ncol = length(to_plot), rel_height = c(.4, .6))
 ```
+
 
 
 ```{r add pca axis to habitat pressure}
@@ -305,7 +381,7 @@ rotated_axis_st <- cbind(pca_pressure[, "station"], test)
 habitat_pressure %<>%
   left_join(rotated_axis_st, by = "station")
 
-mysave(habitat_pressure, dir = mypath("report"), overwrite = TRUE)
+mysave(habitat_pressure, pca_pressure, dir = mypath("report"), overwrite = TRUE)
 ```
 
 
@@ -338,8 +414,8 @@ displayed bimodality. Those bimodalities will be helpful to test relationship
 between stability and diversity for different subset of the dataset and so, test
 the robustness of the relationship.
 
-```{r split-rivers, fig.dim = c(7, 12)}
-hab_type <- na.omit(habitat_pressure) %>%
+```{r split-rivers, fig.dim = c(4, 4)}
+hab_type <- habitat_pressure %>%
   mutate(high_bin = ifelse(alt > median(alt), TRUE, FALSE),
   wide_bin = ifelse(width_river_mean > median(width_river_mean), TRUE, FALSE),
   hab_type = map2_chr(high_bin, wide_bin, function(high, wide){
@@ -362,18 +438,9 @@ hab_type <- na.omit(habitat_pressure) %>%
   mutate(hab_type = map_chr(high_bin, ~ifelse(.x, "high", "low"))) %>%
   select(station, hab_type)
 
-hab_type_pca <- hab_type[hab_type$station %in% na.omit(habitat_pressure)$station, ]
-match_st <- match(hab_type_pca$station, na.omit(habitat_pressure)$station)
-hab_type_pca <- hab_type_pca[order(match_st), ]
-
-pca_cat_river <- fviz_pca_ind(pca_hab, label="none", habillage=hab_type_pca$hab_type,
-  , ellipse.type = "convex",
-             addEllipses=TRUE, ellipse.level=0.95)
-plot_grid(pca_plot, pca_cat_river, ncol = 1)
+#plot_grid(pca_cat_river, ncol = 1)
 mysave(hab_type, dir = mypath("report"), overwrite = TRUE)
 ```
-
-
 
 ### Pressure
 
@@ -428,18 +495,18 @@ myload(habitat_pressure, dir = mypath("report"))
 ```
 
 
-```{r, echo = FALSE}
+```{r, fig.dim = c(7, 5), fig.cap = "NMDS on species composition."}
 library(vegan)
 
 myload(nmds, com_mat, dir = mypath("report"))
 
 
-stressplot(nmds)
-plot(nmds)
-
 order_st <- match(temporal_community_metrics$station, com_mat$station) 
 tps_com_met <- temporal_community_metrics[order(order_st),] 
  
+par(mfrow = c(1, 2))
+stressplot(nmds)
+title("Stress plot")
 bluefunc <- colorRampPalette(c("lightyellow", "darkred"))
 ordiplot(nmds,type="n")
 orditorp(nmds,display="species",col="gray",air=0.01)
@@ -447,6 +514,7 @@ orditorp(nmds, display="sites",
   col= bluefunc(15)[findInterval(tps_com_met$richness_avg, seq(1,15))],
    cex = findInterval(log10(tps_com_met$biomass_med), seq(1, 4, 1))/2,
   air=0.01, pch = "+", labels = "+")
+title("Color = species richness; Size of points = biomass")
 ```
 
 ```{r}
@@ -479,82 +547,44 @@ for (i in seq_along(com_var)) {
 station_analysis <- get_basin_station(sf_obj = TRUE) %>%
   filter(station %in% com_mat$station)
 
-plot(station_analysis[,"basin"])
 # How many station by basin:
 nb_st_basin <- station_analysis %>%
   group_by(basin) %>%
   summarise(nobs = n())
 ```
 
-```{r basin-com}
-dev.off()
+```{r basin-com, fig.dim = c(7, 4), fig.cap = "Species composition by group (95% ellipse)"}
 match_st_basin <- match(station_analysis$station, com_mat$station)
 st_basin <- 
   station_analysis[order(match_st_basin), ] %>%
   mutate(basin = ifelse(is.na(basin), "INCONNU", basin))
 
+par(mfrow = c(1,2))
+
 ordiplot(nmds,type="n")
 orditorp(nmds,display="species",col="red",air=0.01)
+title("Composition by basin")
 # See https://www.davidzeleny.net/anadat-r/doku.php/en:ordiagrams_examples
 u_basin  <- unique(st_basin[["basin"]])
 for (i in seq_along(u_basin)) {
-  ordihull(nmds, groups = st_basin[["basin"]],
+  ordiellipse(nmds, groups = st_basin[["basin"]],
  show.group = u_basin[i], col = i, draw = 'polygon', label = T)
 }
-```
 
-```{r, eval = FALSE}
-match_st <- match(hab_type$station, com_mat$station)
-hab_type <- hab_type[order(match_st), ]
+tmp_hab_type <- filter(hab_type, station %in% com_mat$station)
+match_st <- match(tmp_hab_type$station, com_mat$station)
+tmp_hab_type <- tmp_hab_type[order(match_st), ]
 ordiplot(nmds,type="points", choices = c(1, 2))
 orditorp(nmds,display="species",col="red",air=0.01)
-u_hab  <- unique(hab_type[["hab_type"]])
+title("Composition by Low / High altitude")
+u_hab  <- unique(tmp_hab_type[["hab_type"]])
 for (i in seq_along(u_hab)) {
-  ordihull(nmds, groups = hab_type[["hab_type"]], alpha = .1,
+  ordiellipse(nmds, groups = tmp_hab_type[["hab_type"]], alpha = .3,
  show.group = u_hab[i], col = i, draw = 'polygon', label = T)
 }
 ```
 
-```{r}
-st_basin <- get_basin_station() 
-myload(region_polygon, dir = mypath("data"))
-myload(temporal_network_metrics, dir = mypath("data", "classes"))
-temporal_network_metrics_classes <- temporal_network_metrics
-stab_div_basin <- temporal_network_metrics_classes %>%
-  select(station, troph_group) %>%
-  unnest(troph_group) %>%
-  filter(troph_group != 1) %>%
-  mutate(troph_group = as.factor(troph_group)) %>%
-  select(station, troph_group, biomass_stab, richness_avg) %>%
-  left_join(st_basin, by = "station") %>%
-  filter(!is.na(basin))
-stab_div_basin %>%
-  left_join(hab_type, by = "station") %>%
-  left_join(habitat_pressure[,c("station", "temperature_med", "DBO_med")],
-    by = "station") %>%
-  gather(variable, value, temperature_med, DBO_med) %>%
-  ggplot(aes(x = richness_avg, y = value)) +
-  geom_point() +
-  facet_grid(cols = vars(troph_group), rows = vars(variable), scales = "free_y") +
-  stat_poly_eq(
-    formula = y ~ x,
-    eq.with.lhs = "italic(hat(y))~`=`~",
-    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
-    parse = TRUE) +
-  geom_smooth(method = "lm", formula = y ~ x) +
-  ggplot2::scale_color_manual(
-    labels = troph_group_labeller(),
-    values = c("blue", "green", "red"),
-    name = "Trophic level"
-    ) +
-  #scale_y_log10() +
-  scale_x_log10() +
-  labs(title = "Stability - Div by habitat type",
-    x = "Average species richness (log10)", y = "Biomass stability (log10)")
-```
-
-#### Species occurence
-
+#### Species occurrence
 
 ```{r sp-occ}
 myload(community_analysis, dir = data_common)
@@ -575,133 +605,25 @@ com <- community_analysis %>%
       }
     )
   )
+
+# Local med occurence
 occurence_sp_st <- com %>%
   unnest() 
 
-med_occ <- occurence_sp_st %>%
+global_med_occ <- occurence_sp_st %>%
   dplyr::summarise_if(is.double, list(~median(., na.rm = TRUE))) %>%
   gather(sp, med_occ, everything()) 
 
-med_occ %>%
+p_global_med_occ <- global_med_occ %>%
   ggplot(aes(x = med_occ)) +
-  geom_histogram()
+  geom_histogram() +
+  labs(x = "Median occurrence of species in station")
 
+
+mysave(occurence_sp_st, dir = mypath("report"), overwrite = TRUE)
 ```
 
-###### Species peripherical globally
 
-```{r stab-sp-occ, fig.dim = c(10, 7), fig.cap = "Relationship between biomass stability and species richness without peripherical species."}
-sp_per <- med_occ[med_occ$med_occ < .30,]$sp 
-
-threshold_occ <- c(.10, .30, .50, .80)
-com_wo_per  <- map(threshold_occ, ~ rm_sp_from_com(com = community_analysis, sp_to_rm =
-    med_occ[med_occ$med_occ < .x,]$sp))
-names(com_wo_per) <- threshold_occ
-
-com_data <- list(total = community_analysis)
-com_data <- c(com_data, com_wo_per)
-
-res_sync_per <- map2(com_data, names(com_data), function (.data, .names) {
-
-  sync <- compute_com_synchrony(
-    .op = op_analysis,
-    com = .data)
-  sync$type <- .names 
-  sync$biomass_stab <- 1 / sync$cv_com
-  return(sync)
-
-})
-
-test <- do.call(rbind, res_sync_per)
-
-test %>%
-  ggplot(aes(x = richness_med, y = biomass_stab)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  stat_poly_eq(
-    formula = y ~ x,
-    eq.with.lhs = "italic(hat(y))~`=`~",
-    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
-    parse = TRUE) +
-  geom_smooth(method = "lm", formula = y ~ x) +
-  facet_grid(cols = vars(type))
-
-```
-
-```{r}
-test %>%
-  select(richness_med, biomass_stab, synchrony, cv_sp, type) %>%
-  gather(stab, value, biomass_stab, synchrony, cv_sp) %>%
-  ggplot(aes(x = log10(richness_med), y = value)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  stat_poly_eq(
-    formula = y ~ x,
-    eq.with.lhs = "italic(hat(y))~`=`~",
-    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
-    parse = TRUE) +
-  geom_smooth(method = "lm", formula = y ~ x) +
-  facet_grid(cols = vars(type), rows = vars(stab))
-
-```
-
-###### Species peripherical by station 
-
-```{r, fig.dim = c(10, 7)}
-
-threshold_occ <- c(0, .10, .30, .60, .90)
-
-res_sync_occ_st <- map_dfr(threshold_occ, function (.threshold) {
-    
-  # List of sp to rm
-  sp_to_rm <- occurence_sp_st %>%
-    gather(sp, occ, -station) %>%
-    group_by(station) %>%
-    filter(occ < .threshold) %>%
-    summarise(sp2 = list(unique(sp)))
-
-  # Rm species by station
-  truncated_com <- community_analysis %>%
-    left_join(select(op_analysis, opcod, station), by = "opcod") %>%
-    filter(!is.na(station)) %>%
-    group_by(station) %>%
-    nest() %>%
-    left_join(sp_to_rm, by = "station") %>%
-    mutate(
-      output = map2(data, sp2, function (.data, sp_vec) {
-	rm_sp_from_com(com = .data, sp_to_rm = sp_vec)
-  })
-      ) %>%
-  unnest(output) %>%
-  select(-station)
-
-  sync <- compute_com_synchrony(
-    .op = op_analysis,
-    com = truncated_com)
-
-  sync$type <- .threshold 
-  sync$biomass_stab <- 1 / sync$cv_com
-
-  return(sync)
-    }) 
-
-res_sync_occ_st %>%
-  select(richness_tot, richness_med, biomass_stab, type) %>%
-  gather(rich_type, richness, richness_med, richness_tot) %>%
-  ggplot(aes(x = richness, y = biomass_stab)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  stat_poly_eq(
-    formula = y ~ x,
-    eq.with.lhs = "italic(hat(y))~`=`~",
-    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
-    parse = TRUE) +
-  geom_smooth(method = "lm", formula = y ~ x) +
-  facet_grid(cols = vars(type), rows = vars(rich_type))
-```
-
-Removing the peripherical species nor at the global scale neither at the station
-scale do not affect the stability-diversity relationship. 
 
 #### Description of horizontal Community structure 
 

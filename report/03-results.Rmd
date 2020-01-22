@@ -1,70 +1,15 @@
 # Results
 
-
 ## Network description 
 
-```{r net-cor-med, fig.cap = "Correlation between network indices (median over the temporal series). "}
-# Get network metrics
+```{r}
 myload(temporal_network_metrics, dir = mypath("data", "classes"))
 temporal_network_metrics_classes <- temporal_network_metrics
 myload(temporal_network_metrics, dir = dest_dir)
 myload(temporal_community_metrics, synchrony, dir = data_common)
-
-cor_avg <- temporal_network_metrics %>%
-  select_at(vars(dplyr::matches("med"))) %>%
-  na.omit %>%
-  cor(., method = "spearman")
-#knitr::kable(cor_avg)
-as.data.frame(round(cor_avg,2)) %>%
-  mutate_all(funs(cell_spec(., "html", color = ifelse(abs(.) > .65 & . != 1, "red",
-	  "black")))) %>%
-  mutate(variable = colnames(.)) %>%
-  select(variable, everything()) %>%
-  kable(format = "html", escape = F)
 ```
 
-```{r net-cor-cv, fig.cap="Correlation between network indices (CV over the temporal series). "}
-cor_cv <- temporal_network_metrics %>%
-  select_at(vars(dplyr::matches("cv"))) %>%
-  na.omit %>%
-  cor(., method = "spearman")
 
-as.data.frame(round(cor_cv,2)) %>%
-  mutate_all(funs(cell_spec(., "html", color = ifelse(abs(.) > .65 & . != 1, "red",
-	  "black")))) %>%
-  mutate(variable = colnames(.)) %>%
-  select(variable, everything()) %>%
-  kable(format = "html", escape = F)
-```
-
-```{r}
-library(ade4)
-library(factoextra)
-
-net_ind <- temporal_network_metrics %>%
-  left_join(select(temporal_community_metrics, station, richness_med)) %>%
-  select_at(vars(dplyr::matches("med")))
-
-res.pca <- dudi.pca(na.omit(net_ind),
-  scannf = FALSE,   # Hide scree plot
-  nf = 5            # Number of components kept in the results
-)
-eig_plot <- fviz_eig(res.pca)
-```
-
-```{r}
-pca_plot <- lapply(list(c(1,2), c(1, 3), c(3, 2)), function (axes) {
-  fviz_pca_var(res.pca,
-    axes = axes,
-    col.var = "contrib", # Color by contributions to the PC
-    gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-    repel = TRUE     # Avoid text overlapping
-  )
-})
-
-plot_grid(eig_plot, pca_plot[[1]], pca_plot[[2]], pca_plot[[3]], labels =
-  "AUTO")
-```
 
 
 ### Look at some network temporal series
@@ -128,4 +73,188 @@ my_crap_temporal_network(net = net_ex, metaweb = meta$metaweb, network_data
   = network_analysis)
 ```
 
+### Community description
 
+#### Temporal dynamics
+
+```{r}
+myload(community_metrics, dir = data_common)
+```
+
+
+```{r, fig.dim = c(10, 7)}
+community_metrics %<>% left_join(select(op_analysis, opcod, station, date))
+station_high_low_stab <- temporal_community_metrics %>%
+  arrange(desc(biomass_stab)) %>%
+  slice(c(1:5, (n() - 4):(n() - 0))) %>%
+  select(station) %>%
+  unlist
+names(station_high_low_stab) <- rep(c("high", "low"), each = 5) 
+```
+
+```{r tmp-stab, fig.dim = c(10, 7), fig.cap = "The five lowest and highest biomass stability"}
+temporal_biomass <- community_metrics %>%
+  filter(station %in% station_high_low_stab) %>%
+  mutate(stab_status = ifelse(
+      station %in% station_high_low_stab[names(station_high_low_stab) == "low"],
+      "low", "high")) %>%
+  group_by(stab_status, station) %>%
+  nest() %>%
+  group_by(stab_status) %>%
+  mutate(id_stab = seq_along(station)) %>%
+  unnest()
+ggplot(temporal_biomass, aes(y = biomass, x = date)) +
+  geom_line() +
+  geom_point() +
+  facet_grid(id_stab ~ stab_status, scales = "free_y") +
+  labs(y = "Biomass (g)", x = "Date")
+```
+
+```{r more-stab-troph, fig.dim = c(10, 21), fig.cap = "The four station with the highest biomass stability. Dashed and solid lines represent respectively trophic species in the group 2 and 3."}
+
+# Get biomass by sp node:
+net_sp_troph <- select(network_analysis, opcod, composition) %>%
+  unnest(composition)
+# Get synchrony and cv sp:
+sync_sp_troph <- get_sync_cv_mat(com_analysis = net_sp_troph, op_analysis = op_analysis)
+# Get trophic lvl by node
+trophic_level %<>%
+  rename(species = sp_class) %>%
+  mutate(troph_group = get_size_class(trophic_level, NULL, troph_level,
+      trophic_class))
+
+plot_stab <- purrr::map(station_high_low_stab, function (x) {
+  p <- plot_dyn_sp_biomass(sync = sync_sp_troph, trophic_level = trophic_level, station = x, .log = TRUE)
+  p + theme(legend.position="none") 
+})
+plot_grid(plotlist = plot_stab, ncol = 2)
+```
+
+```{r less-stab-troph, eval = FALSE, fig.dim = c(10, 7), fig.cap = "The four station with the lowest biomass stability. See caption of Figure for details."}
+plot_grid(plotlist = plot_stab[7:10], ncol = 2)
+```
+
+
+```{r mid-stab-troph, eval = FALSE, fig.dim = c(10, 7), fig.cap = "Four stations with medium biomass stability. See caption of Figure for details."}
+# Middle station 
+plot_stab <- purrr::map(sync_sp_troph$station[209:212], function (x) {
+  p <- plot_dyn_sp_biomass(sync = sync_sp_troph, trophic_level = trophic_level, station = x, .log = TRUE)
+  p + theme(legend.position="none") 
+})
+plot_grid(plotlist = plot_stab[1:4], ncol = 2)
+```
+
+
+```{r 75-stab-troph, eval = FALSE, fig.dim = c(10, 7), fig.cap = "Four stations with medium/low biomass stability. See caption of Figure for details."}
+# Third quater
+plot_stab <- purrr::map(sync_sp_troph$station[300:304], function (x) {
+  p <- plot_dyn_sp_biomass(sync = sync_sp_troph, trophic_level = trophic_level, station = x, .log = FALSE)
+  p + theme(legend.position="none") 
+})
+plot_grid(plotlist = plot_stab[1:4], ncol = 2)
+```
+
+```{r 25-stab-troph, eval = FALSE, fig.cap = "Four stations with medium/low biomass stability. See caption of Figure for details."}
+# Third quater
+plot_stab <- purrr::map(sync_sp_troph$station[104:107], function (x) {
+  p <- plot_dyn_sp_biomass(sync = sync_sp_troph, trophic_level = trophic_level, station = x, .log = FALSE)
+  p + theme(legend.position="none") 
+})
+plot_grid(plotlist = plot_stab[1:10], ncol = 2)
+```
+
+```{r}
+high_div_station <- temporal_community_metrics %>%
+  arrange(desc(richness_med)) %>%
+  slice(1: 5) %>%
+  select(station) %>%
+  unlist
+```
+
+```{r tmp-richest, fig.dim = c(10, 7), fig.cap = "The five highest rich community."}
+label_stab <- filter(temporal_community_metrics,
+  station %in% high_div_station) %>%
+mutate(
+  x_pos = ymd_hms("2005-01-01T15:00:00"),
+  x_pos = as.Date(x_pos),
+  y_pos = 50000,
+  text = paste0("Stability: ", round(biomass_stab,2)),
+)
+ggplot(filter(community_metrics, station %in% high_div_station),
+  aes(y = biomass, x = date)) +
+  geom_line() +
+  geom_point() +
+  geom_text(data = label_stab, aes(x = x_pos, y = y_pos, label =
+      text), size = 6) +
+  facet_wrap( ~ station) + 
+  labs(y = "Biomass (g)", x = "Date")
+```
+
+```{r}
+myload(network_analysis, network_metrics, dir = dest_dir)
+high_div_troph_group <- network_metrics %>%
+  select(opcod, troph_group) %>%
+  unnest() %>%
+  mutate(troph_group = as.factor(troph_group)) %>%
+  left_join(select(op_analysis, opcod, station, date)) %>%
+  filter(station %in% high_div_station)
+```
+
+```{r, fig.dim = c(10, 7)}
+ggplot(high_div_troph_group,
+  aes(y = nbnode, x = date, color = troph_group)) +
+  geom_line() +
+  geom_point() +
+  geom_text(data = label_stab,
+    x = ymd_hms("2015-01-01T15:00:00"),
+    y = 3, aes(label =
+      text), size = 6, inherit.aes = FALSE) +
+  facet_wrap( ~ station) + 
+  labs(title = "The five richest station",
+  y = "Fish species richness", x = "Date")
+```
+
+```{r}
+highest_div_grp_3_station <- temporal_network_metrics_classes %>%
+  select(station, troph_group) %>%
+  unnest(troph_group) %>%
+  filter(troph_group == 3) %>%
+  arrange(desc(richness_avg)) %>%
+  slice(1:12) %>%
+  select(station) %>%
+  unlist()
+high_div_troph_group_3 <- network_metrics %>%
+  select(opcod, troph_group) %>%
+  unnest() %>%
+  mutate(troph_group = as.factor(troph_group)) %>%
+  left_join(select(op_analysis, opcod, station, date)) %>%
+  filter(station %in% highest_div_grp_3_station)
+```
+
+```{r, fig.dim = c(10, 7)}
+ggplot(high_div_troph_group_3,
+  aes(y = biomass, x = date, color = troph_group)) +
+  geom_line() +
+  geom_point() +
+  geom_text(data = filter(temporal_community_metrics, station %in% highest_div_grp_3_station),
+    x = ymd_hms("2015-01-01T15:00:00"),
+    y = 3, aes(label = paste0("Stability: ", round(biomass_stab, 2))),
+    size = 6, inherit.aes = FALSE) +
+  facet_wrap( ~ station) + 
+  labs(title = "The twelve richest station of superior predator",
+  y = "Biomass of trophic group (g)", x = "Date")
+```
+
+```{r}
+ggplot(high_div_troph_group_3,
+  aes(y = biomass, x = date, color = troph_group)) +
+  geom_line() +
+  geom_point() +
+  geom_text(data = filter(temporal_community_metrics, station %in% highest_div_grp_3_station),
+    x = ymd_hms("2015-01-01T15:00:00"),
+    y = 3, aes(label = paste0("Stability: ", round(biomass_stab, 2))),
+    size = 6, inherit.aes = FALSE) +
+  facet_wrap( ~ station) + 
+  labs(title = "The twelve richest station of superior predator",
+  y = "Biomass of trophic group (g)", x = "Date")
+```

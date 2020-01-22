@@ -18,6 +18,60 @@ stab_div_troph <- temporal_network_metrics_classes %>%
   mutate(troph_group = as.factor(troph_group)) 
 ```
 
+### Link biomass stability with community structure
+
+
+```{r stab-div-mult, fig.dim = c(10, 7), fig.cap = "Link between the stability of biomass and diversity"}
+biomass_com <- temporal_community_metrics %>%
+  left_join(select(synchrony, station, synchrony, cv_sp)) %>%
+  select(biomass_stab, synchrony, cv_sp, richness_cv, richness_med, betadiv) %>%
+  gather(diversity, div_value, richness_med, richness_cv, betadiv) %>%
+  gather(stability, stab_value, biomass_stab, synchrony, cv_sp)
+
+formula <- y ~ x #needed for stat_poly_eq
+qplot(div_value, stab_value, data =  biomass_com, geom = "point") +
+  facet_grid(stability ~ diversity, labeller = mylabel(), scales = "free") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(x = "Diversity", y = "Stability component")
+```
+
+
+
+```{r stab-net, fig.cap = "Link between biomass stability and network structure (median)"}
+# plot
+avg_network <- temporal_network_metrics %>%
+  select_at(vars(dplyr::matches("med|station")))
+biomass_stab_station <- temporal_community_metrics %>%
+  select(station, biomass_stab)
+stab_biomass_net_avg <- left_join(avg_network, biomass_stab_station) %>%
+  gather(metrics, values, colnames(select_at(., vars((dplyr::matches("med")))))) %>%
+  mutate(metrics = str_replace(metrics, "_med", "")) %>%
+  filter(metrics != "nbnode")
+
+# TODO: think about not facetting (list of plots ?)
+# Facet label:
+formula <- y ~ x #needed for stat_poly_eq
+p <- ggplot(stab_biomass_net_avg, aes(y = biomass_stab, x = values)) +
+  geom_point() +
+  facet_wrap(~ metrics, labeller = mylabel(), scales = "free_x") +
+  geom_smooth(method = 'lm') +
+  stat_poly_eq(
+    formula = formula,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  labs(
+    x = "Median of the network indices",
+    y = "Biomass stability"
+  )
+p
+```
+
 ```{r}
 synchrony %>%
   left_join(hab_type, by = "station") %>%
@@ -549,7 +603,7 @@ plot_grid(plotlist = p_test)
 
 ```{r, fig.dim = c(10, 7), include = FALSE}
 synchrony %>%
-  left_join(select(temporal_community_metrics, station, richness_med), by =
+  left_join(select(temporal_community_metrics, station), by =
     "station") %>%
   gather(comp, stab, synchrony:cv_com) %>%
   ggplot(aes(x = richness_med, y = stab)) +
@@ -796,90 +850,131 @@ cv_sp_div_troph %>%
   facet_grid(cols = vars(troph_group), rows = vars(hab_type))
 ```
 
-### Some temporal series of biomass
+### Separate core and peripherical species
 
-#### Total biomass
+#### Species peripherical globally
 
-```{r, fig.dim = c(10, 7)}
-community_metrics %<>% left_join(select(op_analysis, opcod, station, date))
-station_high_low_stab <- temporal_community_metrics %>%
-  arrange(desc(biomass_stab)) %>%
-  slice(c(1:5, (n() - 4):(n() - 0))) %>%
-  select(station) %>%
-  unlist
-names(station_high_low_stab) <- rep(c("high", "low"), each = 5) 
+```{r}
+myload(occurence_sp_st, dir = mypath("report"))
+myload(community_analysis, dir = data_common)
+
+global_med_occ <- occurence_sp_st %>%
+  dplyr::summarise_if(is.double, list(~median(., na.rm = TRUE))) %>%
+  gather(sp, med_occ, everything())
+
 ```
 
-```{r tmp-stab, fig.dim = c(10, 7), fig.cap = "The five lowest and highest biomass stability"}
-temporal_biomass <- community_metrics %>%
-  filter(station %in% station_high_low_stab) %>%
-  mutate(stab_status = ifelse(
-      station %in% station_high_low_stab[names(station_high_low_stab) == "low"],
-      "low", "high")) %>%
-  group_by(stab_status, station) %>%
-  nest() %>%
-  group_by(stab_status) %>%
-  mutate(id_stab = seq_along(station)) %>%
-  unnest()
-ggplot(temporal_biomass, aes(y = biomass, x = date)) +
-  geom_line() +
+Removing the peripherical species nor at the global scale neither at the station
+scale do not affect the stability-diversity relationship. 
+
+```{r stab-sp-occ, fig.dim = c(10, 7), fig.cap = "Relationship between biomass stability and species richness without peripherical species."}
+
+threshold_occ <- c(0, .10, .30, .60, .90)
+com_wo_per  <- map(threshold_occ, 
+  ~rm_sp_from_com(com = community_analysis, sp_to_rm =
+    global_med_occ[global_med_occ$med_occ < .x,]$sp))
+names(com_wo_per) <- threshold_occ
+
+
+
+res_sync_per <- map2_dfr(com_wo_per, names(com_wo_per), function (.data, .names) {
+
+  sync <- compute_com_synchrony(
+    .op = op_analysis,
+    com = .data)
+  sync$type <- .names 
+  sync$biomass_stab <- 1 / sync$cv_com
+  return(sync)
+
+})
+
+p_sync_global_per <- res_sync_per %>%
+  ggplot(aes(x = richness_med, y = biomass_stab)) +
   geom_point() +
-  facet_grid(id_stab ~ stab_status, scales = "free_y") +
-  labs(y = "Biomass (g)", x = "Date")
+  geom_smooth(method = "lm") +
+  stat_poly_eq(
+    formula = y ~ x,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  geom_smooth(method = "lm", formula = y ~ x) +
+  facet_grid(cols = vars(type))
+
+p_sync_global_per
 ```
 
-```{r more-stab-troph, fig.dim = c(10, 21), fig.cap = "The four station with the highest biomass stability. Dashed and solid lines represent respectively trophic species in the group 2 and 3."}
+```{r, fig.show = "hide"}
+res_sync_per %>%
+  select(richness_med, biomass_stab, synchrony, cv_sp, type) %>%
+  gather(stab, value, biomass_stab, synchrony, cv_sp) %>%
+  ggplot(aes(x = richness_med, y = value)) +
+  geom_point() +
+  geom_smooth(method = "auto") +
+  stat_poly_eq(
+    formula = y ~ x,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  facet_grid(cols = vars(type), rows = vars(stab), scales = "free_y")
 
-# Get biomass by sp node:
-net_sp_troph <- select(network_analysis, opcod, composition) %>%
-  unnest(composition)
-# Get synchrony and cv sp:
-sync_sp_troph <- get_sync_cv_mat(com_analysis = net_sp_troph, op_analysis = op_analysis)
-# Get trophic lvl by node
-trophic_level %<>%
-  rename(species = sp_class) %>%
-  mutate(troph_group = get_size_class(trophic_level, NULL, troph_level,
-      trophic_class))
-
-plot_stab <- purrr::map(station_high_low_stab, function (x) {
-  p <- plot_dyn_sp_biomass(sync = sync_sp_troph, trophic_level = trophic_level, station = x, .log = TRUE)
-  p + theme(legend.position="none") 
-})
-plot_grid(plotlist = plot_stab, ncol = 2)
 ```
 
-```{r less-stab-troph, eval = FALSE, fig.dim = c(10, 7), fig.cap = "The four station with the lowest biomass stability. See caption of Figure for details."}
-plot_grid(plotlist = plot_stab[7:10], ncol = 2)
+#### Species peripherical by station 
+
+```{r stab-occ-st, fig.dim = c(10, 7), fig.cap = "Relationship between biomass stability and species richness without peripherical species."}
+
+
+res_sync_occ_st <- map_dfr(c(threshold_occ, .99), function (.threshold) {
+  # List of sp to rm
+  sp_to_rm <- occurence_sp_st %>%
+    gather(sp, occ, -station) %>%
+    group_by(station) %>%
+    filter(occ < .threshold) %>%
+    summarise(sp2 = list(unique(sp)))
+
+  # Rm species by station
+  truncated_com <- community_analysis %>%
+    left_join(select(op_analysis, opcod, station), by = "opcod") %>%
+    filter(!is.na(station)) %>%
+    group_by(station) %>%
+    nest() %>%
+    left_join(sp_to_rm, by = "station") %>%
+    mutate(
+      output = map2(data, sp2, function (.data, sp_vec) {
+	rm_sp_from_com(com = .data, sp_to_rm = sp_vec)
+  })
+      ) %>%
+  unnest(output) %>%
+  select(-station)
+
+  sync <- compute_com_synchrony(
+    .op = op_analysis,
+    com = truncated_com)
+
+  sync$type <- .threshold 
+  sync$biomass_stab <- 1 / sync$cv_com
+
+  return(sync)
+    }) 
+
+p_sync_local_per <-  res_sync_occ_st %>%
+  select(richness_tot, richness_med, biomass_stab, type) %>%
+  gather(rich_type, richness, richness_med, richness_tot) %>%
+  ggplot(aes(x = richness, y = biomass_stab)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  stat_poly_eq(
+    formula = y ~ x,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  geom_smooth(method = "lm", formula = y ~ x) +
+  facet_grid(cols = vars(type), rows = vars(rich_type))
+p_sync_local_per
 ```
 
+The removal of peripheral species does not change the relationship between stability and species richness meaning that this relation is due to species present most of the time.
 
-```{r mid-stab-troph, eval = FALSE, fig.dim = c(10, 7), fig.cap = "Four stations with medium biomass stability. See caption of Figure for details."}
-# Middle station 
-plot_stab <- purrr::map(sync_sp_troph$station[209:212], function (x) {
-  p <- plot_dyn_sp_biomass(sync = sync_sp_troph, trophic_level = trophic_level, station = x, .log = TRUE)
-  p + theme(legend.position="none") 
-})
-plot_grid(plotlist = plot_stab[1:4], ncol = 2)
-```
-
-
-```{r 75-stab-troph, eval = FALSE, fig.dim = c(10, 7), fig.cap = "Four stations with medium/low biomass stability. See caption of Figure for details."}
-# Third quater
-plot_stab <- purrr::map(sync_sp_troph$station[300:304], function (x) {
-  p <- plot_dyn_sp_biomass(sync = sync_sp_troph, trophic_level = trophic_level, station = x, .log = FALSE)
-  p + theme(legend.position="none") 
-})
-plot_grid(plotlist = plot_stab[1:4], ncol = 2)
-```
-
-```{r 25-stab-troph, eval = FALSE, fig.cap = "Four stations with medium/low biomass stability. See caption of Figure for details."}
-# Third quater
-plot_stab <- purrr::map(sync_sp_troph$station[104:107], function (x) {
-  p <- plot_dyn_sp_biomass(sync = sync_sp_troph, trophic_level = trophic_level, station = x, .log = FALSE)
-  p + theme(legend.position="none") 
-})
-plot_grid(plotlist = plot_stab[1:10], ncol = 2)
-```
 
 ### CV sp
 
@@ -954,7 +1049,7 @@ cv_bm_sp <- left_join(avg_sp, var_sp, by = c("station", "species")) %>%
 ```{r}
 library(ade4)
 library(factoextra)
-myload(habitat_pressure, dir = mypath("report"))
+myload(habitat_pressure, pca_pressure, dir = mypath("report"))
 ```
 
 ```{r}
@@ -967,33 +1062,33 @@ hab_press_div <- left_join(habitat_pressure,
   temporal_community_metrics[, c("station", "richness_med", "biomass_avg","biomass_stab")],
   by = "station") %>%
 left_join(div_troph_grp, by = "station")
-pca_hab <- dudi.pca(as.data.frame(select(na.omit(hab_press_div), -station)), scannf = FALSE, nf = 3, center = TRUE, scale = TRUE)
+pca_hab <- dudi.pca(as.data.frame(select(pca_pressure, -station)), scannf = FALSE, nf = 5, center = TRUE, scale = TRUE)
 
-eig_plot <- fviz_eig(pca_hab)
-pca_plot <- fviz_pca_var(pca_hab,
-    axes = c(1, 2),
-    col.var = "contrib", # Color by contributions to the PC
-    gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-    repel = TRUE     # Avoid text overlapping
-  )
+supp_var <- pca_pressure %>%
+  select(station) %>%
+  left_join(select(temporal_community_metrics, station, biomass_stab,
+      richness_med), by = "station")
+#check
+stopifnot(all(pca_pressure$station == supp_var$station))
 
-ggdraw(pca_plot) + 
-  draw_plot(eig_plot, x = .9, y = .95, hjust = 1, vjust = 1, width = 0.17, height = 0.25)
+pca_stab <- fviz_pca_biplot(
+  pca_hab, geom = "point",
+  col.ind = (supp_var$biomass_stab),
+  pointsize = 2,
+  gradient.cols = "RdYlBu",
+) %>% 
+ggpubr::ggpar(title = "Biomass stability")
+
+pca_rich <- fviz_pca_biplot(
+  pca_hab, geom = "point",
+  col.ind = supp_var$richness_med,
+  gradient.cols = "RdYlBu",
+  pointsize = 2,
+) %>% 
+ggpubr::ggpar(title = "Species richness")
+plot_grid(pca_stab, pca_rich)
 ```
 
-```{r}
-m <- cor(as.matrix(select(na.omit(hab_press_div), -station)), method =
-  "spearman")
-corrplot::corrplot(m, order="hclust")
-```
-
-```{r, eval = FALSE}
-mod <- lm(high_cv ~ temperature + richness_med:temperature + DBO + lat + insecticides + herbicides + insecticides, hab_press_div)
-car::vif(mod)
-
-mod <- lm(mid_cv ~ richness_med + DBO + lat + temperature + insecticides + herbicides + insecticides, hab_press_div)
-car::vif(mod)
-```
 
 #### CV sp VS CV group
 
@@ -1050,7 +1145,6 @@ cv_sp_grp %>%
   facet_grid(cols = vars(troph_group), rows = vars(species), labeller = labeller(troph_group = troph_group_labeller()),
     scales = "free_x") +
   labs(x = "Biomass of the trophic group (g)", y = "CV of the species")
-
 ```
 
 ```{r cv-sp-bm-grp2, eval = FALSE, fig.dim = c(7, 21), fig.cap = "CV of the most abundant species in the medium trophic group versus the biomass of the different trophic groups"}
@@ -1084,103 +1178,6 @@ cv_sp_grp %>%
   labs(x = "Species richness of the trophic group", y = "CV of the species")
 ```
 
-#### Temporal dynamics in high diversity community 
-
-```{r}
-high_div_station <- temporal_community_metrics %>%
-  arrange(desc(richness_med)) %>%
-  slice(1: 5) %>%
-  select(station) %>%
-  unlist
-```
-
-```{r tmp-richest, fig.dim = c(10, 7), fig.cap = "The five highest rich community."}
-label_stab <- filter(temporal_community_metrics,
-  station %in% high_div_station) %>%
-mutate(
-  x_pos = ymd_hms("2005-01-01T15:00:00"),
-  x_pos = as.Date(x_pos),
-  y_pos = 50000,
-  text = paste0("Stability: ", round(biomass_stab,2)),
-)
-ggplot(filter(community_metrics, station %in% high_div_station),
-  aes(y = biomass, x = date)) +
-  geom_line() +
-  geom_point() +
-  geom_text(data = label_stab, aes(x = x_pos, y = y_pos, label =
-      text), size = 6) +
-  facet_wrap( ~ station) + 
-  labs(y = "Biomass (g)", x = "Date")
-```
-
-```{r}
-myload(network_analysis, network_metrics, dir = dest_dir)
-high_div_troph_group <- network_metrics %>%
-  select(opcod, troph_group) %>%
-  unnest() %>%
-  mutate(troph_group = as.factor(troph_group)) %>%
-  left_join(select(op_analysis, opcod, station, date)) %>%
-  filter(station %in% high_div_station)
-```
-
-```{r, fig.dim = c(10, 7)}
-ggplot(high_div_troph_group,
-  aes(y = nbnode, x = date, color = troph_group)) +
-  geom_line() +
-  geom_point() +
-  geom_text(data = label_stab,
-    x = ymd_hms("2015-01-01T15:00:00"),
-    y = 3, aes(label =
-      text), size = 6, inherit.aes = FALSE) +
-  facet_wrap( ~ station) + 
-  labs(title = "The five richest station",
-  y = "Fish species richness", x = "Date")
-```
-
-```{r}
-highest_div_grp_3_station <- temporal_network_metrics_classes %>%
-  select(station, troph_group) %>%
-  unnest(troph_group) %>%
-  filter(troph_group == 3) %>%
-  arrange(desc(richness_avg)) %>%
-  slice(1:12) %>%
-  select(station) %>%
-  unlist()
-high_div_troph_group_3 <- network_metrics %>%
-  select(opcod, troph_group) %>%
-  unnest() %>%
-  mutate(troph_group = as.factor(troph_group)) %>%
-  left_join(select(op_analysis, opcod, station, date)) %>%
-  filter(station %in% highest_div_grp_3_station)
-```
-
-```{r, fig.dim = c(10, 7)}
-ggplot(high_div_troph_group_3,
-  aes(y = biomass, x = date, color = troph_group)) +
-  geom_line() +
-  geom_point() +
-  geom_text(data = filter(temporal_community_metrics, station %in% highest_div_grp_3_station),
-    x = ymd_hms("2015-01-01T15:00:00"),
-    y = 3, aes(label = paste0("Stability: ", round(biomass_stab, 2))),
-    size = 6, inherit.aes = FALSE) +
-  facet_wrap( ~ station) + 
-  labs(title = "The twelve richest station of superior predator",
-  y = "Biomass of trophic group (g)", x = "Date")
-```
-
-```{r}
-ggplot(high_div_troph_group_3,
-  aes(y = biomass, x = date, color = troph_group)) +
-  geom_line() +
-  geom_point() +
-  geom_text(data = filter(temporal_community_metrics, station %in% highest_div_grp_3_station),
-    x = ymd_hms("2015-01-01T15:00:00"),
-    y = 3, aes(label = paste0("Stability: ", round(biomass_stab, 2))),
-    size = 6, inherit.aes = FALSE) +
-  facet_wrap( ~ station) + 
-  labs(title = "The twelve richest station of superior predator",
-  y = "Biomass of trophic group (g)", x = "Date")
-```
 
 
 ### Map stability
@@ -1232,59 +1229,6 @@ The biomass in both trophic groups were lower in moutain area (Figure
 \@ref(map-st)), the same was true for species diversity. For stability, it is
 difficult to see a pattern.
 
-### Link biomass stability with community structure
-
-
-```{r stab-div-mult, fig.dim = c(10, 7), fig.cap = "Link between the stability of biomass and diversity"}
-biomass_com <- temporal_community_metrics %>%
-  left_join(select(synchrony, station, synchrony, cv_sp)) %>%
-  select(biomass_stab, synchrony, cv_sp, richness_cv, richness_med, betadiv) %>%
-  gather(diversity, div_value, richness_med, richness_cv, betadiv) %>%
-  gather(stability, stab_value, biomass_stab, synchrony, cv_sp)
-
-formula <- y ~ x #needed for stat_poly_eq
-qplot(div_value, stab_value, data =  biomass_com, geom = "point") +
-  facet_grid(stability ~ diversity, labeller = mylabel(), scales = "free") +
-  geom_smooth(method = 'lm') +
-  stat_poly_eq(
-    formula = formula,
-    eq.with.lhs = "italic(hat(y))~`=`~",
-    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
-    parse = TRUE) +
-  labs(x = "Diversity", y = "Stability component")
-```
-
-
-
-```{r stab-net, fig.cap = "Link between biomass stability and network structure (median)"}
-# plot
-avg_network <- temporal_network_metrics %>%
-  select_at(vars(dplyr::matches("med|station")))
-biomass_stab_station <- temporal_community_metrics %>%
-  select(station, biomass_stab)
-stab_biomass_net_avg <- left_join(avg_network, biomass_stab_station) %>%
-  gather(metrics, values, colnames(select_at(., vars((dplyr::matches("med")))))) %>%
-  mutate(metrics = str_replace(metrics, "_med", "")) %>%
-  filter(metrics != "nbnode")
-
-# TODO: think about not facetting (list of plots ?)
-# Facet label:
-formula <- y ~ x #needed for stat_poly_eq
-p <- ggplot(stab_biomass_net_avg, aes(y = biomass_stab, x = values)) +
-  geom_point() +
-  facet_wrap(~ metrics, labeller = mylabel(), scales = "free_x") +
-  geom_smooth(method = 'lm') +
-  stat_poly_eq(
-    formula = formula,
-    eq.with.lhs = "italic(hat(y))~`=`~",
-    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
-    parse = TRUE) +
-  labs(
-    x = "Median of the network indices",
-    y = "Biomass stability"
-  )
-p
-```
 
 
 
@@ -1579,7 +1523,7 @@ ggpiecewisesem(prod_sem)
 ```
 
 ```{r colin_prod, fig.cap = "Colinearity check for total biomass"}
-car::vif(lme(prod ~ log_rich + piel + c_c + t_lvl + beta_bin_c + evt_med1 + evt_med2 + evt_cv1 + evt_cv2, random = ~ 1 | basin, data = sem_data)) %>%
+car::vif(lme(prod ~ log_rich + piel + c_c + t_lvl + beta_bin_c + RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = sem_data)) %>%
   enframe %>%
   kable
 ```
