@@ -52,18 +52,21 @@ get_sync_cv_mat <- function(com_analysis = NULL, op_analysis = NULL, presence_th
     com %<>% dplyr::select(station, date, species, biomass)
   }
   
-  # We will compute the variance of each species in each station, which
-  # require that there is some obsversation
-  filter_na <- com %>%
-    dplyr::group_by(station, species) %>%
-    dplyr::summarise(n = sum(!is.na(biomass)) / dplyr::n()) %>%
-    dplyr::mutate(to_rm = ifelse(n < presence_threshold, TRUE, FALSE)) %>%
-    dplyr::select(-n)
 
-  com %<>%
-    dplyr::left_join(filter_na) %>%
-    dplyr::filter(!to_rm) %>%
-    dplyr::select(-to_rm)
+  if (!is.na(presence_threshold)) {
+    # We will compute the variance of each species in each station, which
+    # require that there is some obsversation
+    filter_na <- com %>%
+      dplyr::group_by(station, species) %>%
+      dplyr::summarise(n = sum(!is.na(biomass)) / dplyr::n()) %>%
+      dplyr::mutate(to_rm = ifelse(n < presence_threshold, TRUE, FALSE)) %>%
+      dplyr::select(-n)
+
+    com %<>%
+      dplyr::left_join(filter_na) %>%
+      dplyr::filter(!to_rm) %>%
+      dplyr::select(-to_rm)
+  }
 
   # Get 0 biomass when the species is absent of station
   # By station replicate complete species list observed:

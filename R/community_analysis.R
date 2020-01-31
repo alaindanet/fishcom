@@ -13,7 +13,6 @@ rm_sp_from_com <- function (com = NULL, sp_to_rm = NULL) {
 
 }
 
-
 #' Summarise network metrics over time
 #'
 #' Compute the median and the CV of network metrics through time 
@@ -28,6 +27,7 @@ summarise_network_over_time <- function (op = NULL, network = NULL,
 
   op %<>%
     dplyr::select(opcod, station, year)
+
 
   com <- op %>%
     dplyr::left_join(network, by = "opcod") %>%
@@ -158,11 +158,10 @@ compute_temporal_betadiv <- function (.op = NULL, com = NULL) {
 #' @param com community_analysis
 #'
 #'
-compute_com_synchrony <- function (.op = NULL, com = NULL) {
+compute_com_synchrony <- function (.op = NULL, com = NULL, ...) {
 
   synchrony <- get_sync_cv_mat(com_analysis = com,
-    op_analysis = .op,
-    presence_threshold = 0.5)
+    op_analysis = .op, presence_threshold = NA)
 
   synchrony %<>%
     dplyr::mutate(
