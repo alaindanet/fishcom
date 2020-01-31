@@ -271,6 +271,81 @@ plot_grid(eig_plot, pca_plot[[1]], pca_plot[[2]], pca_plot[[3]], labels =
   "AUTO")
 ```
 
+## Fishing methods
+
+```{r}
+myload(env_analysis, biomass_ts_sax, dir = data_common)
+```
+
+
+```{r}
+census <- op_analysis %>%
+  left_join(select(env_analysis, station, opcod, width_river))
+
+census %>%
+  ggplot(aes(y = length_sourced, x = width_river, color = protocol_type)) +
+  scale_x_log10() +
+  scale_y_log10() +
+  geom_point()
+```
+
+```{r}
+census %>%
+  group_by(station) %>%
+  arrange(year) %>%
+  nest()
+bm_census <-  biomass_ts_sax %>%
+  unnest(data) %>%
+  left_join(mutate(census, station = as.character(station)),
+    by = c("station", "date"))
+```
+
+```{r}
+# Test how sampled effort is linked to biomass
+mod_bm_census <- bm_census %>%
+  group_by(station, protocol_type) %>%
+  #mutate(biomass = scale(biomass)) %>%
+  nest() %>%
+  filter(!is.na(station)) %>%
+  mutate(
+    mod_w_l = map(data, ~lm(length_sourced ~ width_river, data = .x)),
+    data_w_l = map(mod_w_l, broom::augment),
+    data_resid = map2(data, data_w_l,
+      function(raw, augmented) {
+	raw$resid_length <- augmented[[".resid"]]
+        return(raw)
+      }),
+    model = map(data_resid, ~lm(biomass ~ resid_length, data = .x)),
+    coeff = map(model, broom::tidy),
+    summary = map(model, broom::glance)
+  )
+
+mod_bm_census %>%
+  unnest(coeff) %>%
+  #rename(interp = `(Intercept)`, slope = length_sourced) %>%
+  filter(! term %in% "(Intercept)") %>%
+  mutate(effect_size = estimate / std.error) %>%
+  #select(station, term, estimate) %>%
+  #spread(term, estimate) %>%
+  ggplot(aes(x = estimate)) +
+  geom_histogram() +
+  geom_vline(aes(xintercept = mean(estimate)))
+
+```
+
+```{r}
+
+mod_bm_census %>%
+  unnest(coeff) %>%
+  filter(! term %in% "(Intercept)")
+
+residuals(mod_bm_census$model[[9]])
+mod_bm_census$model[[9]]
+mod_bm_census$data[[9]]
+```
+
+
+
 ## Environmental data
 
 ### Habitat

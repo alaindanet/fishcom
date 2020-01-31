@@ -6,7 +6,7 @@ temporal_network_metrics_classes <- temporal_network_metrics
 myload(temporal_network_metrics, dir = dest_dir)
 myload(community_metrics, temporal_community_metrics, synchrony, op_analysis, dir = data_common)
 myload(network_analysis, dir = mypath("data", "classes"))
-myload( trophic_level, trophic_class, dir = mypath("data"))
+myload(trophic_level, trophic_class, dir = mypath("data"))
 myload(hab_type, habitat_pressure, dir = mypath("report"))
 source(mypath("R", "synchrony.R"))
 source(mypath("R", "geo_methods.R"))
@@ -19,7 +19,6 @@ stab_div_troph <- temporal_network_metrics_classes %>%
 ```
 
 ### Link biomass stability with community structure
-
 
 ```{r stab-div-mult, fig.dim = c(10, 7), fig.cap = "Link between the stability of biomass and diversity"}
 biomass_com <- temporal_community_metrics %>%
@@ -90,7 +89,7 @@ synchrony %>%
   facet_grid(cols = vars(rich_type))
 ```
 
-
+### Stability by habitat type
 
 ```{r}
 st_basin <- get_basin_station()
@@ -214,9 +213,35 @@ plot_grid(plotlist = mult_plot_stab_div_bin, ncol = 2)
 
 The relationship between stability and species diversity (Figure
 \@ref(fig:bimod-stab-div)) seemed to work only in station far from the source
-(which are deeper, hotter, wider, fig. \@ref(fig:pca-hab))). It should be the
-place where the ANG is the most present. The ANG were effectively more abundant
-in the latter station (Figure: \@ref(fig:ang-map-bio)).
+(which are deeper, hotter, wider, fig. \@ref(fig:pca-hab))). May be there are
+difference in richness distribution.  
+
+
+```{r}
+plot_bin_rich_div <- function (env = NULL) {
+
+  habitat_pressure$env_bin <- ifelse(
+    habitat_pressure[[env]] < median(habitat_pressure[[env]], na.rm = TRUE),
+    "inf", "sup")
+  habitat_pressure <- na.omit(habitat_pressure[, c("station", "env_bin")])
+  habitat_pressure %>%
+    left_join(stab_div_basin, by = "station") %>%
+    ggplot(aes(x = richness_avg, color = troph_group)) +
+    geom_histogram() +
+    facet_grid(cols = vars(env_bin)) +
+    ggplot2::scale_color_manual(
+      labels = troph_group_labeller(),
+      values = c("blue", "green", "red"),
+      name = "Trophic level"
+    ) +
+  labs(title = env, x = "Average species richness", y = "Frequency") +
+  theme(legend.position = "none")
+}
+
+mult_plot_rich_div_bin <- map(env, ~plot_bin_rich_div(env = .x))
+plot_grid(plotlist = mult_plot_rich_div_bin, ncol = 2)
+```
+
 
 ```{r ang-map-bio, include = FALSE}
 ang_bm <- network_analysis %>%
@@ -382,11 +407,8 @@ avg_troph_lvl %>%
   geom_smooth(method = "lm", formula = y ~ x)
 ```
 
-
 The stability of biomass is determined by the standard deviation and the average
 biomass of the community.
-
-
 
 ```{r}
 cv_bm_div_troph_grp <- temporal_network_metrics_classes %>% 
@@ -921,6 +943,21 @@ res_sync_per %>%
 
 #### Species peripherical by station 
 
+```{r, fig.cap = "histogram of species occurence by station"}
+hist(as.matrix(occurence_sp_st[, !names(occurence_sp_st) %in% "station"])) 
+```
+
+```{r, fig.dim = c(14, 14), fig.cap = "Histogram of species evaluation"}
+occurence_sp_st[, !names(occurence_sp_st) %in% "station"] %>%
+  gather(species, occurence) %>%
+  ggplot(aes(x = occurence)) +
+  geom_histogram() +
+  geom_vline(data = rename(global_med_occ, species = sp, occurence = med_occ),
+    aes(xintercept = occurence), color = "red") +
+  facet_wrap(~species, scales = "free_y")
+```
+
+
 ```{r stab-occ-st, fig.dim = c(10, 7), fig.cap = "Relationship between biomass stability and species richness without peripherical species."}
 
 
@@ -976,9 +1013,100 @@ p_sync_local_per
 The removal of peripheral species does not change the relationship between stability and species richness meaning that this relation is due to species present most of the time.
 
 
+#### Remove most abundant species
+
+```{r}
+threshold_occ <- c(.50, .80, .90, 1)
+com_wo_core  <- map(threshold_occ, 
+  ~rm_sp_from_com(com = ungroup(community_analysis), sp_to_rm =
+    global_med_occ[global_med_occ$med_occ > .x,]$sp))
+names(com_wo_core) <- threshold_occ
+
+res_sync_core <- map2_dfr(com_wo_core, names(com_wo_core), function (.data, .names) {
+
+  sync <- compute_com_synchrony(
+    .op = op_analysis,
+    com = .data, presence_threshold = NA)
+  sync$type <- .names 
+  sync$biomass_stab <- 1 / sync$cv_com
+  return(sync)
+
+})
+
+p_sync_global_core <- res_sync_core %>%
+  ggplot(aes(x = richness_med, y = biomass_stab)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  stat_poly_eq(
+    formula = y ~ x,
+    eq.with.lhs = "italic(hat(y))~`=`~",
+    aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+    parse = TRUE) +
+  geom_smooth(method = "lm", formula = y ~ x) +
+  facet_grid(cols = vars(type))
+
+p_sync_global_core
+
+```
+
+#### Remove low richness 
+
+```{r}
+sync_rm <- map_dfr(seq(0, 10, 1),
+  function (x)
+    filter(synchrony, !richness_tot < x) %>%
+      mutate(min_rich = x) 
+)
+sync_rm_res <- sync_rm %>%
+  mutate(
+    log_rich = log10(richness_med),
+    log_stab = log10(1/cv_com)) %>%
+  group_by(min_rich) %>%
+  nest() %>%
+  mutate(
+    model = map(data, ~ lm(log_stab ~ log_rich, .x)),
+    coeff = map(model, broom::tidy),
+    plot = map2(.x = data, .y = min_rich,
+      ~ .x %>%
+	ggplot(aes(x = richness_med, y = 1/cv_com)) +
+	geom_point() +
+	geom_smooth(method = "lm") +
+	stat_poly_eq(
+	  formula = y ~ x,
+	  eq.with.lhs = "italic(hat(y))~`=`~",
+	  aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")),
+	  parse = TRUE) +
+	labs(title = .y)
+      )
+  )
+plot_grid(plotlist = sync_rm_res$plot)
+```
+
+```{r}
+sync_rm_res %>%
+  unnest(coeff) %>%
+  rename(est = estimate, se = std.error) %>%
+  filter(term == "log_rich") %>%
+  ggplot(aes(y = est, x = min_rich)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = est - 2 * se, ymax = est + 2 * se)) +
+  geom_hline(yintercept = 0) +
+  labs(y = "Slope of linear relationship between Biomass stability and median species richness ()")
+```
+
+In fact, the removal of low species station has an notable effect if the
+richness cut was done on median richness. However, if total richness is
+considered, the removal has far less effect.
+
+
+
 ### CV sp
 
 ```{r abun-sp, fig.dim = c(10, 7), fig.cap = "Species most abundant by trophic group."}
+net_sp_troph <- select(network_analysis, opcod, composition) %>%
+  unnest(composition)
+# Get synchrony and cv sp:
+sync_sp_troph <- get_sync_cv_mat(com_analysis = net_sp_troph, op_analysis = op_analysis)
 # Sp the most abundant by group
 bm_sp_troph_grp <- net_sp_troph %>%
   filter(!is.na(troph_group) & troph_group != 1) %>%
@@ -1454,10 +1582,10 @@ library(piecewiseSEM)
 
 st_basin <- get_basin_station()
 myload(nmds, dir = mypath("report"))
+myload(network_metrics, dir = mypath("data", "species"))
 
 # Compute stability, network metrics, etc with the new datasets
 com_data <- compute_community_temporal_analysis(.op = op_analysis, dest_dir = mypath("data", "species"))
-
 # Compute sem dataset 
 sem_data <- compute_sem_dataset(
   com = com_data[["tps_com"]],

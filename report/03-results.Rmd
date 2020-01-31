@@ -7,6 +7,7 @@ myload(temporal_network_metrics, dir = mypath("data", "classes"))
 temporal_network_metrics_classes <- temporal_network_metrics
 myload(temporal_network_metrics, dir = dest_dir)
 myload(temporal_community_metrics, synchrony, dir = data_common)
+source(mypath("R", "local_network_build.R"))
 ```
 
 
@@ -111,7 +112,7 @@ ggplot(temporal_biomass, aes(y = biomass, x = date)) +
 ```
 
 ```{r more-stab-troph, fig.dim = c(10, 21), fig.cap = "The four station with the highest biomass stability. Dashed and solid lines represent respectively trophic species in the group 2 and 3."}
-
+myload(trophic_level, trophic_class, dir = mypath("data"))
 # Get biomass by sp node:
 net_sp_troph <- select(network_analysis, opcod, composition) %>%
   unnest(composition)
