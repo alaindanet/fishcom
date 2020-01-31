@@ -22,7 +22,8 @@ knitr::opts_chunk$set(
   fig.show = "hold",
   echo = FALSE,
   message = FALSE,
-  warning = FALSE
+  warning = FALSE,
+  results = FALSE
 )
 
 library(tidyverse)
@@ -70,7 +71,7 @@ myload(temporal_network_metrics, dir = mypath("data", "classes"))
 temporal_network_metrics_classes <- temporal_network_metrics
 myload(temporal_network_metrics, dir = mypath("data", "species"))
 
-stab_div_troph <- temporal_network_metrics %>%
+stab_div_troph <- temporal_network_metrics_classes %>%
   dplyr::select(station, troph_group) %>%
   unnest(troph_group) %>%
   filter(troph_group != 1) %>%
@@ -136,6 +137,7 @@ sem_data <- compute_sem_dataset(
   nmds = NULL,
   basin = st_basin 
   )
+
 ```
 
 
@@ -158,11 +160,16 @@ with $i$ being the station $i$.
 ```{r mod-div-total}
 library(lme4)
 ctrl <- lmeControl(opt='optim')
-ctrl_lmer <- lmerControl(optCtrl = list(method = 'optim'))
-stab_div_mod <- lmer(data = sem_data,
-  #control = ctrl_lmer,
+ctrl_lmer <- lmerControl(optCtrl = list(method = 'optimx'))
+#If we want that the model converges with basin as random slope,
+# we have to remove basin with low data
+sem_data %>% group_by(basin) %>% summarise(n())
+stab_div_mod <- lmer(
+  data = sem_data,
+  control = ctrl_lmer,
   formula = log_stab ~ log_rich + (1 | basin)
 )
+
 stopifnot(!isSingular(stab_div_mod, tol = 1e-05))
 #stab_div_colin <- car::vif(stab_div_mod) not use if one response
 stab_div_sum <- piecewiseSEM::rsquared(stab_div_mod, method = "nagelkerke") %>%
@@ -178,10 +185,8 @@ stab_div_pred <- pred %>%
   )
 
 #
-bm_div_mod <- lme(data = sem_data,
-  fixed = log_bm ~ log_rich,
-  random = ~ 1 + log_rich | basin,
-  control = ctrl 
+bm_div_mod <- lmer(data = sem_data,
+  formula = log_bm ~ log_rich + (1 | basin)
 )
 bm_div_sum <- piecewiseSEM::rsquared(bm_div_mod, method = "nagelkerke") %>%
   mutate_at(vars(Conditional, Marginal), ~round(., 2))
@@ -198,11 +203,16 @@ bm_div_pred <- pred %>%
 ```
 
 ```{r mod-div-troph, fig.show = "hide"}
-stab_troph_mod <- lme(data = na.omit(stab_div_troph),
-  fixed = log_stab ~ log_rich + troph_group + log_rich:troph_group,
-  random = ~ 1 | basin,
-  control = ctrl
+stab_troph_mod <- lmer(data = na.omit(stab_div_troph),
+  formula = log_stab ~ log_rich + troph_group + log_rich:troph_group + (1 | basin)
+  #control = ctrl
 )
+mySumm2 <- function(.) {
+  c(beta=fixef(.),sigma=sigma(.), sig01=sqrt(unlist(VarCorr(.))))
+}
+stab_troph_boot <- bootMer(stab_troph_mod, mySumm2, nsim = 100)
+#plot(test,index=2)
+stab_troph_ci <- confint(test)
 
 stab_troph_colin <- car::vif(stab_troph_mod)
 stab_troph_sum <- piecewiseSEM::rsquared(stab_troph_mod, method = "nagelkerke") %>%
@@ -256,6 +266,15 @@ p_stab_sem <- ggpiecewisesem(stab_sem)
 p_bm_sem <- ggpiecewisesem(bm_sem)
 ```
 
+
+```{r get-sem-coeff}
+coef_stab_sem <- coef(stab_sem) %>%
+  group_by(Response) %>%
+  nest() %>%
+  mutate(sum_c = map_dbl(data, ~ sum(.x$Std.Estimate)))
+
+#cor_mat <- cor(sem_data[, !names(sem_data) %in% c("station", "basin")])
+```
 
 
 # Results
@@ -408,7 +427,10 @@ plot_grid(
     - very weak to no direct effect on total biomass 
     - Effect of environment is thus mediated by the community structure
 
-- Main outcome
+- Main outcome:
+
+The effect of richness on biomass stability follows a power law with a negative
+coefficient, meaning that it's a decelerating function.
 
 - Latex:
   - csv:
@@ -417,5 +439,15 @@ plot_grid(
   - path: 
 
 # Discussion
+
+
+# Appendix
+
+```{r}
+mod_list <- list(bm_div_mod, bm_troph_mod, stab_div_mod, stab_troph_mod)
+plot_res <- map(mod_list, ~ plot(.x))
+plot_grid(plotlist = plot_res)
+```
+
 
 # References
