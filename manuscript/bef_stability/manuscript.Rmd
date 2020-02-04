@@ -30,6 +30,7 @@ library(tidyverse)
 library(magrittr)
 library(ggeffects)
 library(cowplot)
+library(kableExtra)
 source(mypath("R", "misc.R"))
 source(mypath("R", "plot_methods.R"))
 source(mypath("R", "community_analysis.R"))
@@ -137,7 +138,6 @@ sem_data <- compute_sem_dataset(
   nmds = NULL,
   basin = st_basin 
   )
-
 ```
 
 
@@ -152,7 +152,11 @@ S_i = 10^(\beta_0 + \beta_R\Log_{10}(x_{Ri}) + \epsilon_{ij})
 $$
 
 $$
-S_i = 10^(\beta_0) \times 10^(\beta_R\Log(x_{Ri})) * 10^(\epsilon_{ij})
+S_i = 10^(\beta_0) \times 10^(\beta_R\Log(x_{Ri})) \times 10^(\epsilon_{ij})
+$$
+
+$$
+S_i = 10^(\beta_{0}) \times x_{Ri}10^(\beta_{R}) \times 10^(\epsilon_{ij})
 $$
 
 with $i$ being the station $i$.
@@ -161,15 +165,11 @@ with $i$ being the station $i$.
 library(lme4)
 ctrl <- lmeControl(opt='optim')
 ctrl_lmer <- lmerControl(optCtrl = list(method = 'optimx'))
-#If we want that the model converges with basin as random slope,
-# we have to remove basin with low data
-sem_data %>% group_by(basin) %>% summarise(n())
 stab_div_mod <- lmer(
   data = sem_data,
   control = ctrl_lmer,
   formula = log_stab ~ log_rich + (1 | basin)
 )
-
 stopifnot(!isSingular(stab_div_mod, tol = 1e-05))
 #stab_div_colin <- car::vif(stab_div_mod) not use if one response
 stab_div_sum <- piecewiseSEM::rsquared(stab_div_mod, method = "nagelkerke") %>%
@@ -182,6 +182,13 @@ stab_div_pred <- pred %>%
     log_stab = predicted,
     log_rich = x,
     basin = group
+  )
+stab_div_pred %<>%
+  mutate(
+    stab = 10^log_stab, # FALSE
+    rich = 10^log_rich,
+    cl10 =  10^conf.low,
+    ch10 =  10^conf.high
   )
 
 #
@@ -211,15 +218,14 @@ mySumm2 <- function(.) {
   c(beta=fixef(.),sigma=sigma(.), sig01=sqrt(unlist(VarCorr(.))))
 }
 stab_troph_boot <- bootMer(stab_troph_mod, mySumm2, nsim = 100)
-#plot(test,index=2)
-stab_troph_ci <- confint(test)
+stab_troph_ci <- confint(stab_troph_boot)
 
 stab_troph_colin <- car::vif(stab_troph_mod)
 stab_troph_sum <- piecewiseSEM::rsquared(stab_troph_mod, method = "nagelkerke") %>%
   mutate_at(vars(Conditional, Marginal), ~round(., 2))
 
 pred_troph_mod <- ggpredict(stab_troph_mod, terms = c("log_rich", "troph_group"), type = "fe")
-plot(pred_troph_mod, add.data = TRUE)
+#plot(pred_troph_mod, add.data = TRUE)
 stab_troph_pred <- pred_troph_mod %>%
   as_tibble() %>%
   rename(
@@ -230,11 +236,14 @@ stab_troph_pred <- pred_troph_mod %>%
 
 # Productivity and troph group
 
-bm_troph_mod <- lme(data = na.omit(stab_div_troph),
-  fixed = log_bm ~ log_rich * troph_group,
-  random = ~ 1 + log_rich * troph_group | basin,
-  control = ctrl 
+bm_troph_mod <- lmer(data = na.omit(stab_div_troph),
+  #fixed = log_bm ~ log_rich * troph_group,
+  formula = log_bm ~ log_rich + troph_group + log_rich:troph_group + (1 | basin)
+  #random = ~ 1 + log_rich * troph_group | basin,
+  #control = ctrl 
 )
+bm_troph_boot <- bootMer(bm_troph_mod, mySumm2, nsim = 100)
+bm_troph_ci <- confint(bm_troph_boot)
 
 bm_troph_sum <- piecewiseSEM::rsquared(bm_troph_mod, method = "nagelkerke") %>%
   mutate_at(vars(Conditional, Marginal), ~round(., 2))
@@ -253,9 +262,10 @@ bm_troph_pred <- pred_troph_mod %>%
 ### SEM
 
 ```{r}
-
 # Compute SEMs
 stab_sem <- compute_stab_sem(.data = sem_data,
+  random_effect = as.formula("~1|basin"))
+stab_sem_rich <- compute_stab_sem_rich(.data = sem_data,
   random_effect = as.formula("~1|basin"))
 
 bm_sem <- compute_prod_sem(.data = sem_data,
@@ -264,6 +274,7 @@ bm_sem <- compute_prod_sem(.data = sem_data,
 library(ggraph)
 p_stab_sem <- ggpiecewisesem(stab_sem)
 p_bm_sem <- ggpiecewisesem(bm_sem)
+p_stab_sem_rich <- ggpiecewisesem(stab_sem_rich)
 ```
 
 
@@ -285,13 +296,15 @@ coef_stab_sem <- coef(stab_sem) %>%
 lim_log_stab <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_stab")
 lim_log_rich <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_rich")
 # Plot left  
+
 p_stab_div <- sem_data %>%
   ggplot(aes(x = log_rich, y = log_stab))+
   geom_point() +
   ylim(lim_log_stab) +
   xlim(lim_log_rich) +
+  #scale_y_log10() +
+  #scale_x_log10() +
   labs(x = "Median species richness (Log 10)", y = " Biomass stability (Log 10)") +
-  geom_line(data = stab_div_pred) +
   geom_ribbon(data = stab_div_pred, aes(ymin = conf.low, ymax = conf.high), fill
   = "grey20", alpha = .2) +
   annotate("text", x = 1.0, y = .8, label = make_label_rsq(rsq = stab_div_sum),
@@ -443,10 +456,74 @@ coefficient, meaning that it's a decelerating function.
 
 # Appendix
 
+## Model summary and diagnostics 
+
+### Biomass and stability models
+
+```{r tab-coeff-bm, fig.cap = "Coefficient"}
+# Replacement rules for term
+rp_est <- c(
+  "(Intercept)" =     "intercept",
+  "sd\\_\\(intercept\\)\\.basin" = "sd intercept basin",
+  "log_rich" =     "Median richness (log base 10)",
+  "troph_group3" =     "high trophic group",
+  "log_rich:troph_group3" =     "Median richness (log10) : high trophic group",
+  "sig01.basin" =     "sd intercept basin",
+  "sd_Observation.Residual" =     "residuals",
+  "sigma" = "residuals"
+)
+# Replacement rules for group
+rp_group <- c(
+  "fixed" = "Fixed",
+  "basin" = "Random"
+)
+
+```
+
+```{r}
+test <- map2_dfr(list(bm_troph_ci, stab_troph_ci), list(bm_troph_mod, stab_troph_mod),
+  clean_summary_mod, term_rp = rp_est, group_rp = rp_group)
+
+kable(test) %>%
+  pack_rows("Biomass", 1, 6) %>%
+  pack_rows("Stab", 7, 12)
+```
+
+
+
+### SEM 
+
+```{r tab-coeff-stab}
+
+```
+
+
+## Model residuals
+
+### Biomass and stability models 
+
 ```{r}
 mod_list <- list(bm_div_mod, bm_troph_mod, stab_div_mod, stab_troph_mod)
 plot_res <- map(mod_list, ~ plot(.x))
 plot_grid(plotlist = plot_res)
+```
+
+### SEM linear relationship 
+
+```{r}
+```
+
+
+## Relationship at the absolute scale, i.e. not the logarythme scale 
+
+```{r}
+ggplot(sem_data, aes(x = richness_med, y = biomass_stab)) +
+  geom_point()
+test <- tibble(
+  richness_med = seq(1,20, length.out = 100),
+  biomass_stab =
+    10^(fixef(stab_div_mod)[1])*richness_med^fixef(stab_div_mod)[2]
+)  
 ```
 
 

@@ -35,3 +35,37 @@ myload <- function (..., dir = ".") {
   lapply(paths, load, .GlobalEnv)
   invisible()
 }
+
+#' Make summary table
+#'
+#' @param ci obj from bootMer
+#' @param mod linear model 
+#' @param term_rp named character vector
+#' @param group_rp named character vector
+clean_summary_mod <- function (ci = NULL, mod = NULL, term_rp = NULL,
+  group_rp = NULL) {
+
+
+  # Make clean ci table
+  ci_tbl <- ci %>%
+    as.data.frame() %>%
+    rownames_to_column(var = "term") %>%
+    as_tibble() %>% 
+    mutate(
+      term = str_replace_all(term, "beta\\.", ""),
+      term = str_replace_all(term, term_rp)) %>%
+    mutate_at(c("2.5 %", "97.5 %"),~ round(., 2)) %>%
+    unite(CI, `2.5 %`, `97.5 %`, sep = ":") %>%
+    mutate(CI = paste0("[", CI,"]"))
+
+  # Make clean estimate table
+  est_tbl <- broom::tidy(mod) %>%
+    mutate(
+      term = str_replace_all(term, term_rp)
+      ) %>%
+  mutate_at(c("estimate", "std.error"), ~round(., 2)) %>%
+  left_join(ci_tbl) %>% 
+  select(term, group, estimate, std.error, CI)
+
+  return(est_tbl)
+}

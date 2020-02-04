@@ -35,11 +35,12 @@ compute_sem_dataset <- function (
   sync %<>% dplyr::select(station, synchrony, cv_sp)
   biomass_sem <- com %>%
     dplyr::select(station, biomass_stab, biomass_med, richness_med, pielou_med,
-      beta_bin_c) %>%
+      betadiv_bin, beta_bin_c) %>%
     dplyr::left_join(sync, by = "station") %>%
     dplyr::rename(sync = synchrony,
       piel = pielou_med,
-      prod = biomass_med
+      prod = biomass_med,
+      beta_bin = betadiv_bin
     )
 
   # Composition
@@ -49,14 +50,14 @@ compute_sem_dataset <- function (
 
   # Habitat -----------------------------------------------------------------
   habitat_sem <- hab_press %>% 
-    dplyr::select(station, lat, alt, width_river_mean, DBO_med, DBO_cv, flow_med, flow_cv,
-      temperature_med, temperature_cv, RC1, RC2, RC3, RC4, RC5) %>%
-    dplyr::rename(width = width_river_mean)
+    dplyr::select(station, RC1, RC2, RC3, RC4, RC5)
 
   # Network -----------------------------------------------------------------
   net_sem <- network %>%
-    dplyr::select(station, connectance_corrected_med, w_trph_lvl_avg_med) %>%
-    dplyr::rename(c_c = connectance_corrected_med,
+    dplyr::select(station, connectance_med, connectance_corrected_med, w_trph_lvl_avg_med) %>%
+    dplyr::rename(
+      c = connectance_med,
+      c_c = connectance_corrected_med,
       t_lvl = w_trph_lvl_avg_med)
 
   # Merge and return --------------------------------------------------------
@@ -83,6 +84,23 @@ compute_sem_dataset <- function (
 #'
 #' @param .data data.frame
 #'
+compute_stab_sem_rich <- function(.data, random_effect = "~ 1 | basin") {
+  corsem <- piecewiseSEM::psem(
+    nlme::lme(log_rich ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
+    nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+    nlme::lme(c ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich, random = ~ 1 | basin, data = .data),
+    nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich, random = ~ 1 | basin, data = .data),
+    #nlme::lme( ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich, random = ~ 1 | basin, data = .data),
+    nlme::lme(log_sync ~ log_rich + piel + c + t_lvl + RC1 + RC2 + RC3 + RC4 + RC5,
+      random = ~ 1 | basin, data = .data),
+    nlme::lme(log_cv_sp ~ log_rich + piel + c + t_lvl
+       + RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+    lm(log_stab ~ log_cv_sp + log_sync, data = .data)
+  )
+  output <- summary(corsem, .progressBar = F)
+
+  return(output)
+}
 compute_stab_sem <- function(.data, random_effect = "~ 1 | basin") {
   corsem <- piecewiseSEM::psem(
     nlme::lme(log_rich ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
@@ -100,6 +118,20 @@ compute_stab_sem <- function(.data, random_effect = "~ 1 | basin") {
 
   return(output)
 }
+#' compute generic sem
+
+sem <- list(
+  nlme::lme(log_cv_sp ~ log_rich + piel + c_c + t_lvl +
+    beta_bin_c + RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = sem_data),
+  lm(log_stab ~ log_cv_sp + log_sync, data = sem_data)
+)
+compute_gen_sem <- function(.data, list_mod, random_effect = "~ 1 | basin") {
+  corsem <- piecewiseSEM::as.psem(list_mod)
+  output <- summary(corsem, .progressBar = F)
+  return(output)
+}
+test <- compute_gen_sem(.data = sem_data, list_mod = sem)
+
 
 #' Compute the productivity sem 
 #'

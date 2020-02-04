@@ -11,6 +11,7 @@ myload(hab_type, habitat_pressure, dir = mypath("report"))
 source(mypath("R", "synchrony.R"))
 source(mypath("R", "geo_methods.R"))
 source(mypath("R", "local_network_build.R"))
+select <- dplyr::select
 stab_div_troph <- temporal_network_metrics_classes %>%
   select(station, troph_group) %>%
   unnest(troph_group) %>%
@@ -1444,8 +1445,14 @@ ratio_sp <- net_troph_group %>%
 ratio_bm <- net_troph_group %>%
   select(station, troph_group, biomass_avg) %>%
   spread(troph_group, biomass_avg) %>%
-  mutate(bm_h_m = `3` / (`3` + `2`)) %>%
+  mutate(bm_h_m = `3` / (`2` + `3`)) %>%
   select(station, bm_h_m)
+
+ratio_bm %>%
+  left_join(select(temporal_community_metrics, station, biomass_stab)) %>%
+  ggplot(aes(x = bm_h_m, y = biomass_stab)) +
+  geom_point() +
+  scale_x_log10()
 
 net_troph_group <- temporal_network_metrics_classes %>%
   left_join(ratio_sp, by = "station") %>%
