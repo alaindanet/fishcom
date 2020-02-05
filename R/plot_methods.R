@@ -624,8 +624,8 @@ make_label_rsq <- function(rsq = NULL) {
   rsq_marg <- round(rsq$Marginal, 2)
 
   tmp <- "paste(
-  \"Marginal \",  italic(R) ^ 2, \" = \", marg, \", \",
-  \"Conditional \", italic(R) ^ 2, \" = \", cond 
+  \"Marg. \",  italic(R) ^ 2, \" = \", marg, \", \",
+  \"Cond. \", italic(R) ^ 2, \" = \", cond 
   )"
   
   str_replace_all(tmp, c(

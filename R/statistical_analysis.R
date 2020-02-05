@@ -56,7 +56,7 @@ compute_sem_dataset <- function (
   net_sem <- network %>%
     dplyr::select(station, connectance_med, connectance_corrected_med, w_trph_lvl_avg_med) %>%
     dplyr::rename(
-      c = connectance_med,
+      ct = connectance_med,
       c_c = connectance_corrected_med,
       t_lvl = w_trph_lvl_avg_med)
 
@@ -84,20 +84,25 @@ compute_sem_dataset <- function (
 #'
 #' @param .data data.frame
 #'
-compute_stab_sem_rich <- function(.data, random_effect = "~ 1 | basin") {
-  corsem <- piecewiseSEM::psem(
+compute_stab_sem_rich <- function(.data, random_effect = "~ 1 | basin", get_sem = FALSE) {
+
+  mod_list <- list(
     nlme::lme(log_rich ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
     nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
-    nlme::lme(c ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich, random = ~ 1 | basin, data = .data),
+    nlme::lme(ct ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich, random = ~ 1 | basin, data = .data),
     nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich, random = ~ 1 | basin, data = .data),
     #nlme::lme( ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich, random = ~ 1 | basin, data = .data),
-    nlme::lme(log_sync ~ log_rich + piel + c + t_lvl + RC1 + RC2 + RC3 + RC4 + RC5,
+    nlme::lme(log_sync ~ log_rich + piel + ct + t_lvl + RC1 + RC2 + RC3 + RC4 + RC5,
       random = ~ 1 | basin, data = .data),
-    nlme::lme(log_cv_sp ~ log_rich + piel + c + t_lvl
+    nlme::lme(log_cv_sp ~ log_rich + piel + ct + t_lvl
        + RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
     lm(log_stab ~ log_cv_sp + log_sync, data = .data)
   )
-  output <- summary(corsem, .progressBar = F)
+  sem <-  piecewiseSEM::as.psem(mod_list)
+  if (get_sem) {
+    return(sem)
+  }
+  output <- summary(sem, .progressBar = F)
 
   return(output)
 }
@@ -119,18 +124,11 @@ compute_stab_sem <- function(.data, random_effect = "~ 1 | basin") {
   return(output)
 }
 #' compute generic sem
-
-sem <- list(
-  nlme::lme(log_cv_sp ~ log_rich + piel + c_c + t_lvl +
-    beta_bin_c + RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = sem_data),
-  lm(log_stab ~ log_cv_sp + log_sync, data = sem_data)
-)
 compute_gen_sem <- function(.data, list_mod, random_effect = "~ 1 | basin") {
   corsem <- piecewiseSEM::as.psem(list_mod)
   output <- summary(corsem, .progressBar = F)
   return(output)
 }
-test <- compute_gen_sem(.data = sem_data, list_mod = sem)
 
 
 #' Compute the productivity sem 
@@ -217,4 +215,9 @@ plot_rotated_pca <- function (pca_rotated = NULL, axis = c(1,2)) {
     repel = TRUE # Avoid text overlapping
   )
   return(list(rotated = rotated_plot, normal = pca_plot))
+}
+
+# Function to get bootstrap result on coefficient
+mySumm2 <- function(.) {
+  c(beta=fixef(.),sigma=sigma(.), sig01=sqrt(unlist(VarCorr(.))))
 }

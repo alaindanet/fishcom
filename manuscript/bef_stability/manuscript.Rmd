@@ -119,7 +119,7 @@ pca_rotated <- compute_rotated_pca(
 
 ## Statistical analysis
 
-```{r get-data, cache = TRUE}
+```{r get-data, cache = FALSE}
 library(nlme)
 library(piecewiseSEM)
 
@@ -171,6 +171,8 @@ stab_div_mod <- lmer(
   formula = log_stab ~ log_rich + (1 | basin)
 )
 stopifnot(!isSingular(stab_div_mod, tol = 1e-05))
+stab_div_boot <- bootMer(stab_div_mod, mySumm2, nsim = 100)
+stab_div_ci <- confint(stab_div_boot)
 #stab_div_colin <- car::vif(stab_div_mod) not use if one response
 stab_div_sum <- piecewiseSEM::rsquared(stab_div_mod, method = "nagelkerke") %>%
   mutate_at(vars(Conditional, Marginal), ~round(., 2))
@@ -195,6 +197,8 @@ stab_div_pred %<>%
 bm_div_mod <- lmer(data = sem_data,
   formula = log_bm ~ log_rich + (1 | basin)
 )
+bm_div_boot <- bootMer(bm_div_mod, mySumm2, nsim = 100)
+bm_div_ci <- confint(bm_div_boot)
 bm_div_sum <- piecewiseSEM::rsquared(bm_div_mod, method = "nagelkerke") %>%
   mutate_at(vars(Conditional, Marginal), ~round(., 2))
 
@@ -207,6 +211,9 @@ bm_div_pred <- pred %>%
     log_rich = x,
     basin = group
   )
+
+# get coeff
+coef_div <- map(list(stab = stab_div_mod, bm = bm_div_mod), fixed.effects)
 ```
 
 ```{r mod-div-troph, fig.show = "hide"}
@@ -214,9 +221,6 @@ stab_troph_mod <- lmer(data = na.omit(stab_div_troph),
   formula = log_stab ~ log_rich + troph_group + log_rich:troph_group + (1 | basin)
   #control = ctrl
 )
-mySumm2 <- function(.) {
-  c(beta=fixef(.),sigma=sigma(.), sig01=sqrt(unlist(VarCorr(.))))
-}
 stab_troph_boot <- bootMer(stab_troph_mod, mySumm2, nsim = 100)
 stab_troph_ci <- confint(stab_troph_boot)
 
@@ -257,6 +261,9 @@ bm_troph_pred <- pred_troph_mod %>%
     log_rich = x,
     troph_group = group
   )
+
+# get coeff
+coef_troph <- map(list(stab = stab_troph_mod, bm = bm_troph_mod), fixed.effects)
 ```
 
 ### SEM
@@ -305,6 +312,7 @@ p_stab_div <- sem_data %>%
   #scale_y_log10() +
   #scale_x_log10() +
   labs(x = "Median species richness (Log 10)", y = " Biomass stability (Log 10)") +
+  geom_line(data = stab_div_pred) +
   geom_ribbon(data = stab_div_pred, aes(ymin = conf.low, ymax = conf.high), fill
   = "grey20", alpha = .2) +
   annotate("text", x = 1.0, y = .8, label = make_label_rsq(rsq = stab_div_sum),
@@ -372,17 +380,65 @@ p_bm <- plot_grid(p_bm_div, p_bm_div_troph, ncol = 2, rel_widths = c(.4, .6))
 
 ```{r psbm, fig.dim = c(10,5)}
 plot_grid(p_stab, p_bm, ncol = 1)
+
+print_coef <- function (vec){
+  round(abs(vec)*100)
+}
+print_ci <- function(.df){
+  .df <- round(.df, 3)*100
+  
+  paste0("[", .df[["2.5 %"]],";",.df[["97.5 %"]] ,"]")
+}
+
+
 ```
 
-- Stability:
-  - decreases with richness
-  - is higher for higher trophic group
-  - increases and decreases with richness for the lower and higher trophic group
-    respectively
+```{r print-coef-stab}
+# Coefficients
+s_co_i <- print_coef(coef_div$stab["(Intercept)"])
+s_co_r <- print_coef(coef_div$stab["log_rich"])
+s_co_t <- print_coef(coef_troph$stab["troph_group3"])
+s_co_r_t2 <- print_coef(coef_troph$stab["log_rich"])
+s_co_r_t3 <- print_coef(coef_troph$stab["log_rich"]+coef_troph$stab["log_rich:troph_group3"])
 
-- richness on stab:
-  - globally negative
-  -  
+s_ci_r <- print_ci(stab_div_ci["beta.log_rich",])
+s_ci_t <- print_ci(stab_troph_ci["beta.troph_group3",])
+s_ci_r_t2 <- print_ci(stab_troph_ci["beta.log_rich",])
+s_ci_r_t3 <- print_ci(coef_troph$stab["log_rich"] + stab_troph_ci["beta.log_rich:troph_group3",])
+```
+
+```{r print-coef-bm}
+# Coefficients
+b_co_i <- print_coef(coef_div$bm["(Intercept)"])
+b_co_r <- print_coef(coef_div$bm["log_rich"])
+b_co_t <- print_coef(coef_troph$bm["troph_group3"])
+b_co_r_t2 <- print_coef(coef_troph$bm["log_rich"])
+b_co_r_t3 <- print_coef(coef_troph$bm["log_rich"]+coef_troph$bm["log_rich:troph_group3"])
+
+b_ci_r <- print_ci(bm_div_ci["beta.log_rich",])
+b_ci_t <- print_ci(bm_troph_ci["beta.troph_group3",])
+b_ci_r_t2 <- print_ci(bm_troph_ci["beta.log_rich",])
+b_ci_r_t3 <- print_ci(coef_troph$bm["log_rich"] + bm_troph_ci["beta.log_rich:troph_group3",])
+```
+
+
+- Stability:
+  - decreases globally with median species richness (MSR)
+    - An increase of 1% of MSR decreased biomass stability by
+      `r s_co_r`% (`r s_ci_r`)
+  - was `r s_co_t`% (`r s_ci_t`) higher for higher trophic group
+  - increased by `r s_co_r_t2`% (`r s_ci_r_t2`) and decreased by `r s_co_r_t3`
+    (`r s_ci_r_t3`) with 1% increase in MSR for the lower and higher trophic
+    group respectively
+
+- Biomass:
+  - increases with MSR 
+    - An increase of 1% of MSR increased total biomass by
+      `r b_co_r` % `r b_ci_r`
+  - was `r b_co_t`% `r b_ci_t` higher for higher trophic group
+  - increased by `r b_co_r_t2`% `r b_ci_r_t2` and decreased by `r b_co_r_t3`
+    (`r b_ci_r_t3`) with 1% increase in MSR for the lower and higher trophic
+    group respectively
 
 ## Drivers of total biomass and stability
 
@@ -450,6 +506,11 @@ coefficient, meaning that it's a decelerating function.
     - https://tex.stackexchange.com/questions/178904/use-datatool-to-read-a-row-from-a-csv-file-then-use-the-variables-in-the-docume
     - https://tex.stackexchange.com/questions/40901/datatool-getting-a-specific-value-given-the-value-of-another-column
   - path: 
+- Reporting:
+  - equations: https://stats.stackexchange.com/questions/169115/reporting-the-actual-formula-equation-of-an-lme-model-with-factors-used-in-r
+  - log-log results:
+    - https://dev.to/rokaandy/logarithmic-transformation-in-linear-regression-models-why-when-3a7c
+    - https://stats.stackexchange.com/questions/18480/interpretation-of-log-transformed-predictor-and-or-response
 
 # Discussion
 
@@ -481,10 +542,10 @@ rp_group <- c(
 ```
 
 ```{r}
-test <- map2_dfr(list(bm_troph_ci, stab_troph_ci), list(bm_troph_mod, stab_troph_mod),
+coeff_troph <- map2_dfr(list(bm_troph_ci, stab_troph_ci), list(bm_troph_mod, stab_troph_mod),
   clean_summary_mod, term_rp = rp_est, group_rp = rp_group)
 
-kable(test) %>%
+kable(coeff_troph) %>%
   pack_rows("Biomass", 1, 6) %>%
   pack_rows("Stab", 7, 12)
 ```
@@ -510,7 +571,42 @@ plot_grid(plotlist = plot_res)
 
 ### SEM linear relationship 
 
-```{r}
+```{r, eval = FALSE}
+compute_stab_sem_rich(.data = sem_data, get_sem =TRUE)
+
+
+mod_list <-  
+  list(
+    nlme::lme(log_rich ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = sem_data),
+    nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = sem_data),
+    nlme::lme(ct ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich, random = ~ 1 | basin, data = sem_data),
+    nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich, random = ~ 1 | basin, data = sem_data),
+    #nlme::lme( ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich, random = ~ 1 | basin, data = sem_data),
+    nlme::lme(log_sync ~ log_rich + piel + ct + t_lvl + RC1 + RC2 + RC3 + RC4 + RC5,
+      random = ~ 1 | basin, data = sem_data),
+    nlme::lme(log_cv_sp ~ log_rich + piel + ct + t_lvl
+      + RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = sem_data),
+    lm(log_stab ~ log_cv_sp + log_sync, data = sem_data)
+  )
+names(mod_list) <- c("richness", "pielou", "connectance", "weighted_mean_trophic_lvl", "synchrony", "cv_sp", "stability") 
+colin_stab_sem <- map(mod_list, car::vif)
+
+tibble(
+  vif = colin_stab_sem,
+  mod = names(mod_list)
+) 
+test <- cbind(colin_stab_sem)
+
+
+formulas <- list(
+  "log_rich ~ RC1 + RC2 + RC3 + RC4 + RC5",
+  "piel ~ RC1 + RC2 + RC3 + RC4 + RC5"
+)
+test <- map(formulas, function(x, y, random_effect) {
+  lmer(as.formula(x), random= as.formula(random_effect), data = y)
+
+}, y =sem_data, random_effect = "~ 1 |basin")
+
 ```
 
 
