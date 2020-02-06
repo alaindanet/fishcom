@@ -571,9 +571,8 @@ plot_grid(plotlist = plot_res)
 
 ### SEM linear relationship 
 
-```{r, eval = FALSE}
-compute_stab_sem_rich(.data = sem_data, get_sem =TRUE)
-
+```{r colin-sem, fig.cap = "Variance Inflation factor for each individual model of stability sem"}
+#compute_stab_sem_rich(.data = sem_data, get_sem =TRUE)
 
 mod_list <-  
   list(
@@ -591,22 +590,33 @@ mod_list <-
 names(mod_list) <- c("richness", "pielou", "connectance", "weighted_mean_trophic_lvl", "synchrony", "cv_sp", "stability") 
 colin_stab_sem <- map(mod_list, car::vif)
 
-tibble(
-  vif = colin_stab_sem,
-  mod = names(mod_list)
-) 
-test <- cbind(colin_stab_sem)
+tmp <- map(colin_stab_sem, enframe)
+  
+# colinearity table
+colin_sem <- tibble(vif = tmp, mod = names(mod_list)) %>%
+  unnest(vif) %>%
+  spread(name, value)
 
+#formulas <- list(
+  #"log_rich ~ RC1 + RC2 + RC3 + RC4 + RC5",
+  #"piel ~ RC1 + RC2 + RC3 + RC4 + RC5"
+#)
+#test <- map(formulas, function(x, y, random_effect) {
+  #lmer(as.formula(x), random= as.formula(random_effect), data = y)
 
-formulas <- list(
-  "log_rich ~ RC1 + RC2 + RC3 + RC4 + RC5",
-  "piel ~ RC1 + RC2 + RC3 + RC4 + RC5"
-)
-test <- map(formulas, function(x, y, random_effect) {
-  lmer(as.formula(x), random= as.formula(random_effect), data = y)
+#}, y =sem_data, random_effect = "~ 1 |basin")
 
-}, y =sem_data, random_effect = "~ 1 |basin")
+kable(colin_sem)
+```
 
+```{r}
+plot_residuals <- function (x, y = "Diagnostic") {
+  plot.lme(x)
+  #title(main = y, xlab = "Fitted values", y = "Residuals")
+}
+plot.lme(mod_list[[7]])
+p_resid_stab_sem <- map2(mod_list, names(mod_list) , plot_residuals)
+plot_grid(plotlist = p_resid_stab_sem)
 ```
 
 
