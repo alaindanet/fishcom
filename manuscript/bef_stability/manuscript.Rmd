@@ -7,6 +7,7 @@ output:
     theme: cayman
     highlight: github
     math: katex
+bibliography: references.bib
 ---
 
 ```{r, echo = FALSE}
@@ -62,10 +63,68 @@ theme_set(theme_alain())
 
 # Methods
 
+## Fish data
+
+- OFB
+  - French long term protocol
+  - standardized
+
+- Electric fishing:
+  - stuned fish
+  - identification of the fishes
+  - fish counted  
+  - length of the fishes in mm by lot (4):
+    - I: big fishes measured individually
+    - S/L: fishes are grouped by species and by size 
+      - 30 random fishes were measured in each lot
+      - simulate the size of all the fishes of the lot:
+	- normal distribution truncated at 95% (?)
+	- mean and sd calculted from the sample of the lot 
+    - G: little fishes are grouped by species
+      - min and max size by lot 
+      - simulate the size of all the fishes of the lot:
+	- normal distribution truncated at 95% (?)
+	- mean computed as ???  
+	- se computed as ??? 
+    - N:
+
+- Protocols type:
+  - complete
+    - shallow river
+  - partial:
+    - deep and large river
+    - partial over bank
+    - partial by point
+    - fusion of the two Protocols when "by point" all the point were done
+      over bank
+
+- Fishing operations and station
+  - kept one protocol type by station
+  - kept one sampling operation per year (of the season the most sampled in the
+    time series)
+  - remove operations which sampling effort (length of river) superior to average
+    plus or minus 30% of sd (by station)
+  - kept station that had 10 or more samplings, i.e. followed 10 years or more
+
+- Biomass:
+  - infered by allometric law 
+  - approximated by $B = 0.01 \times (l^3.03)$
+
+## Network building
+
+- Diet data: 
+  - 7? species over 57 had a piscivorous stage
+  - 3? species had a strict piscivorous stage
+  - ontogenic diet shift based on size
+
+- 7 Resource nodes:
+  - based on diet database 
+
 ## Community
 
 ```{r}
 myload(temporal_community_metrics, dir = mypath("data"))
+myload(synchrony, dir = mypath("data"))
 st_basin <- get_basin_station(sf_obj = FALSE)
 
 myload(temporal_network_metrics, dir = mypath("data", "classes"))
@@ -78,9 +137,10 @@ stab_div_troph <- temporal_network_metrics_classes %>%
   filter(troph_group != 1) %>%
   mutate(troph_group = as.factor(troph_group),
     log_rich = log10(richness_med),
+    log_rich_tot = log10(richness_tot),
     log_bm = log10(biomass_med),
     log_stab = log10(biomass_stab)) %>%
-  dplyr::select(station, troph_group, biomass_stab, richness_med, log_rich, log_stab, log_bm, biomass_med) %>%
+  dplyr::select(station, troph_group, biomass_stab, richness_med, richness_tot, log_rich, log_rich_tot, log_stab, log_bm, biomass_med, richness_tot) %>%
   dplyr::left_join(st_basin, by = "station")
 ```
 
@@ -168,7 +228,7 @@ ctrl_lmer <- lmerControl(optCtrl = list(method = 'optimx'))
 stab_div_mod <- lmer(
   data = sem_data,
   control = ctrl_lmer,
-  formula = log_stab ~ log_rich + (1 | basin)
+  formula = log_stab ~ log_rich_tot + (1 | basin)
 )
 stopifnot(!isSingular(stab_div_mod, tol = 1e-05))
 stab_div_boot <- bootMer(stab_div_mod, mySumm2, nsim = 100)
@@ -177,38 +237,38 @@ stab_div_ci <- confint(stab_div_boot)
 stab_div_sum <- piecewiseSEM::rsquared(stab_div_mod, method = "nagelkerke") %>%
   mutate_at(vars(Conditional, Marginal), ~round(., 2))
 
-pred <- ggpredict(stab_div_mod, terms = c("log_rich"), type = "fe")
+pred <- ggpredict(stab_div_mod, terms = c("log_rich_tot"), type = "fe")
 stab_div_pred <- pred %>%
   as_tibble() %>%
   rename(
     log_stab = predicted,
-    log_rich = x,
+    log_rich_tot = x,
     basin = group
   )
 stab_div_pred %<>%
   mutate(
     stab = 10^log_stab, # FALSE
-    rich = 10^log_rich,
+    rich = 10^log_rich_tot,
     cl10 =  10^conf.low,
     ch10 =  10^conf.high
   )
 
 #
 bm_div_mod <- lmer(data = sem_data,
-  formula = log_bm ~ log_rich + (1 | basin)
+  formula = log_bm ~ log_rich_tot + (1 | basin)
 )
 bm_div_boot <- bootMer(bm_div_mod, mySumm2, nsim = 100)
 bm_div_ci <- confint(bm_div_boot)
 bm_div_sum <- piecewiseSEM::rsquared(bm_div_mod, method = "nagelkerke") %>%
   mutate_at(vars(Conditional, Marginal), ~round(., 2))
 
-pred <- ggpredict(bm_div_mod, terms = c("log_rich"), type = "fe")
+pred <- ggpredict(bm_div_mod, terms = c("log_rich_tot"), type = "fe")
 #plot(pred, add.data = TRUE)
 bm_div_pred <- pred %>%
   as_tibble() %>%
   rename(
     log_bm = predicted,
-    log_rich = x,
+    log_rich_tot = x,
     basin = group
   )
 
@@ -218,7 +278,7 @@ coef_div <- map(list(stab = stab_div_mod, bm = bm_div_mod), fixed.effects)
 
 ```{r mod-div-troph, fig.show = "hide"}
 stab_troph_mod <- lmer(data = na.omit(stab_div_troph),
-  formula = log_stab ~ log_rich + troph_group + log_rich:troph_group + (1 | basin)
+  formula = log_stab ~ log_rich_tot + troph_group + log_rich_tot:troph_group + (1 | basin)
   #control = ctrl
 )
 stab_troph_boot <- bootMer(stab_troph_mod, mySumm2, nsim = 100)
@@ -228,22 +288,22 @@ stab_troph_colin <- car::vif(stab_troph_mod)
 stab_troph_sum <- piecewiseSEM::rsquared(stab_troph_mod, method = "nagelkerke") %>%
   mutate_at(vars(Conditional, Marginal), ~round(., 2))
 
-pred_troph_mod <- ggpredict(stab_troph_mod, terms = c("log_rich", "troph_group"), type = "fe")
+pred_troph_mod <- ggpredict(stab_troph_mod, terms = c("log_rich_tot", "troph_group"), type = "fe")
 #plot(pred_troph_mod, add.data = TRUE)
 stab_troph_pred <- pred_troph_mod %>%
   as_tibble() %>%
   rename(
     log_stab = predicted,
-    log_rich = x,
+    log_rich_tot = x,
     troph_group = group
   )
 
 # Productivity and troph group
 
 bm_troph_mod <- lmer(data = na.omit(stab_div_troph),
-  #fixed = log_bm ~ log_rich * troph_group,
-  formula = log_bm ~ log_rich + troph_group + log_rich:troph_group + (1 | basin)
-  #random = ~ 1 + log_rich * troph_group | basin,
+  #fixed = log_bm ~ log_rich_tot * troph_group,
+  formula = log_bm ~ log_rich_tot + troph_group + log_rich_tot:troph_group + (1 | basin)
+  #random = ~ 1 + log_rich_tot * troph_group | basin,
   #control = ctrl 
 )
 bm_troph_boot <- bootMer(bm_troph_mod, mySumm2, nsim = 100)
@@ -252,13 +312,13 @@ bm_troph_ci <- confint(bm_troph_boot)
 bm_troph_sum <- piecewiseSEM::rsquared(bm_troph_mod, method = "nagelkerke") %>%
   mutate_at(vars(Conditional, Marginal), ~round(., 2))
 
-pred_troph_mod <- ggpredict(bm_troph_mod, terms = c("log_rich", "troph_group"), type = "fe")
+pred_troph_mod <- ggpredict(bm_troph_mod, terms = c("log_rich_tot", "troph_group"), type = "fe")
 #plot(pred_troph_mod, add.data = TRUE)
 bm_troph_pred <- pred_troph_mod %>%
   as_tibble() %>%
   rename(
     log_bm = predicted,
-    log_rich = x,
+    log_rich_tot = x,
     troph_group = group
   )
 
@@ -268,28 +328,81 @@ coef_troph <- map(list(stab = stab_troph_mod, bm = bm_troph_mod), fixed.effects)
 
 ### SEM
 
+We computed Structural Equation Modeling (SEM) to unravel mechanisms underlying link
+between environment, community structure and both biomass stability and total
+biomass. Why SEM? 
+
+SEM enables to reason in terms of causal relationship between components. The
+goal was to understand the mechanisms behind the negative relationship biomass
+stability and species richness and the positive relationship between total
+biomass and species richness.
+
+We built a metamodel to set up the nodes and the links between the different
+compartment of the SEM. Basically, we wanted to test the links between
+environmental conditions, community structure and stability. Theory in ecology 
+predicts that community structure influences stability. In turn, environment 
+influences community structure but also directly stability.
+
+To characterize environment, we retained five axis of PCA on habitat and
+climatic variables which represent different types of forcing (constant and
+variability). The two first axis (RC1 and RC2) were mainly linked the physical
+structure and position of the river and the altitutinal gradient (+temperature).
+The third axis (RC3) was linked to enrichment (Organic Biological Demand) and CV
+of annual flow. The fourth and fifth (RC4 and RC5) axis were associated to
+environmental variability, respectively to CV of width and depth of the river
+and CV of enrichment.
+
+- Community structure:
+  - species richness:
+  - avg trophic level:
+  - connectance:
+  - beta diversity:
+
+- Stability:
+  - 2 components synchrony and $CV_{sp}$
+
+The stream physical structure (RC1 axis) and its altitutinal position (RC2 axis)
+was linked to species richness [REF].
+
+
 ```{r}
 # Compute SEMs
-stab_sem <- compute_stab_sem(.data = sem_data,
+stab_sem_rich_beta <- compute_stab_sem_rich_beta(.data = sem_data,
   random_effect = as.formula("~1|basin"))
-stab_sem_rich <- compute_stab_sem_rich(.data = sem_data,
+stab_sem_meta <- compute_stab_sem_meta(.data = sem_data,
+  random_effect = as.formula("~1|basin"))
+stab_sem <- compute_stab_sem(.data = sem_data,
   random_effect = as.formula("~1|basin"))
 
 bm_sem <- compute_prod_sem(.data = sem_data,
   random_effect = as.formula("~1|basin"))
+bm_sem_rich_beta <- compute_prod_sem_rich_beta(.data = sem_data,
+  random_effect = as.formula("~1|basin"))
 
 library(ggraph)
+p_stab_sem_rich_beta <- ggpiecewisesem(stab_sem_rich_beta)
+p_stab_sem_meta <- ggpiecewisesem(stab_sem_meta, p_val_thd = 1)
 p_stab_sem <- ggpiecewisesem(stab_sem)
+p_bm_sem_rich_beta <- ggpiecewisesem(bm_sem_rich_beta)
 p_bm_sem <- ggpiecewisesem(bm_sem)
-p_stab_sem_rich <- ggpiecewisesem(stab_sem_rich)
+plot_grid(
+  p_stab_sem,
+  p_stab_sem_rich_beta,
+  p_bm_sem,
+  p_bm_sem_rich_beta
+)
 ```
 
 
 ```{r get-sem-coeff}
-coef_stab_sem <- coef(stab_sem) %>%
+coef_stab_sem_sum <- coef(stab_sem) %>%
   group_by(Response) %>%
   nest() %>%
   mutate(sum_c = map_dbl(data, ~ sum(.x$Std.Estimate)))
+
+coef_stab_sem <- coef(stab_sem_rich_beta) %>%
+  select(- 9) %>%
+  filter(P.Value < 0.05)
 
 #cor_mat <- cor(sem_data[, !names(sem_data) %in% c("station", "basin")])
 ```
@@ -299,19 +412,26 @@ coef_stab_sem <- coef(stab_sem) %>%
 
 ## Species richness has a destabilizing effect on community  
 
+```{r}
+richness_lab <- "Total richness (Log 10)"
+stab_lab <- "Biomass stability (Log 10)"
+bm_lab <- "Total biomass (Log 10)"
+```
+
+
 ```{r p-s-div}
 lim_log_stab <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_stab")
-lim_log_rich <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_rich")
+lim_log_rich_tot <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_rich_tot")
 # Plot left  
 
 p_stab_div <- sem_data %>%
-  ggplot(aes(x = log_rich, y = log_stab))+
+  ggplot(aes(x = log_rich_tot, y = log_stab))+
   geom_point() +
   ylim(lim_log_stab) +
-  xlim(lim_log_rich) +
+  xlim(lim_log_rich_tot) +
   #scale_y_log10() +
   #scale_x_log10() +
-  labs(x = "Median species richness (Log 10)", y = " Biomass stability (Log 10)") +
+  labs(x = richness_lab, y = stab_lab) +
   geom_line(data = stab_div_pred) +
   geom_ribbon(data = stab_div_pred, aes(ymin = conf.low, ymax = conf.high), fill
   = "grey20", alpha = .2) +
@@ -320,7 +440,7 @@ p_stab_div <- sem_data %>%
 
 # Right plot
 p_stab_div_troph <- stab_div_troph %>%
-  ggplot(aes(x = log_rich, y = log_stab, color = troph_group)) +
+  ggplot(aes(x = log_rich_tot, y = log_stab, color = troph_group)) +
   geom_point() +
   ggplot2::scale_color_manual(
     labels = troph_group_labeller(),
@@ -328,7 +448,7 @@ p_stab_div_troph <- stab_div_troph %>%
     name = "Trophic group"
   ) +
   ylim(lim_log_stab) +
-  xlim(lim_log_rich) +
+  xlim(lim_log_rich_tot) +
   geom_line(data = stab_troph_pred) +
   geom_ribbon(data = stab_troph_pred,
     aes(ymin = conf.low, ymax = conf.high, color = NULL, group = troph_group),
@@ -336,7 +456,7 @@ p_stab_div_troph <- stab_div_troph %>%
   annotate("text", x = 0.8, y = .8, label = make_label_rsq(rsq = stab_troph_sum),
     parse = TRUE) +
   #scale_x_log10() + scale_y_log10() +
-  labs(x = "Median species richness (Log 10)", y = " Biomass stability (Log 10)")
+  labs(x = richness_lab, y = stab_lab)
 
 p_stab <- plot_grid(p_stab_div, p_stab_div_troph, ncol = 2, rel_widths = c(.4, .6))
 ```
@@ -345,22 +465,22 @@ p_stab <- plot_grid(p_stab_div, p_stab_div_troph, ncol = 2, rel_widths = c(.4, .
 lim_log_bm <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_bm")
 
 p_bm_div <- sem_data %>%
-  ggplot(aes(x = log_rich, y = log_bm))+
+  ggplot(aes(x = log_rich_tot, y = log_bm))+
   geom_point() +
   ylim(lim_log_bm) +
-  xlim(lim_log_rich) +
-  labs(x = "Median species richness (Log 10)", y = " Total biomass(Log 10)") +
+  xlim(lim_log_rich_tot) +
+  labs(x = richness_lab, y = bm_lab) +
   geom_line(data = bm_div_pred) +
   geom_ribbon(data = bm_div_pred, aes(ymin = conf.low, ymax = conf.high), fill
   = "grey20", alpha = .2) +
-  annotate("text", x = 1.0, y = 5, label = make_label_rsq(rsq = bm_div_sum),
+  annotate("text", x = .8, y = 1.5, label = make_label_rsq(rsq = bm_div_sum),
     parse = TRUE)
 
 p_bm_div_troph <- stab_div_troph %>%
-  ggplot(aes(x = log_rich, y = log_bm, color = troph_group)) +
+  ggplot(aes(x = log_rich_tot, y = log_bm, color = troph_group)) +
   geom_point() +
   ylim(lim_log_bm) +
-  xlim(lim_log_rich) +
+  xlim(lim_log_rich_tot) +
   ggplot2::scale_color_manual(
     labels = troph_group_labeller(),
     values = c("blue", "green", "red"),
@@ -370,10 +490,10 @@ p_bm_div_troph <- stab_div_troph %>%
   geom_ribbon(data = bm_troph_pred,
     aes(ymin = conf.low, ymax = conf.high, color = NULL, group = troph_group),
     alpha = .2) +
-  annotate("text", x = 0.8, y = 5, label = make_label_rsq(rsq = bm_troph_sum),
+  annotate("text", x = 0.8, y = 1.5, label = make_label_rsq(rsq = bm_troph_sum),
     parse = TRUE) +
   #scale_x_log10() + scale_y_log10() +
-  labs(x = "Median species richness (Log 10)", y = "Total biomass (Log 10)")
+  labs(x = richness_lab, y = bm_lab)
 
 p_bm <- plot_grid(p_bm_div, p_bm_div_troph, ncol = 2, rel_widths = c(.4, .6))
 ```
@@ -389,55 +509,53 @@ print_ci <- function(.df){
   
   paste0("[", .df[["2.5 %"]],";",.df[["97.5 %"]] ,"]")
 }
-
-
 ```
 
 ```{r print-coef-stab}
 # Coefficients
 s_co_i <- print_coef(coef_div$stab["(Intercept)"])
-s_co_r <- print_coef(coef_div$stab["log_rich"])
+s_co_r <- print_coef(coef_div$stab["log_rich_tot"])
 s_co_t <- print_coef(coef_troph$stab["troph_group3"])
-s_co_r_t2 <- print_coef(coef_troph$stab["log_rich"])
-s_co_r_t3 <- print_coef(coef_troph$stab["log_rich"]+coef_troph$stab["log_rich:troph_group3"])
+s_co_r_t2 <- print_coef(coef_troph$stab["log_rich_tot"])
+s_co_r_t3 <- print_coef(coef_troph$stab["log_rich_tot"]+coef_troph$stab["log_rich_tot:troph_group3"])
 
-s_ci_r <- print_ci(stab_div_ci["beta.log_rich",])
+s_ci_r <- print_ci(stab_div_ci["beta.log_rich_tot",])
 s_ci_t <- print_ci(stab_troph_ci["beta.troph_group3",])
-s_ci_r_t2 <- print_ci(stab_troph_ci["beta.log_rich",])
-s_ci_r_t3 <- print_ci(coef_troph$stab["log_rich"] + stab_troph_ci["beta.log_rich:troph_group3",])
+s_ci_r_t2 <- print_ci(stab_troph_ci["beta.log_rich_tot",])
+s_ci_r_t3 <- print_ci(coef_troph$stab["log_rich_tot"] + stab_troph_ci["beta.log_rich_tot:troph_group3",])
 ```
 
 ```{r print-coef-bm}
 # Coefficients
 b_co_i <- print_coef(coef_div$bm["(Intercept)"])
-b_co_r <- print_coef(coef_div$bm["log_rich"])
+b_co_r <- print_coef(coef_div$bm["log_rich_tot"])
 b_co_t <- print_coef(coef_troph$bm["troph_group3"])
-b_co_r_t2 <- print_coef(coef_troph$bm["log_rich"])
-b_co_r_t3 <- print_coef(coef_troph$bm["log_rich"]+coef_troph$bm["log_rich:troph_group3"])
+b_co_r_t2 <- print_coef(coef_troph$bm["log_rich_tot"])
+b_co_r_t3 <- print_coef(coef_troph$bm["log_rich_tot"]+coef_troph$bm["log_rich_tot:troph_group3"])
 
-b_ci_r <- print_ci(bm_div_ci["beta.log_rich",])
+b_ci_r <- print_ci(bm_div_ci["beta.log_rich_tot",])
 b_ci_t <- print_ci(bm_troph_ci["beta.troph_group3",])
-b_ci_r_t2 <- print_ci(bm_troph_ci["beta.log_rich",])
-b_ci_r_t3 <- print_ci(coef_troph$bm["log_rich"] + bm_troph_ci["beta.log_rich:troph_group3",])
+b_ci_r_t2 <- print_ci(bm_troph_ci["beta.log_rich_tot",])
+b_ci_r_t3 <- print_ci(coef_troph$bm["log_rich_tot"] + bm_troph_ci["beta.log_rich_tot:troph_group3",])
 ```
 
 
 - Stability:
-  - decreases globally with median species richness (MSR)
-    - An increase of 1% of MSR decreased biomass stability by
+  - decreases globally with total species richness (TSR)
+    - An increase of 1% of TSR decreased biomass stability by
       `r s_co_r`% (`r s_ci_r`)
   - was `r s_co_t`% (`r s_ci_t`) higher for higher trophic group
   - increased by `r s_co_r_t2`% (`r s_ci_r_t2`) and decreased by `r s_co_r_t3`
-    (`r s_ci_r_t3`) with 1% increase in MSR for the lower and higher trophic
+    (`r s_ci_r_t3`) with 1% increase in TSR for the lower and higher trophic
     group respectively
 
 - Biomass:
-  - increases with MSR 
-    - An increase of 1% of MSR increased total biomass by
+  - increases with TSR 
+    - An increase of 1% of TSR increased total biomass by
       `r b_co_r` % `r b_ci_r`
   - was `r b_co_t`% `r b_ci_t` higher for higher trophic group
   - increased by `r b_co_r_t2`% `r b_ci_r_t2` and decreased by `r b_co_r_t3`
-    (`r b_ci_r_t3`) with 1% increase in MSR for the lower and higher trophic
+    (`r b_ci_r_t3`) with 1% increase in TSR for the lower and higher trophic
     group respectively
 
 ## Drivers of total biomass and stability
@@ -461,7 +579,7 @@ to_plot <- c(1, 6, 7)
 plot_grid(
   plot_grid(plotlist = map(p_l_rot[to_plot], ~.x$rotated),
       ncol = length(to_plot), labels = LETTERS[1]),
-  plot_grid(p_stab_sem, p_bm_sem, labels = LETTERS[2:3]),
+  plot_grid(p_stab_sem_rich_beta, p_bm_sem_rich_beta, labels = LETTERS[2:3]),
   ncol = 1,
   rel_heights = c(.4, .6)
 )
@@ -478,13 +596,16 @@ plot_grid(
   - Stability component:
     - CV is the main driver of stability:
   - Community structure: 
-    - Richness decreases synchrony but increases CV
-    - Trophic level increases synchrony but decreases CV
+    - Species richness had no direct effects on CV but on synchrony!  
+    - Evenness of biomass dist increased CV but decreased synchrony
+    - Trophic level decreased CV
     - Betadiv increases CV
   - Habitat/Env:
-    - very weak to no direct effect on stability
+    - few direct effect on stability
       - direct: CV_sp dec with increasing RC3, cad enrichment and flow_cv decrease.  
-    - indirectly affect stability by modulating community structure
+      - direct: CV_sp inc with increasing RC2, cad temperature_med.  
+    - indirectly affect stability by modulating community structure,
+      particularly richness
 
 - Total biomass:
   - Community structure:
@@ -497,6 +618,10 @@ plot_grid(
     - Effect of environment is thus mediated by the community structure
 
 - Main outcome:
+  - Biomass but stability increased with richness
+  - Higher trophic group was more stable that lower one
+    - Opposite relationship stability/richness
+  - Stability was mainly driven by species richness
 
 The effect of richness on biomass stability follows a power law with a negative
 coefficient, meaning that it's a decelerating function.
@@ -571,29 +696,29 @@ plot_grid(plotlist = plot_res)
 
 ### SEM linear relationship 
 
-```{r colin-sem, fig.cap = "Variance Inflation factor for each individual model of stability sem"}
+```{r s-colin-sem, fig.cap = "Variance Inflation factor for each individual model of stability sem"}
 #compute_stab_sem_rich(.data = sem_data, get_sem =TRUE)
 
-mod_list <-  
+mod_stab_list <-
   list(
-    nlme::lme(log_rich ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = sem_data),
-    nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = sem_data),
-    nlme::lme(ct ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich, random = ~ 1 | basin, data = sem_data),
-    nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich, random = ~ 1 | basin, data = sem_data),
-    #nlme::lme( ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich, random = ~ 1 | basin, data = sem_data),
-    nlme::lme(log_sync ~ log_rich + piel + ct + t_lvl + RC1 + RC2 + RC3 + RC4 + RC5,
+    nlme::lme(log_rich_tot ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = sem_data),
+    nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
+    nlme::lme(ct ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
+    nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
+    nlme::lme(beta_bin ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
+    nlme::lme(log_sync ~ log_rich_tot + piel + ct + t_lvl + RC1 + RC2 + RC3 + RC4 + RC5,
       random = ~ 1 | basin, data = sem_data),
-    nlme::lme(log_cv_sp ~ log_rich + piel + ct + t_lvl
+    nlme::lme(log_cv_sp ~ log_rich_tot + piel + ct + t_lvl
       + RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = sem_data),
     lm(log_stab ~ log_cv_sp + log_sync, data = sem_data)
   )
-names(mod_list) <- c("richness", "pielou", "connectance", "weighted_mean_trophic_lvl", "synchrony", "cv_sp", "stability") 
-colin_stab_sem <- map(mod_list, car::vif)
+names(mod_stab_list) <- c("richness", "pielou", "connectance", "weighted_mean_trophic_lvl", "beta", "synchrony", "cv_sp", "stability") 
+colin_stab_sem <- map(mod_stab_list, car::vif)
 
 tmp <- map(colin_stab_sem, enframe)
   
 # colinearity table
-colin_sem <- tibble(vif = tmp, mod = names(mod_list)) %>%
+colin_stab_sem <- tibble(vif = tmp, mod = names(mod_stab_list)) %>%
   unnest(vif) %>%
   spread(name, value)
 
@@ -606,19 +731,52 @@ colin_sem <- tibble(vif = tmp, mod = names(mod_list)) %>%
 
 #}, y =sem_data, random_effect = "~ 1 |basin")
 
-kable(colin_sem)
+kable(colin_stab_sem)
 ```
 
 ```{r}
 plot_residuals <- function (x, y = "Diagnostic") {
-  plot.lme(x)
-  #title(main = y, xlab = "Fitted values", y = "Residuals")
+  plot.lme(x, main = y, xlab = "Fitted values", ylab = "Residuals")
 }
-plot.lme(mod_list[[7]])
-p_resid_stab_sem <- map2(mod_list, names(mod_list) , plot_residuals)
+p_resid_stab_sem <- map2(mod_stab_list, names(mod_stab_list) , plot_residuals)
 plot_grid(plotlist = p_resid_stab_sem)
 ```
 
+```{r, eval = FALSE}
+mod_tlvl <- nlme::lme(t_lvl ~ scale(RC1) + scale(RC2) + scale(RC3) + scale(RC4) + scale(RC5) + log_rich_tot, random = ~ 1 | basin, data = sem_data)
+plot(mod_tlvl)
+sem_data %>%
+  ggplot(aes(x = log10(richness_tot), y = t_lvl)) +
+  geom_point()+
+  geom_smooth(method = "lm")
+
+sem_data %>%
+  ggplot(aes(x = RC1, y = t_lvl)) +
+  geom_point()+
+  geom_smooth(method = "lm")
+plot(nlme::lme(t_lvl ~ I(log10(RC1 + abs(min(RC1)))) + log_rich_tot, random = ~ 1 | basin, data = sem_data))
+nlme::lme(t_lvl ~ log_rich_tot, random = ~ 1 | basin, data = sem_data)
+semd_test <- sem_data %>%
+  mutate(RC1b = RC1 + abs(min(RC1)))
+ricker.mixed.fit <- nls(
+  t_lvl ~ (Vm*(RC1 + b) / (K + (RC1 + b)) + d),
+ #fixed = Vm + K + b + d ~ 1,
+ #random = Vm + K + b + d ~ 1|basin,
+ start= c(Vm=1, K = 0.1, b = .5, d = 2.5),
+ data = semd_test,
+ control = lmeControl(maxIter = 1e8, msMaxIter = 1e8) 
+)
+summary(ricker.mixed.fit)
+x <- seq(min(sem_data$RC1), max(sem_data$RC1), length.out = 100)
+sem_data$test_pred <- predict(ricker.mixed.fit)
+
+semd_test %>%
+  ggplot(aes(x = RC1b, y = t_lvl)) +
+  geom_point() +
+  geom_line(aes(y = test_pred))
+  geom_smooth(method = "lm")
+cor(semd_test$piel, semd_test$t_lvl, method = c("spearman"))
+```
 
 ## Relationship at the absolute scale, i.e. not the logarythme scale 
 
