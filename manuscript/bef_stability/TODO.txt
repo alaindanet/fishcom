@@ -1,0 +1,22 @@
+
+# First category
+
+- [ ] Make appear PCA axis
+
+# Second category
+
+- [ ] Explain SEM
+  - [ ] Choice of variables
+  - [ ] Choice of SEM type, according to Grace
+- [ ] Write SEM results 
+  - [ ] report direct and indirect effects
+- [ ] Make a method slide
+- [ ] See [@arnoldi_] 2019 for the links between species abundances and CV 
+
+# Third category
+
+- [ ] Write methods
+- [ ] Write results 
+- [ ] Write discussion 
+- [ ] Write introduction 
+- [ ] Write abstract 

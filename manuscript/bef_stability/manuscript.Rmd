@@ -338,31 +338,67 @@ stability and species richness and the positive relationship between total
 biomass and species richness.
 
 We built a metamodel to set up the nodes and the links between the different
-compartment of the SEM. Basically, we wanted to test the links between
+compartment of the SEM. Basically, we tested the links between
 environmental conditions, community structure and stability. Theory in ecology 
 predicts that community structure influences stability. In turn, environment 
 influences community structure but also directly stability.
 
+#### Variables
+
 To characterize environment, we retained five axis of PCA on habitat and
 climatic variables which represent different types of forcing (constant and
-variability). The two first axis (RC1 and RC2) were mainly linked the physical
+variability). The two first axis (RC1 and RC2) were linked to the physical
 structure and position of the river and the altitutinal gradient (+temperature).
 The third axis (RC3) was linked to enrichment (Organic Biological Demand) and CV
 of annual flow. The fourth and fifth (RC4 and RC5) axis were associated to
 environmental variability, respectively to CV of width and depth of the river
 and CV of enrichment.
 
-- Community structure:
-  - species richness:
-  - avg trophic level:
-  - connectance:
-  - beta diversity:
+The community structure was characterized by total species richness (TSR),
+species turnover (ST), median average weighted trophic level (TLvl) and median connectance.
+Total species richness was the number of unique fish species that were observed
+at a given station over the whole sampling. Species turnover was computed as average
+dissimilarity between the different community composition through time. The
+dissimilarity was calculated on species presence/absence with the Bray-Curtis
+method implemented in the `vegan` R package (`vegdist` function). Both median
+connectance and Tlvl were just computed as the median over the temporal period.
+For the details of the computation of the trophic networks, see Network
+inference part.
 
-- Stability:
-  - 2 components synchrony and $CV_{sp}$
+The biomass stability was decomposed in synchrony and weighted average CV
+components according to @thibaut_understanding_2013.
 
-The stream physical structure (RC1 axis) and its altitutinal position (RC2 axis)
-was linked to species richness [REF].
+#### Causal relationships
+
+---
+# Environment to community attributes and stability  
+---
+We linked environmental variables both to community structure and stability
+components. Rooted in assembly theory, environment filters species that can
+establish in a community and thus affect community structure. (+ add specific
+hypothesis about physical and climate). (1) We hypothesized that enrichment
+(characterized by DBO) and mean annual temperature will increase ST
+[@friedpetersen_drivers_2020]. (2) We hypothesized environmental forcing can also
+decrease biomass stability directly without going by community structure. First,
+instability of habitat and environmental factors may in turn drive biomass
+instability [@hansen_climate_2013]. Secondly, average environmental conditions
+such as enrichment can increase directly CV by increasing species biomass
+fluctuations [@tabi_warming_2019]. Increasing temperature was also hypothesized
+to decrease stability through starvation resulting from high metabolic activity
+[@tabi_warming_2019].
+
+---
+# Species richness to community attributes 
+---
+The reveal the mechanisms behind the relationship between species richness and
+biomass stability, causal links were set from species richness to other
+community attributes. (4) We hypothesized that TSR increased ST because
+increasing species richness because of assembly processes. Species rich
+community are more resistant to invasion and thus produces more ST
+[@tilman_niche_2004; @shurin_how_2007].
+
+
+
 
 
 ```{r}
@@ -639,6 +675,12 @@ coefficient, meaning that it's a decelerating function.
 
 # Discussion
 
+- Stability versus several studies:
+  - [@zhang_scale_nodate]: productivity stability range from [0.4 to 1.4] for
+    diversity range [10 to 30]
+  - [@tilman_biodiversity_2006] on abundances:
+    - stability range: 2 to 12
+    - diversity range: 1 to 16 
 
 # Appendix
 
