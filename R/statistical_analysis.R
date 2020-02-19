@@ -32,7 +32,7 @@ compute_sem_dataset <- function (
   com$beta_bin_c <- resid(mod)
 
   # Add synchrony
-  sync %<>% dplyr::select(station, synchrony, cv_sp)
+  sync %<>% dplyr::select(station, synchrony, cv_sp, richness_tot)
   biomass_sem <- com %>%
     dplyr::select(station, biomass_stab, biomass_med, richness_med, pielou_med,
       betadiv_bin, beta_bin_c) %>%
@@ -51,6 +51,7 @@ compute_sem_dataset <- function (
   # Habitat -----------------------------------------------------------------
   habitat_sem <- hab_press %>% 
     dplyr::select(station, RC1, RC2, RC3, RC4, RC5)
+
 
   # Network -----------------------------------------------------------------
   net_sem <- network %>%
@@ -71,10 +72,14 @@ compute_sem_dataset <- function (
   dsem %<>%
     dplyr::mutate(
       log_rich = log10(richness_med),
+      log_rich_tot = log10(richness_tot),
       log_sync = log10(sync), 
       log_cv_sp = log10(cv_sp),
       log_stab = log10(biomass_stab),
-      log_bm = log10(prod)
+      log_bm = log10(prod),
+      log_RC1 = log10(RC1 + abs(min(RC1)) + 1),
+      log_RC2 = log10(RC2 + abs(min(RC2)) + 1),
+      log_RC3 = log10(RC3 + abs(min(RC3)) + 1)
     )
   return(dsem)
 
@@ -87,15 +92,15 @@ compute_sem_dataset <- function (
 compute_stab_sem_rich <- function(.data, random_effect = "~ 1 | basin", get_sem = FALSE) {
 
   mod_list <- list(
-    nlme::lme(log_rich ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
-    nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
-    nlme::lme(ct ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich, random = ~ 1 | basin, data = .data),
-    nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich, random = ~ 1 | basin, data = .data),
-    #nlme::lme( ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich, random = ~ 1 | basin, data = .data),
-    nlme::lme(log_sync ~ log_rich + piel + ct + t_lvl + RC1 + RC2 + RC3 + RC4 + RC5,
+    nlme::lme(log_rich_tot ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
+    #nlme::lme(piel ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    nlme::lme(ct ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    nlme::lme(t_lvl ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    #nlme::lme( ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    nlme::lme(log_sync ~ log_rich_tot + ct + t_lvl + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,
       random = ~ 1 | basin, data = .data),
-    nlme::lme(log_cv_sp ~ log_rich + piel + ct + t_lvl
-       + RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+    nlme::lme(log_cv_sp ~ log_rich_tot + ct + t_lvl
+       + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
     lm(log_stab ~ log_cv_sp + log_sync, data = .data)
   )
   sem <-  piecewiseSEM::as.psem(mod_list)
@@ -106,16 +111,69 @@ compute_stab_sem_rich <- function(.data, random_effect = "~ 1 | basin", get_sem 
 
   return(output)
 }
+compute_stab_sem_rich_beta <- function(.data, random_effect = "~ 1 | basin", get_sem = FALSE) {
+
+  mod_list <- list(
+    nlme::lme(log_rich_tot ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
+    #nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    nlme::lme(ct ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    nlme::lme(beta_bin ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    nlme::lme(log_sync ~ log_rich_tot  + ct + t_lvl + RC1 + RC2 + RC3 + RC4 + RC5 + beta_bin,
+      random = ~ 1 | basin, data = .data),
+    nlme::lme(log_cv_sp ~ log_rich_tot + ct + t_lvl
+       + RC1 + RC2 + RC3 + RC4 + RC5 + beta_bin, random = ~ 1 | basin, data = .data),
+    lm(log_stab ~ log_cv_sp + log_sync, data = .data)
+    #, piel %~~% t_lvl
+  )
+  sem <-  piecewiseSEM::as.psem(mod_list)
+  #sem <- mod_list
+  if (get_sem) {
+    return(sem)
+  }
+  output <- summary(sem, .progressBar = F)
+
+  return(output)
+}
+compute_stab_sem_meta <- function(.data, random_effect = "~ 1 | basin", get_sem = FALSE) {
+
+  mod_list <- list(
+    nlme::lme(log_rich_tot ~ RC1 + RC2,  random = ~ 1 | basin, data = .data),
+    #nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    #nlme::lme(ct ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    #nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    #nlme::lme(beta_bin ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    nlme::lme(log_sync ~ log_rich_tot  + ct + t_lvl  + piel + RC2 + RC3 + RC4 + RC5,
+      random = ~ 1 | basin, data = .data),
+    nlme::lme(log_cv_sp ~ log_rich_tot + ct + t_lvl
+       + piel + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+    lm(log_stab ~ log_cv_sp + log_sync, data = .data),
+    piel %~~% t_lvl,
+    piel %~~% log_rich_tot, 
+    #beta_bin %~~% log_rich_tot, 
+    t_lvl %~~% log_rich_tot, 
+    ct %~~% log_rich_tot 
+
+  )
+  sem <-  piecewiseSEM::as.psem(mod_list)
+  #sem <- mod_list
+  if (get_sem) {
+    return(sem)
+  }
+  output <- summary(sem, .progressBar = F)
+
+  return(output)
+}
 compute_stab_sem <- function(.data, random_effect = "~ 1 | basin") {
   corsem <- piecewiseSEM::psem(
-    nlme::lme(log_rich ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
+    nlme::lme(log_rich_tot ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
     nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
     nlme::lme(c_c ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
     nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
     nlme::lme(beta_bin_c ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
-    nlme::lme(log_sync ~ log_rich + piel + c_c + t_lvl + beta_bin_c + RC1 + RC2 + RC3 + RC4 + RC5,
+    nlme::lme(log_sync ~ log_rich_tot + piel + c_c + t_lvl + beta_bin_c + RC1 + RC2 + RC3 + RC4 + RC5,
       random = ~ 1 | basin, data = .data),
-    nlme::lme(log_cv_sp ~ log_rich + piel + c_c + t_lvl +
+    nlme::lme(log_cv_sp ~ log_rich_tot + piel + c_c + t_lvl +
       beta_bin_c + RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
     lm(log_stab ~ log_cv_sp + log_sync, data = .data)
   )
@@ -137,24 +195,93 @@ compute_gen_sem <- function(.data, list_mod, random_effect = "~ 1 | basin") {
 #'
 compute_prod_sem <- function(.data, random_effect = "~ 1 | basin") {
   corsem <- piecewiseSEM::psem(
-    nlme::lme(log_rich ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
+    nlme::lme(log_rich_tot ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
     nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
-    nlme::lme(c_c ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+    nlme::lme(ct ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
     nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
     nlme::lme(beta_bin_c ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
-    nlme::lme(prod ~ log_rich + piel + c_c + t_lvl + beta_bin_c + RC1 + RC2 + RC3 + RC4 + RC5,
+    nlme::lme(log_bm ~ log_rich_tot + piel + ct + t_lvl + beta_bin_c + RC1 + RC2 + RC3 + RC4 + RC5,
       random = ~ 1 | basin, data = .data)
   )
   output <- summary(corsem, .progressBar = F)
 
   return(output)
 }
+compute_prod_sem_rich <- function(.data, random_effect = "~ 1 | basin") {
+  corsem <- piecewiseSEM::psem(
+    nlme::lme(log_rich_tot ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
+    #nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+    nlme::lme(ct ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    #nlme::lme(beta_bin_c ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+    nlme::lme(log_bm ~ log_rich_tot + ct + t_lvl + RC1 + RC2 + RC3 + RC4 + RC5,
+      random = ~ 1 | basin, data = .data)
+  )
+  output <- summary(corsem, .progressBar = F)
+
+  return(output)
+}
+compute_prod_sem_rich_beta <- function(.data, random_effect = "~ 1 | basin", get_sem = FALSE) {
+
+  mod_list <- list(
+    nlme::lme(log_rich_tot ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
+    nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    nlme::lme(ct ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    nlme::lme(beta_bin ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    nlme::lme(prod ~ log_rich_tot + piel + ct + t_lvl + RC1 + RC2 + RC3 + RC4 + RC5 + beta_bin,
+      random = ~ 1 | basin, data = .data)
+  )
+  sem <-  piecewiseSEM::as.psem(mod_list)
+  if (get_sem) {
+    return(sem)
+  }
+  output <- summary(sem, .progressBar = F)
+
+  return(output)
+}
+
+#' Compute indirect effect
+#'
+#' @param sem
+#' @param type character "stab" or "bm" 
+#' 
+compute_sem_indirect <- function (sem = NULL, type = "stab") {
+
+  params <- sem$coefficients
+  colnames(params) <- str_to_lower(colnames(params))
+  colnames(params)[length(colnames(params))] <- "stars"
+  params
+
+  # A. filter effects
+  evt_var <- paste0("RC", seq(1,5))
+  stab_var <- c("sync", "cv_sp")
+  rich_var <- c("log_rich")
+  com_var <- c("piel", "ct", "t_lvt", "beta_bin", rich_var)
+
+
+  #1. Evt on stab 
+  evt_stab <- filter(params, response %in% stab_var, predictor %in% evt_var, p.value <= 0.05)
+  #2. Com on stab
+  com_stab <- filter(params, response %in% stab_var, predictor %in% com_var, p.value <= 0.05)
+  #3. Rich on com
+  rich_com <- filter(params, response %in% com_var, predictor %in% rich_var, p.value <= 0.05)
+  #4. Evt on com
+  evt_com <- filter(params, response %in% com_var, predictor %in% evt_com, p.value <= 0.05)
+
+  # compute indirect effects
+
+
+}
+#compute_sem_indirect(sem = stab_sem_rich_beta)
+
+
 
 #' Build dataset, compute sem and gather result 
 #'
 #' @inheritParams compute_community_temporal_analysis
 #'
-build_dataset_get_sem_coefficient <- function (.op = NULL, dest_dir = NULL) {
+build_dataset_get_sem_coefficient <- function (.op = NULL, sem_fun = compute_stab_sem_rich_beta, dest_dir = NULL) {
 
   # Compute stability, network metrics, etc with the new datasets
   com_data <- compute_community_temporal_analysis(.op = .op, dest_dir = dest_dir)
@@ -170,7 +297,7 @@ build_dataset_get_sem_coefficient <- function (.op = NULL, dest_dir = NULL) {
   )
 
   # Compute SEMs
-  sem <- compute_stab_sem(.data = sem_data,
+  sem <- sem_fun(.data = sem_data,
     random_effect = as.formula("~1|basin"))
 
   return(sem)

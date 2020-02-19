@@ -366,7 +366,22 @@ For the details of the computation of the trophic networks, see Network
 inference part.
 
 The biomass stability was decomposed in synchrony and weighted average CV
-components according to @thibaut_understanding_2013.
+components according to @thibaut_understanding_2013:
+
+$$
+CV_{com} = \overline{CV_{sp}} \times \sqrt{\phi}
+$$
+
+with $CV_{com}$ being the Coefficient of Variation of the community,
+$\overline{CV_{sp}}$ the average coefficient of variation of population
+pondered by biomass. $\phi$ is the synchrony, which is the ratio the total
+community variance ($\sigma^2_{x_T}$) and the sum of population variance
+($\sigma_{x_i}$) [@loreau_species_2008]:
+
+$$
+\phi = \frac{\sigma^2_{x_T}}{\sum_i{\sigma_{x_i}}}
+$$
+
 
 #### Causal relationships
 
@@ -390,20 +405,43 @@ to decrease stability through starvation resulting from high metabolic activity
 ---
 # Species richness to community attributes 
 ---
-The reveal the mechanisms behind the relationship between species richness and
+To reveal the mechanisms behind the relationship between species richness and
 biomass stability, causal links were set from species richness to other
 community attributes. (4) We hypothesized that TSR increased ST because
 increasing species richness because of assembly processes. Species rich
-community are more resistant to invasion and thus produces more ST
-[@tilman_niche_2004; @shurin_how_2007].
+communities are more resistant to invasion and thus increase ST
+[@tilman_niche_2004; @shurin_how_2007]. (5) We hypothesized also that TSR
+decreased connectance following results from @thebault_stability_2010;
+@winemiller_must_1989. But theoretically, some ecological networks can show the
+inverse relationship [@winemiller_must_1989]. (6) We hypothesized also that TSR
+will modulate average weighted trophic level because of food web assembly
+processes. If *TSR increased and that new species are placed at random in the
+network, we expected a positive relationship between Tlvl and TSR because
+individuals of the higher trophic level have a higher body mass [to think
+again]*. Finally, we set up causal relationships from community attributes to
+stability components. 
 
-
-
+---
+#  Community attributes to stability
+---
+We hypothesized that (7) TSR decreased synchrony between species by portfolio
+effects [REF] and increased $\overline{CV_{sp}}$ [@tilman_biodiversity_2006] *to
+complete*. We hypothesized that (8) ST increased $\overline{CV_{sp}}$ and that it
+decreased synchrony. (9a) We expected that Tlvl had a positive or negative
+relationship with synchrony, bottom-up effects should result in positive whereas
+top-down in negative relationship. We expected a (9b) negative relationship
+between Tlvl and $\overline{CV_{sp}}$ if predators stabilised population
+fluctuations or if the increasing part of biomass in the predators decreased
+$\overline{CV_{sp}}$ because of their higher body mass (if mean increase faster than
+variance). (10a) Connectance was expected to decrease or increase $\overline{CV_{sp}}$
+and (10b) synchrony because of top down effects or bottom up effects.
 
 
 ```{r}
 # Compute SEMs
 stab_sem_rich_beta <- compute_stab_sem_rich_beta(.data = sem_data,
+  random_effect = as.formula("~1|basin"))
+stab_sem_rich <- compute_stab_sem_rich(.data = sem_data,
   random_effect = as.formula("~1|basin"))
 stab_sem_meta <- compute_stab_sem_meta(.data = sem_data,
   random_effect = as.formula("~1|basin"))
@@ -412,21 +450,21 @@ stab_sem <- compute_stab_sem(.data = sem_data,
 
 bm_sem <- compute_prod_sem(.data = sem_data,
   random_effect = as.formula("~1|basin"))
+bm_sem_rich <- compute_prod_sem_rich(.data = sem_data,
+  random_effect = as.formula("~1|basin"))
 bm_sem_rich_beta <- compute_prod_sem_rich_beta(.data = sem_data,
   random_effect = as.formula("~1|basin"))
 
 library(ggraph)
-p_stab_sem_rich_beta <- ggpiecewisesem(stab_sem_rich_beta)
-p_stab_sem_meta <- ggpiecewisesem(stab_sem_meta, p_val_thd = 1)
 p_stab_sem <- ggpiecewisesem(stab_sem)
-p_bm_sem_rich_beta <- ggpiecewisesem(bm_sem_rich_beta)
+p_stab_sem_rich_beta <- ggpiecewisesem(stab_sem_rich_beta)
+p_stab_sem_rich <- ggpiecewisesem(stab_sem_rich)
+
+library(DiagrammeR)
+graph <- build_diag_from_sem(stab_sem_rich, p_val_thd = 0.05)
+
 p_bm_sem <- ggpiecewisesem(bm_sem)
-plot_grid(
-  p_stab_sem,
-  p_stab_sem_rich_beta,
-  p_bm_sem,
-  p_bm_sem_rich_beta
-)
+p_bm_sem_rich <- ggpiecewisesem(bm_sem_rich)
 ```
 
 
@@ -494,7 +532,10 @@ p_stab_div_troph <- stab_div_troph %>%
   #scale_x_log10() + scale_y_log10() +
   labs(x = richness_lab, y = stab_lab)
 
-p_stab <- plot_grid(p_stab_div, p_stab_div_troph, ncol = 2, rel_widths = c(.4, .6))
+p_stab <- plot_grid(p_stab_div, p_stab_div_troph,
+  ncol = 2, rel_widths = c(.4, .6),
+  labels = c("A", "B") 
+)
 ```
 
 ```{r p-p-div}
@@ -531,7 +572,8 @@ p_bm_div_troph <- stab_div_troph %>%
   #scale_x_log10() + scale_y_log10() +
   labs(x = richness_lab, y = bm_lab)
 
-p_bm <- plot_grid(p_bm_div, p_bm_div_troph, ncol = 2, rel_widths = c(.4, .6))
+p_bm <- plot_grid(p_bm_div, p_bm_div_troph, ncol = 2, rel_widths = c(.4, .6),
+  labels = c("C", "D"))
 ```
 
 ```{r psbm, fig.dim = c(10,5)}
@@ -575,24 +617,22 @@ b_ci_r_t2 <- print_ci(bm_troph_ci["beta.log_rich_tot",])
 b_ci_r_t3 <- print_ci(coef_troph$bm["log_rich_tot"] + bm_troph_ci["beta.log_rich_tot:troph_group3",])
 ```
 
-
-- Stability:
-  - decreases globally with total species richness (TSR)
-    - An increase of 1% of TSR decreased biomass stability by
-      `r s_co_r`% (`r s_ci_r`)
-  - was `r s_co_t`% (`r s_ci_t`) higher for higher trophic group
-  - increased by `r s_co_r_t2`% (`r s_ci_r_t2`) and decreased by `r s_co_r_t3`
-    (`r s_ci_r_t3`) with 1% increase in TSR for the lower and higher trophic
-    group respectively
-
-- Biomass:
-  - increases with TSR 
-    - An increase of 1% of TSR increased total biomass by
-      `r b_co_r` % `r b_ci_r`
-  - was `r b_co_t`% `r b_ci_t` higher for higher trophic group
-  - increased by `r b_co_r_t2`% `r b_ci_r_t2` and decreased by `r b_co_r_t3`
-    (`r b_ci_r_t3`) with 1% increase in TSR for the lower and higher trophic
-    group respectively
+---
+# Total biomass versus TSR
+---
+TSR increased total biomass (`r b_co_r`% `r b_ci_r` by 1% TSR increase). Total
+biomass was `r b_co_t`% `r b_ci_t` higher in the high than in the low trophic group. However,
+the increase of total biomass with the increase of TSR was lower in the high
+than the low trophic group (`r b_co_r_t3`% `r b_ci_r_t3` and `r b_co_r_t2`%
+`rb_ci_r_t2` respectively,  by 1% TSR increase).
+---
+# Stability versus TSR
+---
+However, biomass stability decreased with TSR (`r s_co_r`% `r s_ci_r` by 1%
+TSR increase). Biomass stability was overall `r s_co_t`% `r s_ci_t` higher for the high
+than the low trophic group. But biomass stability decreased by `r s_co_r_t3`% by
+1% increase in TSR in the high trophic group and increased by `r s_co_r_t2`% `r s_ci_r_t2`
+in the low trophic group.
 
 ## Drivers of total biomass and stability
 
@@ -615,7 +655,7 @@ to_plot <- c(1, 6, 7)
 plot_grid(
   plot_grid(plotlist = map(p_l_rot[to_plot], ~.x$rotated),
       ncol = length(to_plot), labels = LETTERS[1]),
-  plot_grid(p_stab_sem_rich_beta, p_bm_sem_rich_beta, labels = LETTERS[2:3]),
+  plot_grid(p_stab_sem_rich, p_bm_sem_rich, labels = LETTERS[2:3]),
   ncol = 1,
   rel_heights = c(.4, .6)
 )
@@ -661,6 +701,9 @@ plot_grid(
 
 The effect of richness on biomass stability follows a power law with a negative
 coefficient, meaning that it's a decelerating function.
+
+- R diagramm:
+  - https://rstudio-pubs-static.s3.amazonaws.com/78926_5aa94ae32fae49f3a384ce885744ef4a.html
 
 - Latex:
   - csv:
@@ -736,25 +779,39 @@ plot_res <- map(mod_list, ~ plot(.x))
 plot_grid(plotlist = plot_res)
 ```
 
-### SEM linear relationship 
+### SEM linear relationships
+
+
+```{r hist-sem-data}
+sem_data %>%
+  select(prod, log_rich_tot, log_sync, log_stab, log_cv_sp, RC1, RC2, RC3, RC4,
+    RC5, t_lvl, ct, log_bm) %>%
+  gather(variable, value) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram() +
+  facet_wrap(~variable, scales = "free")
+
+```
+
+
 
 ```{r s-colin-sem, fig.cap = "Variance Inflation factor for each individual model of stability sem"}
 #compute_stab_sem_rich(.data = sem_data, get_sem =TRUE)
 
 mod_stab_list <-
   list(
-    nlme::lme(log_rich_tot ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = sem_data),
-    nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
-    nlme::lme(ct ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
-    nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
-    nlme::lme(beta_bin ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
-    nlme::lme(log_sync ~ log_rich_tot + piel + ct + t_lvl + RC1 + RC2 + RC3 + RC4 + RC5,
+    nlme::lme(log_rich_tot ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,  random = ~ 1 | basin, data = sem_data),
+    #nlme::lme(piel ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
+    nlme::lme(ct ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
+    nlme::lme(t_lvl ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
+    #nlme::lme(beta_bin ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
+    nlme::lme(log_sync ~ log_rich_tot + ct + t_lvl + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,
       random = ~ 1 | basin, data = sem_data),
-    nlme::lme(log_cv_sp ~ log_rich_tot + piel + ct + t_lvl
-      + RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = sem_data),
+    nlme::lme(log_cv_sp ~ log_rich_tot  + ct + t_lvl
+      + RC1 + log_RC2 + log_RC3 + RC4 + RC5, random = ~ 1 | basin, data = sem_data),
     lm(log_stab ~ log_cv_sp + log_sync, data = sem_data)
   )
-names(mod_stab_list) <- c("richness", "pielou", "connectance", "weighted_mean_trophic_lvl", "beta", "synchrony", "cv_sp", "stability") 
+names(mod_stab_list) <- c("richness", "connectance", "weighted_mean_trophic_lvl", "synchrony", "cv_sp", "stability") 
 colin_stab_sem <- map(mod_stab_list, car::vif)
 
 tmp <- map(colin_stab_sem, enframe)
@@ -763,15 +820,6 @@ tmp <- map(colin_stab_sem, enframe)
 colin_stab_sem <- tibble(vif = tmp, mod = names(mod_stab_list)) %>%
   unnest(vif) %>%
   spread(name, value)
-
-#formulas <- list(
-  #"log_rich ~ RC1 + RC2 + RC3 + RC4 + RC5",
-  #"piel ~ RC1 + RC2 + RC3 + RC4 + RC5"
-#)
-#test <- map(formulas, function(x, y, random_effect) {
-  #lmer(as.formula(x), random= as.formula(random_effect), data = y)
-
-#}, y =sem_data, random_effect = "~ 1 |basin")
 
 kable(colin_stab_sem)
 ```
@@ -791,9 +839,9 @@ sem_data %>%
   ggplot(aes(x = log10(richness_tot), y = t_lvl)) +
   geom_point()+
   geom_smooth(method = "lm")
-
+plot(x = log10(sem_data$RC1 + abs(min(sem_data$RC1))), y = sem_data$t_lvl)
 sem_data %>%
-  ggplot(aes(x = RC1, y = t_lvl)) +
+  ggplot(aes(x = log10(RC1), y = t_lvl)) +
   geom_point()+
   geom_smooth(method = "lm")
 plot(nlme::lme(t_lvl ~ I(log10(RC1 + abs(min(RC1)))) + log_rich_tot, random = ~ 1 | basin, data = sem_data))
@@ -819,6 +867,58 @@ semd_test %>%
   geom_smooth(method = "lm")
 cor(semd_test$piel, semd_test$t_lvl, method = c("spearman"))
 ```
+
+```{r, eval = FALSE}
+library(glmmTMB)
+# Gaussian
+mod_log_rich <- glmmTMB(
+  log_rich_tot ~ log_RC1 + log_RC2 + log_RC3
+  + RC4 + RC5 + (1 | basin), family = gaussian, data = sem_data)
+summary(mod_log_rich)
+plot(y = resid(mod_log_rich), x = fitted(mod_log_rich))
+
+# Poisson 
+mod_log_rich_poi <- glmmTMB(
+  richness_tot ~ log_RC1 + log_RC2 + log_RC3
+  + RC4 + RC5 + (1 | basin), family = poisson, data = sem_data)
+summary(mod_log_rich_poi)
+plot(y = resid(mod_log_rich_poi), x = fitted(mod_log_rich_poi))
+
+# Truncate 
+mod_log_rich_nbinom <- glmmTMB(
+  richness_tot ~ log_RC1 + log_RC2 + log_RC3
+  + RC4 + RC5 + (1 | basin), family = nbinom1, data = sem_data)
+summary(mod_log_rich_nbinom)
+plot(y = resid(mod_log_rich_nbinom), x = fitted(mod_log_rich_nbinom))
+```
+
+#### Total biomass
+
+```{r}
+
+mod_bm_list <-
+  list(
+    nlme::lme(log_rich_tot ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = sem_data),
+    #nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
+    nlme::lme(ct ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
+    nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
+    #nlme::lme(beta_bin ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
+    nlme::lme(log_bm ~ log_rich_tot + ct + t_lvl + RC1 + RC2 + RC3 + RC4 + RC5,
+      random = ~ 1 | basin, data = sem_data)
+  )
+names(mod_bm_list) <- c("richness", "connectance", "weighted_mean_trophic_lvl", "total_biomass") 
+colin_bm_sem <- map(mod_bm_list, car::vif)
+
+tmp <- map(colin_bm_sem, enframe)
+  
+# colinearity table
+colin_bm_sem <- tibble(vif = tmp, mod = names(mod_bm_list)) %>%
+  unnest(vif) %>%
+  spread(name, value)
+
+kable(colin_bm_sem)
+```
+
 
 ## Relationship at the absolute scale, i.e. not the logarythme scale 
 
