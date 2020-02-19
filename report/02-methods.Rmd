@@ -348,6 +348,7 @@ mod_bm_census$data[[9]]
 
 ## Environmental data
 
+
 ### Habitat
 
 ```{r}
@@ -360,6 +361,15 @@ habitat_pressure <- build_habitat_pressure_dataset(
   .tmp_st_desc = temporal_station_desc,
   .geo_st = geo_station 
 )
+```
+
+```{r}
+st_basin <- get_basin_station(sf_obj = TRUE) 
+
+st_basin %>%
+  ggplot() +
+  geom_sf(aes(fill = basin, color = basin))
+#myload(region_polygon, dir = mypath("data"))
 ```
 
 

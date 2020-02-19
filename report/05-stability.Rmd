@@ -1604,24 +1604,26 @@ sem_data <- compute_sem_dataset(
   )
 
 # Compute SEMs
-sem <- compute_stab_sem(.data = sem_data,
+sem <- compute_stab_sem_rich_beta(.data = sem_data,
   random_effect = as.formula("~1|basin"))
 
 ggpiecewisesem(sem)
 ```
 
-- Main results:
-  - Richness destabilizes communities 
-  - 
-  - Trophic level decreased CV but increase species synchrony!
-  - Connectance!
 
-
-```{r sensitivity, fig.dim = c(14, 7), fig.cap = "Sensivity analysis with different dataset"}
+```{r sensitivity, fig.dim = c(10, 7), fig.cap = "Sensivity analysis with different dataset"}
 myload(op_analysis, op_analysis_wo_holes, op_analysis_ov, dir = mypath("data"))
-sem_l_data <- map(list(full = op_analysis, wo_holes = op_analysis_wo_holes, ov = op_analysis_ov),
+myload(biomass_ts_sax, dir = mypath("data"))
+op_analysis_bbb <- filter(op_analysis, station %in%
+  biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
+
+#library(future)
+#plan(multiprocess)
+sem_sensivity_data <- list(full = op_analysis, wo_holes = op_analysis_wo_holes, bbb = op_analysis_bbb)
+sem_l_data <- furrr::future_map(sem_sensivity_data,
   ~build_dataset_get_sem_coefficient(
     .op = .x,
+    sem_fun = compute_stab_sem_rich_beta,
     dest_dir = mypath("data", "species"))
 )
 
@@ -1640,12 +1642,93 @@ sem_results %>%
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
+```{r, fig.dim = c(10, 5)}
+p_sensitivity_stab_sem <- map(sem_l_data, ggpiecewisesem)
+p_sensitivity_stab_sem %<>% map2(., names(sem_sensivity_data),  ~ .x + labs(title = .y))
+plot_grid(plotlist = p_sensitivity_stab_sem)
+```
+```{r}
+p_op_analysis_protocol_bbb <- op_analysis_bbb %>%
+  group_by(station) %>%
+  slice(1) %>%
+  ggplot(aes(x = protocol_type)) + 
+  geom_histogram(stat ="count") +
+  labs(title = "Station bbb")
+
+p_op_analysis_protocol <- op_analysis %>%
+  group_by(station) %>%
+  slice(1) %>%
+  ggplot(aes(x = protocol_type)) + 
+  geom_histogram(stat ="count") +
+  labs(title = "All stations")
+plot_grid(p_op_analysis_protocol_bbb, p_op_analysis_protocol, ncol = 2)
+```
+
+```{r, eval = FALSE}
+bootstrap_bbb <- map(seq(1,10),
+  function(x) {
+
+    sampled_st <- map(c(complete = "complete", partial = "partial"), function (y) {
+      st_id <- unique(op_analysis_bbb[op_analysis_bbb$protocol_type == y,
+	]$station)
+      sample(x = st_id, size = 20, replace = FALSE)
+    })
+
+    op_analysis_bbb %>%
+      filter(station %in% unlist(sampled_st))
+  }
+)
+names(bootstrap_bbb) <- letters[1:10] 
+
+bootstrap_sem <- map(c(bootstrap_bbb, list(full = op_analysis)),
+  ~build_dataset_get_sem_coefficient(
+    .op = .x,
+    sem_fun = compute_stab_sem_rich_beta,
+    dest_dir = mypath("data", "species"))
+)
+
+sem_results <- map(bootstrap_sem,
+  ~.x$coefficients[-ncol(.x$coefficients)]) %>%
+  enframe() %>%
+  rename(dataset = name) %>%
+  unnest(value)
+
+# Reformat
+colnames(sem_results) <- str_to_lower(colnames(sem_results))
+sem_results %>%
+  mutate(r_p = str_c(response, predictor, sep = "~")) %>%
+  ggplot(aes(x = r_p, y = std.estimate)) +
+  geom_point(aes(color = dataset)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+#### CV by basin
+
+```{r}
+st_basin %<>%
+  mutate(basin = str_replace_all(basin, "RHIN|MEUSE", "RHIN MEUSE"))
+sync_basin <- compute_synchrony_over_basin(com = community_analysis, basin = st_basin, .op = op_analysis)
+sync_basin %>%
+  filter(!is.na(basin)) %>%
+  filter(!basin %in% c("ESCAUT SOMME", "MEUSE", "RHIN")) %>%
+  ggplot(aes(x = richness_tot, y = 1/ cv_com, label = basin)) +
+  geom_point() +
+  geom_text(hjust = 0, nudge_x = 0.05) +
+  labs(
+    x = "Total richness", y = "Biomass stability",
+    title = "Basin scale",
+    caption = "Average biomass by species by year and by basin was taken to
+    compute CV."
+  )
+```
+
+
 #### Productivity
 
 
 ```{r, fig.cap = "Coefficients of the SEM of biomass"}
 
-prod_sem <- compute_prod_sem(.data = sem_data)
+prod_sem <- compute_prod_sem_rich_beta(.data = sem_data)
 
 prod_sem$coefficients %>%
   kable() %>%
