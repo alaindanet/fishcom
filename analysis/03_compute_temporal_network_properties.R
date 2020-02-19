@@ -19,6 +19,7 @@ devtools::load_all()
 source(mypath("R", "community_analysis.R"))
 myload(op_analysis, metaweb_analysis, dir = data_common)
 myload(network_metrics, dir = dest_dir)
+debug(summarise_network_over_time)
 temporal_network_metrics <- summarise_network_over_time(
   op = op_analysis,
   network = network_metrics,

@@ -540,7 +540,7 @@ ggsem <- function(fit, layout = "sugiyama") {
     theme_graph()
 }
 
-ggpiecewisesem <- function(fit, layout = "sugiyama") {
+ggpiecewisesem <- function(fit, layout = "sugiyama", p_val_thd = .05) {
 
   # Extract standardized parameters
   params <- fit$coefficients
@@ -549,7 +549,7 @@ ggpiecewisesem <- function(fit, layout = "sugiyama") {
 
   # Edge properties
   param_edges <- params %>%
-    filter(p.value < .05) %>%
+    filter(p.value < p_val_thd) %>%
     transmute(to = as.character(response),
               from = as.character(predictor),
               val = std.estimate) %>%
@@ -609,6 +609,79 @@ ggpiecewisesem <- function(fit, layout = "sugiyama") {
     scale_size(guide = FALSE) +
     theme_graph()
 }
+
+build_diag_from_sem <- function (fit = NULL, p_val_thd = NULL) {
+
+  est <- fit$coefficients
+  names(est)[9] <- "stars"
+
+  # Get node
+  node_set <- est %>%
+    dplyr::select(Response, Predictor) %>%
+    tidyr::gather(type, nodes, Response, Predictor) %>%
+    dplyr::select(nodes) %>%
+    dplyr::distinct() 
+
+  ## Set type 
+  node_set %<>%
+    mutate(
+      type = map_chr(nodes, function (x) {
+	if (any(paste0("RC", seq(1,5)) %in% x)) {
+	  type <- "evt" 
+	} else if (x == "log_rich_tot") {
+	  type <- "rich"
+	} else if (any(x %in% c("log_sync", "log_cv_sp"))) {
+	  type <- "stab_comp"
+	} else if (any(x %in% c("ct", "t_lvl"))) {
+	  type <- "com"
+	} else if (x == "log_stab") {
+	  type <- "stab" 
+	}
+	return(type)
+		       })
+    )
+
+  node_df <- create_node_df(
+    n = nrow(node_set),
+    label = node_set$nodes,
+    shape = c("rectangle"),
+    type = node_set$type
+  )
+  #https://rich-iannone.github.io/DiagrammeR/graph_creation.html
+
+  replace_edge <- as.character(node_df$id) 
+  names(replace_edge) <- node_df$label 
+
+  # Get path
+  all_path <- est %>%
+    dplyr::mutate(
+      edge_from = str_replace_all(Predictor, replace_edge),
+      edge_to = str_replace_all(Response, replace_edge),
+      rel = round(Std.Estimate, 2)
+      )
+    
+  ## Select significant path
+  if (!is.null(p_val_thd)) {
+    all_path %<>% dplyr::filter(P.Value < p_val_thd)
+  }
+  
+  edge_df <- create_edge_df(
+    from = all_path$edge_from, 
+    to = all_path$edge_to, 
+    width = all_path$rel,  
+    color = ifelse(all_path$rel < 0, "red", "green"),  
+    rel = as.character(all_path$rel),
+    label = as.character(all_path$rel)
+  )
+
+  graph <- DiagrammeR::create_graph(
+    nodes_df = node_df,
+    attr_theme = "tb",
+    edges_df = edge_df
+  )
+
+  return(graph)
+} 
 
 ################################################################################
 #                                 Plot labels                                  #

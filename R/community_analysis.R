@@ -28,14 +28,40 @@ summarise_network_over_time <- function (op = NULL, network = NULL,
   op %<>%
     dplyr::select(opcod, station, year)
 
-
   com <- op %>%
     dplyr::left_join(network, by = "opcod") %>%
     dplyr::group_by(station) %>%
     dplyr::rename(mean_troph_level = troph_level_avg,
       max_troph_level = troph_length) %>%
     dplyr::summarise_at(metrics,
-      list(cv = ~sd(.) / mean(.), med = median))
+      list(cv = ~sd(.) / mean(.), med = median, stab = ~mean(.) / sd(.)))
+
+  # Get total richness, biomass_med,  by station and trophic group 
+  composition <- network %>%
+    dplyr::left_join(op, by = "opcod") %>%
+    tidyr::unnest(composition) %>%
+    mutate(species = str_extract_all(sp_class, "[A-Z]{3}"))
+
+  richness_tot <- composition %>%
+    dplyr::group_by(station, troph_group) %>%
+    dplyr::summarise(richness_tot = length(unique(species)))
+
+  ## Biomass
+  troph_group <- network %>%
+    dplyr::left_join(op, by = "opcod") %>%
+    dplyr::select(station, opcod, troph_group) %>%
+    unnest(troph_group) %>%
+    dplyr::group_by(station, troph_group) %>%
+    dplyr::summarise_at(c("biomass", "richness", "nbnode"),
+      list(cv = ~sd(.) / mean(.), med = median, avg = mean, stab = ~mean(.) / sd(.)))
+
+  # Merge trophic group metrics
+  troph_group_metrics <- troph_group %>%
+    dplyr::left_join(richness_tot, by = c("station", "troph_group")) %>%
+    dplyr::group_by(station) %>%
+    tidyr::nest(.key = "troph_group")
+
+  com %<>% dplyr::left_join(troph_group_metrics, by = "station")
 
   return(com)
 }
@@ -151,6 +177,24 @@ compute_temporal_betadiv <- function (.op = NULL, com = NULL) {
     )
 
 } 
+
+#' Compute betadiv
+#'
+#'
+#'@export
+compute_betadiv <- function(com, binary = FALSE, time_to_time = FALSE) {
+  if (binary) {
+    com %<>% replace(., . != 0, 1)
+  }
+
+  dist_mat <- vegan::vegdist(com, method = "bray", binary = binary)
+
+  if (time_to_time) {
+    dist_mat <- diag(dist_mat)
+  }
+
+  mean(dist_mat)
+}
 
 #' Compute synchrony with species
 #'
@@ -280,4 +324,63 @@ compute_pielou_simpson <- function(.data) {
   }
   out <- tibble( pielou = pielou, simpson = simpson)
   return(out)
+}
+
+#' Compute synchrony over basin
+#'
+#'
+#'
+compute_synchrony_over_basin <- function(com = NULL, basin = NULL, .op = NULL) {
+
+  com %<>%
+    dplyr::left_join(dplyr::select(.op, opcod, station, year), by = "opcod") %>%
+    dplyr::left_join(basin, by = "station")
+
+  # Get mean biomass by basin, species and by year
+  complete_com <- com %>%
+    dplyr::group_by(basin) %>%
+    dplyr::summarise(
+      species = list(unique(species)),
+      year = list(unique(year))) %>%
+    dplyr::mutate(comb = purrr::map2(species, year, function(sp, date){
+        test <- expand.grid(species = sp, year = date)
+        return(test)
+    })
+      ) %>%
+    tidyr::unnest(comb)
+
+  # Join and put biomass to 0 when no observed:
+  complete_com %<>% dplyr::left_join(com, by = c("basin", "species", "year")) %>%
+    dplyr::mutate(biomass = ifelse(is.na(biomass), 0, biomass)) %>%
+    group_by(basin, species, year) %>%
+    summarise(biomass = mean(biomass))
+
+  complete_com %<>%
+    group_by(basin) %>%
+    nest()
+
+  complete_com %<>%
+    dplyr::mutate(
+      com_mat_date = purrr::map(data, function(x) tidyr::spread(x, species, biomass)),
+      com_mat = purrr::map(com_mat_date, function(x) dplyr::select(x, -year)),
+      com_mat = purrr::map(com_mat, as.matrix)
+    )
+
+  synchrony <- complete_com %>%
+    dplyr::mutate(
+      richness = purrr::map(com_mat, compute_sp_nb_from_com_mat),
+      richness_med = purrr::map_dbl(richness, median),
+      richness_tot = map_dbl(com_mat, ~ncol(.x)),
+      avg_sp = purrr::map(com_mat, colMeans),
+      cov_mat = purrr::map(com_mat, cov),
+      var_sp = purrr::map(cov_mat, diag),
+      synchrony = purrr::map_dbl(cov_mat, compute_synchrony),
+      cv_sp = purrr::map2_dbl(avg_sp, var_sp, compute_avg_cv_sp),
+      cv_com = compute_cv_com(synchrony = synchrony, cv_sp = cv_sp),
+      cv_classic = purrr::map2_dbl(cov_mat, com_mat, function(variance, biomass) {
+        sqrt(sum(variance)) / mean(rowSums(biomass))
+})
+    )
+  synchrony
+
 }
