@@ -246,35 +246,112 @@ compute_prod_sem_rich_beta <- function(.data, random_effect = "~ 1 | basin", get
 #' @param sem
 #' @param type character "stab" or "bm" 
 #' 
-compute_sem_indirect <- function (sem = NULL, type = "stab") {
+compute_stab_sem_indirect <- function (sem = NULL, type = "stab", p_val_thl = NULL) {
 
   params <- sem$coefficients
-  colnames(params) <- str_to_lower(colnames(params))
   colnames(params)[length(colnames(params))] <- "stars"
-  params
+
+  # Preliminary coeff col modif
+  params %<>%
+    dplyr::rename(
+      resp = Response,
+      pred = Predictor,
+      p_val = P.Value,
+      std_est = Std.Estimate
+    ) %>%
+    dplyr::select(resp, pred, p_val, std_est)
+
+  if (!is.null(p_val_thl)) {
+    params %<>% dplyr::filter(p_val < p_val_thl)
+  }
 
   # A. filter effects
-  evt_var <- paste0("RC", seq(1,5))
-  stab_var <- c("sync", "cv_sp")
-  rich_var <- c("log_rich")
-  com_var <- c("piel", "ct", "t_lvt", "beta_bin", rich_var)
+  evt_var <- c(paste0("log_RC", seq(1,3)), paste0("RC", seq(4,5)))
+  names(evt_var) <- evt_var
+  stab_comp_var <- c("log_sync", "log_cv_sp")
+  names(stab_comp_var) <- stab_comp_var 
+  rich_var <- c("log_rich_tot")
+  names(rich_var) <- rich_var 
+  com_var <- c("ct", "t_lvl")
+  names(com_var) <- com_var
+
+  #1. effect on stab
+  #commute all the indirect on stab through cv_sp and sync 
+
+  ## Get CV and sync effect on stab
+  sync_cv_sp_on_stab <- purrr::map_dbl(stab_comp_var, function (x, fit) {
+    fit[fit$resp == "log_stab" & fit$pred == x, ]$std_est
+    }, fit = params)
+
+  ## Get indirect com effect on stab +
+  #temp indirect effect of rich, evt on stab through direct effect on cv_sp and
+  #sync
+
+  variable <- c(evt_var, com_var, rich_var)
+  indir_var_stab <- purrr::map_dbl(variable, function (x, fit, stab_comp_est) {
+
+    indir_sync <- fit[fit$resp == "log_sync" & fit$pred == x, ]$std_est * stab_comp_est["log_sync"]
+    indir_cv_sp <- fit[fit$resp == "log_cv_sp" & fit$pred == x, ]$std_est * stab_comp_est["log_cv_sp"]
+
+    if (any(length(indir_sync), length(indir_cv_sp)) == 0) {
+      indir_sync <- ifelse(length(indir_sync) == 0, 0, indir_sync)
+      indir_cv_sp <- ifelse(length(indir_cv_sp) == 0, 0, indir_cv_sp)
+    }
+      
+    output <- indir_sync + indir_cv_sp
+    return(output)
+    }, fit = params, stab_comp_est = sync_cv_sp_on_stab)
 
 
-  #1. Evt on stab 
-  evt_stab <- filter(params, response %in% stab_var, predictor %in% evt_var, p.value <= 0.05)
-  #2. Com on stab
-  com_stab <- filter(params, response %in% stab_var, predictor %in% com_var, p.value <= 0.05)
-  #3. Rich on com
-  rich_com <- filter(params, response %in% com_var, predictor %in% rich_var, p.value <= 0.05)
-  #4. Evt on com
-  evt_com <- filter(params, response %in% com_var, predictor %in% evt_com, p.value <= 0.05)
+  #B. compute indirect effects
 
-  # compute indirect effects
+  #1. Richness
+  ## Effect of richness on com
+  rich_com_effect <- purrr::map_dbl(com_var, function (x, fit, rich_var) {
+    params[params$resp == x & params$pred == rich_var, ]$std_est
+    }, fit = params, rich_var = rich_var)
 
+  rich_com_effect <- purrr::map_dbl(rich_com_effect, ~ifelse(length(.x) == 0, 0, .x))
 
+  ## Total effect of richness on stability  
+  indir_rich <- 
+     rich_com_effect["ct"] * indir_var_stab["ct"] +
+     rich_com_effect["t_lvl"] * indir_var_stab["t_lvl"] +
+     indir_var_stab[rich_var]
+  names(indir_rich) <- rich_var
+
+   #2. Environment
+   indir_evt <- purrr::map_dbl(evt_var, function (x, fit, indir_rich, indir_var_stab) {
+     tmp <- vector(mode = "list", length = 4)
+
+     # effect through richness:
+     tmp[[1]] <-
+       params[params$resp == rich_var & params$pred == x, ]$std_est *
+       indir_rich
+     # effect through connectance
+     tmp[[2]] <-
+       params[params$resp == "ct" & params$pred == x, ]$std_est *
+       indir_var_stab["ct"]
+     # effect through trophic level
+     tmp[[3]] <-
+       params[params$resp == "t_lvl" & params$pred == x, ]$std_est *
+       indir_var_stab["t_lvl"]
+     # effect through sync and cv_sp
+     tmp[[4]] <- indir_var_stab[x]
+
+     tmp <- map_dbl(tmp, ~ifelse(length(.x) == 0, 0, .x))
+
+     return(sum(tmp))
+    
+    }, fit = params, indir_rich = indir_rich, indir_var_stab = indir_var_stab)
+
+   #3. Community
+   indir_com <- indir_var_stab[names(indir_var_stab) %in% com_var]
+
+   #C. output
+   output <- c(indir_evt, indir_rich, indir_com)
+   return(output)
 }
-#compute_sem_indirect(sem = stab_sem_rich_beta)
-
 
 
 #' Build dataset, compute sem and gather result 
