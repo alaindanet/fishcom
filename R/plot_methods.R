@@ -626,7 +626,7 @@ build_diag_from_sem <- function (fit = NULL, p_val_thd = NULL) {
   node_set %<>%
     mutate(
       type = map_chr(nodes, function (x) {
-	if (any(paste0("RC", seq(1,5)) %in% x)) {
+	if (any(c(paste0("RC", seq(1,5)), paste0("log_RC", seq(1,5))) %in% x)) {
 	  type <- "evt" 
 	} else if (x == "log_rich_tot") {
 	  type <- "rich"

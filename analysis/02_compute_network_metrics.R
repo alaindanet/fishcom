@@ -107,7 +107,7 @@ trophic_class <- split_in_classes(trophic_level$troph_level, class_method = "per
   nb_class = 3, round_limits = FALSE)
 mysave(trophic_level, trophic_class, dir = data_common, overwrite = TRUE)
 
-## Assign trophic group to each node  
+## Assign trophic group to each node
 trophic_level %<>%
   mutate(
     troph_group = get_size_class(trophic_level, NULL, troph_level, trophic_class)
@@ -159,7 +159,7 @@ if (!is.null(options("network.type")) & options("network.type") == "species") {
 	group_by(troph_group) %>%
 	summarise(
 	  biomass = sum(biomass),
-	  nbnode  = n(),
+	  nbnode  = n(), #nb nodes only of fishes
 	  richness = n()
 	  ) %>%
 	ungroup()
@@ -258,22 +258,34 @@ test <- network_analysis %>%
 
 source('../analysis/misc/parallel_setup.R')
 cat("Get network indices:\n")
+
+# Trophic level:
 network_analysis %<>%
   mutate(
+    troph = future_map(network, NetIndices::TrophInd),
+    obs_troph_level = map(troph, function (x){
+      out <- x$TL
+      names(out) <- row.names(x)
+      out
+	  }),
+    #troph_level = map(troph, "TL"),
+    mean_troph_level = map_dbl(obs_troph_level, mean),
+    max_troph_lvl = map_dbl(obs_troph_level, max),
     connectance = map_dbl(metrics, "C"),
-    nbnode = map_dbl(metrics, "N"),
-    compartiment = map_dbl(metrics, "Cbar"),
-    troph_level = future_map(network, NetIndices::TrophInd),
-    troph_level = map(troph_level, "TL"),
-    mean_troph_level = map_dbl(troph_level, mean),
-    max_troph_lvl = map_dbl(troph_level, max),
-    modularity = map_dbl(modul_guimera, 2)
+    nbnode = map_dbl(metrics, "N")
+  )
+
+network_analysis %<>%
+  mutate(
+    modularity = map_dbl(modul_guimera, 2),
+    compartiment = map_dbl(metrics, "Cbar")
   )
 
 network_metrics <- network_analysis %>%
-  dplyr::select(-metrics, -troph_level)
+  dplyr::select(-metrics)
 
 mysave(network_metrics, dir = dest_dir, overwrite = TRUE)
+
 
 ##############################
 #  Standardized connectance  #
@@ -395,11 +407,18 @@ network_metrics %<>%
 #  Compute weighted trophic level  #
 ####################################
 
+obs_troph_level <- network_metrics %>%
+  select(opcod, obs_troph_level) %>% 
+  mutate(obs_troph_level = map(obs_troph_level, enframe)) %>%
+  unnest(obs_troph_level) %>%
+  rename(obs_troph_level = value, !!var_chr := name)
+
 weighted_mean_trophic_lvl <- network_metrics %>%
   select(opcod, composition) %>%
   unnest(composition) %>%
+  left_join(obs_troph_level, by = c("opcod", var_chr)) %>%
   group_by(opcod) %>%
-  summarise(w_trph_lvl_avg = sum(troph_level * biomass) / sum(biomass))
+  summarise(w_trph_lvl_avg = sum(obs_troph_level * biomass) / sum(biomass))
 network_metrics %<>%
   left_join(weighted_mean_trophic_lvl, by = "opcod")
 

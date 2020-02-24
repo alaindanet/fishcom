@@ -187,16 +187,16 @@ myload(nmds, habitat_pressure, dir = mypath("report"))
 myload(op_analysis, dir = mypath("data"))
 
 # Compute stability, network metrics, etc with ;he new datasets
-com_data <- compute_community_temporal_analysis(.op = op_analysis, dest_dir = mypath("data", "species"))
+com_data <- compute_community_temporal_analysis(.op = op_analysis, dest_dir = mypath("data", "classes"))
 
 # Compute sem dataset 
 sem_data <- compute_sem_dataset(
   com = com_data[["tps_com"]],
-  network = com_data[["tps_net"]], 
-  hab_press = habitat_pressure, 
+  network = com_data[["tps_net"]],
+  hab_press = habitat_pressure,
   sync = com_data[["sync"]],
   nmds = NULL,
-  basin = st_basin 
+  basin = st_basin
   )
 ```
 
@@ -439,52 +439,42 @@ and (10b) synchrony because of top down effects or bottom up effects.
 
 ```{r}
 # Compute SEMs
-stab_sem_rich_beta <- compute_stab_sem_rich_beta(.data = sem_data,
-  random_effect = as.formula("~1|basin"))
 stab_sem_rich <- compute_stab_sem_rich(.data = sem_data,
   random_effect = as.formula("~1|basin"))
-stab_sem_meta <- compute_stab_sem_meta(.data = sem_data,
-  random_effect = as.formula("~1|basin"))
-stab_sem <- compute_stab_sem(.data = sem_data,
-  random_effect = as.formula("~1|basin"))
 
-bm_sem <- compute_prod_sem(.data = sem_data,
-  random_effect = as.formula("~1|basin"))
 bm_sem_rich <- compute_prod_sem_rich(.data = sem_data,
-  random_effect = as.formula("~1|basin"))
-bm_sem_rich_beta <- compute_prod_sem_rich_beta(.data = sem_data,
   random_effect = as.formula("~1|basin"))
 
 library(ggraph)
-p_stab_sem <- ggpiecewisesem(stab_sem)
-p_stab_sem_rich_beta <- ggpiecewisesem(stab_sem_rich_beta)
 p_stab_sem_rich <- ggpiecewisesem(stab_sem_rich)
 
 library(DiagrammeR)
 graph <- build_diag_from_sem(stab_sem_rich, p_val_thd = 0.05)
 
-p_bm_sem <- ggpiecewisesem(bm_sem)
 p_bm_sem_rich <- ggpiecewisesem(bm_sem_rich)
 ```
 
 
 ```{r get-sem-coeff}
-coef_stab_sem_sum <- coef(stab_sem) %>%
-  group_by(Response) %>%
-  nest() %>%
-  mutate(sum_c = map_dbl(data, ~ sum(.x$Std.Estimate)))
+total_effect_stab_sem <- compute_stab_sem_indirect(sem = stab_sem_rich,
+  p_val_thl = 0.05) 
 
-coef_stab_sem <- coef(stab_sem_rich_beta) %>%
+total_effect_bm_sem <- compute_bm_sem_indirect(sem = bm_sem_rich,
+  p_val_thl = 0.05) 
+
+coef_stab_sem <- coef(stab_sem_rich) %>%
   select(- 9) %>%
   filter(P.Value < 0.05)
 
-#cor_mat <- cor(sem_data[, !names(sem_data) %in% c("station", "basin")])
+coef_bm_sem <- coef(stab_bm_rich) %>%
+  select(- 9) %>%
+  filter(P.Value < 0.05)
 ```
 
 
 # Results
 
-## Species richness has a destabilizing effect on community  
+## Contradictory responses of species richness on total biomass and biomass stability
 
 ```{r}
 richness_lab <- "Total richness (Log 10)"
@@ -503,8 +493,6 @@ p_stab_div <- sem_data %>%
   geom_point() +
   ylim(lim_log_stab) +
   xlim(lim_log_rich_tot) +
-  #scale_y_log10() +
-  #scale_x_log10() +
   labs(x = richness_lab, y = stab_lab) +
   geom_line(data = stab_div_pred) +
   geom_ribbon(data = stab_div_pred, aes(ymin = conf.low, ymax = conf.high), fill

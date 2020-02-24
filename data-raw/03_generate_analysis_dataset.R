@@ -187,7 +187,8 @@ rm(fish_length, length_analysis)
 
 # get their localisation
 myload(station, dir = mypath("data-raw"))
-station_analysis <- station %>% filter(id %in% op_analysis$station)
+station_analysis <- station %>%
+  filter(id %in% op_analysis$station)
 # get the map
 station_analysis %<>% st_as_sf(coords = c("lon", "lat"), crs = 4326)
 myload(region_polygon, dir = mypath("data"))

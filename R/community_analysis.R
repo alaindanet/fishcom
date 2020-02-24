@@ -31,8 +31,8 @@ summarise_network_over_time <- function (op = NULL, network = NULL,
   com <- op %>%
     dplyr::left_join(network, by = "opcod") %>%
     dplyr::group_by(station) %>%
-    dplyr::rename(mean_troph_level = troph_level_avg,
-      max_troph_level = troph_length) %>%
+    #dplyr::rename(mean_troph_level = troph_level_avg,
+      #max_troph_level = troph_length) %>%
     dplyr::summarise_at(metrics,
       list(cv = ~sd(.) / mean(.), med = median, stab = ~mean(.) / sd(.)))
 
