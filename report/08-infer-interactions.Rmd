@@ -1,0 +1,111 @@
+## Infer species association 
+
+The goal is to infer species associations thanks to `PLNmodels` R package. 
+
+```{r}
+myload(temporal_network_metrics, dir = mypath("data", "classes"))
+temporal_network_metrics_classes <- temporal_network_metrics
+myload(temporal_network_metrics, dir = dest_dir)
+myload(network_analysis, dir = mypath("data", "classes"))
+myload(community_analysis, dir = data_common)
+```
+
+```{r get-fish-network-abun}
+fish_abun <- network_analysis %>%
+  unnest(composition) %>%
+  select(opcod, sp_class, nind) %>%
+  filter(!is.na(opcod))
+```
+
+```{r get-opcod-covariate}
+myload(habitat_pressure, dir = mypath("report"))
+myload(press_metrics, flow_temp_metrics, dir = data_common)
+myload(env_analysis, geo_station, dir = data_common)
+myload(op_analysis, dir = data_common)
+
+# DBO:
+press <- press_metrics %>%
+  filter(category %in% c("DBO")) %>%
+  rename(station = id) %>%
+  spread(category, press)
+# temperature and flow 
+flow_temp <- flow_temp_metrics %>%
+  ungroup() %>%
+  rename(station = id) %>%
+  spread(category, press)
+# River desc:
+env <- env_analysis %>%
+  select(opcod, width_river, avg_depth_station)
+# Alt, d_source
+position <- geo_station %>%
+  select(station, alt, d_source)
+
+# Collect data:
+## Fish operation:
+op <- op_analysis %>%
+  select(opcod, station, year, surface, length_sourced) %>%
+  left_join(env, by = c("opcod"))
+
+## covariate table:
+covariates <- press %>% 
+  left_join(flow_temp, by = c("station", "year")) %>%
+  left_join(position, by = c("station")) %>%
+  left_join(
+    select(op, opcod, station, year, width_river, avg_depth_station), by = c("station", "year")) %>%
+  select(-station, -year) %>%
+  filter(!is.na(opcod))
+
+
+```
+
+```{r}
+
+# Sanitize opcod:
+map_dbl(list(fish_abun, covariates), ~length(unique(.x$opcod))) 
+fish_ok <- fish_abun %>%
+  filter(opcod %in% unique(covariates$opcod)) %>%
+  arrange(opcod)
+cov_mat <- covariates %>%
+  filter(opcod %in% unique(fish_abun$opcod)) %>%
+  arrange(opcod) %>%
+  as.matrix
+rownames(cov_mat) <- cov_mat[, "opcod"] 
+cov_mat  <- cov_mat[, !colnames(cov_mat) %in% "opcod"] 
+
+# remove opcod and build abundance matrix
+mat_abun <- fish_abun %>%
+  spread(sp_class, nind)%>%
+  #select(-opcod) %>%
+  as.matrix
+rownames(mat_abun) <- mat_abun[, "opcod"] 
+mat_abun <- mat_abun[, !colnames(mat_abun) %in% "opcod"]
+
+```
+
+```{r}
+library(PLNmodels)
+fish <- prepare_data(
+  counts = mat_abun, 
+  covariates = cov_mat)
+network_models <- PLNnetwork(Abundance ~ 1 + offset(log(Offset)), data = fish)
+plot(network_models, "diagnostic")
+plot(network_models)
+network_models
+model_StARS <- getBestModel(network_models, "StARS")
+
+my_graph <- plot(model_StARS, plot = FALSE)
+plot(model_StARS)
+plot(model_StARS, type = "support", output = "corrplot")
+```
+
+
+```{r}
+data(trichoptera)
+trichoptera <- prepare_data(trichoptera$Abundance, trichoptera$Covariate)
+network_models <- PLNnetwork(Abundance ~ 1 + offset(log(Offset)), data = trichoptera)
+plot(network_models)
+model_StARS <- getBestModel(network_models, "StARS")
+my_graph <- plot(model_StARS, plot = FALSE)
+plot(model_StARS)
+```
+
