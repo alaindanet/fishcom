@@ -92,7 +92,7 @@ myload(op_analysis, dir = mypath("data"))
 
 op_analysis_wo_holes <- get_op_wo_holes(.op = op_analysis)
   
-  mysave(op_analysis_wo_holes, dir = mypath("data"), overwrite = TRUE)
+mysave(op_analysis_wo_holes, dir = mypath("data"), overwrite = TRUE)
 
 #--------------------
 # Overlapping station
