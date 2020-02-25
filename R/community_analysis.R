@@ -232,7 +232,8 @@ compute_community_temporal_analysis <- function(.op = NULL, dest_dir = NULL) {
   if(!exists("network_metrics")) {
     myload(network_metrics, dir = dest_dir)
   }
-  output[["tps_net"]] <- summarise_network_over_time(op = .op, network = network_metrics)
+  output[["tps_net"]] <- summarise_network_over_time(op = .op, network =
+    network_metrics, metrics = c("connectance", "w_trph_lvl_avg"))
 
   cat("Network done (1/4)\n")
 

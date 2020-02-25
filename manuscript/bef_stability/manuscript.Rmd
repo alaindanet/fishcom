@@ -184,11 +184,15 @@ library(nlme)
 library(piecewiseSEM)
 
 myload(nmds, habitat_pressure, dir = mypath("report"))
-myload(op_analysis, dir = mypath("data"))
+myload(op_analysis, op_analysis_wo_holes, dir = mypath("data"))
+myload(biomass_ts_sax, dir = mypath("data"))
+op_analysis_bbb <- filter(op_analysis, station %in%
+  biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
+op_analysis_wo_holes_bbb <- filter(op_analysis_wo_holes, station %in%
+  biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
 
 # Compute stability, network metrics, etc with ;he new datasets
-com_data <- compute_community_temporal_analysis(.op = op_analysis, dest_dir = mypath("data", "classes"))
-
+com_data <- compute_community_temporal_analysis(.op = op_analysis_bbb, dest_dir = mypath("data", "classes"))
 # Compute sem dataset 
 sem_data <- compute_sem_dataset(
   com = com_data[["tps_com"]],
@@ -466,7 +470,7 @@ coef_stab_sem <- coef(stab_sem_rich) %>%
   select(- 9) %>%
   filter(P.Value < 0.05)
 
-coef_bm_sem <- coef(stab_bm_rich) %>%
+coef_bm_sem <- coef(bm_sem_rich) %>%
   select(- 9) %>%
   filter(P.Value < 0.05)
 ```

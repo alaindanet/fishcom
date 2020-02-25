@@ -55,10 +55,9 @@ compute_sem_dataset <- function (
 
   # Network -----------------------------------------------------------------
   net_sem <- network %>%
-    dplyr::select(station, connectance_med, connectance_corrected_med, w_trph_lvl_avg_med) %>%
+    dplyr::select(station, connectance_med, w_trph_lvl_avg_med) %>%
     dplyr::rename(
       ct = connectance_med,
-      c_c = connectance_corrected_med,
       t_lvl = w_trph_lvl_avg_med)
 
   # Merge and return --------------------------------------------------------
@@ -209,12 +208,12 @@ compute_prod_sem <- function(.data, random_effect = "~ 1 | basin") {
 }
 compute_prod_sem_rich <- function(.data, random_effect = "~ 1 | basin") {
   corsem <- piecewiseSEM::psem(
-    nlme::lme(log_rich_tot ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
-    #nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
-    nlme::lme(ct ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
-    nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
-    #nlme::lme(beta_bin_c ~ RC1 + RC2 + RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
-    nlme::lme(log_bm ~ log_rich_tot + ct + t_lvl + RC1 + RC2 + RC3 + RC4 + RC5,
+    nlme::lme(log_rich_tot ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
+    #nlme::lme(piel ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+    nlme::lme(ct ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    nlme::lme(t_lvl ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    #nlme::lme(beta_bin_c ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+    nlme::lme(log_bm ~ log_rich_tot + ct + t_lvl + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,
       random = ~ 1 | basin, data = .data)
   )
   output <- summary(corsem, .progressBar = F)
@@ -286,7 +285,6 @@ compute_stab_sem_indirect <- function (sem = NULL, type = "stab", p_val_thl = NU
   ## Get indirect com effect on stab +
   #temp indirect effect of rich, evt on stab through direct effect on cv_sp and
   #sync
-
   variable <- c(evt_var, com_var, rich_var)
   indir_var_stab <- purrr::map_dbl(variable, function (x, fit, stab_comp_est) {
 
@@ -297,31 +295,40 @@ compute_stab_sem_indirect <- function (sem = NULL, type = "stab", p_val_thl = NU
       indir_sync <- ifelse(length(indir_sync) == 0, 0, indir_sync)
       indir_cv_sp <- ifelse(length(indir_cv_sp) == 0, 0, indir_cv_sp)
     }
-      
+
     output <- indir_sync + indir_cv_sp
     return(output)
     }, fit = params, stab_comp_est = sync_cv_sp_on_stab)
 
 
   #B. compute indirect effects
+  output <- vector(mode = "list", length = 4)
+  names(output) <- c("richness", "community", "environment", "sync_cv_sp") 
+  output$community <- indir_var_stab[com_var]
 
   #1. Richness
   ## Effect of richness on com
-  rich_com_effect <- purrr::map_dbl(com_var, function (x, fit, rich_var) {
+  rich_com_effect <- purrr::map(com_var, function (x, fit, rich_var) {
     fit[fit$resp == x & fit$pred == rich_var, ]$std_est
     }, fit = params, rich_var = rich_var)
 
   rich_com_effect <- purrr::map_dbl(rich_com_effect, ~ifelse(length(.x) == 0, 0, .x))
 
-  ## Total effect of richness on stability  
+  ## Total effect of richness on stability
   indir_rich <- 
      rich_com_effect["ct"] * indir_var_stab["ct"] +
      rich_com_effect["t_lvl"] * indir_var_stab["t_lvl"] +
      indir_var_stab[rich_var]
   names(indir_rich) <- rich_var
+  output$richness <- c(indir_rich,
+    rich_com_effect["ct"] * indir_var_stab["ct"],
+    rich_com_effect["t_lvl"] * indir_var_stab["t_lvl"],
+    indir_var_stab[rich_var]
+  )
+  names(output$richness) <- c("total", "ct", "t_lvl", "rich")
 
    #2. Environment
-   indir_evt <- purrr::map_dbl(evt_var, function (x, fit, indir_rich, indir_var_stab) {
+   indir_evt <- purrr::map(evt_var, function (x, fit, indir_rich, indir_var_stab) {
      tmp <- vector(mode = "list", length = 4)
 
      # effect through richness:
@@ -340,17 +347,16 @@ compute_stab_sem_indirect <- function (sem = NULL, type = "stab", p_val_thl = NU
      tmp[[4]] <- indir_var_stab[x]
 
      tmp <- map_dbl(tmp, ~ifelse(length(.x) == 0, 0, .x))
+     tmp <- c(tmp, sum(tmp))
+     names(tmp) <- c("richness", "ct", "t_lvl", "sync_cv_sp", "total")
 
-     return(sum(tmp))
+     return(tmp)
     
     }, fit = params, indir_rich = indir_rich, indir_var_stab = indir_var_stab)
+  output$environment <- indir_evt
 
-   #3. Community
-   indir_com <- indir_var_stab[names(indir_var_stab) %in% com_var]
-
-   #C. output
-   output <- c(indir_evt, indir_rich, indir_com, sync_cv_sp_on_stab)
-   return(output)
+  #C. output
+  return(output)
 }
 
 #' Compute total effects bm sem 
@@ -387,6 +393,9 @@ compute_bm_sem_indirect <- function (sem = NULL, p_val_thl = NULL) {
   names(com_var) <- com_var
 
   #B. compute indirect effects
+  output <- vector(mode = "list", length = 2)
+  names(output) <- c("richness", "environment") 
+  #output$community <- indir_var_stab[com_var]
 
   #1. Richness
 
@@ -410,37 +419,49 @@ compute_bm_sem_indirect <- function (sem = NULL, p_val_thl = NULL) {
      rich_com_effect["t_lvl"] * com_bm_effect["t_lvl"] +
      params[params$resp == bm_var & params$pred == rich_var, ]$std_est
   names(indir_rich) <- rich_var
+  output$richness <- c(indir_rich,
+    rich_com_effect["ct"] * com_bm_effect["ct"],
+    rich_com_effect["t_lvl"] * com_bm_effect["t_lvl"],
+    params[params$resp == bm_var & params$pred == rich_var, ]$std_est
+  )
+  names(output$richness) <- c("total", "ct", "t_lvl", "rich")
 
-   #2. Environment
-   indir_evt <- purrr::map_dbl(evt_var, function (x, fit, indir_rich, com_bm_effect) {
-     tmp <- vector(mode = "list", length = 4)
+  #2. Environment
 
-     # effect through richness:
-     tmp[[1]] <-
-       fit[fit$resp == rich_var & fit$pred == x, ]$std_est *
-       indir_rich
-     # effect through connectance
-     tmp[[2]] <-
-       fit[fit$resp == "ct" & fit$pred == x, ]$std_est *
-       com_bm_effect["ct"]
-     # effect through trophic level
-     tmp[[3]] <-
-       fit[fit$resp == "t_lvl" & fit$pred == x, ]$std_est *
-       com_bm_effect["t_lvl"]
-     # direct effect on bm
-     tmp[[4]] <- fit[fit$resp == "log_bm" & fit$pred == x, ]$std_est 
+  extract_evt_effect <- function (x, fit, indir_rich, com_bm_effect) {
+    tmp <- vector(mode = "list", length = 4)
 
-     tmp <- map_dbl(tmp, ~ifelse(length(.x) == 0, 0, .x))
+    # effect through richness:
+    tmp[[1]] <-
+      fit[fit$resp == rich_var & fit$pred == x, ]$std_est *
+      indir_rich
+    # effect through connectance
+    tmp[[2]] <-
+      fit[fit$resp == "ct" & fit$pred == x, ]$std_est *
+      com_bm_effect["ct"]
+    # effect through trophic level
+    tmp[[3]] <-
+      fit[fit$resp == "t_lvl" & fit$pred == x, ]$std_est *
+      com_bm_effect["t_lvl"]
+    # direct effect on bm
+    tmp[[4]] <- fit[fit$resp == "log_bm" & fit$pred == x, ]$std_est 
 
-     return(sum(tmp))
-    
-    }, fit = params, indir_rich = indir_rich, com_bm_effect = com_bm_effect)
+    tmp <- map_dbl(tmp, ~ifelse(length(.x) == 0, 0, .x))
+    tmp <- c(tmp, sum(tmp))
+    names(tmp) <- c("richness", "ct", "t_lvl", "bm", "total")
+
+    return(tmp)
+
+  }
+
+  #debug(extract_evt_effect)
+  indir_evt <- purrr::map(evt_var, extract_evt_effect, fit = params, indir_rich = indir_rich, com_bm_effect = com_bm_effect)
+  output$environment <- indir_evt
 
    #3. Community
    indir_com <- com_bm_effect 
 
    #C. output
-   output <- c(indir_evt, indir_rich, indir_com)
    return(output)
 }
 

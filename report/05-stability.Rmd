@@ -884,7 +884,6 @@ myload(community_analysis, dir = data_common)
 global_med_occ <- occurence_sp_st %>%
   dplyr::summarise_if(is.double, list(~median(., na.rm = TRUE))) %>%
   gather(sp, med_occ, everything())
-
 ```
 
 Removing the peripherical species nor at the global scale neither at the station
@@ -897,8 +896,6 @@ com_wo_per  <- map(threshold_occ,
   ~rm_sp_from_com(com = community_analysis, sp_to_rm =
     global_med_occ[global_med_occ$med_occ < .x,]$sp))
 names(com_wo_per) <- threshold_occ
-
-
 
 res_sync_per <- map2_dfr(com_wo_per, names(com_wo_per), function (.data, .names) {
 
@@ -1610,32 +1607,43 @@ sem <- compute_stab_sem_rich_beta(.data = sem_data,
 ggpiecewisesem(sem)
 ```
 
+#### Sensivity to dataset
 
 ```{r sensitivity, fig.dim = c(10, 7), fig.cap = "Sensivity analysis with different dataset"}
 myload(op_analysis, op_analysis_wo_holes, op_analysis_ov, dir = mypath("data"))
 myload(biomass_ts_sax, dir = mypath("data"))
 op_analysis_bbb <- filter(op_analysis, station %in%
   biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
-
+op_analysis_cba <- filter(op_analysis, station %in%
+  biomass_ts_sax[biomass_ts_sax$sax == "cba",]$station)
+op_analysis_wo_holes_bbb <- filter(op_analysis_wo_holes, station %in%
+  biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
 #library(future)
 #plan(multiprocess)
-sem_sensivity_data <- list(full = op_analysis, wo_holes = op_analysis_wo_holes, bbb = op_analysis_bbb)
-sem_l_data <- furrr::future_map(sem_sensivity_data,
+#undebug(build_dataset_get_sem_coefficient)
+#undebug(compute_community_temporal_analysis)
+#undebug(summarise_network_over_time)
+myload(network_metrics, dir = mypath("data", "classes"))
+sem_sensivity_data <- list(full = op_analysis, cba = op_analysis_cba, bbb = op_analysis_bbb)
+sem_stab_l_data <- furrr::future_map(sem_sensivity_data,
   ~build_dataset_get_sem_coefficient(
     .op = .x,
-    sem_fun = compute_stab_sem_rich_beta,
-    dest_dir = mypath("data", "species"))
+    sem_fun = compute_stab_sem_rich,
+    dest_dir = mypath("data", "classes"))
 )
 
-sem_results <- map(sem_l_data,
+# Nb station by dataset 
+nb_station <- map_int(sem_sensivity_data, ~length(unique(.x$station))) 
+ 
+sem_stab_results <- map(sem_stab_l_data,
   ~.x$coefficients[-ncol(.x$coefficients)]) %>%
   enframe() %>%
   rename(dataset = name) %>%
   unnest(value)
 
 # Reformat
-colnames(sem_results) <- str_to_lower(colnames(sem_results))
-sem_results %>%
+colnames(sem_stab_results) <- str_to_lower(colnames(sem_stab_results))
+sem_stab_results %>%
   mutate(r_p = str_c(response, predictor, sep = "~")) %>%
   ggplot(aes(x = r_p, y = std.estimate)) +
   geom_point(aes(color = dataset)) +
@@ -1643,10 +1651,40 @@ sem_results %>%
 ```
 
 ```{r, fig.dim = c(10, 5)}
-p_sensitivity_stab_sem <- map(sem_l_data, ggpiecewisesem)
+p_sensitivity_stab_sem <- map(sem_stab_l_data, ggpiecewisesem)
 p_sensitivity_stab_sem %<>% map2(., names(sem_sensivity_data),  ~ .x + labs(title = .y))
 plot_grid(plotlist = p_sensitivity_stab_sem)
 ```
+
+```{r}
+sem_bm_l_data <- furrr::future_map(sem_sensivity_data,
+  ~build_dataset_get_sem_coefficient(
+    .op = .x,
+    sem_fun = compute_prod_sem_rich,
+    dest_dir = mypath("data", "classes"))
+)
+sem_bm_results <- map(sem_bm_l_data,
+  ~.x$coefficients[-ncol(.x$coefficients)]) %>%
+  enframe() %>%
+  rename(dataset = name) %>%
+  unnest(value)
+
+# Reformat
+colnames(sem_bm_results) <- str_to_lower(colnames(sem_bm_results))
+sem_bm_results %>%
+  mutate(r_p = str_c(response, predictor, sep = "~")) %>%
+  ggplot(aes(x = r_p, y = std.estimate)) +
+  geom_point(aes(color = dataset)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
+p_sensitivity_bm_sem <- map(sem_bm_l_data, ggpiecewisesem)
+p_sensitivity_bm_sem %<>% map2(., names(sem_sensivity_data),  ~ .x + labs(title = .y))
+plot_grid(plotlist = p_sensitivity_bm_sem)
+```
+
+
 ```{r}
 p_op_analysis_protocol_bbb <- op_analysis_bbb %>%
   group_by(station) %>%
@@ -1701,6 +1739,18 @@ sem_results %>%
   geom_point(aes(color = dataset)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
+
+```{r sampling-span-stab}
+span_sampling <- op_analysis %>%
+  group_by(station) %>%
+  summarise(span = max(year) - min(year) + 1)
+
+sem_data %>%
+  left_join(span_sampling, by = "station") %>%
+  ggplot(aes(x = span, y = biomass_stab)) +
+  geom_point()
+```
+
 
 #### CV by basin
 
