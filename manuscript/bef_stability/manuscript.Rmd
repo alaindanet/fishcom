@@ -192,7 +192,7 @@ op_analysis_wo_holes_bbb <- filter(op_analysis_wo_holes, station %in%
   biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
 
 # Compute stability, network metrics, etc with ;he new datasets
-com_data <- compute_community_temporal_analysis(.op = op_analysis_bbb, dest_dir = mypath("data", "classes"))
+com_data <- compute_community_temporal_analysis(.op = op_analysis_bbb, dest_dir = mypath("data", "species"))
 # Compute sem dataset 
 sem_data <- compute_sem_dataset(
   com = com_data[["tps_com"]],
@@ -451,11 +451,46 @@ bm_sem_rich <- compute_prod_sem_rich(.data = sem_data,
 
 library(ggraph)
 p_stab_sem_rich <- ggpiecewisesem(stab_sem_rich)
+p_bm_sem_rich <- ggpiecewisesem(bm_sem_rich)
 
 library(DiagrammeR)
-graph <- build_diag_from_sem(stab_sem_rich, p_val_thd = 0.05)
 
-p_bm_sem_rich <- ggpiecewisesem(bm_sem_rich)
+p_format <- "png"
+p_width <- 500
+p_height <- 500
+
+stab_sem_path <- mypath("manuscript", "bef_stability",
+  paste0("stab_sem.", p_format))
+stab_bm_path <- mypath("manuscript", "bef_stability",
+  paste0("bm_sem.", p_format))
+
+graph_stab_sem <- build_diag_from_sem(stab_sem_rich, p_val_thd = 0.05)
+render_graph(graph_stab_sem)
+export_graph(graph = graph_stab_sem, file_type = p_format,
+  file_name = stab_sem_path,
+  height = p_height,
+  width = p_width
+)
+#source(mypath("R", "plot_methods.R")) 
+graph_bm_sem <- build_diag_from_sem(bm_sem_rich, p_val_thd = 0.05)
+render_graph(graph_bm_sem)
+export_graph(graph = graph_bm_sem, file_type = p_format,
+  file_name = stab_bm_path,
+  #file_name = "stab_sem.svg",
+  height = p_height,
+  width = p_width 
+)
+
+library(magick)
+img_stab_sem <- mypath("manuscript", "bef_stability", "stab_sem.svg") %>%
+  image_read_svg(width = 1300, height = 1000)
+p_stab_sem_rich <- ggdraw() +
+  draw_image(img_stab_sem)
+img_bm_sem <- mypath("manuscript", "bef_stability", "bm_sem.svg") %>%
+  image_read_svg(width = 1000, height = 700)
+p_bm_sem_rich <- ggdraw() +
+  draw_image(img_bm_sem)
+
 ```
 
 
@@ -644,6 +679,7 @@ p_l_rot <- map(axis_pair,
 #https://tex.stackexchange.com/questions/20496/drawing-different-tikz-shapes-parameterized-by-data-from-a-file?rq=1
 #https://tex.stackexchange.com/questions/83888/how-to-plot-data-from-a-csv-file-using-tikz-and-csvsimple
 to_plot <- c(1, 6, 7)
+
 plot_grid(
   plot_grid(plotlist = map(p_l_rot[to_plot], ~.x$rotated),
       ncol = length(to_plot), labels = LETTERS[1]),

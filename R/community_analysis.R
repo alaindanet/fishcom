@@ -21,23 +21,26 @@ rm_sp_from_com <- function (com = NULL, sp_to_rm = NULL) {
 #' @param network data.frame containing opcod and network metrics 
 #'
 #'
-summarise_network_over_time <- function (op = NULL, network = NULL,
+summarise_network_over_time <- function (op = NULL, class_network = NULL,
+  species_network = NULL,
   metrics = c("nestedness", "connectance", "connectance_corrected", "nbnode",
   "mean_troph_level", "mean_troph_level_corrected", "max_troph_level", "modularity", "modularity_corrected", "w_trph_lvl_avg")) {
 
   op %<>%
     dplyr::select(opcod, station, year)
 
+  # Metrics are computed with species network
   com <- op %>%
-    dplyr::left_join(network, by = "opcod") %>%
+    dplyr::left_join(species_network, by = "opcod") %>%
     dplyr::group_by(station) %>%
     #dplyr::rename(mean_troph_level = troph_level_avg,
       #max_troph_level = troph_length) %>%
     dplyr::summarise_at(metrics,
       list(cv = ~sd(.) / mean(.), med = median, stab = ~mean(.) / sd(.)))
 
-  # Get total richness, biomass_med,  by station and trophic group 
-  composition <- network %>%
+    ##  Trophic group metrics are computed with class network
+    # Get total richness, biomass_med,  by station and trophic group 
+  composition <- class_network %>%
     dplyr::left_join(op, by = "opcod") %>%
     tidyr::unnest(composition) %>%
     mutate(species = str_extract_all(sp_class, "[A-Z]{3}"))
@@ -47,7 +50,7 @@ summarise_network_over_time <- function (op = NULL, network = NULL,
     dplyr::summarise(richness_tot = length(unique(species)))
 
   ## Biomass
-  troph_group <- network %>%
+  troph_group <- class_network %>%
     dplyr::left_join(op, by = "opcod") %>%
     dplyr::select(station, opcod, troph_group) %>%
     unnest(troph_group) %>%
@@ -229,11 +232,16 @@ compute_community_temporal_analysis <- function(.op = NULL, dest_dir = NULL) {
   names(output) <- c("tps_net", "tps_com", "tps_bm_troph", "sync")
 
   # Network ---------------------------------------------------------- 
-  if(!exists("network_metrics")) {
-    myload(network_metrics, dir = dest_dir)
-  }
-  output[["tps_net"]] <- summarise_network_over_time(op = .op, network =
-    network_metrics, metrics = c("connectance", "w_trph_lvl_avg"))
+  myload(network_metrics, dir = mypath("data", "classes"))
+  class_network_metrics <- network_metrics
+  myload(network_metrics, dir = mypath("data", "species"))
+  species_network_metrics <- network_metrics
+  rm(network_metrics)
+
+  output[["tps_net"]] <- summarise_network_over_time(op = .op,
+    species_network = species_network_metrics,
+    class_network = class_network_metrics,
+    metrics = c("connectance", "w_trph_lvl_avg"))
 
   cat("Network done (1/4)\n")
 
@@ -264,12 +272,13 @@ compute_community_temporal_analysis <- function(.op = NULL, dest_dir = NULL) {
   cat("Community description done (3/4)\n")
 
   # Biomass by trophic group -----------------------------------------
-  if(!exists("network_analysis")) {
-    myload(network_analysis, dir = dest_dir)
-  }
+  myload(network_analysis, dir = mypath("data", "classes"))
+  class_network_analysis <- network_analysis
+  rm(network_analysis)
+
   output[["tps_bm_troph"]] <- summarise_bm_troph_over_time(
     op = .op,
-    network = network_analysis
+    network = class_network_analysis
   )
 
   cat("Biomass by trophic group done (4/4)\n")

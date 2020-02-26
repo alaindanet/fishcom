@@ -116,11 +116,11 @@ trophic_level %<>%
 ## Assign to each network its trophic group:
 source('../analysis/misc/parallel_setup.R')
 
-#if (!is.null(options("network.type")) & options("network.type") == "species") {
-  #var_chr <- "species"
-#} else {
+if (!is.null(options("network.type")) & options("network.type") == "species") {
+  var_chr <- "species"
+} else {
   var_chr <- "sp_class"
-#}
+}
 network_analysis %<>%
   mutate(
   composition = furrr::future_map(composition, function (compo, troph_group, var2join){

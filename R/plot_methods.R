@@ -615,6 +615,33 @@ build_diag_from_sem <- function (fit = NULL, p_val_thd = NULL) {
   est <- fit$coefficients
   names(est)[9] <- "stars"
 
+  rsq <- fit$R2
+
+  # Replace names
+  node_name_replacement <- c(
+    "log_RC1" = "Avg \n river size",
+    "log_RC2" = "Altitude \n Avg temperature",
+    "log_RC3" = "CV flow \n & \n Avg enrichment",
+    "RC4" = "CV \n river size",
+    "RC5" = "CV \n enrichment",
+    "ct" = "Connectance",
+    "t_lvl" = "Avg \n trophic level",
+    "log_cv_sp" = "CVsp",
+    "log_sync" = "Synchrony",
+    "log_stab" = "Biomass \n stability",
+    "log_rich_tot" = "Species \n richness",
+    "log_bm" = "Total \n biomass"
+  )
+
+  # Put Rsquared:
+  var_with_rsq <- c("ct", "t_lvl", "log_cv_sp", "log_rich_tot",
+    "log_sync", "log_rich_tot", "log_stab", "log_bm") 
+  node_name_replacement[names(node_name_replacement) %in% var_with_rsq] <-
+    map_chr(names(node_name_replacement)[names(node_name_replacement) %in% var_with_rsq],
+      function(x, rsq, node_name) {
+	paste0(node_name[x], "\n", "Rsq = ", rsq[rsq$Response == x,]$Marginal)
+      }, rsq = rsq, node_name = node_name_replacement)
+
   # Get node
   node_set <- est %>%
     dplyr::select(Response, Predictor) %>%
@@ -636,21 +663,31 @@ build_diag_from_sem <- function (fit = NULL, p_val_thd = NULL) {
 	  type <- "com"
 	} else if (x == "log_stab") {
 	  type <- "stab" 
+	} else if (x == "log_bm") {
+	  type <- "bm" 
 	}
 	return(type)
 		       })
     )
+  # Set node shape:
+  evt_node <- str_match(node_set$nodes, "RC")[, 1]
+  node_shape <- ifelse(!is.na(evt_node), "circle", "box")
 
   node_df <- create_node_df(
     n = nrow(node_set),
-    label = node_set$nodes,
-    shape = c("rectangle"),
-    type = node_set$type
+    label = str_replace_all(node_set$nodes, node_name_replacement),
+    shape = node_shape,
+    style = "solid",
+    color = "black", 
+    fontcolor = "black", 
+    type = node_set$type,
+    width = 1,
+    height = 1
   )
   #https://rich-iannone.github.io/DiagrammeR/graph_creation.html
 
   replace_edge <- as.character(node_df$id) 
-  names(replace_edge) <- node_df$label 
+  names(replace_edge) <- node_set$nodes
 
   # Get path
   all_path <- est %>%
@@ -668,10 +705,11 @@ build_diag_from_sem <- function (fit = NULL, p_val_thd = NULL) {
   edge_df <- create_edge_df(
     from = all_path$edge_from, 
     to = all_path$edge_to, 
-    width = all_path$rel,  
+    penwidth = abs(all_path$rel)*5,
     color = ifelse(all_path$rel < 0, "red", "green"),  
     rel = as.character(all_path$rel),
-    label = as.character(all_path$rel)
+    label = as.character(all_path$rel),
+    fontsize = 12 
   )
 
   graph <- DiagrammeR::create_graph(
