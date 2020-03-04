@@ -25,17 +25,60 @@ library(tidygraph)
 library(ggraph)
 library(lubridate)
 #devtools::load_all()
-theme_set(theme_alain())
-
 mypath <- rprojroot::find_package_root_file
 data_common <- mypath("data")
 dest_dir <- mypath("data", "species")
+
+source(mypath("R", "misc.R"))
+source(mypath("R", "plot_methods.R"))
+source(mypath("R", "geo_methods.R"))
+source(mypath("R", "press_methods.R"))
+source(mypath("R", "synchrony.R"))
+source(mypath("R", "community_methods.R"))
+source(mypath("R", "community_analysis.R"))
+source(mypath("R", "statistical_analysis.R"))
+theme_set(theme_alain())
+
+
 ```
 
 ```{r load data}
 myload(metaweb_analysis, op_analysis, temporal_community_metrics, diet_shift,
   dir = data_common)
 myload(network_analysis, temporal_network_metrics, dir = dest_dir)
+```
+
+```{r}
+myload(nmds, habitat_pressure, dir = mypath("report"))
+st_basin <- get_basin_station(sf_obj = FALSE)
+myload(op_analysis, op_analysis_wo_holes, dir = mypath("data"))
+myload(biomass_ts_sax, dir = mypath("data"))
+op_analysis_bbb <- filter(op_analysis, station %in%
+  biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
+op_analysis_wo_holes_bbb <- filter(op_analysis_wo_holes, station %in%
+  biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
+
+# Compute stability, network metrics, etc with ;he new datasets
+com_data <- compute_community_temporal_analysis(.op = op_analysis_bbb)
+# Compute sem dataset 
+sem_data <- compute_sem_dataset(
+  com = com_data[["tps_com"]],
+  network = com_data[["tps_net"]],
+  hab_press = habitat_pressure,
+  sync = com_data[["sync"]],
+  nmds = NULL,
+  basin = st_basin
+  )
+
+stab_div_troph <- com_data$tps_bm_troph %>%
+  filter(troph_group != 1) %>%
+  mutate(troph_group = as.factor(troph_group),
+    log_rich = log10(richness_med),
+    log_rich_tot = log10(richness_tot),
+    log_bm = log10(biomass_med),
+    log_stab = log10(biomass_stab)) %>%
+  dplyr::select(station, troph_group, biomass_stab, richness_med, richness_tot, log_rich, log_rich_tot, log_stab, log_bm, biomass_med, richness_tot) %>%
+  dplyr::left_join(st_basin, by = "station")
 ```
 
 ## Ontogenic shift data
@@ -58,7 +101,7 @@ print(
 ## Temporal network 
 
 ```{r}
-meta <- metaweb_analysis; rm(metaweb_analysis)
+meta <- metaweb_analysis
 dead_material <- c("det", "biof")
 ```
 
@@ -86,6 +129,7 @@ save_plot("~/Documents/thesis/talks/fishcom_fig/temporal_colors.pdf",
   p2, base_height = 8, base_width = 12, bg = "transparent")
 ```
 
+
 ```{r station_loc}
 myload(station_analysis, dir = mypath("data"))
 myload(region_polygon, dir = mypath("data"))
@@ -106,14 +150,66 @@ save_plot("~/Documents/thesis/talks/fishcom_fig/fish_station.pdf", map_station, 
 ```{r species}
 species <- read_delim("../bonnafe_work/data/raw_data/Code_sp.txt", delim = "\t")
 filter(diet_shift, species %in% c("VAI", "TRF", "CHA")) %>%
-  select(species, species_name)
+  dplyr::select(species, species_name)
 # CHA: Chabot commun
 # TRF: Truite commune
 # VAI: Vairon
 ```
 
 
-## Stability & network structure
+# Stability
+
+## Species richness
+
+```{r}
+richness_lab <- "Total richness (Log 10)"
+stab_lab <- "Biomass stability (Log 10)"
+bm_lab <- "Total biomass (Log 10)"
+```
+
+
+```{r p-s-div}
+lim_log_stab <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_stab")
+lim_log_rich_tot <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_rich_tot")
+# Plot left  
+
+p_stab_div <- sem_data %>%
+  ggplot(aes(x = log_rich_tot, y = log_stab))+
+  geom_point() +
+  ylim(lim_log_stab) +
+  xlim(lim_log_rich_tot) +
+  labs(x = richness_lab, y = stab_lab) +
+  geom_line(data = stab_div_pred) +
+  geom_ribbon(data = stab_div_pred, aes(ymin = conf.low, ymax = conf.high), fill
+  = "grey20", alpha = .2) +
+  annotate("text", x = 1.0, y = .8, label = make_label_rsq(rsq = stab_div_sum),
+    parse = TRUE)
+
+# Right plot
+p_stab_div_troph <- stab_div_troph %>%
+  ggplot(aes(x = log_rich_tot, y = log_stab, color = troph_group)) +
+  geom_point() +
+  ggplot2::scale_color_manual(
+    labels = troph_group_labeller(),
+    values = c("blue", "green", "red"),
+    name = "Trophic group"
+  ) +
+  ylim(lim_log_stab) +
+  xlim(lim_log_rich_tot) +
+  geom_line(data = stab_troph_pred) +
+  geom_ribbon(data = stab_troph_pred,
+    aes(ymin = conf.low, ymax = conf.high, color = NULL, group = troph_group),
+    alpha = .2) +
+  annotate("text", x = 0.8, y = .8, label = make_label_rsq(rsq = stab_troph_sum),
+    parse = TRUE) +
+  #scale_x_log10() + scale_y_log10() +
+  labs(x = richness_lab, y = stab_lab)
+
+p_stab <- plot_grid(p_stab_div, p_stab_div_troph,
+  ncol = 2, rel_widths = c(.4, .6),
+  labels = c("A", "B") 
+)
+```
 
 ```{r}
 myload(temporal_network_metrics, dir = mypath("data", "classes") )
@@ -168,18 +264,6 @@ net_troph_group <- temporal_network_metrics_classes %>%
   filter(!is.na(troph_group), troph_group != 1) %>%
   mutate(troph_group = as.factor(troph_group))
 
-mod <- lm(biomass_stab ~ troph_group*richness_avg, net_troph_group)
-car::vif(mod)
-
-coefs <- mod$coefficients
-# Effect of troph group
-coefs["troph_group3"]/coefs["(Intercept)"]
-# Effect of richness in low troph group
-coefs["richness_avg"]/coefs["(Intercept)"]
-coefs["richness_avg"]*10/(coefs["(Intercept)"] + coefs["richness_avg"])
-# Effect of richness in high troph group
-(coefs["richness_avg"] + coefs["troph_group3:richness_avg"])/(coefs["(Intercept)"] + coefs["troph_group3"])
-(coefs["richness_avg"] + coefs["troph_group3:richness_avg"])*10/(coefs["(Intercept)"] + coefs["richness_avg"]+ coefs["troph_group3"])
 
 troph_group_label <- c(
   "Low trophic level"    = "1",

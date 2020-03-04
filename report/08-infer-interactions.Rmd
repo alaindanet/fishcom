@@ -68,18 +68,24 @@ fish_ok <- fish_abun %>%
 cov_mat <- covariates %>%
   filter(opcod %in% unique(fish_abun$opcod)) %>%
   arrange(opcod) %>%
-  as.matrix
+  as.data.frame
+  
 rownames(cov_mat) <- cov_mat[, "opcod"] 
 cov_mat  <- cov_mat[, !colnames(cov_mat) %in% "opcod"] 
 
 # remove opcod and build abundance matrix
 mat_abun <- fish_abun %>%
-  spread(sp_class, nind)%>%
-  #select(-opcod) %>%
-  as.matrix
+  spread(sp_class, nind) %>%
+  as.data.frame
+
 rownames(mat_abun) <- mat_abun[, "opcod"] 
 mat_abun <- mat_abun[, !colnames(mat_abun) %in% "opcod"]
 
+save_dir <- mypath("report", "stephane")
+if (!dir.exists(save_dir)) {
+  dir.create(save_dir)
+}
+mysave(mat_abun, cov_mat, dir = save_dir)
 ```
 
 ```{r}

@@ -78,7 +78,7 @@ compute_sem_dataset <- function (
       log_bm = log10(prod),
       log_RC1 = log10(RC1 + abs(min(RC1)) + 1),
       log_RC2 = log10(RC2 + abs(min(RC2)) + 1),
-      log_RC3 = log10(RC3 + abs(min(RC3)) + 1)
+      log_RC3 = log10((RC3)*(-1) + abs(min((RC3)*(-1))) + 1)
     )
   return(dsem)
 

@@ -49,6 +49,9 @@ theme_set(theme_alain())
 
 # Introduction 
 
+Cf blutghen for CVsp as portfolio and statistical averaging of species.
+Synchrony as insurance hypothesis facing environmental variations.
+
 - Research questions:
   - What are the effects of the community structure on total biomass and stability ? 
     1. What are the effects of species richness on total biomass and stability ?
@@ -123,17 +126,28 @@ theme_set(theme_alain())
 ## Community
 
 ```{r}
-myload(temporal_community_metrics, dir = mypath("data"))
-myload(synchrony, dir = mypath("data"))
+myload(nmds, habitat_pressure, dir = mypath("report"))
 st_basin <- get_basin_station(sf_obj = FALSE)
+myload(op_analysis, op_analysis_wo_holes, dir = mypath("data"))
+myload(biomass_ts_sax, dir = mypath("data"))
+op_analysis_bbb <- filter(op_analysis, station %in%
+  biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
+op_analysis_wo_holes_bbb <- filter(op_analysis_wo_holes, station %in%
+  biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
 
-myload(temporal_network_metrics, dir = mypath("data", "classes"))
-temporal_network_metrics_classes <- temporal_network_metrics
-myload(temporal_network_metrics, dir = mypath("data", "species"))
+# Compute stability, network metrics, etc with ;he new datasets
+com_data <- compute_community_temporal_analysis(.op = op_analysis_bbb)
+# Compute sem dataset 
+sem_data <- compute_sem_dataset(
+  com = com_data[["tps_com"]],
+  network = com_data[["tps_net"]],
+  hab_press = habitat_pressure,
+  sync = com_data[["sync"]],
+  nmds = NULL,
+  basin = st_basin
+  )
 
-stab_div_troph <- temporal_network_metrics_classes %>%
-  dplyr::select(station, troph_group) %>%
-  unnest(troph_group) %>%
+stab_div_troph <- com_data$tps_bm_troph %>%
   filter(troph_group != 1) %>%
   mutate(troph_group = as.factor(troph_group),
     log_rich = log10(richness_med),
@@ -154,7 +168,7 @@ myload(
   geo_station,
   dir = mypath("data")
 )
-habitat_pressure <- build_habitat_pressure_dataset(
+habitat_press <- build_habitat_pressure_dataset(
   .habitat_analysis = hab_analysis,
   .tmp_press = temporal_press_polluants,
   .tmp_st_desc = temporal_station_desc,
@@ -167,7 +181,7 @@ evt_var_mean <- c("flow_med", "temperature_med", "width_river_mean",
   "avg_depth_station_mean", "slope", "alt", "d_source", "strahler", "DBO_med")
 evt_var_cv <- c("flow_cv", "temperature_cv", "width_river_cv",
   "avg_depth_station_cv", "DBO_cv")
-pca_pressure <- habitat_pressure[, names(habitat_pressure) %in% c(evt_var_mean, evt_var_cv, "station")] %>%
+pca_pressure <- habitat_press[, names(habitat_press) %in% c(evt_var_mean, evt_var_cv, "station")] %>%
   na.omit
 
 pca_rotated <- compute_rotated_pca(
@@ -182,26 +196,6 @@ pca_rotated <- compute_rotated_pca(
 ```{r get-data, cache = FALSE}
 library(nlme)
 library(piecewiseSEM)
-
-myload(nmds, habitat_pressure, dir = mypath("report"))
-myload(op_analysis, op_analysis_wo_holes, dir = mypath("data"))
-myload(biomass_ts_sax, dir = mypath("data"))
-op_analysis_bbb <- filter(op_analysis, station %in%
-  biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
-op_analysis_wo_holes_bbb <- filter(op_analysis_wo_holes, station %in%
-  biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
-
-# Compute stability, network metrics, etc with ;he new datasets
-com_data <- compute_community_temporal_analysis(.op = op_analysis_bbb, dest_dir = mypath("data", "species"))
-# Compute sem dataset 
-sem_data <- compute_sem_dataset(
-  com = com_data[["tps_com"]],
-  network = com_data[["tps_net"]],
-  hab_press = habitat_pressure,
-  sync = com_data[["sync"]],
-  nmds = NULL,
-  basin = st_basin
-  )
 ```
 
 
@@ -456,38 +450,39 @@ p_bm_sem_rich <- ggpiecewisesem(bm_sem_rich)
 library(DiagrammeR)
 
 p_format <- "png"
-p_width <- 500
-p_height <- 500
+p_width <- 700
+p_height <- 700
 
 stab_sem_path <- mypath("manuscript", "bef_stability",
   paste0("stab_sem.", p_format))
-stab_bm_path <- mypath("manuscript", "bef_stability",
+bm_sem_path <- mypath("manuscript", "bef_stability",
   paste0("bm_sem.", p_format))
 
 graph_stab_sem <- build_diag_from_sem(stab_sem_rich, p_val_thd = 0.05)
 render_graph(graph_stab_sem)
 export_graph(graph = graph_stab_sem, file_type = p_format,
   file_name = stab_sem_path,
-  height = p_height,
+  height = p_height - p_height*20/100,
   width = p_width
 )
 #source(mypath("R", "plot_methods.R")) 
 graph_bm_sem <- build_diag_from_sem(bm_sem_rich, p_val_thd = 0.05)
 render_graph(graph_bm_sem)
 export_graph(graph = graph_bm_sem, file_type = p_format,
-  file_name = stab_bm_path,
+  file_name = bm_sem_path,
   #file_name = "stab_sem.svg",
   height = p_height,
   width = p_width 
 )
 
 library(magick)
-img_stab_sem <- mypath("manuscript", "bef_stability", "stab_sem.svg") %>%
-  image_read_svg(width = 1300, height = 1000)
+library(rsvg)
+img_stab_sem <- stab_sem_path %>%
+  image_read()
 p_stab_sem_rich <- ggdraw() +
   draw_image(img_stab_sem)
-img_bm_sem <- mypath("manuscript", "bef_stability", "bm_sem.svg") %>%
-  image_read_svg(width = 1000, height = 700)
+img_bm_sem <- bm_sem_path %>%
+  image_read()
 p_bm_sem_rich <- ggdraw() +
   draw_image(img_bm_sem)
 
@@ -508,6 +503,69 @@ coef_stab_sem <- coef(stab_sem_rich) %>%
 coef_bm_sem <- coef(bm_sem_rich) %>%
   select(- 9) %>%
   filter(P.Value < 0.05)
+```
+
+```{r stab-network}
+sem_data %>%
+  select(sync, cv_sp, ct, t_lvl) %>%
+  gather(network, metrics, ct, t_lvl) %>%
+  gather(stab_comp, value, sync, cv_sp) %>%
+  ggplot(aes(y = value, x = metrics)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  facet_grid(stab_comp ~ network, scales = "free_x")
+
+stab_ct_mod <- lmer(data = sem_data,
+  #fixed = log_bm ~ log_rich_tot * troph_group,
+  formula = log_stab ~ ct + (1 | basin)
+  #random = ~ 1 + log_rich_tot * troph_group | basin,
+  #control = ctrl 
+)
+stab_ct_boot <- bootMer(stab_ct_mod, mySumm2, nsim = 100)
+stab_ct_ci <- confint(stab_ct_boot)
+
+stab_ct_sum <- piecewiseSEM::rsquared(stab_ct_mod, method = "nagelkerke") %>%
+  mutate_at(vars(Conditional, Marginal), ~round(., 2))
+
+pred_stab_ct_mod <- ggpredict(stab_ct_mod, terms = c("ct"), type = "fe")
+#plot(pred_troph_mod, add.data = TRUE)
+stab_ct_pred <- pred_stab_ct_mod %>%
+  as_tibble() %>%
+  rename(
+    log_bm = predicted,
+    log_rich_tot = x,
+    troph_group = group
+  )
+
+# get coeff
+coef_stab_ct <- map(list(stab = stab_ct_mod), fixed.effects)
+
+
+stab_tlvl_mod <- lmer(data = sem_data,
+  #fixed = log_bm ~ log_rich_tot * troph_group,
+  formula = log_stab ~ t_lvl + (1 | basin)
+  #random = ~ 1 + log_rich_tot * troph_group | basin,
+  #control = ctrl 
+)
+stab_tlvl_boot <- bootMer(stab_tlvl_mod, mySumm2, nsim = 100)
+stab_tlvl_ci <- confint(stab_tlvl_boot)
+
+stab_tlvl_sum <- piecewiseSEM::rsquared(stab_tlvl_mod, method = "nagelkerke") %>%
+  mutate_at(vars(Conditional, Marginal), ~round(., 2))
+
+pred_stab_tlvl_mod <- ggpredict(stab_tlvl_mod, terms = c("t_lvl"), type = "fe")
+#plot(pred_troph_mod, add.data = TRUE)
+stab_tlvl_pred <- pred_stab_tlvl_mod %>%
+  as_tibble() %>%
+  rename(
+    log_bm = predicted,
+    log_rich_tot = x,
+    troph_group = group
+  )
+
+# get coeff
+coef_stab_tlvl <- map(list(stab = stab_tlvl_mod), fixed.effects)
+
 ```
 
 
@@ -564,6 +622,7 @@ p_stab <- plot_grid(p_stab_div, p_stab_div_troph,
   labels = c("A", "B") 
 )
 ```
+
 
 ```{r p-p-div}
 lim_log_bm <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_bm")
@@ -683,43 +742,56 @@ to_plot <- c(1, 6, 7)
 plot_grid(
   plot_grid(plotlist = map(p_l_rot[to_plot], ~.x$rotated),
       ncol = length(to_plot), labels = LETTERS[1]),
-  plot_grid(p_stab_sem_rich, p_bm_sem_rich, labels = LETTERS[2:3]),
+  plot_grid(p_stab_sem_rich, p_bm_sem_rich, labels = LETTERS[2:3], rel_widths = c(.6, .4)),
   ncol = 1,
   rel_heights = c(.4, .6)
 )
 ```
 
-- Habitat: (+ / -)
-  - RC 1: width & depth & flow med, d source, strahler 	/
-  - RC 2: T°C med 					/ slope, alt 
-  - RC 3: 						/ flow CV, DBO med
-  - RC 4: river width med, depth med 			/
-  - RC 5: DBO CV 					/
+```{r}
+total_effect_bm_sem
+total_effect_stab_sem
+```
 
-- Stability:
-  - Stability component:
-    - CV is the main driver of stability:
-  - Community structure: 
-    - Species richness had no direct effects on CV but on synchrony!  
-    - Evenness of biomass dist increased CV but decreased synchrony
-    - Trophic level decreased CV
-    - Betadiv increases CV
-  - Habitat/Env:
-    - few direct effect on stability
-      - direct: CV_sp dec with increasing RC3, cad enrichment and flow_cv decrease.  
-      - direct: CV_sp inc with increasing RC2, cad temperature_med.  
-    - indirectly affect stability by modulating community structure,
-      particularly richness
 
-- Total biomass:
-  - Community structure:
-    - Richness increased total biomass / had the bigger effect
-    - Even community deceased total biomass
-    - Species turnover decreased total biomass  
-    - Connectance increased biomass
-  - Habitat/Env:
-    - very weak to no direct effect on total biomass 
-    - Effect of environment is thus mediated by the community structure
+---
+# Total biomass
+---
+We found that the primary drivers of total biomass were the total species
+richness (TSR) and the average trophic level (Tlvl) ($r_\delta = 0.35$ and
+$r_\delta = 0.40$ resp.) whereas connectance had no significant effect  (Fig.
+\@ref{fig:sem-plot} C). The stream size had a direct positive effect on total
+biomass ($r_\delta = 0.22$) whereas CV of flow and avg DBO increased total
+biomass ($r_\delta = - 0.2$). Avg temperature, CV of river size and CV of DBO
+had no direct effects on total biomass.
+
+TSR had also a indirect positive effect on total biomass through Tlvl ($r_\delta
+= 0.21$), that is, TSR had a total positive effect of $0.56$ on total biomass.
+The stream size had a total effect on total biomass as strong as TSR ($r_\delta
+= 0.54$), indirectly through Tlvl ($r_\delta = 0.10$) and TSR ($r_\delta = 0.22$).
+The avg temperature of the river had an indirect positive effect on total biomass
+($r_\delta = 0.48$), through Tlvl ($r_\delta = 0.11$) and TSR ($r_\delta = 0.33$).
+Avg DBO, CV DBO and CV of river size had no or weak indirect effect on total
+biomass. 
+
+
+---
+# Biomass stability
+---
+\overline{CV_{sp}} ($r_\delta = -1.26$) decreased biomass stability more than
+synchrony ($r_\delta = -0.55$, Figure \@ref{fig:sem-plot}). TSR had a strong
+positive effect on \overline{CV_{sp}} and a strong negative effect on synchrony
+whereas Tlvl and connectance had no significant effects on either
+\overline{CV_{sp}} nor synchrony. The avg river size had a small positive direct
+effect on synchrony ($r_\delta = 0.19$). The other environmental variables had
+no significant direct effects on \overline{CV_{sp}} nor synchrony.
+
+Indirectly through synchrony and \overline{CV_{sp}}, TSR had a total negative
+effect on biomass stability ($r_\delta = -0.26$). Avg river size and avg
+temperature had also a total effect which was negative on biomass stability
+(resp. $r_\delta = -0.24$ and $r_\delta = -0.16$), going through richness 
+(resp. $r_\delta = -0.10$ and $r_\delta = -0.16$).
+
 
 - Main outcome:
   - Biomass but stability increased with richness
@@ -727,31 +799,83 @@ plot_grid(
     - Opposite relationship stability/richness
   - Stability was mainly driven by species richness
 
-The effect of richness on biomass stability follows a power law with a negative
-coefficient, meaning that it's a decelerating function.
 
-- R diagramm:
-  - https://rstudio-pubs-static.s3.amazonaws.com/78926_5aa94ae32fae49f3a384ce885744ef4a.html
-
-- Latex:
-  - csv:
-    - https://tex.stackexchange.com/questions/178904/use-datatool-to-read-a-row-from-a-csv-file-then-use-the-variables-in-the-docume
-    - https://tex.stackexchange.com/questions/40901/datatool-getting-a-specific-value-given-the-value-of-another-column
-  - path: 
-- Reporting:
-  - equations: https://stats.stackexchange.com/questions/169115/reporting-the-actual-formula-equation-of-an-lme-model-with-factors-used-in-r
-  - log-log results:
-    - https://dev.to/rokaandy/logarithmic-transformation-in-linear-regression-models-why-when-3a7c
-    - https://stats.stackexchange.com/questions/18480/interpretation-of-log-transformed-predictor-and-or-response
 
 # Discussion
+
+We tested for the first time the determinants of temporal biomass stability in a
+foodweb with an empirical dataset at such high temporal and spatial scales.
+
+Surprisingly, we found a negative relationship biomass stability and species
+richness whereas there was a positive one between total biomass and species
+richness. Those relationships followed a power law, meaning that they represent
+respectively accelerating and decelerating functions. Overall, it contrasts
+with studies in grasslands [@tilman_biodiversity_2006, @zhang_scale_nodate],
+mesocosms [@pennekamp_biodiversity_2018] or other animals
+[@olivier_independent_nodate] where positive relationships are typically found
+between biomass stability and species richness. Even @franssen_annual_2011 found
+that species rich communities are more stable than species poor in streams. 
+
+@grace_integrative_2016 found that biomass negatively linked to species richness
+in grasslands, notably because of light competition. In freshwater ecosystems,
+where resources are based on trophic relationship, TOCOMPLETE.
+
+The total biomass of high and low trophic group trophic groups responded both
+positively to species richness but not biomass stability TOREPHRASE. There is a
+paradox where the high trophic group is overall more stable than the low but
+species richness had a destabilizing effect on the former whereas a stabilizing
+on the latter. @shanafelt_david_w._stability_nodate showed in a theoretical
+study in trophic chains, the top trophic level is the more stable TOEXPLORE.
+The comparison between our study and theoretical studies stays limited because
+fishes in our system have a large diet and consume food item of several trophic
+level while theoretical studies consider system in which one species of one
+trophic level feeds only on the trophic level directly inferior
+[@shanafelt_david_w._stability_nodate] ADD REF. 
+
+---
+# Effect of synchrony and cv_sp  
+---
+It was unexpected that the average population CV had a stronger negative effect
+on biomass stability than synchrony [@bluthgen_land_2016;
+@olivier_independent_nodate] *cf ref in bluthgen*. We see two hypothesis that
+can raise this effect. First, the opportunity for diet differentiation can be
+low in streams compare to other organisms. Bird species are for example quite
+specialized in seed, flying or soil arthropods or mammals which gives
+opportunities for independent dynamics. Plants also can achieve independent
+dynamics either spatial segregation, niche differentiation. Because fish
+species even piscivorous one are quite opportunistic in
+their foraging. Secondly, in trophic network, amplitude of species biomass
+involved in trophic interactions could covary positively TOTHINKABOUT.
+
+
+---
+# Effect of trophic level and connectance are richness effects:
+---
+Our path analysis reveled that, although species richness has a strong effect on
+connectance and the average trophic level, network structure had itself little
+to no effect either on synchrony nor average population stability. This result
+contradicts precedent theoretical studies on the relationship
+between stability and network structure [@angelis_stability_1975, @may_will_1972], although
+they considered different stability metrics (i.e. local stability of equilibrium
+point). The reason might be that in our inferred network, network structure is
+strongly constraints by assembly processes. Indeed, connectance decreased with
+increasing species richness [@thebault_stability_2010], because a small fraction
+of links are realized because of food diet constraints. In theoretical studies,
+connectance can be tuned from 0 (no links) to 1 (all possible links are
+present). SAMEFORTLVL
+Finally, the biomass stability of freshwater ecosystems can be derived by
+species richness because, through trophic structure constraints, species
+richness determine largely network structure.
+
+
+
 
 - Stability versus several studies:
   - [@zhang_scale_nodate]: productivity stability range from [0.4 to 1.4] for
     diversity range [10 to 30]
   - [@tilman_biodiversity_2006] on abundances:
     - stability range: 2 to 12
-    - diversity range: 1 to 16 
+    - diversity range: 1 to 16
 
 # Appendix
 
@@ -958,6 +1082,22 @@ test <- tibble(
   biomass_stab =
     10^(fixef(stab_div_mod)[1])*richness_med^fixef(stab_div_mod)[2]
 )  
+```
+
+```{r save-plot}
+
+save_plot("~/Documents/thesis/talks/fishcom_fig/stab_div.pdf",
+  p_stab_div,
+  base_height = 3,
+  bg = "transparent",
+  ncol = 1)
+
+save_plot("~/Documents/thesis/talks/fishcom_fig/stab_div_troph.pdf",
+  p_stab_div_troph + theme(legend.position = "bottom"),
+  base_height = 3,
+  bg = "transparent",
+  ncol = 1)
+
 ```
 
 

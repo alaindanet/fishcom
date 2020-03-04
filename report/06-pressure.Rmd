@@ -9,6 +9,8 @@ myload(temporal_network_metrics, dir = dest_dir)
 myload(community_metrics, temporal_community_metrics, synchrony,
 temporal_press_polluants, press_metrics, op_analysis,
   dir = data_common)
+
+myload(yearly_press_interp, dir = mypath())
 ```
 
 ```{r}

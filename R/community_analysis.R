@@ -281,6 +281,15 @@ compute_community_temporal_analysis <- function(.op = NULL, dest_dir = NULL) {
     network = class_network_analysis
   )
 
+  ## Richness tot by trophic group
+  troph_richness_tot <- output$tps_net %>%
+    tidyr::unnest() %>%
+    dplyr::select(station, troph_group, richness_tot)
+
+  output[["tps_bm_troph"]] %<>%
+    tidyr::unnest(troph_group) %>%
+    dplyr::left_join(troph_richness_tot, by = c("station", "troph_group"))
+
   cat("Biomass by trophic group done (4/4)\n")
 
   return(output)
