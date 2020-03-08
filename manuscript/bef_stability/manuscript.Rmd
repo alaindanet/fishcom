@@ -490,6 +490,8 @@ p_bm_sem_rich <- ggdraw() +
 
 
 ```{r get-sem-coeff}
+source(mypath("R", "statistical_analysis.R"))
+debug(compute_stab_sem_indirect)
 total_effect_stab_sem <- compute_stab_sem_indirect(sem = stab_sem_rich,
   p_val_thl = 0.05) 
 
