@@ -4,7 +4,7 @@ author: Alain Danet, Maud Mouchet, Elisa Thébault and Colin Fontaine
 date: \today 
 output:
   pdf_document:
-      fig_caption: true
+    fig_caption: true
 bibliography: references.bib
 ---
 
@@ -256,20 +256,12 @@ library(piecewiseSEM)
 
 ### Relationship between stability and species richness
 
-$$
-\begin{align}
-
+$$\begin{aligned}
 \log_{10}S_i &= \beta_0 + \beta_R\log_{10}x_{Ri} + \epsilon_{ij}\\
-
 S_i &= 10^{\beta_0 + \beta_R\log_{10}x_{Ri} + \epsilon_{ij}}\\
-
-S_i &= 10^{\beta_0} \times 10^{\beta_R\log_{10}x_{Ri}} \times
-10^{\epsilon_{ij}}\\
-
+S_i &= 10^{\beta_0} \times 10^{\beta_R\log_{10}x_{Ri}} \times10^{\epsilon_{ij}}\\
 S_i &= 10^{\beta_{0}} \times x_{Ri}10^{\beta_{R}} \times 10^{\epsilon_{ij}}
-
-\end{align}
-$$
+\end{aligned}$$
 
 with $i$ being the station $i$.
 
@@ -728,15 +720,15 @@ rich_on_cv_sp <- get_rich_on_stab_comp(fit = all_params,
 # Biomass stability
 ---
 
-\overline{CV_{sp}} ($r_\delta = `r cv_sp_on_stab`$) decreased biomass stability more than
+$\overline{CV_{sp}}$ ($r_\delta = `r cv_sp_on_stab`$) decreased biomass stability more than
 synchrony ($r_\delta = `r sync_on_stab`$, Figure \@ref(fig:sem-plot)). Species richness had a strong
-positive effect on \overline{CV_{sp}} and a strong negative effect on synchrony
+positive effect on $\overline{CV_{sp}}$ and a strong negative effect on synchrony
 whereas average trophic level and connectance had no significant effects on either
-\overline{CV_{sp}} nor synchrony. The avg river size had a small positive direct
+$\overline{CV_{sp}}$ nor synchrony. The avg river size had a small positive direct
 effect on synchrony ($r_\delta = `r RC1_on_sync`$). The other environmental variables had
-no significant direct effects on either \overline{CV_{sp}} nor synchrony.
+no significant direct effects on either $\overline{CV_{sp}}$ nor synchrony.
 
-Indirectly through synchrony and \overline{CV_{sp}}, species richness had a total negative
+Indirectly through synchrony and $\overline{CV_{sp}}$, species richness had a total negative
 effect on biomass stability ($r_\delta = `r rich_on_stab`$). Avg river size and avg
 temperature had also a total effect which was negative on biomass stability
 (resp. $r_\delta = `r env_on_stab["log_RC1"]`$ and $r_\delta = `r env_on_stab["log_RC2"]`$),
@@ -913,7 +905,7 @@ For the first time, we assessed the determinants of total biomass and temporal
 biomass stability in empirical trophic communities at such high temporal and
 spatial scales. We showed that species richness increased total biomass but 
 decreased biomass stability. In particular, species richness decreased
-synchrony and increased species CV ($\LaTeX$). Surprisingly, the avg trophic
+synchrony and increased species CV (\LaTeX). Surprisingly, the avg trophic
 level and connectance had no effects on either synchrony nor species CV.
 Finally, we showed that high trophic group was more stable than low trophic
 group but that high trophic group was responsible for the negative
@@ -990,17 +982,17 @@ variation might destabilize top predators (REF or Bullshit again).
 ---
 
 
-Species richness decreased synchrony and increased \overline{CV_{sp}}. Species
+Species richness decreased synchrony and increased $\overline{CV_{sp}}$. Species
 richness can reduce synchrony through decrease of population size, thus raising
 the role of demographic stochasticity [@loreau_species_2008] but also in the
 case where species have different responses to environmental variation
 [@loreau_species_2008]. While the effect of species richness on synchrony is
-well understood, its effect on \overline{CV_{sp}} is more complex. Indeed, studies reported positive [@tilman_biodiversity_2006, ], neutral  [@jiang_different_2009, @olivier_independent_nodate] or negative relationships [@franssen_annual_2011, @olivier_independent_nodate]. Positive relationship between
+well understood, its effect on $\overline{CV_{sp}}$ is more complex. Indeed, studies reported positive [@tilman_biodiversity_2006, ], neutral  [@jiang_different_2009, @olivier_independent_nodate] or negative relationships [@franssen_annual_2011, @olivier_independent_nodate]. Positive relationship between
 
-In turn, we found that synchrony and \overline{CV_{sp}} both decreased biomass
+In turn, we found that synchrony and $\overline{CV_{sp}}$ both decreased biomass
 stability, as predicted by the formulation of stability based on the CV
 [@thibaut_understanding_2013].
-However, it was unexpected that the average population \overline{CV_{sp}} had
+However, it was unexpected that the average population $\overline{CV_{sp}}$ had
 a stronger negative effect on biomass stability than synchrony
 [@bluthgen_land_2016; @olivier_independent_nodate]. We can advance two
 hypothesis that can raise this effect. First, the opportunity for diet
