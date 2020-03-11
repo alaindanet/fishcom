@@ -650,15 +650,9 @@ env_on_richness <- get_env_on_rich(fit = bm_all_params,
   p_val_thl = 0.05)
 ```
 
-```{r get-sem-tot-effect-rich}
+```{r get-bm-tot-effect-rich}
 rich_on_bm <- get_rich_on_bm(fit = bm_all_params,
   p_val_thl = 0.05)
-rich_on_sync <- get_rich_on_bm_comp(fit = bm_all_params,
-  p_val_thl = 0.05,
-  bm_comp = "log_sync")
-rich_on_cv_sp <- get_rich_on_bm_comp(fit = bm_all_params,
-  p_val_thl = 0.05,
-  bm_comp = "log_cv_sp")
 ```
 
 ---
@@ -911,6 +905,10 @@ in the low trophic group.
 
 # Discussion
 
+---
+# Chapeau
+---
+
 For the first time, we assessed the determinants of total biomass and temporal
 biomass stability in empirical trophic communities at such high temporal and
 spatial scales. We showed that species richness increased total biomass but 
@@ -918,8 +916,12 @@ decreased biomass stability. In particular, species richness decreased
 synchrony and increased species CV ($\LaTeX$). Surprisingly, the avg trophic
 level and connectance had no effects on either synchrony nor species CV.
 Finally, we showed that high trophic group was more stable than low trophic
-group but that high trophic was responsible for the negative stability-diversity
-relationship.
+group but that high trophic group was responsible for the negative
+stability-diversity relationship.
+
+---
+# Negative relationship between stability and richness 
+---
 
 Surprisingly, we found a negative relationship biomass stability and species
 richness whereas there was a positive one between total biomass and species
@@ -928,15 +930,122 @@ respectively accelerating and decelerating functions. Overall, it contrasts
 with studies in grasslands [@tilman_biodiversity_2006, @zhang_scale_nodate],
 mesocosms [@pennekamp_biodiversity_2018] or other animals
 [@olivier_independent_nodate] where positive relationships are typically found
-between biomass stability and species richness. Even @franssen_annual_2011 found
-that species rich communities are more stable than species poor in streams. 
+between biomass stability (computed as CV) and species richness. In streams as
+well, @franssen_annual_2011 found that species richness increased biomass
+stability. However other studies found a opposite relationship
+[@yang_effects_2011] or a marginal one [@declerc_species_2006].
 
-@grace_integrative_2016 found that biomass negatively linked to species richness
-in grasslands, notably because of light competition. In freshwater ecosystems,
-where resources are based on trophic relationship, TOCOMPLETE.
+
+---
+# Total biomass
+---
+
+We found that species richness increased total biomass as found in salt
+marshes, forests [@wu_relationship_2014,@shuaifeng_positive_2018]. But opposite
+relation has been found in richness in grasslands [@grace_integrative_2016],
+notably because of light competition. Precedent researches in plant communities
+showed that the total biomass was primary driven by environmental drivers. In
+contrast, we found that the species richness was one of the main driver of the
+total biomass, together with the stream size and increasing avg temperature
+(with decreasing altitude). The big effect of species richness is 
+partly explained by its effect on food web assembly and so, avg trophic level
+(`r round(.2/0.54 * 100)` % of richness effect on total biomass). The direct
+positive effect of species richness on total biomass might be due to resource use
+complementarity [@cardinale_species_2002] [add more direct REF]. It was however
+unexpected that connectance had no effect on total biomass, because we could
+imagine that connectance could also improve resource use, but this might be
+true only under the assumption that all species have the same assimilation
+efficiency.
+
+We found that contrary to stream size, the effect of altitude of the river and
+its avg temperature on total biomass was only indirect through community
+structure (avg trophic level and connectance). 
+
+---
+# Effect of environment on community structure
+---
+
+The total effect of river size on biomass stability was as negative as species
+richness, indicating that big rivers had a high negative effect on stability (TO MOVE).
+We found a mix of both expected and unexpected results on the effects on
+environment on community structure. First, we expected that bigger and low
+altitude streams had higher species richness because they might receive more
+confluents streams and so more species through immigration.
+Stream size increased both connectance and avg trophic level with the same
+magnitude. An increase in mean trophic position of piscivorous species in
+bigger rivers could explain this relation [@post_ecosystem_2000]. In our
+network reconstruction, the fish-fish interactions are more resolved than
+fish-resource interactions, which might explain positive effect of stream size
+on connectance. @petchey_predicting_2010 predicted that temperature should
+increase connectance but we did not find any relationship but temperature (and
+low altitude) increased avg trophic level (**Bullshit**). 
+CV of enrichment decreased both connectance and avg trophic level, while avg
+enrichment (and CV of flow) increased both. The latter might by explained by
+the fact that enrichment can benefit to top trophic level
+[@hulot_functional_2000]. One explanation for the former is that enrichment
+variation might destabilize top predators (REF or Bullshit again).
+
+---
+# Effect of synchrony and cv_sp  
+---
+
+
+Species richness decreased synchrony and increased \overline{CV_{sp}}. Species
+richness can reduce synchrony through decrease of population size, thus raising
+the role of demographic stochasticity [@loreau_species_2008] but also in the
+case where species have different responses to environmental variation
+[@loreau_species_2008]. While the effect of species richness on synchrony is
+well understood, its effect on \overline{CV_{sp}} is more complex. Indeed, studies reported positive [@tilman_biodiversity_2006, ], neutral  [@jiang_different_2009, @olivier_independent_nodate] or negative relationships [@franssen_annual_2011, @olivier_independent_nodate]. Positive relationship between
+
+In turn, we found that synchrony and \overline{CV_{sp}} both decreased biomass
+stability, as predicted by the formulation of stability based on the CV
+[@thibaut_understanding_2013].
+However, it was unexpected that the average population \overline{CV_{sp}} had
+a stronger negative effect on biomass stability than synchrony
+[@bluthgen_land_2016; @olivier_independent_nodate]. We can advance two
+hypothesis that can raise this effect. First, the opportunity for diet
+differentiation can be low in streams compare to other organisms. Bird species
+are for example quite specialized in seed, flying or soil arthropods or mammals
+which gives opportunities for independent dynamics. Plants also can achieve
+independent dynamics either spatial segregation or niche differentiation. Because
+fish species even piscivorous one are quite opportunistic in their foraging.
+Secondly, in trophic communities, species directly affect each other through
+feeding interactions, and so could raise synchrony between species
+[@raimondo_interspecific_2004] more than in systems where interactions happen
+more in the form of competitive exploitation.
+
+---
+# Effect of trophic level and connectance are richness effects:
+---
+
+Our path analysis revealed that, although species richness has a strong effect on
+connectance and the average trophic level, network structure  itself had little
+to no effect either on synchrony nor average population stability. This result
+contradicts precedent theoretical studies on the relationship
+between stability and network structure [@angelis_stability_1975,
+@may_will_1972], although they considered different stability metrics (i.e.
+local stability of equilibrium point). The reason might be that in our inferred
+network, network structure is strongly constraints by assembly processes.
+Indeed, connectance generally decreased with increasing species richness
+[@winemiller_must_1989, @thebault_stability_2010], because a small fraction of
+links are realized because of food diet constraints. In theoretical studies,
+connectance can be tuned from 0 (no links) to 1 (all possible links are
+present) [@angelis_stability_1975]. The link between the average trophic level
+and species richness has been less studied. However, we can suppose that
+because species richness increase total biomass, species richness also increase
+both the biomass of prey available for piscivorous fishes and the biomass of
+piscivorous species which in turn, increase the avg trophic level of the
+community. In sum, the biomass stability of freshwater ecosystems can be
+derived by species richness because, through trophic structure constraints,
+species richness determine largely network structure.
+
+
+---
+# Trophic group
+---
 
 The total biomass of high and low trophic group trophic groups responded both
-positively to species richness but not biomass stability TOREPHRASE. There is a
+positively to species richness but not biomass stability. There is a
 paradox where the high trophic group is overall more stable than the low but
 species richness had a destabilizing effect on the former whereas a stabilizing
 on the latter. @shanafelt_david_w._stability_nodate showed in a theoretical
@@ -947,53 +1056,6 @@ level while theoretical studies consider system in which one species of one
 trophic level feeds only on the trophic level directly inferior
 [@shanafelt_david_w._stability_nodate] ADD REF.
 
-The total effect of river size on biomass stability was as negative as species richness,
-indicating that big rivers had a high negative effect on stability.
-
----
-# Effect of synchrony and cv_sp  
----
-
-It was unexpected that the average population CV had a stronger negative effect
-on biomass stability than synchrony [@bluthgen_land_2016;
-@olivier_independent_nodate] *cf ref in bluthgen*. We see two hypothesis that
-can raise this effect. First, the opportunity for diet differentiation can be
-low in streams compare to other organisms. Bird species are for example quite
-specialized in seed, flying or soil arthropods or mammals which gives
-opportunities for independent dynamics. Plants also can achieve independent
-dynamics either spatial segregation, niche differentiation. Because fish
-species even piscivorous one are quite opportunistic in
-their foraging. Secondly, in trophic network, amplitude of species biomass
-involved in trophic interactions could covary positively TOTHINKABOUT.
-
-
----
-# Effect of trophic level and connectance are richness effects:
----
-
-Our path analysis revealed that, although species richness has a strong effect on
-connectance and the average trophic level, network structure had itself little
-to no effect either on synchrony nor average population stability. This result
-contradicts precedent theoretical studies on the relationship
-between stability and network structure [@angelis_stability_1975, @may_will_1972], although
-they considered different stability metrics (i.e. local stability of equilibrium
-point). The reason might be that in our inferred network, network structure is
-strongly constraints by assembly processes. Indeed, connectance decreased with
-increasing species richness [@winemiller_must_1989, @thebault_stability_2010],
-because a small fraction of links are realized because of food diet constraints.
-In theoretical studies, connectance can be tuned from 0 (no links) to 1 (all
-possible links are present) [@angelis_stability_1975]. SAMEFORTLVL
-Finally, the biomass stability of freshwater ecosystems can be derived by
-species richness because, through trophic structure constraints, species
-richness determine largely network structure.
-
-
-- Stability versus several studies:
-  - [@zhang_scale_nodate]: productivity stability range from [0.4 to 1.4] for
-    diversity range [10 to 30]
-  - [@tilman_biodiversity_2006] on abundances:
-    - stability range: 2 to 12
-    - diversity range: 1 to 16
 
 # Appendix
 
