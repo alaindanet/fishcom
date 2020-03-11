@@ -139,11 +139,11 @@ cat("-----------------------------------\n")
 cat("End of temporal metrics computation\n")
 cat("-----------------------------------\n")
 
-################################################################
-#  Compute temporal correlation between biomass trophic level  #
-################################################################
+#####################################################
+#  Compute synchrony between biomass trophic level  #
+#####################################################
 cat("----------------------------------------------------------\n")
-cat("Compute temporal correlation between biomass trophic level\n")
+cat("Compute synchrony between biomass trophic level\n")
 cat("----------------------------------------------------------\n")
 myload(op_analysis, network_analysis, dir = data_common)
 myload(network_metrics, dir = dest_dir)
@@ -259,3 +259,30 @@ cat("-----------------------------------\n")
 cat("End of temporal metrics computation\n")
 cat("-----------------------------------\n")
 
+
+#####################################################
+#  Compute temporal correlation between biomass trophic level  #
+#####################################################
+cat("----------------------------------------------------------\n")
+cat("Compute temporal correlation between biomass trophic level\n")
+cat("----------------------------------------------------------\n")
+myload(op_analysis, dir = data_common)
+myload(network_metrics, network_analysis, dir = mypath("data", "classes"))
+
+bm_troph_group <- network_analysis %>%
+  unnest(troph_group) %>%
+  filter(troph_group != 1) %>%
+  select(opcod, troph_group, biomass) %>%
+  mutate(troph_group = ifelse(troph_group == 2, "low", "high")) %>%
+  spread(troph_group, biomass)
+
+bm_st_troph_group <- bm_troph_group %>%
+  left_join(select(op_analysis, opcod, station, year), by = "opcod") %>%
+  filter(!is.na(station)) %>%
+  arrange(station, year) %>%
+  group_by(station)
+
+cor_troph <- bm_st_troph_group %>%
+  summarise(cor_troph = cor(low, high, use = "complete.obs", method = "spearman"))
+
+mysave(cor_troph, dir = mypath("data"), overwrite = TRUE)

@@ -365,14 +365,20 @@ stab_div_troph %>%
   facet_grid(cols = vars(troph_group), rows = vars(hab_type))
 ```
 
+## Temporal correlation between troph group biomass 
+
 ```{r}
 #TODO: Update cor_troph_group 
-myload(cor_troph_group, dir = mypath("data"))
-cor_troph_group %>%
-  left_join(hab_type, by = "station") %>%
-  filter(!is.na(hab_type)) %>%
-  ggplot(aes(x = hab_type, y = cor_troph)) +
-  geom_boxplot() 
+myload(cor_troph, dir = mypath("data"))
+cor_troph %>%
+  left_join(stab_div_troph, by = "station") %>%
+  ggplot(aes(y = log10(1/ biomass_cv), x = cor_troph, color = troph_group)) +
+  geom_point()
+
+cor_troph %>%
+  left_join(stab_div_troph, by = "station") %>%
+  ggplot(aes(y = cor_troph, x = log10(richness_tot), color = troph_group)) +
+  geom_point()
 ```
 
 TODO: may be that the altitude station misses the really big fishes that
