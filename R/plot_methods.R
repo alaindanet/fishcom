@@ -630,12 +630,13 @@ build_diag_from_sem <- function (fit = NULL, p_val_thd = NULL) {
     "log_sync" = "Synchrony",
     "log_stab" = "Biomass \n stability",
     "log_rich_tot" = "Species \n richness",
-    "log_bm" = "Total \n biomass"
+    "log_bm" = "Total \n biomass",
+    "log_bm_std" = "Total \n biomass (g/m2)"
   )
 
   # Put Rsquared:
   var_with_rsq <- c("ct", "t_lvl", "log_cv_sp", "log_rich_tot",
-    "log_sync", "log_rich_tot", "log_stab", "log_bm") 
+    "log_sync", "log_rich_tot", "log_stab", "log_bm", "log_bm_std") 
   node_name_replacement[names(node_name_replacement) %in% var_with_rsq] <-
     map_chr(names(node_name_replacement)[names(node_name_replacement) %in% var_with_rsq],
       function(x, rsq, node_name) {
@@ -663,7 +664,7 @@ build_diag_from_sem <- function (fit = NULL, p_val_thd = NULL) {
 	  type <- "com"
 	} else if (x == "log_stab") {
 	  type <- "stab" 
-	} else if (x == "log_bm") {
+	} else if (x %in% c("log_bm", "log_bm_std")) {
 	  type <- "bm" 
 	}
 	return(type)

@@ -54,7 +54,7 @@ mysave(weight_analysis, dir = data_common, overwrite = TRUE)
 # Get station and  
 myload(length_analysis, op_analysis, dir = data_common)
 op_analysis %<>%
-  select(opcod, station, date)
+  select(opcod, station, date, surface)
 
 com_analysis <- length_analysis %>%
   group_by(opcod, species) %>%
@@ -93,8 +93,15 @@ com <- community_analysis %>%
   summarise(
     richness = n(),
     nind = sum(nind),
-    biomass = sum(biomass)
-  )
+    biomass = sum(biomass),
+    #bm_std = sum(biomass)/surface
+  ) %>%
+  left_join(select(op_analysis, opcod, surface), by = "opcod") %>%
+  mutate(
+    rich_std = richness / surface, 
+    nind_std = nind / surface,
+    bm_std = biomass / surface
+  ) 
 
 ######################
 #  Compute evenness  #

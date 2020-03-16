@@ -32,14 +32,15 @@ compute_sem_dataset <- function (
   com$beta_bin_c <- resid(mod)
 
   # Add synchrony
-  sync %<>% dplyr::select(station, synchrony, cv_sp, richness_tot)
+  sync %<>% dplyr::select(station, synchrony, cv_sp, richness_tot, rich_tot_std)
   biomass_sem <- com %>%
-    dplyr::select(station, biomass_stab, biomass_med, richness_med, pielou_med,
+    dplyr::select(station, biomass_stab, biomass_med, bm_std_med, richness_med, rich_std_med, pielou_med,
       betadiv_bin, beta_bin_c) %>%
     dplyr::left_join(sync, by = "station") %>%
     dplyr::rename(sync = synchrony,
       piel = pielou_med,
       prod = biomass_med,
+      prod_std = bm_std_med,
       beta_bin = betadiv_bin
     )
 
@@ -76,6 +77,7 @@ compute_sem_dataset <- function (
       log_cv_sp = log10(cv_sp),
       log_stab = log10(biomass_stab),
       log_bm = log10(prod),
+      log_bm_std = log10(prod_std),
       log_RC1 = log10(RC1 + abs(min(RC1)) + 1),
       log_RC2 = log10(RC2 + abs(min(RC2)) + 1),
       log_RC3 = log10((RC3)*(-1) + abs(min((RC3)*(-1))) + 1)
@@ -213,7 +215,7 @@ compute_prod_sem_rich <- function(.data, random_effect = "~ 1 | basin") {
     nlme::lme(ct ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
     nlme::lme(t_lvl ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
     #nlme::lme(beta_bin_c ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
-    nlme::lme(log_bm ~ log_rich_tot + ct + t_lvl + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,
+    nlme::lme(log_bm_std ~ log_rich_tot + ct + t_lvl + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,
       random = ~ 1 | basin, data = .data)
   )
   output <- summary(corsem, .progressBar = F)

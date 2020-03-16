@@ -4,12 +4,13 @@
 myload(temporal_network_metrics, dir = mypath("data", "classes"))
 temporal_network_metrics_classes <- temporal_network_metrics
 myload(temporal_network_metrics, dir = dest_dir)
+myload(community_metrics, dir = data_common)
 myload(temporal_community_metrics, synchrony, dir = data_common)
 ```
 
 ```{r prod-dist, fig.cap = "Median community biomass by station"}
 biomass_prod_station <- temporal_community_metrics %>%
-  select(station, biomass_med, richness_med) %>%
+  select(station, biomass_med, bm_std_med, richness_med, rich_std_med) %>%
   rename(biomass = biomass_med)
 
 plot_biomass_dist <- ggplot(biomass_prod_station, aes(x = biomass)) +
@@ -19,6 +20,14 @@ plot_biomass_dist <- ggplot(biomass_prod_station, aes(x = biomass)) +
     y = "# of stations"
   )
 plot_biomass_dist
+
+plot_biomass_std_dist <- ggplot(biomass_prod_station, aes(x = bm_std_med)) +
+  geom_histogram() +
+  labs(
+    x = "Median of standardized biomass (g/m2)",
+    y = "# of stations"
+  )
+plot_biomass_std_dist
 ```
 
 There is no bistability in biomass distribution.
@@ -57,6 +66,37 @@ plot_stab_biomass_net_avg <- ggplot(prod_biomass_net_avg, aes(y = biomass, x = v
     y = "Average Biomass"
   )
 plot_stab_biomass_net_avg
+```
+
+### Biomass richness
+
+```{r}
+# Raw biomass
+raw_bm_rich <- biomass_prod_station %>% 
+  select(station, biomass, richness_med) %>%
+  rename(richness = richness_med) %>%
+  mutate(type = "raw")
+std_bm_rich <- biomass_prod_station %>% 
+  select(station, bm_std_med, rich_std_med) %>%
+  rename(richness = rich_std_med, biomass = bm_std_med) %>%
+  mutate(type = "std")
+
+p_bm_rich_raw_std <- map(list(raw_bm_rich, std_bm_rich), function (x) {
+
+  if (unique(x$type) == "raw") {
+    x_lab <- paste0("Median richness")
+    y_lab <- paste0("Median biomass (g)")
+  } else {
+    x_lab <- paste0("Median standardized richness (m2^-1)")
+    y_lab <- paste0("Median standardized biomass (g/m2)")
+  }
+
+  x %>%
+  ggplot(aes(x = log10(richness), y = log10(biomass))) +
+  geom_point() +
+  labs(x = x_lab, y = y_lab)
+  })
+plot_grid(plotlist = p_bm_rich_raw_std)
 ```
 
 

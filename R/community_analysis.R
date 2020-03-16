@@ -128,12 +128,14 @@ summarise_com_over_time <- function (
      com$station <- NULL
     }
 
+var_to_summarise <- c("richness", "rich_std", "nind", "nind_std", "biomass", "bm_std", "pielou", "simpson")
+
   output <- com %>%
     dplyr::left_join(op, by = c("opcod")) %>%
     dplyr::filter(!(is.na(station) | is.na(opcod))) %>%
-    dplyr::select(station, richness, nind, biomass, pielou, simpson) %>%
+    dplyr::select_at(c("station", var_to_summarise)) %>%
     dplyr::group_by(station) %>%
-    dplyr::summarise_at(c("richness", "nind", "biomass", "pielou", "simpson"),
+    dplyr::summarise_at(var_to_summarise,
       list(avg = mean, cv =~ sd(.) / mean(.), med = median, stab = ~mean(.) / sd(.)))
   return(output)
 }
@@ -218,8 +220,14 @@ compute_com_synchrony <- function (.op = NULL, com = NULL, ...) {
       richness_tot = map_dbl(com_mat, ~ncol(.x))
     )
 
+  # Total number of of species by unit of surface: 
+  sum_surface <- .op %>%
+    dplyr::group_by(station) %>%
+    dplyr::summarise(sum_surface = sum(surface))
   synchrony %<>%
-    dplyr::select(station, richness_med, synchrony, cv_sp, cv_com, cv_classic, contrib, richness_tot)
+    dplyr::left_join(sum_surface, by = "station") %>%
+    dplyr::mutate(rich_tot_std = richness_tot / sum_surface) %>%
+    dplyr::select(station, richness_med,  synchrony, cv_sp, cv_com, cv_classic, contrib, richness_tot, rich_tot_std)
 
   return(synchrony)
 } 

@@ -15,6 +15,9 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.dim = c(7, 4)
 )
+
+mypath <- rprojroot::find_package_root_file
+data_common <- mypath("data")
 library(tidyverse)
 library(magrittr)
 library(cowplot)
@@ -22,9 +25,12 @@ library(ggpmisc)
 library(sf)
 library(rgdal)
 library(lubridate)
+library(kableExtra)
+source(mypath("R", "misc.R"))
+
 #devtools::load_all()
 #theme_set(theme_alain())
-fish_build_dir <- 
+#fish_build_dir <- 
 ```
 
 # What is known 
@@ -102,7 +108,7 @@ Following the analysis, we refined the dataset for the analysis here:
 ## Preambule
 
 ```{r data_prep}
-data(operation_data)
+myload(operation_data, dir = data_common)
 op <- dplyr::select(operation_data, opcod:year, count)
 rm(operation_data)
 ```
@@ -280,7 +286,8 @@ the month!
 
 ```{r}
 # Get operation data
-data(operation_data)
+
+myload(operation_data, dir = data_common)
 operation_data %<>% distinct(opcod, .keep_all = TRUE) %>%
   dplyr::select(-species, -station, -count, -year, -month)
 st_method <- left_join(good_station_sampling, operation_data, by = c("opcod")) %>%
@@ -382,7 +389,7 @@ question to know if each sampling method allow to have a unbiaised estimation of
 the abundances of the species.
 
 ```{r fig.dim = c(7, 4)}
-data(environmental_data)
+myload(environmental_data, dir = data_common)
 st_env <- left_join(st_method, environmental_data, by = "opcod")
 
 # Let's see if some sampling point were to large to perform complete:
@@ -568,6 +575,63 @@ needed.
 One idea: if the length of the transect is *constant*. For each station, we
 compute the residuals of the relation between sampled area and the width of the
 river
+
+
+### Check for analysis data 
+
+```{r}
+myload(op_analysis, dir = mypath("data"))
+op_analysis %>%
+  ggplot(aes(x = protocol, y = surface)) +
+  geom_boxplot() +
+    geom_text(aes(label=..count..), y=0, stat='count', size=4) 
+```
+
+Partial by point protocol had very similar sampled surface because I took only
+the one that had 100 over bank points, meaning that the sampling have been
+realized over bank, so it is equivalent to the partial over bank protocol.
+However, we see that the sampled surface is highly constant in point partial
+protocol relative to the partial over bank protocol.
+
+```{r}
+summary_protocol_station <- op_analysis %>%
+  group_by(station) %>%
+  summarise(nb_protocol = length(unique(protocol)))
+length(which(summary_protocol_station$nb_protocol ==2))
+mask <- summary_protocol_station[summary_protocol_station$nb_protocol ==2, ]$station
+
+op_analysis %>%
+  filter(station %in% mask) %>%
+  kable %>%
+  kable_styling() %>%
+  scroll_box(width = "100%", height = "400px")
+```
+
+
+```{r}
+myload(community_metrics, dir = mypath("data"))
+com <- community_metrics %>%
+  left_join(select(op_analysis, opcod, station, year, protocol, surface)) %>%
+  filter(!is.na(station)) %>%
+  mutate(bm_surf = biomass / surface)
+```
+
+```{r}
+com %>%
+  ggplot(aes(x = surface, y = biomass)) +
+  geom_point() +
+  scale_y_log10() +
+  labs(y = "Raw total biomass (g)", x = "sampled surface (m2)")
+```
+
+
+```{r}
+com %>%
+  ggplot(aes(x= biomass, y = bm_surf)) +
+  geom_point() +
+  labs(x = "Raw total biomass (g)", y = "Biomass density (g/m2)")
+```
+
 
 # Check variables
 
