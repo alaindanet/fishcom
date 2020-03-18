@@ -88,27 +88,34 @@ get_indirect_effect <- function (fit = NULL, p_val_thl = NULL, ...) {
 }
 
 #' Get env effect on stab 
-get_env_on_stab <- function (fit = NULL, p_val_thl = NULL) {
+get_env_on_stab <- function (fit = NULL, p_val_thl = NULL, type = "std") {
+
+  rich_var <- "log_rich_tot"
+  stab_var <- "log_stab"
+  if (type == "std") {
+   rich_var <- paste0(rich_var, "_", type)
+   stab_var <- paste0(stab_var, "_", type)
+  }
 
   via_cv_sp_sync <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
     zz = c("log_sync", "log_cv_sp"),
-    zzz = c("log_stab") 
+    zzz = c(stab_var) 
   )
   # effect of env through richness 
   via_richness <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
-    y = c("log_rich_tot"),
+    y = c(rich_var),
     zz = c("log_sync", "log_cv_sp"),
-    zzz = c("log_stab") 
+    zzz = c(stab_var) 
   )
   # effect of env through richness through com 
   via_richness_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
-    y = c("log_rich_tot"),
+    y = c(rich_var),
     z = c("ct", "t_lvl"),
     zz = c("log_sync", "log_cv_sp"),
-    zzz = c("log_stab")
+    zzz = c(stab_var)
   )
 
   # effect of env through com 
@@ -116,7 +123,7 @@ get_env_on_stab <- function (fit = NULL, p_val_thl = NULL) {
     x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
     z = c("ct", "t_lvl"),
     zz = c("log_sync", "log_cv_sp"),
-    zzz = c("log_stab")
+    zzz = c(stab_var)
   )
   to_sum <- list(via_cv_sp_sync = via_cv_sp_sync, via_richness = via_richness,
     via_com = via_com, via_richness_com = via_richness_com)
@@ -125,7 +132,13 @@ get_env_on_stab <- function (fit = NULL, p_val_thl = NULL) {
 }
 
 #' Get env effect on sync cv_sp 
-get_env_on_stab_comp <- function (fit = NULL, p_val_thl = NULL, stab_comp = NULL) {
+get_env_on_stab_comp <- function (fit = NULL, p_val_thl = NULL,
+  stab_comp = NULL, type = "std") {
+
+  rich_var <- "log_rich_tot"
+  if (type == "std") {
+    rich_var <- paste0(rich_var, "_", type)
+  }
 
   direct <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
@@ -134,13 +147,13 @@ get_env_on_stab_comp <- function (fit = NULL, p_val_thl = NULL, stab_comp = NULL
   # effect of env through richness 
   via_richness <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
-    y = c("log_rich_tot"),
+    y = c(rich_var),
     zz = stab_comp
   )
   # effect of env through com 
   via_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
-    y = c("log_rich_tot"),
+    y = c(rich_var),
     z = c("ct", "t_lvl"),
     zz = stab_comp
   )
@@ -149,7 +162,12 @@ get_env_on_stab_comp <- function (fit = NULL, p_val_thl = NULL, stab_comp = NULL
 }
 
 #' get env on com 
-get_env_on_com <- function (fit = NULL, p_val_thl = NULL, com = NULL) {
+get_env_on_com <- function (fit = NULL, p_val_thl = NULL, com = NULL, type = "std") {
+
+  rich_var <- "log_rich_tot"
+  if (type == "std") {
+   rich_var <- paste0(rich_var, "_", type)
+  }
 
   direct <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
@@ -158,7 +176,7 @@ get_env_on_com <- function (fit = NULL, p_val_thl = NULL, com = NULL) {
   # effect of env through richness 
   via_richness <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
-    y = c("log_rich_tot"),
+    y = c(rich_var),
     zz = com 
   )
   to_sum <- list(direct = direct, via_richness = via_richness)
@@ -166,11 +184,16 @@ get_env_on_com <- function (fit = NULL, p_val_thl = NULL, com = NULL) {
   from_indir_to_tot(to_sum = to_sum)
 }
 #' Get env on richness
-get_env_on_rich <- function (fit = NULL, p_val_thl = NULL) {
+get_env_on_rich <- function (fit = NULL, p_val_thl = NULL, type = "std") {
+
+  rich_var <- "log_rich_tot"
+  if (type == "std") {
+   rich_var <- paste0(rich_var, "_", type)
+  }
 
   direct <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
-    zz = "log_rich_tot" 
+    zz = rich_var 
   )
   to_sum <- list(direct = direct)
 
@@ -178,18 +201,25 @@ get_env_on_rich <- function (fit = NULL, p_val_thl = NULL) {
 }
 
 #' Get richness effect on stab 
-get_rich_on_stab <- function (fit = NULL, p_val_thl = NULL) {
+get_rich_on_stab <- function (fit = NULL, p_val_thl = NULL, type = "std") {
+
+  rich_var <- "log_rich_tot"
+  stab_var <- "log_stab"
+  if (type == "std") {
+   rich_var <- paste0(rich_var, "_", type)
+   stab_var <- paste0(stab_var, "_", type)
+  }
 
   via_cv_sp_sync <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = "log_rich_tot",
+    x = rich_var,
     zz = c("log_sync", "log_cv_sp"),
-    zzz = c("log_stab") 
+    zzz = c(stab_var) 
   )
   via_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    y = c("log_rich_tot"),
+    y = c(rich_var),
     z = c("ct", "t_lvl"),
     zz = c("log_sync", "log_cv_sp"),
-    zzz = c("log_stab") 
+    zzz = c(stab_var) 
   )
   to_sum <- list(via_cv_sp_sync = via_cv_sp_sync, via_com = via_com)
 
@@ -198,14 +228,19 @@ get_rich_on_stab <- function (fit = NULL, p_val_thl = NULL) {
 
 #' Get richness effect on stab 
 get_rich_on_stab_comp <- function (fit = NULL,
-  p_val_thl = NULL, stab_comp = NULL) {
+  p_val_thl = NULL, stab_comp = NULL, type = "std") {
+
+  rich_var <- "log_rich_tot"
+  if (type == "std") {
+   rich_var <- paste0(rich_var, "_", type)
+  }
 
   direct <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = "log_rich_tot",
+    x = rich_var,
     zz = stab_comp 
   )
   via_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    y = c("log_rich_tot"),
+    y = rich_var,
     z = c("ct", "t_lvl"),
     zz = stab_comp 
   )
@@ -215,31 +250,38 @@ get_rich_on_stab_comp <- function (fit = NULL,
 }
 
 #' Get env effect on bm 
-get_env_on_bm <- function (fit = NULL, p_val_thl = NULL) {
+get_env_on_bm <- function (fit = NULL, p_val_thl = NULL, type = "std") {
+
+  bm_var <- "log_bm"
+  rich_var <- "log_rich_tot"
+  if (type == "std") {
+   bm_var <- paste0(bm_var, "_", type)
+   rich_var <- paste0(rich_var, "_", type)
+  }
 
   direct <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
-    zzz = c("log_bm") 
+    zzz = c(bm_var) 
   )
   # effect of env through richness 
   via_richness <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
-    y = c("log_rich_tot"),
-    zzz = c("log_bm") 
+    y = c(rich_var),
+    zzz = c(bm_var) 
   )
 
   # effect via richness and com 
   via_richness_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
-    y = c("log_rich_tot"),
+    y = c(rich_var),
     z = c("ct", "t_lvl"),
-    zzz = c("log_bm") 
+    zzz = c(bm_var) 
   )
   # effect of env through com 
   via_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
     z = c("ct", "t_lvl"),
-    zzz = c("log_bm") 
+    zzz = c(bm_var) 
   )
   to_sum <- list(direct = direct, via_richness = via_richness,
     via_richness_com = via_richness_com, via_com = via_com)
@@ -248,16 +290,23 @@ get_env_on_bm <- function (fit = NULL, p_val_thl = NULL) {
 }
 
 #' Get richness effect on bm 
-get_rich_on_bm <- function (fit = NULL, p_val_thl = NULL) {
+get_rich_on_bm <- function (fit = NULL, p_val_thl = NULL, type = "std") {
+
+  bm_var <- "log_bm"
+  rich_var <- "log_rich_tot"
+  if (type == "std") {
+   bm_var <- paste0(bm_var, "_", type)
+   rich_var <- paste0(rich_var, "_", type)
+  }
 
   direct <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = "log_rich_tot",
-    zzz = c("log_bm") 
+    x = rich_var,
+    zzz = c(bm_var) 
   )
   via_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    y = c("log_rich_tot"),
+    y = c(rich_var),
     z = c("ct", "t_lvl"),
-    zzz = c("log_bm") 
+    zzz = c(bm_var) 
   )
   to_sum <- list(direct = direct, via_com = via_com)
 

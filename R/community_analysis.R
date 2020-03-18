@@ -27,7 +27,7 @@ summarise_network_over_time <- function (op = NULL, class_network = NULL,
   "mean_troph_level", "mean_troph_level_corrected", "max_troph_level", "modularity", "modularity_corrected", "w_trph_lvl_avg")) {
 
   op %<>%
-    dplyr::select(opcod, station, year)
+    dplyr::select(opcod, station, year, surface)
 
   # Metrics are computed with species network
   com <- op %>%
@@ -43,11 +43,18 @@ summarise_network_over_time <- function (op = NULL, class_network = NULL,
   composition <- class_network %>%
     dplyr::left_join(op, by = "opcod") %>%
     tidyr::unnest(composition) %>%
-    mutate(species = str_extract_all(sp_class, "[A-Z]{3}"))
+    dplyr::mutate(species = str_extract_all(sp_class, "[A-Z]{3}"))
+
+  sum_surface <- op %>%
+    dplyr::group_by(station) %>%
+    dplyr::summarise(sum_surface = sum(surface))
 
   richness_tot <- composition %>%
     dplyr::group_by(station, troph_group) %>%
-    dplyr::summarise(richness_tot = length(unique(species)))
+    dplyr::summarise(richness_tot = length(unique(species))) %>%
+    dplyr::left_join(sum_surface, by = "station") %>%
+    dplyr::mutate(rich_tot_std = richness_tot / sum_surface) %>%
+    dplyr::select(-sum_surface)
 
   ## Biomass
   troph_group <- class_network %>%
@@ -55,8 +62,9 @@ summarise_network_over_time <- function (op = NULL, class_network = NULL,
     dplyr::select(station, opcod, troph_group) %>%
     unnest(troph_group) %>%
     dplyr::group_by(station, troph_group) %>%
-    dplyr::summarise_at(c("biomass", "richness", "nbnode"),
-      list(cv = ~sd(.) / mean(.), med = median, avg = mean, stab = ~mean(.) / sd(.)))
+    dplyr::summarise_at(c("biomass", "bm_std", "richness", "rich_std",
+	"nbnode"), list(cv = ~sd(.) / mean(.), med = median, avg = mean, stab =
+	~mean(.) / sd(.)))
 
   # Merge trophic group metrics
   troph_group_metrics <- troph_group %>%
@@ -81,9 +89,14 @@ summarise_bm_troph_over_time <- function (
   network = NULL
 ) {
 
+  ## Get sum_surface: 
+  sum_surface <- op %>%
+    dplyr::group_by(station) %>%
+    dplyr::summarise(sum_surface = sum(surface))
+
   op %<>% dplyr::select(opcod, station, year)
   # Match network to fish operation 
-  net <- network %>% 
+  net <- network %>%
     dplyr::left_join(op, by = "opcod") %>%
     dplyr::ungroup() %>%
     filter(!is.na(station) & !is.na(opcod)) %>%
@@ -101,9 +114,25 @@ summarise_bm_troph_over_time <- function (
 	stab = ~mean(.) / sd(.))
     )
 
+  # Get total richness:
+  tot_richness <- network %>% 
+    dplyr::left_join(op, by = "opcod") %>%
+    dplyr::ungroup() %>%
+    dplyr::filter(!is.na(station) & !is.na(opcod)) %>%
+    dplyr::select(opcod, station, composition) %>%
+    tidyr::unnest(composition) %>%
+    dplyr::mutate(species = str_extract_all(sp_class, "[A-Z]{3}")) %>%
+    dplyr::group_by(station, troph_group) %>%
+    dplyr::summarise(richness_tot = length(unique(species))) %>%
+    dplyr::left_join(sum_surface, by = "station") %>%
+    dplyr::mutate(rich_tot_std = richness_tot / sum_surface) %>%
+    dplyr::select(-sum_surface)
+
   # Select variables to keep:
+  var_to_keep <- "biomass|bm_std|rich_std|richness_avg|richness_med|richness_tot|rich_tot_std|station|troph_group"
   biomass_variation %<>%
-    select_at(vars(dplyr::matches("biomass|richness_avg|richness_med|station|troph_group")))
+    dplyr::left_join(tot_richness, by = c("station", "troph_group")) %>%
+    select_at(vars(dplyr::matches(var_to_keep)))
 
   # Merge with temporal_network_metrics
   biomass_variation %<>%
@@ -265,6 +294,19 @@ compute_community_temporal_analysis <- function(.op = NULL, dest_dir = NULL) {
   output[["sync"]] <- compute_com_synchrony(.op = .op, com = community_analysis)
 
   cat("Synchrony done (2/4)\n")
+  # 
+  com_std <- community_analysis %>%
+    dplyr::ungroup() %>%
+    dplyr::left_join(dplyr::select(.op, opcod, surface), by = "opcod") %>%
+    dplyr::mutate(
+      nind = nind / surface, 
+      length = length / surface, 
+      biomass = biomass / surface
+    )
+
+  output[["sync_std"]] <- compute_com_synchrony(.op = .op, com = com_std)
+
+  cat("Synchrony standardized done (2.5/4)\n")
 
   # Biomass ---------------------------------------------------------- 
   if(!exists("community_metrics")) {
@@ -288,20 +330,12 @@ compute_community_temporal_analysis <- function(.op = NULL, dest_dir = NULL) {
     op = .op,
     network = class_network_analysis
   )
-
-  ## Richness tot by trophic group
-  troph_richness_tot <- output$tps_net %>%
-    tidyr::unnest() %>%
-    dplyr::select(station, troph_group, richness_tot)
-
-  output[["tps_bm_troph"]] %<>%
-    tidyr::unnest(troph_group) %>%
-    dplyr::left_join(troph_richness_tot, by = c("station", "troph_group"))
+  output[["tps_bm_troph"]] %<>% 
+    unnest(troph_group)
 
   cat("Biomass by trophic group done (4/4)\n")
 
   return(output)
-
 }
 
 

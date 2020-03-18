@@ -4,7 +4,12 @@ author: Alain Danet, Maud Mouchet, Elisa Thébault and Colin Fontaine
 date: \today 
 output:
   pdf_document:
-    fig_caption: true
+    fig_caption: yes
+fontsize: 12pt
+header-includes:
+   - \usepackage{setspace}
+   - \doublespacing
+geometry: margin=2cm
 bibliography: references.bib
 ---
 
@@ -48,56 +53,157 @@ theme_set(theme_alain())
 
 # Introduction 
 
-Cf blutghen for CVsp as portfolio and statistical averaging of species.
-Synchrony as insurance hypothesis facing environmental variations.
+Determining the shape of the relationship between species diversity and ecosystem
+functioning has been a central research topic in ecology [@may_will_1972,
+@hector_plant_1999, @loreau_biodiversity_2001, @hooper_effects_2005,
+@duffy_why_2009, @isbell_forest_quantifying_2018]. Current biodiversity losses
+in all ecosystems challenge scientists to understand how ecosystems will be
+affected in turn. Studies in Bioversity-Ecosystem Functioning (BEF) usually
+quantify species diversity as species richness (i.e number of species) while
+ecosystem functioning is quantified as total biomass, productivity (biomass
+produced by unit of time) or stability which is quantified in more diverse ways
+such as the variability of species abundance, the resilience to perturbation, or
+resistance to perturbation [@donohue_navigating_2016].
 
-- Diversity - stability and diversity - biomass / productivity
-  - well studied: both experimentally, empirically and theoretically
-  - mecanisms:
-    - stability: insurance (asynchrony),
-    - diversity: overyielding (complementarity)
-  - key papers: [@tilman_biodiversity_2006, @loreau_species_2008,
-    @thibaut_understanding_2013, @may_will_1972]
-  - BUT: less vertical diversity, trophic communities
+---
+#- Diversity - stability and diversity - biomass / productivity
+  #- well studied: both experimentally, empirically and theoretically
+  #- mecanisms:
+    #- stability: insurance (asynchrony),
+    #- diversity: overyielding (complementarity)
+  #- key papers: [@tilman_biodiversity_2006, @loreau_species_2008,
+    #@thibaut_understanding_2013, @may_will_1972]
+  #- BUT: less vertical diversity, trophic communities
+---
 
-- Vertical diversity and stability/biomass
-  - well studied: theoretically and (experimentally, less)
-  - mecanisms:
-    - stability: top-down and bottom-up effect
-    - biomass: top-down and bottom-up effects (pyramids of biomass)
-  - key papers:[@barbier_pyramids_2019, @shanafelt_david_w._stability_nodate]
-  - BUT: local stability, little systems 
+Species richness has been reported to increase productivity in grasslands
+[@grace_integrative_2016], but complex links between between species richness,
+environment, productivity and total biomass showed that species richness
+decrease total biomass [@grace_integrative_2016] contrary to previous
+assessment [@hector_plant_1999, @tilman_biodiversity_2014] because of
+competition for light between plants [@grace_integrative_2016]. Complementarity
+between species in resource exploitation [@cardinale_species_2002] leading to
+overyielding (CHECK) has been proposed to explain positive relationship between
+productivity
+and species richness, while species richness effect can also rise from the
+statistical probability to end up with a highly productive species . The
+relationship between species richness and stability is even more complex
+partly because of the inherent multidimensionality of stability
+[@donohue_dimensionality_2013, @donohue_navigating_2016] and because of the
+different metrics of stability privileged in theoretical (stability of local
+equilibrium, robustness to primary extinction) and empirical work (variability
+of abundance or biomass through time). @may_will_1972 stimulated a lot of
+debate and fecund research, showing that species richness, probability of
+interacting and average interaction strength destabilizes communities in which
+species interact randomly. Empirically, consistent works showed that species
+richness increased community stability in grasslands [@tilman_biodiversity_2006],
+mesocosms [@pennekamp_biodiversity_2018] and vertebrates
+[@olivier_independent_nodate, @franssen_annual_2011]. Two components can
+explain variation of community stability, (1) individual species stability and (2)
+the species synchrony [@loreau_species_2008, @thibaut_understanding_2013].
+Positive [@tilman_biodiversity_2006], neutral [@jiang_different_2009, @olivier_independent_nodate]
+and negative [@franssen_annual_2011, @olivier_independent_nodate] relationships
+between species stability and species richness have been found.
+On the other side, studies consistently found that species richness decreased
+synchrony between species [@loreau_species_2008, @thibaut_understanding_2013,
+@bluthgen_land_2016; @olivier_independent_nodate]. However, as far as we know,
+less studies have reported empirical assessment of stability-richness
+relationship in trophic network [but see @thebault_stability_2010].
 
-- Environment can drive stability and biomass:
-  - forcing: environmental forcing on communities 
-  - can lead to misleading effect: @grace_integrative_2016
+Conversely, an extensive literature exists on the effects of network structure
+on stability in mutualistic and trophic networks [@angelis_stability_1975, @stouffer_,
+@thebault_stability_2010, @barbier_pyramids_2019,
+@shanafelt_david_w._stability_nodate, add ref]. Particularly, in trophic
+networks, most studies are theoretical and consider asymptotic stability to
+small perturbation. Studies showed that compartimentalization [@stouffer_] can
+increase persistence, while nestedness can either increase [@bascompte,
+@thebault_stability_2010] or decrease persistence [@thebault_stability_2010].
+Connectance can decrease [@thebault_stability_2010] or increase
+[@angelis_stability_1975] resilience of trophic network depending on the
+functioning of networks [@angelis_stability_1975].
 
-- Big scope assessment:
-  - inconsistency between theoretical and empirical stability
-    - theoretical: no cv_sp nor synchrony
-  - No studies on stability-richness in empirical trophic communities
-    - no effect of trophic structure
+---
+#- Vertical diversity and stability/biomass
+  #- well studied: theoretically and (experimentally, less)
+  #- mecanisms:
+    #- stability: top-down and bottom-up effect
+    #- biomass: top-down and bottom-up effects (pyramids of biomass)
+  #- key papers:[@barbier_pyramids_2019, @shanafelt_david_w._stability_nodate]
+  #- BUT: local stability, little systems 
+---
 
-- Goal: Assess relation biomass/stability-diversity in empirical trophic communities
-  - introduce effect of trophic structure and environment
-  - merge gap between theoretical and empirical studies
+Trophic network are assembled both vertically and horizontally. Studies showed
+that the vertical position in the trophic network as well as the strength of
+top-down and bottom-up regulation determine biomass and stability at
+equilibrium  [@shanafelt_david_w._stability_nodate, @barbier_pyramids_2019].
+However studies on stability-diversity have focused on either vertical
+diversity or horizontal but rarely both. @zhao_horizontal_2019 have shown that
+horizontal and vertical diversity respectively increase and decrease stability
+in plankton communities.
 
-- What we have done:
-  - big empirical dataset
-  - rebuilding empirical network
-  - assess relationship between environment, community structure and stability
+---
+#- Big scope assessment:
+  #- inconsistency between theoretical and empirical stability
+    #- theoretical: no cv_sp nor synchrony
+  #- No studies on stability-richness in empirical trophic communities
+    #- no effect of trophic structure
+---
 
-- Research questions:
-  - What are the effects of the community structure on total biomass and stability ? 
-    1. What are the effects of species richness on total biomass and stability ?
-      - effect of species richness
-      - effect of trophic group
-    2. What are the effects of the community structure on total biomass and stability ?
-      - What is the relative effect of the environment relative to the community
-	structure ?
-      - What is the effect of the community structure on the different
-	parts of the stability + total biomass?
-	- Effect of horizontal and vertical diversity
+A large inconsistency remains between theoretical and empirical assessment of
+stability-diversity in trophic communities. Theoretical studies have
+ignored temporal variability and the relative contribution of synchrony and
+species variability while empirical studies about temporal variability in natural 
+communities have ignored trophic communities and the effect of trophic structure. 
+
+---
+#- Goal: Assess relation biomass/stability-diversity in empirical trophic communities
+  #- introduce effect of trophic structure and environment
+  #- merge gap between theoretical and empirical studies
+---
+
+---
+#- What we have done:
+  #- big empirical dataset
+  #- rebuilding empirical network
+  #- assess relationship between environment, community structure and stability
+---
+
+Our goal was to assess stability-diversity in natural trophic community with the
+effect of the trophic structure. We combined together the effect of vertical
+and horizontal diversity and thus aimed to bridge the gap between theoretical
+and empirical studies. We used an standardized monitoring of freshwater fish
+communities in french streams. More than three hundreds sites were followed
+more than 10 years on the 1995-2018 period. We inferred four thousands potential
+interaction networks corresponding to each sampling event, based on size
+relationships and knowledge about their ontogenic diet shift. 
+
+---
+#- Research questions:
+  #- What are the effects of the community structure on total biomass and stability ? 
+    #1. What are the effects of species richness on total biomass and stability ?
+      #- effect of species richness
+      #- effect of trophic group
+    #2. What are the effects of the community structure on total biomass and stability ?
+      #- What is the relative effect of the environment relative to the community
+	#structure ?
+      #- What is the effect of the community structure on the different
+	#parts of the stability + total biomass?
+	#- Effect of horizontal and vertical diversity
+---
+
+We investigated the effects of the community structure on total biomass and on
+synchrony and species variability, which in turn determine community
+variability. We have also included the effect of environmental drivers which
+can directly affect community variability or indirectly via community structure.
+Finally, we assessed the effect of horizontal diversity on trophic group
+biomass and variability. 
+
+---
+#- Environment can drive stability and biomass:
+  #- forcing: environmental forcing on communities 
+  #- can lead to misleading effect: @grace_integrative_2016
+---
+
 
 # Methods
 
@@ -182,13 +288,21 @@ op_analysis_wo_holes_bbb <- filter(op_analysis_wo_holes, station %in%
   biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
 
 # Compute stability, network metrics, etc with ;he new datasets
+#debug(summarise_network_over_time)
+##myload(network_metrics, dir = mypath("data", "classes"))
+#network_metrics %>%
+  #left_join(op_analysis, by = "opcod") %>%
+  #select(opcod, station, composition) %>%
+  #unnest(composition) %>%
+  #group_by(station, troph_group) %>%
+  #summarise(richness_tot = length(unique(species)))
 com_data <- compute_community_temporal_analysis(.op = op_analysis_bbb)
 # Compute sem dataset 
 sem_data <- compute_sem_dataset(
   com = com_data[["tps_com"]],
   network = com_data[["tps_net"]],
   hab_press = habitat_pressure,
-  sync = com_data[["sync"]],
+  sync = com_data[["sync_std"]],
   nmds = NULL,
   basin = st_basin
   )
@@ -197,10 +311,15 @@ stab_div_troph <- com_data$tps_bm_troph %>%
   filter(troph_group != 1) %>%
   mutate(troph_group = as.factor(troph_group),
     log_rich = log10(richness_med),
+    log_rich_std = log10(rich_std_med),
     log_rich_tot = log10(richness_tot),
+    log_rich_tot_std = log10(rich_tot_std),
     log_bm = log10(biomass_med),
-    log_stab = log10(biomass_stab)) %>%
-  dplyr::select(station, troph_group, biomass_stab, richness_med, richness_tot, log_rich, log_rich_tot, log_stab, log_bm, biomass_med, richness_tot) %>%
+    log_bm_std = log10(bm_std_med),
+    log_stab = log10(biomass_stab),
+    log_stab_std = log10(bm_std_stab)
+    ) %>%
+  dplyr::select(station, troph_group, biomass_stab, richness_med, richness_tot, log_rich, log_rich_std, log_rich_tot, log_rich_tot_std, log_stab, log_stab_std, log_bm, log_bm_std, biomass_med, bm_std_med, richness_tot, rich_tot_std) %>%
   dplyr::left_join(st_basin, by = "station")
 ```
 
@@ -249,10 +368,6 @@ pca_rotated <- compute_rotated_pca(
 
 ## Statistical analysis
 
-```{r get-data, cache = FALSE}
-library(nlme)
-library(piecewiseSEM)
-```
 
 ### Relationship between stability and species richness
 
@@ -265,14 +380,19 @@ S_i &= 10^{\beta_{0}} \times x_{Ri}10^{\beta_{R}} \times 10^{\epsilon_{ij}}
 
 with $i$ being the station $i$.
 
-```{r mod-div-total}
+```{r get-data, cache = FALSE}
+library(nlme)
+library(piecewiseSEM)
 library(lme4)
 ctrl <- lmeControl(opt='optim')
 ctrl_lmer <- lmerControl(optCtrl = list(method = 'optimx'))
+```
+
+```{r mod-div-total}
 stab_div_mod <- lmer(
   data = sem_data,
   control = ctrl_lmer,
-  formula = log_stab ~ log_rich_tot + (1 | basin)
+  formula = log_stab_std ~ log_rich_tot_std + (1 | basin)
 )
 stopifnot(!isSingular(stab_div_mod, tol = 1e-05))
 stab_div_boot <- bootMer(stab_div_mod, mySumm2, nsim = 100)
@@ -281,38 +401,38 @@ stab_div_ci <- confint(stab_div_boot)
 stab_div_sum <- piecewiseSEM::rsquared(stab_div_mod, method = "nagelkerke") %>%
   mutate_at(vars(Conditional, Marginal), ~round(., 2))
 
-pred <- ggpredict(stab_div_mod, terms = c("log_rich_tot"), type = "fe")
+pred <- ggpredict(stab_div_mod, terms = c("log_rich_tot_std"), type = "fe")
 stab_div_pred <- pred %>%
   as_tibble() %>%
   rename(
-    log_stab = predicted,
-    log_rich_tot = x,
+    log_stab_std = predicted,
+    log_rich_tot_std = x,
     basin = group
   )
 stab_div_pred %<>%
   mutate(
-    stab = 10^log_stab, # FALSE
-    rich = 10^log_rich_tot,
+    stab = 10^log_stab_std, # FALSE
+    rich = 10^log_rich_tot_std,
     cl10 =  10^conf.low,
     ch10 =  10^conf.high
   )
 
 #
 bm_div_mod <- lmer(data = sem_data,
-  formula = log_bm ~ log_rich_tot + (1 | basin)
+  formula = log_bm_std ~ log_rich_tot_std + (1 | basin)
 )
 bm_div_boot <- bootMer(bm_div_mod, mySumm2, nsim = 100)
 bm_div_ci <- confint(bm_div_boot)
 bm_div_sum <- piecewiseSEM::rsquared(bm_div_mod, method = "nagelkerke") %>%
   mutate_at(vars(Conditional, Marginal), ~round(., 2))
 
-pred <- ggpredict(bm_div_mod, terms = c("log_rich_tot"), type = "fe")
+pred <- ggpredict(bm_div_mod, terms = c("log_rich_tot_std"), type = "fe")
 #plot(pred, add.data = TRUE)
 bm_div_pred <- pred %>%
   as_tibble() %>%
   rename(
-    log_bm = predicted,
-    log_rich_tot = x,
+    log_bm_std = predicted,
+    log_rich_tot_std = x,
     basin = group
   )
 
@@ -321,24 +441,24 @@ coef_div <- map(list(stab = stab_div_mod, bm = bm_div_mod), fixed.effects)
 ```
 
 ```{r mod-div-troph, fig.show = "hide"}
-stab_troph_mod <- lmer(data = na.omit(stab_div_troph),
-  formula = log_stab ~ log_rich_tot + troph_group + log_rich_tot:troph_group + (1 | basin)
+stab_troph_mod <- lmer(data = stab_div_troph,
+  formula = log_stab_std ~ log_rich_tot_std + troph_group + log_rich_tot_std:troph_group + (1 | basin)
   #control = ctrl
 )
-stab_troph_boot <- bootMer(stab_troph_mod, mySumm2, nsim = 100)
+stab_troph_boot <- bootMer(stab_troph_mod, mySumm2, nsim = 200)
 stab_troph_ci <- confint(stab_troph_boot)
 
 stab_troph_colin <- car::vif(stab_troph_mod)
 stab_troph_sum <- piecewiseSEM::rsquared(stab_troph_mod, method = "nagelkerke") %>%
   mutate_at(vars(Conditional, Marginal), ~round(., 2))
 
-pred_troph_mod <- ggpredict(stab_troph_mod, terms = c("log_rich_tot", "troph_group"), type = "fe")
+pred_troph_mod <- ggpredict(stab_troph_mod, terms = c("log_rich_tot_std", "troph_group"), type = "fe")
 #plot(pred_troph_mod, add.data = TRUE)
 stab_troph_pred <- pred_troph_mod %>%
   as_tibble() %>%
   rename(
-    log_stab = predicted,
-    log_rich_tot = x,
+    log_stab_std = predicted,
+    log_rich_tot_std = x,
     troph_group = group
   )
 
@@ -346,7 +466,7 @@ stab_troph_pred <- pred_troph_mod %>%
 
 bm_troph_mod <- lmer(data = na.omit(stab_div_troph),
   #fixed = log_bm ~ log_rich_tot * troph_group,
-  formula = log_bm ~ log_rich_tot + troph_group + log_rich_tot:troph_group + (1 | basin)
+  formula = log_bm_std ~ log_rich_tot_std + troph_group + log_rich_tot_std:troph_group + (1 | basin)
   #random = ~ 1 + log_rich_tot * troph_group | basin,
   #control = ctrl 
 )
@@ -356,13 +476,13 @@ bm_troph_ci <- confint(bm_troph_boot)
 bm_troph_sum <- piecewiseSEM::rsquared(bm_troph_mod, method = "nagelkerke") %>%
   mutate_at(vars(Conditional, Marginal), ~round(., 2))
 
-pred_troph_mod <- ggpredict(bm_troph_mod, terms = c("log_rich_tot", "troph_group"), type = "fe")
+pred_troph_mod <- ggpredict(bm_troph_mod, terms = c("log_rich_tot_std", "troph_group"), type = "fe")
 #plot(pred_troph_mod, add.data = TRUE)
 bm_troph_pred <- pred_troph_mod %>%
   as_tibble() %>%
   rename(
-    log_bm = predicted,
-    log_rich_tot = x,
+    log_bm_std = predicted,
+    log_rich_tot_std = x,
     troph_group = group
   )
 
@@ -539,7 +659,7 @@ coef_bm_sem <- coef(bm_sem_rich) %>%
   filter(P.Value < 0.05)
 ```
 
-```{r stab-network}
+```{r stab-network, fig.show = "hide"}
 sem_data %>%
   select(sync, cv_sp, ct, t_lvl) %>%
   gather(network, metrics, ct, t_lvl) %>%
@@ -551,7 +671,7 @@ sem_data %>%
 
 stab_ct_mod <- lmer(data = sem_data,
   #fixed = log_bm ~ log_rich_tot * troph_group,
-  formula = log_stab ~ ct + (1 | basin)
+  formula = log_stab_std ~ ct + (1 | basin)
   #random = ~ 1 + log_rich_tot * troph_group | basin,
   #control = ctrl 
 )
@@ -566,8 +686,8 @@ pred_stab_ct_mod <- ggpredict(stab_ct_mod, terms = c("ct"), type = "fe")
 stab_ct_pred <- pred_stab_ct_mod %>%
   as_tibble() %>%
   rename(
-    log_bm = predicted,
-    log_rich_tot = x,
+    log_stab_std = predicted,
+    log_rich_tot_std = x,
     troph_group = group
   )
 
@@ -577,7 +697,7 @@ coef_stab_ct <- map(list(stab = stab_ct_mod), fixed.effects)
 
 stab_tlvl_mod <- lmer(data = sem_data,
   #fixed = log_bm ~ log_rich_tot * troph_group,
-  formula = log_stab ~ t_lvl + (1 | basin)
+  formula = log_stab_std ~ t_lvl + (1 | basin)
   #random = ~ 1 + log_rich_tot * troph_group | basin,
   #control = ctrl 
 )
@@ -592,8 +712,8 @@ pred_stab_tlvl_mod <- ggpredict(stab_tlvl_mod, terms = c("t_lvl"), type = "fe")
 stab_tlvl_pred <- pred_stab_tlvl_mod %>%
   as_tibble() %>%
   rename(
-    log_bm = predicted,
-    log_rich_tot = x,
+    log_stab_std = predicted,
+    log_rich_tot_std = x,
     troph_group = group
   )
 
@@ -621,30 +741,29 @@ get_clean_sem_coef <- function(sem = NULL, resp = NULL, pred = NULL) {
   round(out, 2)
 }
 
-rich_on_bm <- get_clean_sem_coef(sem = bm_sem_coef, resp = "log_bm", pred = "log_rich_tot")
-tlvl_on_bm <- get_clean_sem_coef(sem = bm_sem_coef, resp = "log_bm", pred = "t_lvl")
-RC1_on_bm <- get_clean_sem_coef(sem = bm_sem_coef, resp = "log_bm", pred = "log_RC1")
+rich_on_bm <- get_clean_sem_coef(sem = bm_sem_coef, resp = "log_bm_std", pred = "log_rich_tot_std")
+tlvl_on_bm <- get_clean_sem_coef(sem = bm_sem_coef, resp = "log_bm_std", pred = "t_lvl")
+RC1_on_bm <- get_clean_sem_coef(sem = bm_sem_coef, resp = "log_bm_std", pred = "log_RC1")
 ```
 
 ```{r get-bm-tot-effect-env}
 bm_all_params <- get_coefficient_piecewisesem(sem = bm_sem_rich, p_val_thl = NULL)
 
 # effect of env on bm 
-env_on_bm <- get_env_on_bm(fit = bm_all_params, p_val_thl = 0.05)
+env_on_bm <- get_env_on_bm(fit = bm_all_params, p_val_thl = 0.05,
+  type = "std")
 # env on com 
-env_on_t_lvl <- get_env_on_com(fit = bm_all_params,
-  p_val_thl = 0.05,
-  com = "t_lvl")
+env_on_t_lvl <- get_env_on_com(fit = bm_all_params, p_val_thl = 0.05,
+  com = "t_lvl", type = "std")
 env_on_ct <- get_env_on_com(fit = bm_all_params,
-  p_val_thl = 0.05,
-  com = "ct")
+  p_val_thl = 0.05, com = "ct", type = "std")
 env_on_richness <- get_env_on_rich(fit = bm_all_params,
-  p_val_thl = 0.05)
+  p_val_thl = 0.05, type = "std")
 ```
 
 ```{r get-bm-tot-effect-rich}
-rich_on_bm <- get_rich_on_bm(fit = bm_all_params,
-  p_val_thl = 0.05)
+tot_rich_on_bm <- get_rich_on_bm(fit = bm_all_params,
+  p_val_thl = 0.05, type = "std")
 ```
 
 ---
@@ -676,8 +795,8 @@ get_clean_sem_coef <- function(sem = NULL, resp = NULL, pred = NULL) {
   round(out, 2)
 }
 
-sync_on_stab <- get_clean_sem_coef(sem = stab_sem_coef, resp = "log_stab", pred = "log_sync")
-cv_sp_on_stab <- get_clean_sem_coef(sem = stab_sem_coef, resp = "log_stab", pred = "log_cv_sp")
+sync_on_stab <- get_clean_sem_coef(sem = stab_sem_coef, resp = "log_stab_std", pred = "log_sync")
+cv_sp_on_stab <- get_clean_sem_coef(sem = stab_sem_coef, resp = "log_stab_std", pred = "log_cv_sp")
 RC1_on_sync <- get_clean_sem_coef(sem = stab_sem_coef, resp = "log_sync", pred = "log_RC1")
 ```
 
@@ -685,34 +804,35 @@ RC1_on_sync <- get_clean_sem_coef(sem = stab_sem_coef, resp = "log_sync", pred =
 all_params <- get_coefficient_piecewisesem(sem = stab_sem_rich, p_val_thl = NULL)
 # effect of env on stab
 
-env_on_stab <- get_env_on_stab(fit = all_params, p_val_thl = 0.05)
+env_on_stab <- get_env_on_stab(fit = all_params, p_val_thl = 0.05,
+  type = "std")
 # effect of env on sync and cv_sp
 env_on_sync <- get_env_on_stab_comp(fit = all_params,
   p_val_thl = 0.05,
-  stab_comp = "log_sync")
+  stab_comp = "log_sync", type = "std")
 env_on_cv_sp <- get_env_on_stab_comp(fit = all_params,
   p_val_thl = 0.05,
-  stab_comp = "log_cv_sp")
+  stab_comp = "log_cv_sp", type = "std")
 # env on com 
 env_on_t_lvl <- get_env_on_com(fit = all_params,
   p_val_thl = 0.05,
-  com = "t_lvl")
+  com = "t_lvl", type = "std")
 env_on_ct <- get_env_on_com(fit = all_params,
   p_val_thl = 0.05,
-  com = "ct")
+  com = "ct", type = "std")
 env_on_richness <- get_env_on_rich(fit = all_params,
-  p_val_thl = 0.05)
+  p_val_thl = 0.05, type = "std")
 ```
 
 ```{r get-sem-tot-effect-rich}
 rich_on_stab <- get_rich_on_stab(fit = all_params,
-  p_val_thl = 0.05)
+  p_val_thl = 0.05, type = "std")
 rich_on_sync <- get_rich_on_stab_comp(fit = all_params,
   p_val_thl = 0.05,
-  stab_comp = "log_sync")
+  stab_comp = "log_sync", type = "std")
 rich_on_cv_sp <- get_rich_on_stab_comp(fit = all_params,
   p_val_thl = 0.05,
-  stab_comp = "log_cv_sp")
+  stab_comp = "log_cv_sp", type = "std")
 ```
 
 
@@ -745,20 +865,20 @@ $r_\delta = `r env_on_richness["log_RC2"]`$).
 ## Species richness increases total biomass but decreases biomass stability
 
 ```{r}
-richness_lab <- "Total richness (Log 10)"
+richness_lab <- "Total richness (m2^-1) (Log 10)"
 stab_lab <- "Biomass stability (Log 10)"
-bm_lab <- "Total biomass (Log 10)"
+bm_lab <- "Total biomass (g/m2) (Log 10)"
 
 stab_div_caption <- paste0("Relationship between biomass stability (log 10) (top panel) or total biomass (log 10) (bottom panel) versus total species richness.") 
 ```
 
 ```{r p-s-div, fig.cap = stab_div_caption}
-lim_log_stab <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_stab")
-lim_log_rich_tot <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_rich_tot")
+lim_log_stab <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_stab_std")
+lim_log_rich_tot <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_rich_tot_std")
 # Plot left  
 
 p_stab_div <- sem_data %>%
-  ggplot(aes(x = log_rich_tot, y = log_stab))+
+  ggplot(aes(x = log_rich_tot_std, y = log_stab_std))+
   geom_point() +
   ylim(lim_log_stab) +
   xlim(lim_log_rich_tot) +
@@ -771,7 +891,7 @@ p_stab_div <- sem_data %>%
 
 # Right plot
 p_stab_div_troph <- stab_div_troph %>%
-  ggplot(aes(x = log_rich_tot, y = log_stab, color = troph_group)) +
+  ggplot(aes(x = log_rich_tot_std, y = log_stab_std, color = troph_group)) +
   geom_point() +
   ggplot2::scale_color_manual(
     labels = troph_group_labeller(),
@@ -797,10 +917,10 @@ p_stab <- plot_grid(p_stab_div, p_stab_div_troph,
 
 
 ```{r p-p-div}
-lim_log_bm <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_bm")
+lim_log_bm <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_bm_std")
 
 p_bm_div <- sem_data %>%
-  ggplot(aes(x = log_rich_tot, y = log_bm))+
+  ggplot(aes(x = log_rich_tot_std, y = log_bm_std))+
   geom_point() +
   ylim(lim_log_bm) +
   xlim(lim_log_rich_tot) +
@@ -812,7 +932,7 @@ p_bm_div <- sem_data %>%
     parse = TRUE)
 
 p_bm_div_troph <- stab_div_troph %>%
-  ggplot(aes(x = log_rich_tot, y = log_bm, color = troph_group)) +
+  ggplot(aes(x = log_rich_tot_std, y = log_bm_std, color = troph_group)) +
   geom_point() +
   ylim(lim_log_bm) +
   xlim(lim_log_rich_tot) +
@@ -850,29 +970,29 @@ print_ci <- function(.df){
 ```{r print-coef-stab}
 # Coefficients
 s_co_i <- print_coef(coef_div$stab["(Intercept)"])
-s_co_r <- print_coef(coef_div$stab["log_rich_tot"])
+s_co_r <- print_coef(coef_div$stab["log_rich_tot_std"])
 s_co_t <- print_coef(coef_troph$stab["troph_group3"])
-s_co_r_t2 <- print_coef(coef_troph$stab["log_rich_tot"])
-s_co_r_t3 <- print_coef(coef_troph$stab["log_rich_tot"]+coef_troph$stab["log_rich_tot:troph_group3"])
+s_co_r_t2 <- print_coef(coef_troph$stab["log_rich_tot_std"])
+s_co_r_t3 <- print_coef(coef_troph$stab["log_rich_tot_std"]+coef_troph$stab["log_rich_tot_std:troph_group3"])
 
-s_ci_r <- print_ci(stab_div_ci["beta.log_rich_tot",])
+s_ci_r <- print_ci(stab_div_ci["beta.log_rich_tot_std",])
 s_ci_t <- print_ci(stab_troph_ci["beta.troph_group3",])
-s_ci_r_t2 <- print_ci(stab_troph_ci["beta.log_rich_tot",])
-s_ci_r_t3 <- print_ci(coef_troph$stab["log_rich_tot"] + stab_troph_ci["beta.log_rich_tot:troph_group3",])
+s_ci_r_t2 <- print_ci(stab_troph_ci["beta.log_rich_tot_std",])
+s_ci_r_t3 <- print_ci(coef_troph$stab["log_rich_tot_std"] + stab_troph_ci["beta.log_rich_tot_std:troph_group3",])
 ```
 
 ```{r print-coef-bm}
 # Coefficients
 b_co_i <- print_coef(coef_div$bm["(Intercept)"])
-b_co_r <- print_coef(coef_div$bm["log_rich_tot"])
+b_co_r <- print_coef(coef_div$bm["log_rich_tot_std"])
 b_co_t <- print_coef(coef_troph$bm["troph_group3"])
-b_co_r_t2 <- print_coef(coef_troph$bm["log_rich_tot"])
-b_co_r_t3 <- print_coef(coef_troph$bm["log_rich_tot"]+coef_troph$bm["log_rich_tot:troph_group3"])
+b_co_r_t2 <- print_coef(coef_troph$bm["log_rich_tot_std"])
+b_co_r_t3 <- print_coef(coef_troph$bm["log_rich_tot_std"]+coef_troph$bm["log_rich_tot_std:troph_group3"])
 
-b_ci_r <- print_ci(bm_div_ci["beta.log_rich_tot",])
+b_ci_r <- print_ci(bm_div_ci["beta.log_rich_tot_std",])
 b_ci_t <- print_ci(bm_troph_ci["beta.troph_group3",])
-b_ci_r_t2 <- print_ci(bm_troph_ci["beta.log_rich_tot",])
-b_ci_r_t3 <- print_ci(coef_troph$bm["log_rich_tot"] + bm_troph_ci["beta.log_rich_tot:troph_group3",])
+b_ci_r_t2 <- print_ci(bm_troph_ci["beta.log_rich_tot_std",])
+b_ci_r_t3 <- print_ci(coef_troph$bm["log_rich_tot_std"] + bm_troph_ci["beta.log_rich_tot_std:troph_group3",])
 ```
 
 ---
@@ -987,16 +1107,16 @@ richness can reduce synchrony through decrease of population size, thus raising
 the role of demographic stochasticity [@loreau_species_2008] but also in the
 case where species have different responses to environmental variation
 [@loreau_species_2008]. While the effect of species richness on synchrony is
-well understood, its effect on $\overline{CV_{sp}}$ is more complex. Indeed, studies reported positive [@tilman_biodiversity_2006, ], neutral  [@jiang_different_2009, @olivier_independent_nodate] or negative relationships [@franssen_annual_2011, @olivier_independent_nodate]. Positive relationship between
+well understood, its effect on $\overline{CV_{sp}}$ is more complex. 
 
 In turn, we found that synchrony and $\overline{CV_{sp}}$ both decreased biomass
 stability, as predicted by the formulation of stability based on the CV
-[@thibaut_understanding_2013].
-However, it was unexpected that the average population $\overline{CV_{sp}}$ had
-a stronger negative effect on biomass stability than synchrony
-[@bluthgen_land_2016; @olivier_independent_nodate]. We can advance two
-hypothesis that can raise this effect. First, the opportunity for diet
-differentiation can be low in streams compare to other organisms. Bird species
+[@thibaut_understanding_2013]. However, it was unexpected that the average
+population $\overline{CV_{sp}}$ had a stronger negative effect on biomass
+stability than synchrony [@bluthgen_land_2016; @olivier_independent_nodate]. We
+can advance two hypothesis that can raise this effect. First, the opportunity
+for diet differentiation can be low in streams compare to other organisms. Bird
+species
 are for example quite specialized in seed, flying or soil arthropods or mammals
 which gives opportunities for independent dynamics. Plants also can achieve
 independent dynamics either spatial segregation or niche differentiation. Because

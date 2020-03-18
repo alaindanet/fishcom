@@ -286,7 +286,6 @@ network_metrics <- network_analysis %>%
 
 mysave(network_metrics, dir = dest_dir, overwrite = TRUE)
 
-
 ##############################
 #  Standardized connectance  #
 ##############################
@@ -438,6 +437,38 @@ network_metrics %<>%
 #plot(mod)
 
 mysave(network_metrics, dir = dest_dir, overwrite = TRUE)
+
+###############################################
+#  Get Standardized biomass by trophic group  #
+###############################################
+
+myload(network_metrics, network_analysis, dir = mypath("data", "classes"))
+
+troph_group_std <- network_analysis %>%
+  select(opcod, troph_group) %>%
+  unnest(troph_group) %>%
+  left_join(select(op_analysis, opcod, surface), by = "opcod") %>%
+  mutate(
+    bm_std = biomass / surface,
+    rich_std = richness / surface
+  ) %>%
+  select(-surface) %>%
+  group_by(opcod) %>%
+  nest(.key = "troph_group")
+
+network_metrics %<>%
+  select(-troph_group) %>%
+  left_join(troph_group_std, by = "opcod")
+network_analysis %<>%
+  select(-troph_group) %>%
+  left_join(troph_group_std, by = "opcod")
+
+#check:
+network_metrics %>%
+  select(opcod, troph_group) %>%
+  unnest(troph_group)
+
+mysave(network_metrics, network_analysis, dir = mypath("data", "classes"), overwrite = TRUE)
 
 ################################
 #  Compute motif distribution  #

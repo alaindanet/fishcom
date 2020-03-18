@@ -34,10 +34,16 @@ compute_sem_dataset <- function (
   # Add synchrony
   sync %<>% dplyr::select(station, synchrony, cv_sp, richness_tot, rich_tot_std)
   biomass_sem <- com %>%
-    dplyr::select(station, biomass_stab, biomass_med, bm_std_med, richness_med, rich_std_med, pielou_med,
+    dplyr::select(
+      station,
+      biomass_stab, bm_std_stab, 
+      biomass_med, bm_std_med,
+      richness_med, rich_std_med,
+      pielou_med,
       betadiv_bin, beta_bin_c) %>%
     dplyr::left_join(sync, by = "station") %>%
-    dplyr::rename(sync = synchrony,
+    dplyr::rename(
+      sync = synchrony,
       piel = pielou_med,
       prod = biomass_med,
       prod_std = bm_std_med,
@@ -73,9 +79,11 @@ compute_sem_dataset <- function (
     dplyr::mutate(
       log_rich = log10(richness_med),
       log_rich_tot = log10(richness_tot),
+      log_rich_tot_std = log10(rich_tot_std),
       log_sync = log10(sync), 
       log_cv_sp = log10(cv_sp),
       log_stab = log10(biomass_stab),
+      log_stab_std = log10(bm_std_stab),
       log_bm = log10(prod),
       log_bm_std = log10(prod_std),
       log_RC1 = log10(RC1 + abs(min(RC1)) + 1),
@@ -93,16 +101,16 @@ compute_sem_dataset <- function (
 compute_stab_sem_rich <- function(.data, random_effect = "~ 1 | basin", get_sem = FALSE) {
 
   mod_list <- list(
-    nlme::lme(log_rich_tot ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
+    nlme::lme(log_rich_tot_std ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
     #nlme::lme(piel ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
-    nlme::lme(ct ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
-    nlme::lme(t_lvl ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    nlme::lme(ct ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot_std, random = ~ 1 | basin, data = .data),
+    nlme::lme(t_lvl ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot_std, random = ~ 1 | basin, data = .data),
     #nlme::lme( ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
-    nlme::lme(log_sync ~ log_rich_tot + ct + t_lvl + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,
+    nlme::lme(log_sync ~ log_rich_tot_std + ct + t_lvl + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,
       random = ~ 1 | basin, data = .data),
-    nlme::lme(log_cv_sp ~ log_rich_tot + ct + t_lvl
+    nlme::lme(log_cv_sp ~ log_rich_tot_std + ct + t_lvl
        + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
-    lm(log_stab ~ log_cv_sp + log_sync, data = .data)
+    lm(log_stab_std ~ log_cv_sp + log_sync, data = .data)
   )
   sem <-  piecewiseSEM::as.psem(mod_list)
   if (get_sem) {
@@ -210,12 +218,12 @@ compute_prod_sem <- function(.data, random_effect = "~ 1 | basin") {
 }
 compute_prod_sem_rich <- function(.data, random_effect = "~ 1 | basin") {
   corsem <- piecewiseSEM::psem(
-    nlme::lme(log_rich_tot ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
+    nlme::lme(log_rich_tot_std ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
     #nlme::lme(piel ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
-    nlme::lme(ct ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
-    nlme::lme(t_lvl ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
+    nlme::lme(ct ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot_std, random = ~ 1 | basin, data = .data),
+    nlme::lme(t_lvl ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot_std, random = ~ 1 | basin, data = .data),
     #nlme::lme(beta_bin_c ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
-    nlme::lme(log_bm_std ~ log_rich_tot + ct + t_lvl + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,
+    nlme::lme(log_bm_std ~ log_rich_tot_std + ct + t_lvl + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,
       random = ~ 1 | basin, data = .data)
   )
   output <- summary(corsem, .progressBar = F)

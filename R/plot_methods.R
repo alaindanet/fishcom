@@ -629,7 +629,9 @@ build_diag_from_sem <- function (fit = NULL, p_val_thd = NULL) {
     "log_cv_sp" = "CVsp",
     "log_sync" = "Synchrony",
     "log_stab" = "Biomass \n stability",
+    "log_stab_std" = "Biomass \n stability",
     "log_rich_tot" = "Species \n richness",
+    "log_rich_tot_std" = "Species \n richness (m2^-1)",
     "log_bm" = "Total \n biomass",
     "log_bm_std" = "Total \n biomass (g/m2)"
   )
@@ -656,15 +658,15 @@ build_diag_from_sem <- function (fit = NULL, p_val_thd = NULL) {
       type = map_chr(nodes, function (x) {
 	if (any(c(paste0("RC", seq(1,5)), paste0("log_RC", seq(1,5))) %in% x)) {
 	  type <- "evt" 
-	} else if (x == "log_rich_tot") {
+	} else if (x %in% paste0("log_rich_tot", c("", "_std"))) {
 	  type <- "rich"
 	} else if (any(x %in% c("log_sync", "log_cv_sp"))) {
 	  type <- "stab_comp"
 	} else if (any(x %in% c("ct", "t_lvl"))) {
 	  type <- "com"
-	} else if (x == "log_stab") {
+	} else if (x %in% paste0("log_stab", c("", "_std"))) {
 	  type <- "stab" 
-	} else if (x %in% c("log_bm", "log_bm_std")) {
+	} else if (x %in% paste0("log_bm", c("", "_std"))) {
 	  type <- "bm" 
 	}
 	return(type)
