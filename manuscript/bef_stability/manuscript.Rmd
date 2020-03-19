@@ -9,6 +9,8 @@ fontsize: 12pt
 header-includes:
    - \usepackage{setspace}
    - \doublespacing
+   - \usepackage{lineno}
+   - \linenumbers
 geometry: margin=2cm
 bibliography: references.bib
 ---
@@ -84,10 +86,9 @@ assessment [@hector_plant_1999, @tilman_biodiversity_2014] because of
 competition for light between plants [@grace_integrative_2016]. Complementarity
 between species in resource exploitation [@cardinale_species_2002] leading to
 overyielding (CHECK) has been proposed to explain positive relationship between
-productivity
-and species richness, while species richness effect can also rise from the
-statistical probability to end up with a highly productive species . The
-relationship between species richness and stability is even more complex
+productivity and species richness, while species richness effect can also rise
+from the statistical probability to end up with a highly productive species
+. The relationship between species richness and stability is even more complex
 partly because of the inherent multidimensionality of stability
 [@donohue_dimensionality_2013, @donohue_navigating_2016] and because of the
 different metrics of stability privileged in theoretical (stability of local
@@ -96,16 +97,17 @@ of abundance or biomass through time). @may_will_1972 stimulated a lot of
 debate and fecund research, showing that species richness, probability of
 interacting and average interaction strength destabilizes communities in which
 species interact randomly. Empirically, consistent works showed that species
-richness increased community stability in grasslands [@tilman_biodiversity_2006],
-mesocosms [@pennekamp_biodiversity_2018] and vertebrates
-[@olivier_independent_nodate, @franssen_annual_2011]. Two components can
-explain variation of community stability, (1) individual species stability and (2)
-the species synchrony [@loreau_species_2008, @thibaut_understanding_2013].
-Positive [@tilman_biodiversity_2006], neutral [@jiang_different_2009, @olivier_independent_nodate]
-and negative [@franssen_annual_2011, @olivier_independent_nodate] relationships
-between species stability and species richness have been found.
-On the other side, studies consistently found that species richness decreased
-synchrony between species [@loreau_species_2008, @thibaut_understanding_2013,
+richness increased community stability in grasslands
+[@tilman_biodiversity_2006], mesocosms [@pennekamp_biodiversity_2018] and
+vertebrates [@olivier_independent_nodate, @franssen_annual_2011]. Two
+components can explain variation of community stability, (1) individual species
+stability and (2) the species synchrony [@loreau_species_2008,
+@thibaut_understanding_2013]. Positive [@tilman_biodiversity_2006], neutral
+[@jiang_different_2009, @olivier_independent_nodate] and negative
+[@franssen_annual_2011, @olivier_independent_nodate] relationships between
+species stability and species richness have been found. On the other side,
+studies consistently found that species richness decreased synchrony between
+species [@loreau_species_2008, @thibaut_understanding_2013,
 @bluthgen_land_2016; @olivier_independent_nodate]. However, as far as we know,
 less studies have reported empirical assessment of stability-richness
 relationship in trophic network [but see @thebault_stability_2010].
@@ -209,73 +211,143 @@ biomass and variability.
 
 ## Fish data
 
-- OFB
-  - French long term protocol
-  - standardized
+---
+#- OFB
+  #- French long term protocol
+  #- standardized
+#- Electric fishing:
+  #- stuned fish
+  #- identification of the fishes
+  #- fish counted  
+  #- length of the fishes in mm by lot (4):
+    #- I: big fishes measured individually
+    #- S/L: fishes are grouped by species and by size 
+      #- 30 random fishes were measured in each lot
+      #- simulate the size of all the fishes of the lot:
+	#- normal distribution truncated at 95% (?)
+	#- mean and sd calculted from the sample of the lot 
+    #- G: little fishes are grouped by species
+      #- min and max size by lot 
+      #- simulate the size of all the fishes of the lot:
+	#- normal distribution truncated at 95% (?)
+	#- mean computed as ???  
+	#- se computed as ??? 
+    #- N:
+#- Protocols type:
+  #- complete
+    #- shallow river
+  #- partial:
+    #- deep and large river
+    #- partial over bank
+    #- partial by point
+    #- fusion of the two Protocols when "by point" all the point were done
+      #over bank
+---
 
-- Electric fishing:
-  - stuned fish
-  - identification of the fishes
-  - fish counted  
-  - length of the fishes in mm by lot (4):
-    - I: big fishes measured individually
-    - S/L: fishes are grouped by species and by size 
-      - 30 random fishes were measured in each lot
-      - simulate the size of all the fishes of the lot:
-	- normal distribution truncated at 95% (?)
-	- mean and sd calculted from the sample of the lot 
-    - G: little fishes are grouped by species
-      - min and max size by lot 
-      - simulate the size of all the fishes of the lot:
-	- normal distribution truncated at 95% (?)
-	- mean computed as ???  
-	- se computed as ??? 
-    - N:
-
-- Protocols type:
-  - complete
-    - shallow river
-  - partial:
-    - deep and large river
-    - partial over bank
-    - partial by point
-    - fusion of the two Protocols when "by point" all the point were done
-      over bank
-
-- Fishing operations and station
-  - kept one protocol type by station
-  - kept one sampling operation per year (of the season the most sampled in the
-    time series)
-  - remove operations which sampling effort (length of river sampled) superior to average
-    plus or minus 30% of sd (by station)
-  - kept station that had 10 or more samplings, i.e. followed 10 years or more
-
+Fish communities were monitored across streams of France on the period
+1995-2018 by a French governmental agency (OFB, previously AFB and ONEMA). We
+kept only standardized protocols: complete and partial methods for respectively
+little and big streams (detailed in Supplementary methods).  The sampling was
+performed by electric fishing. All the stunned fish species were identified and
+the individuals counted. Fish were classified in batch according to species and
+size class. Depending on the size class, individual fishes were measured or
+only a subsample. The size of individual fishes in subsampled batches were
+inferred under normality distribution assumption (detailed in Supplementary
+material).
 
 ## Network building
 
-- Diet data: 
-  - 7? species over 57 had a piscivorous stage
-  - 3? species had a strict piscivorous stage
-  - ontogenic diet shift based on size
+```{r}
+myload(metaweb_analysis, dir= mypath("data"))
+meta <- metaweb_analysis
+#metaweb_analysis$resource
+#meta$metaweb[meta$resource, meta$resource]
 
-- 7 Resource nodes:
-  - based on diet database
-  - no information about their biomass
+```
 
-- Size class:
-  - quantile: 9 size class per species
 
-- Interaction:
-  - Fish-resources and resources: based on diet data 
-  - Fish-fish:
-    1. diet data: is piscivorous?
-    2. allometric relationship: predation range from .03 to .45 of body size
+---
+#- Diet data: 
+  #- 7? species over 57 had a piscivorous stage
+  #- 3? species had a strict piscivorous stage
+  #- ontogenic diet shift based on size
+#- 7 Resource nodes:
+  #- based on diet database
+  #- no information about their biomass
+#- Size class:
+  #- quantile: 9 size class per species
+---
+
+---
+#- Interaction:
+  #- Fish-resources and resources: based on diet data 
+  #- Fish-fish:
+    #1. diet data: is piscivorous?
+    #2. allometric relationship: predation range from .03 to .45 of body size
+---
+
+Network inference was performed in two steps: determine trophic species,  build
+a metaweb, subtract the metaweb according to the trophic species present in
+community. Diet information were obtained from database and literature. Over
+the 57 fish species, only seven had a piscivorous life stage and only three had
+as strict piscivorous life stage. Fish species were largely omnivorous. Because
+species have ontogenic diet shift, we created nine size classes by species, one
+size class of one species constituting one trophic species. The bounds between
+size classes were equidistant (percentile method). The metaweb described the
+potential trophic interactions between the $`r 57*9`$ ($57\times9$) trophic species. 
+We had seven resource nodes which were present in the diet of the trophic
+species namely detritus, biofilm, phytoplankton, zooplankton, macrophages,
+phytobenthos and zoobenthos. A trophic species belonged to a life stage if the
+median of its size range fell in the range of the life stage. In turn, this
+trophic species has feeding interactions with the resource nodes of its life stage.
+Interactions between resource nodes are determined by literature. For example,
+phytobenthos fed on detritus, while zooplankton fed on zooplankton and
+phytoplankton. Fish-fish trophic interactions were determined by allometric
+relationships as in many studies [@brose_predator_2019, @poisot_structure_2016,
+@schneider_body_2012]. For a given trophic species, we first determined if its
+size class end up in a life stage containing piscivorous diet. If it did, we
+determined the prey size range of the trophic species from 3% to 45% of the
+median of its size range. A feeding interaction was set for each trophic species
+whose median of its size class fell into the prey range of the predator trophic
+species. To sum up, the metaweb was obtained with allometric feeding
+interactions (1) between trophic species, (2) between trophic species and
+resource nodes and (3) between resource nodes.
+
+The local networks (i.e. one network for each fish community sampling) was
+obtained by determining the trophic species of each fish individual in the
+community and interactions were set according to the metaweb. All the resource
+nodes were assumed to be present in each local network. Finally, the
+structure of the local networks varied according the presence of the trophic
+species. The inferred interactions represent potential interactions (i.e.
+not measured interactions) and are binary (i.e. presence or absence of feeding
+interactions).
+
+We computed the connectance ($C = L/N^2$, L and N being resp. the number of
+links and of nodes) and the average trophic level of each network, the average
+trophic level was weighted the biomass of each node (excluding resource nodes
+for which we had no biomass) ($\overline{T} = \sum_i^N{B_i * T_i} \times
+\sum_i^N{b_i}^{-1}$, $T_i$ and $B_i$ being resp. the trophic level and the
+biomass of the node $i$). In order to have connectance at the species level
+(i.e. not a trophic species level), we merge the trophic species of the network
+by species and thereby aggregating the link by species.
 
 ## Community
 
-- Biomass:
-  - infered by allometric law 
-  - approximated by $B = 0.01 \times (l^3.03)$
+---
+#- Biomass:
+  #- infered by allometric law 
+  #- approximated by $B = 0.01 \times (l^3.03)$
+---
+
+The body mass of each fish was approximated from their body size with an
+allometric law ($B = 0.01 \times (l^3.03)$, $B$ being the body mass in grams and $l$ the
+body size in millimeters). We have worked with body mass instead of abundances to avoid to sum
+abundances of fishes that had really different sizes and so body masses. Body
+mass are more meaningful in terms of ecosystem description. The biomass of each
+trophic species (and species) was divided by the surface sampled (measured in
+square meters) during the sampling event. The total biomass in a given
+community are so expressed in $gm^{-2}$.
+
 
 ```{r}
 myload(nmds, habitat_pressure, dir = mypath("report"))
@@ -325,16 +397,52 @@ stab_div_troph <- com_data$tps_bm_troph %>%
 
 ## Habitat and environment
 
-- Collected during fishing operation:   
-  - River size (width and depth)
-  - Altitude and slope
-  - distance to source
-- Independant dataset from naiades: 
-  - flow, temperature, DBO
-    1. moving window average
-    2. annual average 
-    3. interpolation along rivers (OpenStars + SSN package)
+---
+#- Collected during fishing operation:
+  #- River size (width and depth)
+  #- Altitude and slope
+  #- distance to source
+#- Independant dataset from naiades: 
+  #- flow, temperature, DBO
+    #1. moving window average
+    #2. annual average 
+    #3. interpolation along rivers (OpenStars + SSN package)
+---
 
+Habitat description were obtained from fish sampling data. We kept variables
+describing the ecosystem size namely the stream width and depth, the ecosystem
+position (altitude and slope). Physico-chemical variables were obtained from
+naiades (http://www.naiades.eaufrance.fr/)[http://www.naiades.eaufrance.fr/].
+We chose flow and temperature as physical variables to describe streams as flow
+impose swimming constraints which filter fish species that can establish [REF].
+Water temperature is linked to physiological constraints namely thermal
+tolerance and oxygen concentration tolerance [REF] since the level of water
+saturation in oxygen is inversely linked to water temperature. We chose
+Biochemical Oxygen Demand (BOD) for a proxy of enrichment in the ecosystem [REF
+mccann]. BOD is also inversely linked to oxygen concentration in water.
+The time resolution was heterogeneous according to the variable considered
+(hourly, daily and monthly for temperature, flow and BOD). For each recording
+station, we applied a moving window averaging (more details in supplementary
+material) to get rid of seasonal effects and took the annual mean (i.e. one
+value by year and by station. As the environmental recording stations were not
+located at the same place than the fish stations, we interpolated data with
+spatial statistical network model [@isaak_applications_2014] implemented in the 
+`SSN` R package [@hoef_ssn:_2014]. The interpolation procedure is detailed
+in supplementary material. For each fish station, environmental variables were
+matched with the year of fish sampling (except for water temperature for which the 
+record began in 2006). Then, the average temperature, flow, BDO, river width
+and depth were computed as well as coefficient of variation ($CV = \sigma
+\mu^{-1}$). As habitat and environmental variables are often colinear,
+a principal component analysis (PCA) was performed on the scaled variables. The
+PCA explained % of the variance. An axis rotation was performed to maximize the
+representation of the variables by the principal components
+(Fig. \@ref{fig:pca-rotated}). We kept five axis, representing respectively the
+(1) river size (river width & depth), (2) the altitude, slope and decreasing
+average temperature, (3) average enrichment (BDO) and CV of flow, (4) river
+size CV (CV of river width and depth) and (5) CV of enrichment (CV of BDO).
+Additionally, we logged the axis one, two and three to normalize their
+distribution and we reversed the third axis to get increasing average
+temperature with increasing values of the axis.
 
 ```{r}
 myload(
@@ -494,7 +602,7 @@ coef_troph <- map(list(stab = stab_troph_mod, bm = bm_troph_mod), fixed.effects)
 
 We computed Structural Equation Modeling (SEM) to unravel mechanisms underlying link
 between environment, community structure and both biomass stability and total
-biomass. Why SEM? 
+biomass. Why SEM?
 
 SEM enables to reason in terms of causal relationship between components. We
 aimed to understand the mechanisms behind the negative relationship biomass
@@ -721,6 +829,20 @@ stab_tlvl_pred <- pred_stab_tlvl_mod %>%
 coef_stab_tlvl <- map(list(stab = stab_tlvl_mod), fixed.effects)
 ```
 
+---
+#- Fishing operations and station
+  #- kept one protocol type by station
+  #- kept one sampling operation per year (of the season the most sampled in the
+    #time series)
+  #- remove operations which sampling effort (length of river sampled) superior to average
+    #plus or minus 30% of sd (by station)
+  #- kept station that had 10 or more samplings, i.e. followed 10 years or more
+---
+
+Only one protocol
+type was kept by station. We kept only one sampling event by year to homogenize
+the dataset [numbers: month of sampling, number of days bw samplings] (detailed
+in Supplementary material).
 
 # Results
 
