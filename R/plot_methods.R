@@ -610,7 +610,14 @@ ggpiecewisesem <- function(fit, layout = "sugiyama", p_val_thd = .05) {
     theme_graph()
 }
 
-build_diag_from_sem <- function (fit = NULL, p_val_thd = NULL) {
+build_diag_from_sem <- function (
+  fit = NULL,
+  p_val_thd = NULL,
+  env_x_pos_range = c(from = 0, to = 3),
+  env_y_pos = 0,
+  env_y_sep = 1,
+  order_env_node = NULL
+  ) {
 
   est <- fit$coefficients
   names(est)[9] <- "stars"
@@ -620,7 +627,7 @@ build_diag_from_sem <- function (fit = NULL, p_val_thd = NULL) {
   # Replace names
   node_name_replacement <- c(
     "log_RC1" = "Avg \n river size",
-    "log_RC2" = "Altitude \n Avg temperature",
+    "log_RC2" = "Avg \n temperature \n & \n (- Altitude)",
     "log_RC3" = "CV flow \n & \n Avg enrichment",
     "RC4" = "CV \n river size",
     "RC5" = "CV \n enrichment",
@@ -628,17 +635,20 @@ build_diag_from_sem <- function (fit = NULL, p_val_thd = NULL) {
     "t_lvl" = "Avg \n trophic level",
     "log_cv_sp" = "CVsp",
     "log_sync" = "Synchrony",
-    "log_stab" = "Biomass \n stability",
     "log_stab_std" = "Biomass \n stability",
+    "log_stab" = "Biomass \n stability",
+    "log_rich_tot_std" = "Species \n richness",
     "log_rich_tot" = "Species \n richness",
-    "log_rich_tot_std" = "Species \n richness (m2^-1)",
-    "log_bm" = "Total \n biomass",
-    "log_bm_std" = "Total \n biomass (g/m2)"
+    "log_bm_std" = "Total \n biomass",
+    "log_bm" = "Total \n biomass"
   )
 
   # Put Rsquared:
-  var_with_rsq <- c("ct", "t_lvl", "log_cv_sp", "log_rich_tot",
-    "log_sync", "log_rich_tot", "log_stab", "log_bm", "log_bm_std") 
+  var_with_rsq <- c("ct", "t_lvl", "log_cv_sp",
+    "log_sync", "log_rich_tot", "log_rich_tot_std", "log_stab",
+    "log_stab_std", "log_bm", "log_bm_std")
+  var_with_rsq <- var_with_rsq[var_with_rsq %in% rsq$Response]
+
   node_name_replacement[names(node_name_replacement) %in% var_with_rsq] <-
     map_chr(names(node_name_replacement)[names(node_name_replacement) %in% var_with_rsq],
       function(x, rsq, node_name) {
@@ -652,34 +662,43 @@ build_diag_from_sem <- function (fit = NULL, p_val_thd = NULL) {
     dplyr::select(nodes) %>%
     dplyr::distinct() 
 
-  ## Set type 
+  ## Set node type 
+  type_of_node <- vector(mode = "list", length = 6)
+  names(type_of_node)         <- c("evt", "rich", "com", "stab_comp", "stab", "bm")
+  type_of_node[["evt"]]       <- c(paste0("log_RC", seq(1,3)), paste0("RC", seq(4,5)))
+  type_of_node[["rich"]]      <- paste0("log_rich_tot", c("", "_std"))
+  type_of_node[["com"]]       <- c("ct", "t_lvl")
+  type_of_node[["stab_comp"]] <- c("log_sync", "log_cv_sp")
+  type_of_node[["stab"]]      <- paste0("log_stab", c("", "_std"))
+  type_of_node[["bm"]]        <- paste0("log_bm", c("", "_std"))
+
   node_set %<>%
     mutate(
       type = map_chr(nodes, function (x) {
-	if (any(c(paste0("RC", seq(1,5)), paste0("log_RC", seq(1,5))) %in% x)) {
+	if (any(type_of_node[["evt"]] %in% x)) {
 	  type <- "evt" 
-	} else if (x %in% paste0("log_rich_tot", c("", "_std"))) {
+	} else if (x %in% type_of_node[["rich"]]) {
 	  type <- "rich"
-	} else if (any(x %in% c("log_sync", "log_cv_sp"))) {
+	} else if (any(x %in% type_of_node[["stab_comp"]])) {
 	  type <- "stab_comp"
-	} else if (any(x %in% c("ct", "t_lvl"))) {
+	} else if (any(x %in% type_of_node[["com"]])) {
 	  type <- "com"
-	} else if (x %in% paste0("log_stab", c("", "_std"))) {
+	} else if (x %in% type_of_node[["stab"]]) {
 	  type <- "stab" 
-	} else if (x %in% paste0("log_bm", c("", "_std"))) {
+	} else if (x %in% type_of_node[["bm"]]) {
 	  type <- "bm" 
 	}
 	return(type)
 		       })
     )
   # Set node shape:
-  evt_node <- str_match(node_set$nodes, "RC")[, 1]
-  node_shape <- ifelse(!is.na(evt_node), "circle", "box")
+  #evt_node <- str_match(node_set$nodes, "RC")[, 1]
+  #node_shape <- ifelse(!is.na(evt_node), "circle", "box")
 
   node_df <- create_node_df(
     n = nrow(node_set),
-    label = str_replace_all(node_set$nodes, node_name_replacement),
-    shape = node_shape,
+    label = node_set$nodes,
+    shape = "box",
     style = "solid",
     color = "black", 
     fontcolor = "black", 
@@ -688,6 +707,56 @@ build_diag_from_sem <- function (fit = NULL, p_val_thd = NULL) {
     height = 1
   )
   #https://rich-iannone.github.io/DiagrammeR/graph_creation.html
+  # Order env nodes
+  if (!is.null(order_env_node)) {
+
+    node_label_in_env <- which(node_df$label %in% type_of_node[["evt"]])
+    env_node_pos_in_df <- map_int(order_env_node, ~which(node_df$label == .x))
+
+    node_df[node_label_in_env, ] <-
+      node_df[env_node_pos_in_df, ]
+  }
+   
+
+  # Set node placement
+  env_x_pos <- seq(
+    from = env_x_pos_range["from"],
+    to = env_x_pos_range["to"],
+    length.out = length(type_of_node[["evt"]])
+  )
+
+  node_df$x <- NA
+  node_df$x[env_node_pos_in_df]       <- env_x_pos
+  node_df$x[node_df$label %in% type_of_node[["rich"]] ] <- env_x_pos[3]
+  node_df$x[node_df$label %in% type_of_node[["com"]] ]  <- env_x_pos[c(2, 4)]
+
+  node_df$y <- NA
+  node_df$y[node_df$label %in%  type_of_node[["evt"]] ]  <- env_y_pos
+  node_df$y[node_df$label %in%  type_of_node[["rich"]] ] <- env_y_pos - env_y_sep
+  node_df$y[node_df$label %in%  type_of_node[["com"]] ]  <- env_y_pos - 2 * env_y_sep
+
+  # Adapt if SEM is for stab or bm:
+  if (any(node_df$label %in% type_of_node[["stab"]])) {
+
+    node_df$x[node_df$label %in% type_of_node[["stab_comp"]] ] <- env_x_pos[c(2, 4)]
+    node_df$x[node_df$label %in% type_of_node[["stab"]] ]      <- env_x_pos[3]
+
+    node_df$y[node_df$label %in%  type_of_node[["stab_comp"]] ] <- env_y_pos - 3 * env_y_sep
+    node_df$y[node_df$label %in%  type_of_node[["stab"]] ]      <- env_y_pos - 4 * env_y_sep
+    
+  } else if (any(node_df$label %in% type_of_node[["bm"]])) {
+
+    node_df$x[node_df$label %in% type_of_node[["bm"]] ]  <- env_x_pos[3]
+    node_df$y[node_df$label %in%  type_of_node[["bm"]] ] <- env_y_pos - 3 * env_y_sep
+    
+  } else {
+    stop("SEM has no stability or total biomass. Function cannot set node position.")
+  }
+
+  # Replace label to have nice label names 
+  node_name_replacement <-
+  node_name_replacement[names(node_name_replacement) %in% node_df$label]
+  node_df$label <- str_replace_all(node_df$label, node_name_replacement)
 
   replace_edge <- as.character(node_df$id) 
   names(replace_edge) <- node_set$nodes
@@ -717,9 +786,10 @@ build_diag_from_sem <- function (fit = NULL, p_val_thd = NULL) {
 
   graph <- DiagrammeR::create_graph(
     nodes_df = node_df,
-    attr_theme = "tb",
+    attr_theme = "default",
     edges_df = edge_df
   )
+  # Create spline shape: https://github.com/rich-iannone/DiagrammeR/issues/215
 
   return(graph)
 } 
