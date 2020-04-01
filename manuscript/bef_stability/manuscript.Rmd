@@ -1,5 +1,8 @@
 ---
-title: Species richness destabilizes trophic communities in freshwater ecosystems
+title:"""
+  Complex mecanisms linking biomass stability and total biomass with
+species richness and network structure in stream ecosystems 
+"""
 author: Alain Danet, Maud Mouchet, Elisa Thébault and Colin Fontaine
 date: \today 
 output:
@@ -56,7 +59,8 @@ theme_set(theme_alain())
 
 # Introduction 
 
-##### BEF
+#### Importance of BEF assessment
+
 Determining the shape of the relationship between species diversity and ecosystem
 functioning has been a central research topic in ecology
 [@may_will_1972, @hector_plant_1999, @loreau_biodiversity_2001, @hooper_effects_2005, @duffy_why_2009, @isbell_forest_quantifying_2018].
@@ -69,106 +73,74 @@ produced by unit of time) or stability which is quantified in more diverse ways
 such as the variability of species abundance, the resilience to perturbation, or
 resistance to perturbation [@donohue_navigating_2016].
 
+#### Shape of BEF: total biomass
 
-Species richness has been reported to increase productivity in grasslands
-[@grace_integrative_2016], but complex links between between species richness,
-environment, productivity and total biomass showed that species richness
-decrease total biomass [@grace_integrative_2016] contrary to previous
-assessment [@hector_plant_1999, @tilman_biodiversity_2014]. Complementarity
-between species in resource exploitation [@cardinale_species_2002] leading to
-overyielding (CHECK) has been proposed to explain positive relationship between
-productivity and species richness, while species richness effect can also rise
-from the statistical probability to end up with a highly productive species
-. The relationship between species richness and stability is even more complex
+Species richness has been reported to increase productivity
+[@tilman_productivity_1996, @grace_integrative_2016] through complementarity
+between species in resource exploitation and selection effects
+[@loreau_partioning_2001, @cardinale_species_2002, @fargione_from_2007].
+Empirical assessment of the effect of species richness on total biomass showed negative
+[@grace_integrative_2016] and positive relationships [@hector_plant_1999,
+@tilman_biodiversity_2014]. @grace_integrative_2016 showed that the results
+depend on the refinement of the mecanisms involved in the analysis.
+
+#### Shape of BEF: stability 
+
+The relationship between species richness and stability is even more complex
 partly because of the inherent multidimensionality of stability
 [@donohue_dimensionality_2013, @donohue_navigating_2016] and because of the
 different metrics of stability privileged in theoretical (stability of local
 equilibrium, robustness to primary extinction) and empirical work (variability
-of abundance or biomass through time). @may_will_1972 stimulated a lot of
-debate and fecund research, showing that species richness, probability of
-interacting and average interaction strength destabilizes communities in which
-species interact randomly. Empirically, consistent works showed that species
-richness increased community stability in grasslands
+of abundance or biomass through time). Empirical studies showed consistently
+that species richness decreased community variability in grasslands
 [@tilman_biodiversity_2006], mesocosms [@pennekamp_biodiversity_2018] and
 vertebrates [@olivier_independent_nodate, @franssen_annual_2011]. Two
-components can explain variation of community stability, (1) individual species
-stability and (2) the species synchrony [@loreau_species_2008, @thibaut_understanding_2013].
+mecanisms are involved into community variability, (1) species
+variability and (2) the species synchrony [@loreau_species_2008, @thibaut_understanding_2013].
 Positive [@tilman_biodiversity_2006], neutral
 [@jiang_different_2009, @olivier_independent_nodate] and negative
 [@franssen_annual_2011, @olivier_independent_nodate] relationships between
-species stability and species richness have been found. On the other side,
+species variability and species richness have been found. On the other side,
 studies consistently found that species richness decreased synchrony between
-species [@loreau_species_2008, @thibaut_understanding_2013, @bluthgen_land_2016; @olivier_independent_nodate]. However, as far as we know,
-less studies have reported empirical assessment of stability-richness
-relationship in trophic network [but see @thebault_stability_2010].
+species
+[@loreau_species_2008, @thibaut_understanding_2013, @bluthgen_land_2016, @olivier_independent_nodate].
+Beyond species richness, species interactions, which modifies species
+abondance and biomass and make species dynamics interdependant, have been
+largely ignored in empirical assessment.
 
-Conversely, an extensive literature exists on the effects of network structure
-on stability in mutualistic and trophic networks
-[@angelis_stability_1975, @stouffer_, @thebault_stability_2010, @barbier_pyramids_2019, @shanafelt_david_w._stability_nodate, add ref].
-Particularly, in trophic
-networks, most studies are theoretical and consider asymptotic stability to
-small perturbation. Studies showed that compartimentalization [@stouffer_] can
-increase persistence, while nestedness can either increase
-[@bascompte, @thebault_stability_2010] or decrease persistence
-[@thebault_stability_2010].
-Connectance can decrease [@thebault_stability_2010] or increase
-[@angelis_stability_1975] resilience of trophic network depending on the
-functioning of networks [@angelis_stability_1975].
 
----
-#- Vertical diversity and stability/biomass
-  #- well studied: theoretically and (experimentally, less)
-  #- mecanisms:
-    #- stability: top-down and bottom-up effect
-    #- biomass: top-down and bottom-up effects (pyramids of biomass)
-  #- key papers:[@barbier_pyramids_2019, @shanafelt_david_w._stability_nodate]
-  #- BUT: local stability, little systems 
----
+#### BEF: Theoretical ecology
 
-Trophic network are assembled both vertically and horizontally. Studies showed
-that the vertical position in the trophic network as well as the strength of
-top-down and bottom-up regulation determine biomass and stability at
-equilibrium  [@shanafelt_david_w._stability_nodate, @barbier_pyramids_2019].
-However studies on stability-diversity have focused on either vertical
-diversity or horizontal but rarely both. @zhao_horizontal_2019 have shown that
-horizontal and vertical diversity respectively increase and decrease stability
-in plankton communities.
+Conversely, theoretical ecology display an extensive literature about the
+effects of network structure on stability 
+[@may_will_1972, @angelis_stability_1975, @stouffer_compartmentalization_2011, @thebault_stability_2010, @barbier_pyramids_2019, @shanafelt_david_w._stability_nodate].
+Theoretical ecology generally uses stability definitions related to community
+equilibrium and its stability to small perturbations.
+Connectance (i.e. proportion of realized links in a network) can decrease
+[@angelis_stability_1975, @thebault_stability_2010] or increase resilience of
+trophic network depending on the functioning of networks
+[@angelis_stability_1975].
+The number of trophic levels, the vertical position in the trophic network as
+well as the strength of their biomass regulation (i.e. top-down and bottom-up)
+can determine biomass and stability at equilibrium
+[@hurd_stability_1971, @shanafelt_david_w._stability_nodate, @zhao_horizontal_2019, @barbier_pyramids_2019].
 
----
-#- Big scope assessment:
-  #- inconsistency between theoretical and empirical stability
-    #- theoretical: no cv_sp nor synchrony
-  #- No studies on stability-richness in empirical trophic communities
-    #- no effect of trophic structure
----
+A large inconsistency remains between theoretical and empirical assessments of
+the relationship between community structure and ecosystem properties.
+Theoretical studies have ignored temporal variability and then the relative
+contribution of synchrony and species variability on community variability while
+empirical studies about temporal variability and total biomass in natural
+communities have ignored the contribution of network structure.
 
-A large inconsistency remains between theoretical and empirical assessment of
-stability-diversity in trophic communities. Theoretical studies have
-ignored temporal variability and the relative contribution of synchrony and
-species variability while empirical studies about temporal variability in natural 
-communities have ignored trophic communities and the effect of trophic structure. 
-
----
-#- Goal: Assess relation biomass/stability-diversity in empirical trophic communities
-  #- introduce effect of trophic structure and environment
-  #- merge gap between theoretical and empirical studies
----
-
----
-#- What we have done:
-  #- big empirical dataset
-  #- rebuilding empirical network
-  #- assess relationship between environment, community structure and stability
----
-
-Our goal was to assess stability-diversity in natural trophic community with the
-effect of the trophic structure. We combined together the effect of vertical
-and horizontal diversity and thus aimed to bridge the gap between theoretical
-and empirical studies. We used an standardized monitoring of freshwater fish
+Our goal was to assess the mecanisms determining temporal variability and total
+biomass in natural communities while integrating both species richness and
+network structure. We combined together the effect of vertical
+and horizontal diversity and thus aimed to bridge the current gap between theoretical
+and empirical studies. We used an standardized monitoring of fish
 communities in french streams. More than three hundreds sites were followed
 more than 10 years on the 1995-2018 period. We inferred four thousands potential
-interaction networks corresponding to each sampling event, based on size
-relationships and knowledge about their ontogenic diet shift. 
+interaction networks corresponding to each sampling event, based on trait
+matching.
 
 ---
 #- Research questions:
@@ -184,23 +156,22 @@ relationships and knowledge about their ontogenic diet shift.
 	#- Effect of horizontal and vertical diversity
 ---
 
-We investigated the effects of the community structure on total biomass and on
-synchrony and species variability, which in turn determine community
-variability. We have also included the effect of environmental drivers which
-can directly affect community variability or indirectly via community structure.
-Finally, we assessed the effect of horizontal diversity on trophic group
-biomass and variability. 
+We investigated the effects of the community structure on total biomass and
+community variability, which in turn determine community variability. We have
+also included the effect of environmental drivers [@grace_integrative_2016]
+which can directly affect community variability or indirectly via community
+structure.
 
 ---
 #- Environment can drive stability and biomass:
   #- forcing: environmental forcing on communities 
-  #- can lead to misleading effect: @grace_integrative_2016
+  #- can lead to misleading effect: 
 ---
 
 
 # Methods
 
-## Fish data
+## Community variability 
 
 ---
 #- OFB
@@ -235,16 +206,89 @@ biomass and variability.
       #over bank
 ---
 
+#### Protocol 
+
 Fish communities were monitored across streams of France on the period
 1995-2018 by a French governmental agency (OFB, previously AFB and ONEMA). We
 kept only standardized protocols: complete and partial methods for respectively
-little and big streams (detailed in Supplementary methods).  The sampling was
-performed by electric fishing. All the stunned fish species were identified and
-the individuals counted. Fish were classified in batch according to species and
-size class. Depending on the size class, individual fishes were measured or
-only a subsample. The size of individual fishes in subsampled batches were
-inferred under normality distribution assumption (detailed in Supplementary
-material).
+little and big streams (detailed in Supplementary methods). In the complete
+protocol, the sampling takes place over the whole width of the river and is done
+by foot whereas in the partial protocol, the sampling is done over the bank only
+and by boat. The sampling took place either in late spring and/or Autumn.
+Heterogeneity in the sampling time may introduce variability that is not related
+to ecological processes such as the presence of juveniles. In order to reduce
+heterogeneity in sampling time, we select only one sampling per year if there
+was two in a given year. Most of the fish sampling occurred in September
+(Median: mid-August) and within station the median standard deviation of the
+sampling month was inferior to one (0.7). Additionally, we removed sampling
+events, in a given station, which the length of the stream sampled was outside
+the median length sampled more or less 30%. The number of sampling events is
+critical in order to estimate a meaningful variability of the community. We kept
+only station that have been followed ten years or more (i.e 10 sampling events
+or more), which sums to 403 stations.
+
+The sampling itself was performed by electric fishing. All the stunned fish
+species were identified and the individuals counted.
+
+##### Biomass  
+
+To characterize communities variability, abundance or biomass are generally
+used. When the body size and therefore body mass vary by several orders of
+magnitude, one downside of abundance is that we mix individual that have
+potentially really different meaning in terms of ecosystem properties such as
+biomass. We therefore estimated the body mass of fish individuals according to
+their body size. During sampling, the fishes were classified in batch according
+to species and size class. Depending on the batches, the body size of all
+individuals were measured or only a subsample. Only the body size big fishes was
+measured individually. The body size of individual fishes in subsampled batches
+was inferred under normality distribution assumption (detailed in Supplementary
+material). The body mass of individual fishes were then estimated with an
+allometric law ($B_i = 0.01 \times l_i^3.03$, $B$ being the body mass in grams,
+$l$ the body size in millimeters and $i$ the individual).
+
+The species and community biomass were then computed for each sampling event.
+As sampling effort varied across protocol type and sampling event, biomass
+was reported to the surface sampled (in $m^{2}$). Community and species biomass
+were then expressed in $gm^{-2}$.
+
+Total biomass was characterized as the median total biomass over time. Community
+stability was defined as the inverse of biomass variability. Variability was
+computed as Coefficient of Variation (CV) of the biomass ($CV_i = \sigma_i \mu_i^{-1}$,
+with $\sigma_i$ and $\mu_i$ being respectively the standard deviation and the
+average of the biomass of the station $i$). Then, biomass stability was equal to
+$CV^{-1} = \mu \sigma^{-1}$.
+
+The CV of community biomass can represent very different dynamics such as
+decreasing, stable or increasing. However, the concept of community variability
+refered to variability around an equilibrium, which is rarely observed or
+difficult to characterize in natural communities. 
+We However used SAX (Symbolic Aggregate Approximation) method to caracterize
+rougly biomass dynamics over time (details in Supplementary information). We
+finally kept only the stations which the biomass had no trends, remaining 99
+stations.
+ 
+To characterize the mecanisms driving biomass stability, we decomposed
+the community CV in synchrony and weighted average species CV
+components according to @thibaut_understanding_2013:
+
+$$
+CV_{com} = \overline{CV_{sp}} \times \sqrt{\phi}
+$$
+
+with $CV_{com}$ being the Coefficient of Variation of the community,
+$\overline{CV_{sp}}$ the average coefficient of variation of population
+pondered by biomass. $\phi$ is the synchrony, which is the ratio the total
+community variance ($\sigma^2_{x_T}$) and the sum of population variance
+($\sigma_{x_i}$) [@loreau_species_2008]:
+
+$$
+\phi = \frac{\sigma^2_{x_T}}{\sum_i{\sigma_{x_i}}}
+$$
+
+Species richness was computed as the total species richness over time in a given
+station. To normalize by sampling effort, we reported total species richness to
+the sum of surface sampled over the time period, it was expressed in number of
+species by square meter.
 
 ## Network building
 
@@ -253,7 +297,6 @@ myload(metaweb_analysis, dir= mypath("data"))
 meta <- metaweb_analysis
 #metaweb_analysis$resource
 #meta$metaweb[meta$resource, meta$resource]
-
 ```
 
 
@@ -294,7 +337,8 @@ trophic species has feeding interactions with the resource nodes of its life sta
 Interactions between resource nodes are determined by literature. For example,
 phytobenthos fed on detritus, while zooplankton fed on zooplankton and
 phytoplankton. Fish-fish trophic interactions were determined by allometric
-relationships as in many studies [@brose_predator_2019, @poisot_structure_2016, @schneider_body_2012].
+relationships as in many studies
+[@brose_predator_2019, @poisot_structure_2016, @schneider_body_2012].
 For a given trophic species, we first determined if its
 size class end up in a life stage containing piscivorous diet. If it did, we
 determined the prey size range of the trophic species from 3% to 45% of the
@@ -330,14 +374,6 @@ by species and thereby aggregating the link by species.
   #- approximated by $B = 0.01 \times (l^3.03)$
 ---
 
-The body mass of each fish was approximated from their body size with an
-allometric law ($B = 0.01 \times (l^3.03)$, $B$ being the body mass in grams and $l$ the
-body size in millimeters). We have worked with body mass instead of abundances to avoid to sum
-abundances of fishes that had really different sizes and so body masses. Body
-mass are more meaningful in terms of ecosystem description. The biomass of each
-trophic species (and species) was divided by the surface sampled (measured in
-square meters) during the sampling event. The total biomass in a given
-community are so expressed in $gm^{-2}$.
 
 
 ```{r}
@@ -656,22 +692,6 @@ connectance and average trophic level were just computed as the median over the
 temporal period. For the details of the computation of the trophic networks,
 see Network inference part.
 
-The biomass stability was decomposed in synchrony and weighted average CV
-components according to @thibaut_understanding_2013:
-
-$$
-CV_{com} = \overline{CV_{sp}} \times \sqrt{\phi}
-$$
-
-with $CV_{com}$ being the Coefficient of Variation of the community,
-$\overline{CV_{sp}}$ the average coefficient of variation of population
-pondered by biomass. $\phi$ is the synchrony, which is the ratio the total
-community variance ($\sigma^2_{x_T}$) and the sum of population variance
-($\sigma_{x_i}$) [@loreau_species_2008]:
-
-$$
-\phi = \frac{\sigma^2_{x_T}}{\sum_i{\sigma_{x_i}}}
-$$
 
 
 #### Causal relationships

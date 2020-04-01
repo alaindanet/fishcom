@@ -12,7 +12,7 @@
 1.2.2.1 different stability for different fields
 1.2.2.2 Components of community variability
 
-1.3 Effect of network structure on stability
+1.3 Effect of network structure on stability and biomass
 1.3.1 connectance & nestedness
 1.3.2 resilience & persistence
 

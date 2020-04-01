@@ -41,9 +41,111 @@ protocols correspond to the big river.
 In some stations, the two protocols are used and it's not a good idea the mix
 them when looking at temporal variation.
 
+
 ```{r}
 
-qplot(month, data = mutate(op, month = month(date))) +
+myload(op, dir = mypath("data-raw"))
+#op_sp_ind Summary of op 
+myload(op_sp_ind, dir = mypath("data"))
+source(mypath("R", "building_dataset.R"))
+
+op %<>% left_join(op_sp_ind, by = "opcod")
+
+op %<>%
+  mutate(
+    protocol_type = ifelse(protocol == "complete", "complete", "partial"),
+    date = lubridate::date(date) #date-time to date
+    ) %>%
+  select(opcod, date, station, protocol, protocol_type, surface, nb_sp, nb_ind)
+
+op_clean <- op %>%
+  group_by(protocol_type) %>%
+  nest() %>%
+  mutate(clean = purrr::map(data,
+      ~rm_dbl_fishing_op(op = .x, sep_threshold = 270, nb_sampling = 10))) %>%
+  select(-data)
+
+# Check that there are not double station:
+station_protocol <- sapply(op_clean$clean, function (x) {
+ unique(x$station) 
+}) %>% unlist()
+length(unique(station_protocol)) == length(station_protocol)
+
+opcod_clean <- op_clean %>%
+  unnest() %>%
+  .[["opcod"]]
+  
+# Test for the length fished
+myload(op_desc, dir = mypath("data-raw"))
+op_desc %<>%
+  rename(opcod = ope_id) %>%
+  filter(opcod %in% opcod_clean)
+op_clean %<>%
+  unnest() %>%
+  left_join(select(op_desc, opcod, length_sourced)) %>%
+  arrange(station) 
+
+op_cv_length <- op_clean %>%
+  group_by(station) %>%
+  summarise(
+    mean = mean(length_sourced),
+    median = median(length_sourced),
+    cv = mean / sd(length_sourced),
+    cv = replace(cv, cv == Inf, 0)
+  )
+test_too_different <- op_clean %>%
+  left_join(op_cv_length, by = "station") %>%
+  mutate(out = ifelse(length_sourced > median + .3 * median | length_sourced < median - .3 * median, TRUE, FALSE))
+filter(test_too_different, out == TRUE) %>%
+  filter(protocol != "complete") %>%
+  arrange(station)
+filter(op_clean, station == 345)
+
+op_analysis <- op_clean %>%
+  filter(opcod %in% filter(test_too_different, out == FALSE)$opcod)
+
+op_hist <- op_analysis %>%
+  group_by(station) %>%
+  summarise(n = n()) %>%
+  filter(n >= 10)
+op_analysis %<>% 
+  filter(station %in% op_hist$station)
+
+```
+
+# Distribution of sampling in time 
+
+```{r}
+op_analysis  %<>%
+  mutate(month = month(date))
+
+getmode <- function(v) {
+   uniqv <- unique(v)
+   uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+st_month_sampling <- op_analysis %>%
+  group_by(station) %>%
+  summarise(
+    mode = getmode(month),
+    med = median(month),
+    sd = sd(month)
+  ) 
+st_month_sampling %>%
+  pivot_longer(
+    cols = c("mode", "med", "sd"),
+    names_to = "type",
+    values_to = "value") %>%
+  ggplot(aes(x = value)) +
+  geom_histogram() +
+  facet_wrap(~type, scales = "free_x")
+summarise(st_month_sampling, med_sd = median(sd), med_med = median(med))
+```
+
+
+```{r}
+
+qplot(month, data = op_analysis) +
   labs(x = "Date",
     y = "Frequency")
 
@@ -59,10 +161,12 @@ filter(protocol_station,
 )
 
 # Numbering the sampling events by station
-op_hist <- clean_dbl %>%
+op_hist <- op_analysis %>%
   group_by(station) %>%
   summarise(freq = n()) %>%
   arrange(desc(freq)) %>%
   mutate(station = fct_inorder(as.factor(station)))
+op_hist %>%
+  ggplot(aes(x = freq)) +
+  geom_histogram()
 ```
-
