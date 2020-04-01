@@ -794,6 +794,154 @@ build_diag_from_sem <- function (
   return(graph)
 } 
 
+export_diagram <- function(
+  fit = NULL,
+  format = "png",
+  width = 700*2,
+  height = 900*2  - 900*2*30/100,
+  file_path = NULL,
+  arrows = "ortho",
+  val_thd = 0.05,
+  env_x_pos_range = c(from = 0, to = 7.5),
+  env_y_pos = 0,
+  env_y_sep = 1.5,
+  order_env_node = c("RC4", "log_RC3", "RC5", "log_RC1", "log_RC2")  
+  ) {
+
+
+  file_path <- paste0(file_path, ".", format) 
+
+  graph <- build_diag_from_sem(
+    fit = fit, 
+    p_val_thd = 0.05,
+    env_x_pos_range = c(from = 0, to = 7.5),
+    env_y_pos = 0,
+    env_y_sep = 1.5,
+    order_env_node = c("RC4", "log_RC3", "RC5", "log_RC1", "log_RC2")  
+  )
+  graph %<>%
+    add_global_graph_attrs(
+      attr = "splines",
+      value = arrows, #spline
+      attr_type = "graph")
+
+  render_graph(graph)
+  export_graph(
+    graph = graph,
+    file_type = format,
+    file_name = file_path,
+    height = height,
+    width = width
+  )
+
+  # Get the plot as an R object
+  img <- file_path %>%
+    magick::image_read()
+  p_sem <- cowplot::ggdraw() +
+    cowplot::draw_image(img)
+  return(p_sem)
+
+}
+
+###################
+#  Plot response  #
+###################
+
+#' Make the plot for troph
+#' @param .data output from compute_stat_troph_rich()
+make_troph_plot <- function (
+  .data = NULL,
+  resp  = NULL,
+  x_lim = NULL,
+  y_lim = NULL,
+  lab_xy = NULL,
+  rsq_xy = NULL
+  )  {
+
+
+  resp_sym <- sym(resp)
+
+  # data:
+  raw_data <- .data[["all"]] %>%
+    dplyr::select(troph_group, data) %>%
+    tidyr::unnest(data)
+
+  # Basic plot:
+  p <- na.omit(raw_data) %>%
+    ggplot(
+      aes(
+	x     = log_rich_tot_std,
+	y     = !!resp_sym,
+	color = troph_group
+      )
+      ) +
+    geom_point()
+
+  # Add model prediction:
+  prediction <- .data[["predict"]]
+  p <- p + 
+    geom_line(data = prediction) +
+    geom_ribbon(
+      data = prediction,
+      aes(
+	ymin  = conf.low,
+	ymax  = conf.high,
+	color = NULL,
+	group = troph_group
+	),
+      alpha = .2
+    )
+
+    # Custom colors:
+    p <- p +
+      ggplot2::scale_color_manual(
+	labels = troph_group_labeller(),
+	values = c("blue", "green", "red"),
+	name   = "Trophic group"
+      )
+
+    # Add Rsq of the model:
+    rsq_data <- .data[["rsq"]]
+    p <- p + 
+    annotate(
+      "text",
+      x     = rsq_xy["x"],
+      y     = rsq_xy["y"],
+      label = make_label_rsq(rsq = rsq_data[1,]),
+      parse = TRUE,
+      color = "blue",
+      hjust = 0,
+      vjust = 1
+      ) +
+    annotate(
+      "text",
+      x     = rsq_xy["x"],
+      y     = rsq_xy["y"],
+      label = make_label_rsq(rsq = rsq_data[2,]),
+      parse = TRUE,
+      color = "green",
+      hjust = 0,
+      vjust = 0
+    )
+
+    # Set axis limit:
+    if (!all(map_lgl(list(x_lim, y_lim), ~is.null(.x)))) {
+      p <- p +
+	ylim(y_lim) +
+	xlim(x_lim)
+    }
+
+    if (!is.null(lab_xy)) {
+      p <- p + 
+	labs(x = lab_xy["x"], y = lab_xy["y"])
+    }
+
+    return(p)
+    
+}
+
+
+
 ################################################################################
 #                                 Plot labels                                  #
 ################################################################################

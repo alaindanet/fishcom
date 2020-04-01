@@ -8,7 +8,6 @@ compute_sp_nb_from_com_mat <- function (com_mat = NULL) {
 
 }
 
-
 compute_avg_cv_sp <- function(biomass, variance) {
   #Check that the species are in the same order in the vector:
   stopifnot(names(biomass) == names(variance))
@@ -80,6 +79,7 @@ get_sync_cv_mat <- function(com_analysis = NULL, op_analysis = NULL, presence_th
 	return(test)
 })
       ) %>%
+    dplyr::select(station, comb) %>%
     tidyr::unnest(comb)
 
   # Join and put biomass to 0 when no observed:

@@ -405,19 +405,24 @@ network_metrics %<>%
 ####################################
 #  Compute weighted trophic level  #
 ####################################
+myload(network_metrics, dir = mypath("data", "classes"))
+myload(op_analysis, dir = mypath("data"))
 
-obs_troph_level <- network_metrics %>%
-  select(opcod, obs_troph_level) %>% 
-  mutate(obs_troph_level = map(obs_troph_level, enframe)) %>%
-  unnest(obs_troph_level) %>%
-  rename(obs_troph_level = value, !!var_chr := name)
+weighted_mean_trophic_lvl <- 
+  compute_weighted_avg_trophic_level(.net = network_metrics)
 
-weighted_mean_trophic_lvl <- network_metrics %>%
-  select(opcod, composition) %>%
-  unnest(composition) %>%
-  left_join(obs_troph_level, by = c("opcod", var_chr)) %>%
-  group_by(opcod) %>%
-  summarise(w_trph_lvl_avg = sum(obs_troph_level * biomass) / sum(biomass))
+weighted_mean_trophic_lvl <- 
+  compute_weighted_avg_trophic_level(
+    .net = network_metrics, bm_var = "bm_std",
+    .op = op_analysis
+  )
+
+if ("w_trph_lvl_avg" %in% names(network_metrics)) {
+
+  network_metrics %<>%
+    select(-w_trph_lvl_avg)
+}
+
 network_metrics %<>%
   left_join(weighted_mean_trophic_lvl, by = "opcod")
 
@@ -468,7 +473,8 @@ network_metrics %>%
   select(opcod, troph_group) %>%
   unnest(troph_group)
 
-mysave(network_metrics, network_analysis, dir = mypath("data", "classes"), overwrite = TRUE)
+mysave(network_metrics, network_analysis,
+  dir = mypath("data", "classes"), overwrite = TRUE)
 
 ################################
 #  Compute motif distribution  #

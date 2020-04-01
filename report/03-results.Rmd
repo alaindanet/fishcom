@@ -10,9 +10,6 @@ myload(temporal_community_metrics, synchrony, dir = data_common)
 source(mypath("R", "local_network_build.R"))
 ```
 
-
-
-
 ### Look at some network temporal series
 
 
@@ -258,4 +255,75 @@ ggplot(high_div_troph_group_3,
   facet_wrap( ~ station) + 
   labs(title = "The twelve richest station of superior predator",
   y = "Biomass of trophic group (g)", x = "Date")
+```
+
+## Network properties
+
+### class connectance versus species connectance
+
+```{r}
+cl_ct <- temporal_network_metrics_classes %>%
+  select(station, connectance_med, nbnode_med) %>%
+  rename(cl_ct_med = connectance_med, cl_node_med = nbnode_med)
+myload(temporal_network_metrics, dir = mypath("data", "species"))
+sp_ct <- temporal_network_metrics %>%
+  select(station, connectance_med, nbnode_med) %>%
+  rename(sp_ct_med = connectance_med, sp_node_med = nbnode_med)
+
+myload(network_metrics, dir = mypath("data", "classes"))
+cl_network_metrics <- network_metrics
+myload(network_metrics, dir = mypath("data", "species"))
+sp_network_metrics <- network_metrics
+sp_net <- sp_network_metrics %>%
+  select(opcod, connectance, nbnode) %>%
+  rename(sp_ct = connectance, sp_node = nbnode)
+cl_net <- cl_network_metrics %>%
+  select(opcod, connectance, nbnode) %>%
+  rename(cl_ct = connectance, cl_node = nbnode)
+
+net_comp <- sp_net %>% 
+  left_join(cl_net, by = "opcod")
+```
+
+```{r}
+net_comp %>%
+  pivot_longer(
+        cols = ends_with("ct"),
+        names_to = "type",
+        names_prefix = "_ct",
+        values_to = "ct",
+        values_drop_na = TRUE
+  ) %>%
+  ggplot(aes(x = ct, fill = type)) +
+  geom_histogram(position = "identity", alpha = .2) +
+  xlab("Connectance")
+```
+
+
+### Weighted average trophic level: class vs species network
+
+```{r}
+sp_net <- sp_network_metrics %>%
+  select(opcod, w_trph_lvl_avg, nbnode) %>%
+  rename(cl_tlvl = w_trph_lvl_avg, cl_node = nbnode)
+cl_net <- cl_network_metrics %>%
+  select(opcod, w_trph_lvl_avg, nbnode) %>%
+  rename(sp_tlvl = w_trph_lvl_avg, sp_node = nbnode)
+
+net_comp <- sp_net %>% 
+  left_join(cl_net, by = "opcod")
+```
+
+```{r}
+net_comp %>%
+  pivot_longer(
+        cols = ends_with("tlvl"),
+        names_to = "type",
+        names_prefix = "_tlvl",
+        values_to = "tlvl",
+        values_drop_na = TRUE
+  ) %>%
+  ggplot(aes(x = tlvl, fill = type)) +
+  geom_histogram(position = "identity", alpha = .2) +
+  xlab("Connetlvlance")
 ```

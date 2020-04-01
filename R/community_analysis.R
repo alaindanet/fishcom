@@ -21,20 +21,28 @@ rm_sp_from_com <- function (com = NULL, sp_to_rm = NULL) {
 #' @param network data.frame containing opcod and network metrics 
 #'
 #'
-summarise_network_over_time <- function (op = NULL, class_network = NULL,
+summarise_network_over_time <- function (
+  op = NULL,
+  class_network = NULL,
   species_network = NULL,
-  metrics = c("nestedness", "connectance", "connectance_corrected", "nbnode",
-  "mean_troph_level", "mean_troph_level_corrected", "max_troph_level", "modularity", "modularity_corrected", "w_trph_lvl_avg")) {
+  metrics = NULL,
+  type_metrics = "species") {
 
   op %<>%
     dplyr::select(opcod, station, year, surface)
 
-  # Metrics are computed with species network
-  com <- op %>%
-    dplyr::left_join(species_network, by = "opcod") %>%
+  # Metrics are computed with a type of network
+  stopifnot(type_metrics %in% c("species", "classes"))
+  if (type_metrics == "classes") {
+   com <- op %>%
+    dplyr::left_join(class_network, by = "opcod") 
+    
+  } else {
+   com <- op %>%
+    dplyr::left_join(species_network, by = "opcod") 
+  }
+   com %<>%
     dplyr::group_by(station) %>%
-    #dplyr::rename(mean_troph_level = troph_level_avg,
-      #max_troph_level = troph_length) %>%
     dplyr::summarise_at(metrics,
       list(cv = ~sd(.) / mean(.), med = median, stab = ~mean(.) / sd(.)))
 
@@ -42,6 +50,7 @@ summarise_network_over_time <- function (op = NULL, class_network = NULL,
     # Get total richness, biomass_med,  by station and trophic group 
   composition <- class_network %>%
     dplyr::left_join(op, by = "opcod") %>%
+    dplyr::select(station, composition) %>%
     tidyr::unnest(composition) %>%
     dplyr::mutate(species = str_extract_all(sp_class, "[A-Z]{3}"))
 
@@ -69,8 +78,7 @@ summarise_network_over_time <- function (op = NULL, class_network = NULL,
   # Merge trophic group metrics
   troph_group_metrics <- troph_group %>%
     dplyr::left_join(richness_tot, by = c("station", "troph_group")) %>%
-    dplyr::group_by(station) %>%
-    tidyr::nest(.key = "troph_group")
+    tidyr::nest(troph_group = -station)
 
   com %<>% dplyr::left_join(troph_group_metrics, by = "station")
 
@@ -101,7 +109,7 @@ summarise_bm_troph_over_time <- function (
     dplyr::ungroup() %>%
     filter(!is.na(station) & !is.na(opcod)) %>%
     dplyr::select(station, troph_group) %>%
-    tidyr::unnest()
+    tidyr::unnest(troph_group)
 
   # Summarise biomass and community characteristics
   biomass_variation <- net %>%
@@ -137,7 +145,7 @@ summarise_bm_troph_over_time <- function (
   # Merge with temporal_network_metrics
   biomass_variation %<>%
     dplyr::group_by(station) %>%
-    nest(.key = "troph_group")
+    tidyr::nest(troph_group = c(troph_group, matches(gsub(x = var_to_keep, "\\|station", "")))) #bm_std, rich_std, richness_avg, richness_med, richness_tot, rich_tot_std
 
   return(biomass_variation)
 
@@ -263,7 +271,8 @@ compute_com_synchrony <- function (.op = NULL, com = NULL, ...) {
 #'
 #'
 #'
-compute_community_temporal_analysis <- function(.op = NULL, dest_dir = NULL) {
+compute_community_temporal_analysis <- function(.op = NULL,
+  type_network_metrics = "species") {
 
   output <- vector("list", length = 4)
   names(output) <- c("tps_net", "tps_com", "tps_bm_troph", "sync")
@@ -275,10 +284,13 @@ compute_community_temporal_analysis <- function(.op = NULL, dest_dir = NULL) {
   species_network_metrics <- network_metrics
   rm(network_metrics)
 
-  output[["tps_net"]] <- summarise_network_over_time(op = .op,
+  output[["tps_net"]] <- summarise_network_over_time(
+    op = .op,
     species_network = species_network_metrics,
     class_network = class_network_metrics,
-    metrics = c("connectance", "w_trph_lvl_avg"))
+    metrics = c("connectance", "w_trph_lvl_avg"),
+    type_metrics = type_network_metrics
+  )
 
   cat("Network done (1/4)\n")
 
@@ -331,7 +343,8 @@ compute_community_temporal_analysis <- function(.op = NULL, dest_dir = NULL) {
     network = class_network_analysis
   )
   output[["tps_bm_troph"]] %<>% 
-    unnest(troph_group)
+    tidyr::unnest(troph_group) %>%
+    dplyr::ungroup()
 
   cat("Biomass by trophic group done (4/4)\n")
 

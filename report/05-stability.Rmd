@@ -1103,7 +1103,6 @@ richness cut was done on median richness. However, if total richness is
 considered, the removal has far less effect.
 
 
-
 ### CV sp
 
 ```{r abun-sp, fig.dim = c(10, 7), fig.cap = "Species most abundant by trophic group."}
@@ -1513,18 +1512,6 @@ What are the contributions of the the environment and the structure of
 the network on the functioning and the stability of the trophic network
 
 
-```{r}
-myload(nmds, dir = mypath("report"))
-lav_data <- compute_sem_dataset(
-  com = temporal_community_metrics,
-  network = temporal_network_metrics, 
-  hab_press = habitat_pressure, 
-  sync = synchrony,
-  nmds = NULL,
-  basin = st_basin 
-  )
-```
-
 
 ### Piecewiese SEM
 
@@ -1535,6 +1522,74 @@ library(piecewiseSEM)
 ```
 
 #### Stability
+
+```{r, fig.dim = c(10, 7), echo = FALSE, fig.cap = "SEM for stability"}
+library(nlme)
+library(piecewiseSEM)
+
+st_basin <- get_basin_station()
+myload(nmds, dir = mypath("report"))
+myload(network_metrics, dir = mypath("data", "species"))
+sp_network_metrics <- network_metrics
+rm(network_metrics)
+myload(network_metrics, dir = mypath("data", "classes"))
+cl_network_metrics <- network_metrics
+rm(network_metrics)
+
+myload(biomass_ts_sax, dir = mypath("data"))
+op_analysis_bbb <- filter(op_analysis, station %in%
+  biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
+
+# Compute stability, network metrics, etc with the new datasets
+source(mypath("R", "community_analysis.R"))
+#debug(compute_community_temporal_analysis)
+com_data <- compute_community_temporal_analysis(.op = op_analysis_bbb)
+class_tps_net <- summarise_network_over_time(op = op_analysis_bbb,
+class_network = cl_network_metrics,
+species_network = sp_network_metrics,
+metrics = c("connectance", "w_trph_lvl_avg"),
+type_metrics = "classes")
+
+# Compute sem dataset 
+sem_data <- map(list(sp = com_data[["tps_net"]], cl = class_tps_net),
+~compute_sem_dataset(
+  com = com_data[["tps_com"]],
+  network = .x, 
+  hab_press = habitat_pressure, 
+  sync = com_data[["sync"]],
+  nmds = NULL,
+  basin = st_basin 
+  )
+)
+
+
+# Compute SEMs
+sem <- map(sem_data, ~compute_stab_sem_rich(.data = .x))
+
+library(DiagrammeR)
+sem_graph <- map2(
+  sem,
+  paste0(mypath("manuscript", "bef_stability"), "/", c("species", "class"), "_stab_sem"),
+  function(x, path) {
+
+  export_diagram(
+    fit = x,
+    file_path = path,
+    format = "png",
+    width = 700*2,
+    height = 900*2  - 900*2*30/100,
+    arrows = "ortho",
+    val_thd = 0.05,
+    env_x_pos_range = c(from = 0, to = 7.5),
+    env_y_pos = 0,
+    env_y_sep = 1.5,
+    order_env_node = c("RC4", "log_RC3", "RC5", "log_RC1", "log_RC2")
+  )
+
+
+}
+)
+```
 
 ```{r, eval = FALSE, fig.cap = "The basic SEM"}
 build_stab_sem <- function (evt = NULL, com = NULL, stab_comp = NULL, stab = NULL,  .data = NULL) {
@@ -1569,7 +1624,7 @@ corsem <- build_stab_sem(
   com = c("log_rich", "piel", "c_c", "t_lvl", "beta_bin_c"),
   stab_comp = c("log_sync", "log_cv_sp"),
   stab = c("log_stab"),
-  .data = lav_data)
+  .data = sem_data)
 
 output <- summary(as.psem(corsem), .progressBar = F)
 output$coefficients %>%
@@ -1586,32 +1641,6 @@ car::vif(lme(log_sync ~ log_rich + piel + alt + c_c + t_lvl + beta_bin_c, random
 car::vif(lme(log_sync ~ alt + width + temperature_med + DBO_med + flow_med, random = ~ 1 | basin, data = lav_data))
 ```
 
-```{r, fig.dim = c(10, 7), echo = FALSE, fig.cap = "SEM for stability"}
-library(nlme)
-library(piecewiseSEM)
-
-st_basin <- get_basin_station()
-myload(nmds, dir = mypath("report"))
-myload(network_metrics, dir = mypath("data", "species"))
-
-# Compute stability, network metrics, etc with the new datasets
-com_data <- compute_community_temporal_analysis(.op = op_analysis, dest_dir = mypath("data", "species"))
-# Compute sem dataset 
-sem_data <- compute_sem_dataset(
-  com = com_data[["tps_com"]],
-  network = com_data[["tps_net"]], 
-  hab_press = habitat_pressure, 
-  sync = com_data[["sync"]],
-  nmds = NULL,
-  basin = st_basin 
-  )
-
-# Compute SEMs
-sem <- compute_stab_sem_rich_beta(.data = sem_data,
-  random_effect = as.formula("~1|basin"))
-
-ggpiecewisesem(sem)
-```
 
 #### Sensivity to dataset
 

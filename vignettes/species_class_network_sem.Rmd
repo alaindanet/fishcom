@@ -1,0 +1,136 @@
+---
+title: "species_class_network_sem"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{species_class_network_sem}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.dim = c(14, 10)
+)
+
+mypath <- rprojroot::find_package_root_file
+
+library(tidyverse)
+library(magrittr)
+library(cowplot)
+library(DiagrammeR)
+
+map(list.files(mypath("R")), ~source(mypath("R", .x)))
+
+theme_set(theme_alain())
+
+```
+
+# SEM
+
+Here I show how the path change if we take the species network or the class
+network.  
+
+We see that the species richness has no link with trophic level if we consider
+class network but avg trophic level gain a direct link on total biomass and CV. 
+
+```{r setup}
+library(nlme)
+library(piecewiseSEM)
+
+st_basin <- get_basin_station()
+myload(nmds, habitat_pressure, dir = mypath("report"))
+myload(network_metrics, dir = mypath("data", "species"))
+sp_network_metrics <- network_metrics
+rm(network_metrics)
+myload(network_metrics, dir = mypath("data", "classes"))
+cl_network_metrics <- network_metrics
+rm(network_metrics)
+
+myload(biomass_ts_sax, dir = mypath("data"))
+op_analysis_bbb <- filter(op_analysis, station %in%
+  biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
+
+# Compute stability, network metrics, etc with the new datasets
+#debug(compute_community_temporal_analysis)
+com_data <- compute_community_temporal_analysis(.op = op_analysis_bbb)
+class_tps_net <- summarise_network_over_time(
+  op = op_analysis_bbb,
+  class_network = cl_network_metrics,
+  species_network = sp_network_metrics,
+  metrics = c("connectance", "w_trph_lvl_avg"),
+  type_metrics = "classes"
+)
+
+# Compute sem dataset 
+sem_data <- map(list(sp = com_data[["tps_net"]], cl = class_tps_net),
+  ~compute_sem_dataset(
+    com = com_data[["tps_com"]],
+    network = .x, 
+    hab_press = habitat_pressure, 
+    sync = com_data[["sync"]],
+    nmds = NULL,
+    basin = st_basin 
+  )
+)
+
+stab_sem <- map(sem_data, ~compute_stab_sem_rich(.data = .x))
+
+stab_sem_graph <- map2(
+  stab_sem,
+  paste0(mypath("manuscript", "bef_stability"), "/", c("species", "class"), "_stab_sem"),
+  function(x, path) {
+
+  export_diagram(
+    fit = x,
+    file_path = path,
+    format = "png",
+    width = 700*2,
+    height = 900*2  - 900*2*30/100,
+    arrows = "ortho",
+    val_thd = 0.05,
+    env_x_pos_range = c(from = 0, to = 7.5),
+    env_y_pos = 0,
+    env_y_sep = 1.5,
+    order_env_node = c("RC4", "log_RC3", "RC5", "log_RC1", "log_RC2")
+  )
+
+
+}
+)
+
+plot_grid(plotlist = stab_sem_graph, labels = c("Species", "Class"))
+```
+
+```{r}
+bm_sem <- map(sem_data, ~compute_prod_sem_rich(.data = .x))
+
+bm_sem_graph <- map2(
+  bm_sem,
+  paste0(mypath("manuscript", "bef_stability"), "/", c("species", "class"), "_bm_sem"),
+  function(x, path) {
+
+  export_diagram(
+    fit = x,
+    file_path = path,
+    format = "png",
+    width = 700*2,
+    height = 900*2  - 900*2*30/100,
+    arrows = "ortho",
+    val_thd = 0.05,
+    env_x_pos_range = c(from = 0, to = 7.5),
+    env_y_pos = 0,
+    env_y_sep = 1.5,
+    order_env_node = c("RC4", "log_RC3", "RC5", "log_RC1", "log_RC2")
+  )
+
+
+}
+)
+
+
+plot_grid(plotlist = bm_sem_graph, labels = c("Species", "Class"))
+
+```
+

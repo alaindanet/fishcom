@@ -709,6 +709,67 @@ build_dataset_get_sem_coefficient <- function (.op = NULL, sem_fun = compute_sta
 
 }
 
+#' Model troph group and richness
+#'
+#' @param .data data.frame with richness, basin and troph_group 
+#' @param resp string response variable of the model 
+compute_stat_troph_rich <- function (.data = NULL, resp = NULL) {
+
+  output <- vector(mode = "list", length = 3) 
+  names(output) <- c("all", "rsq", "predict")
+
+  output[["all"]] <- .data %>%
+    dplyr::ungroup() %>%
+    tidyr::nest(data = -troph_group)
+
+  # Formula: 
+  myformula <- as.formula(paste0(resp, " ~ log_rich_tot_std + (1 | basin)"))
+
+  # Model and CI:
+  output[["all"]] %<>%
+    dplyr::mutate(
+      model = purrr::map(data,
+	~lmer(data = na.omit(.x),
+	  formula = myformula
+	  )),
+      coefs = purrr::map(model, ~fixef(.x)),
+      rsq   = purrr::map(model, ~piecewiseSEM::rsquared(.x, method = "nagelkerke") %>%
+	mutate_at(vars(Conditional, Marginal), ~round(., 2))),
+      boot  = purrr::map(model, ~bootMer(.x, mySumm2, nsim = 100)),
+      ci    = purrr::map(boot, ~confint(.x))
+    )
+
+  # Prediction of the model:
+
+  output[["all"]] %<>%
+    dplyr::mutate(
+      pred = purrr::map(model, ~ggpredict(.x, terms = c("log_rich_tot_std"), type = "fe")),
+      pred_df = purrr::map(pred,
+	~.x %>%
+	  as_tibble() %>%
+	  rename(!!resp := predicted, log_rich_tot_std = x)
+	),
+	plot = purrr::map(data,
+	  ~ggplot(.x, aes(y = sym(resp), x = log_rich_tot_std)) +
+	    geom_point() +
+	    geom_smooth(method = "lm")
+	)
+    )
+
+  # Format Rsq and prediction: 
+  output[["rsq"]] <- output[["all"]] %>%
+    select(troph_group, rsq) %>%
+    unnest(rsq)
+
+  output[["predict"]] <- output[["all"]] %>%
+    select(troph_group, pred_df) %>%
+    unnest(pred_df)
+
+  return(output)
+
+}
+
+
 #' Compute PCA and rotated PCA over a list of dataset
 #'
 #' @param .data data.frame
@@ -753,3 +814,70 @@ plot_rotated_pca <- function (pca_rotated = NULL, axis = c(1,2)) {
 mySumm2 <- function(.) {
   c(beta=fixef(.),sigma=sigma(.), sig01=sqrt(unlist(VarCorr(.))))
 }
+
+print_coef <- function (vec){
+  round(abs(vec)*100)
+}
+
+print_ci <- function(.df){
+  .df <- round(.df, 3)*100
+  
+  paste0("[", .df[["2.5 %"]],";",.df[["97.5 %"]] ,"]")
+}
+
+get_clean_sem_coef <- function(sem = NULL, resp = NULL, pred = NULL) {
+  out <- sem[sem$Response == resp & sem$Predictor == pred, ]$Std.Estimate
+  out <- ifelse(length(out) == 0, 0, out)
+  round(out, 2)
+}
+
+permutation_test <- function (
+  x = NULL,
+  y = NULL,
+  nb_perm = NULL
+) {
+
+  obs_diff <- mean(x) - mean(y)
+
+  null_dist <- map_dbl(1:nb_perm, function(id) {
+
+    x_sim <- sample(c(x, y), size = length(x), replace = FALSE)
+    y_sim <- sample(c(x, y), size = length(y), replace = FALSE)
+
+    null_diff <- mean(x_sim) - mean(y_sim) 
+    return(null_diff)
+})
+
+    output <- vector(mode = "list", length = 4)
+    names(output) <- c("obs", "null", "null_dist", "p_val") 
+
+    output$obs <- obs_diff
+    output$null <- mean(null_dist)
+    output$null_dist <- null_dist
+    output$p_val <- (length(which(abs(null_dist) > abs(obs_diff))) + 1) / nb_perm
+
+    return(output)
+}
+
+test_troph <- function (
+  .data = NULL,
+  var = NULL,
+  nb_perm = 2000,
+  na_omit = TRUE 
+) {
+
+  low_troph <- .data[.data$troph_group == "2",][[var]] 
+  high_troph <- .data[.data$troph_group == "3",][[var]] 
+
+  if (na_omit) {
+    low_troph <- na.omit(low_troph)
+    high_troph <- na.omit(high_troph)
+  }
+
+ permutation_test(
+  x = high_troph,
+  y = low_troph,
+  nb_perm = nb_perm 
+ )
+} 
+
