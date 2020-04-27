@@ -62,56 +62,107 @@ set_color_species <- function (node_list = NULL, species_list = NULL,  resource_
   names(resource_color) <- resource_list
   c(species_color, resource_color)
 }
-my_crap_temporal_network <- function (net = NULL, metaweb = parent.frame()$meta$metaweb, network_data = parent.frame()$network_analysis, ...) {
+my_crap_temporal_network <- function (
+  net = NULL,
+  metaweb = parent.frame()$meta$metaweb,
+  network_data = parent.frame()$network_analysis,
+  bm_var = "biomass",
+  ...) {
 
-net_list <- net %>%
-  select(date, from, to) %>%
-  arrange(date) %>%
-  group_by(date) %>%
-  nest(.key = "network")
+  # Get network list
+  net_list <- net %>%
+    dplyr::select(date, from, to) %>%
+    arrange(date) %>%
+    group_by(date) %>%
+    nest(.key = "network")
 
-try(
-size_analysis <- network_data %>%
-  select(opcod, composition) %>%
-  filter(opcod %in% net$opcod) %>%
-  unnest() %>%
-  left_join(select(net, date, opcod) %>%
-  distinct(opcod, date)) %>%
-  select(date, biomass, species) %>%
-  arrange(date) %>%
-  group_by(date) %>%
-  nest() %>%
-  mutate(biomass = map(data, function(x){
-      val <- x$biomass
-      names(val) <- x$species
-      val
-  }))
-)
-net_list %<>%
-  left_join(select(size_analysis, date, biomass))
-#Node position:
-node <- net_list$network %>% unlist(., use.names = FALSE) %>% unique
-try(
-test <- graph_from_adjacency_matrix(metaweb) %>% 
-  igraph::as_data_frame(.) %>%
-  mutate_all(list(~str_extract_all(., "[a-zA-Z]+", simplify = TRUE))) %>%
-  distinct(from, to)
-)
-node_position <- create_layout(graph_from_data_frame(test), layout = "kk")$x
-names(node_position) <- create_layout(graph_from_data_frame(test), layout = "kk")$name
-#color:
-color <- set_color_species(node_list = node, species_list = NULL,
-  resource_list = NULL,
-  col_resource = NULL)
+  # Get biomass
+  size_analysis <- network_data %>%
+      dplyr::select(opcod, composition) %>%
+      filter(opcod %in% net$opcod) %>%
+      unnest()
 
-plot_temporal_network(
-  data = net_list,
-  net_var = network,
-  date = date,
-  x = node_position,
-  y = net_list[["y"]],
-  size = net_list[["biomass"]]
-)
+    if ("species" %in% names(size_analysis)) {
+      sp_var <- "species"
+    } else {
+      sp_var <- "sp_class"
+    }
+
+    bm_var_sym <- sym(bm_var)
+    sp_var_sym <- sym(sp_var)
+
+    size_analysis %<>%
+      left_join(dplyr::select(net, date, opcod) %>%
+	distinct(opcod, date)) %>%
+    dplyr::select(date, !!bm_var_sym, !!sp_var_sym) %>%
+    arrange(date) %>%
+    group_by(date) %>%
+    nest() %>%
+    mutate(biomass = map(data,
+	function(x){
+	val <- x[[bm_var]]
+	names(val) <- x[[sp_var]]
+	val
+	}
+	)
+    )
+
+  net_list %<>%
+    left_join(dplyr::select(size_analysis, date, !!bm_var_sym))
+
+  #Get the nodes of the network:
+  node <- net_list$network %>% unlist(., use.names = FALSE) %>% unique
+
+  metaweb <- igraph::graph_from_adjacency_matrix(metaweb) %>% 
+    igraph::as_data_frame(.) %>%
+    #mutate_all(list(~str_extract_all(., "[a-zA-Z]+", simplify = TRUE))) %>%
+    distinct(from, to)
+
+  # Get the unique species (add for sp_class)
+  species <- unique(str_extract(c(metaweb[[1]], metaweb[[2]]), "[A-Z]{3}"))
+
+  # Get constant x position for the nodes  
+  ## Get a layout:
+  layout <- ggraph::create_layout(
+    igraph::graph_from_data_frame(metaweb),
+    layout = "kk")
+  node_position <- layout$x
+  names(node_position) <- layout$name
+
+  #color of the nodes:
+  color <- set_color_species(
+    node_list = node,
+    species_list = NULL,
+    resource_list = NULL,
+    col_resource = NULL)
+
+  # Trophic level 
+  net_list %<>%
+    mutate(
+      network_graph = map(network, igraph::graph_from_data_frame,
+	directed = TRUE),
+      network_graph = map(network_graph, igraph::as_adjacency_matrix,
+	sparse = FALSE),
+      troph = map(network_graph, ~NetIndices::TrophInd(.x)),
+      obs_troph_level_vector = map(troph, function (x) {
+	out <- x$TL
+	names(out) <- rownames(x)
+	return(out)
+	}
+      )
+    ) %>%
+  dplyr::select(-troph)
+
+  plot_temporal_network(
+    data = net_list,
+    net_var = network,
+    date = date,
+    x = node_position,
+    y = net_list[["obs_troph_level_vector"]],
+    size = net_list[[bm_var]],
+    color = color,
+    ...
+  )
 }
 
 #' Temporal graph for a station
@@ -125,8 +176,16 @@ plot_temporal_network(
 #' @return a plot_grid object 
 #' @seealso set_layout_graph
 #' 
-plot_temporal_network <- function(data = NULL, net_var = NULL, date = NULL,
-  y = NULL, x = NULL, size = NULL, color = NULL, ...){
+plot_temporal_network <- function(data = NULL,
+  net_var = NULL,
+  date = NULL,
+  y = NULL,
+  x = NULL,
+  size = NULL,
+  color = NULL,
+  ncol_graph = NULL,
+  nrow_sp_legend = NULL,
+  ...){
 
   net_var <- rlang::enquo(net_var)
   net_var_chr <- rlang::quo_name(net_var)
@@ -143,7 +202,7 @@ plot_temporal_network <- function(data = NULL, net_var = NULL, date = NULL,
     } else {
       stopifnot(any(class(net) == "igraph"))
     }
-    attr(V(net), "name")
+    attr(igraph::V(net), "name")
       }) %>%
   unlist(., use.names = FALSE) %>%
   unique
@@ -160,23 +219,17 @@ plot_temporal_network <- function(data = NULL, net_var = NULL, date = NULL,
       color_scale = color
     )
   }
-  #data %<>% mutate(
-  #!!net_var := purrr::pmap(
-    #list(
-      #net = !!net_var,
-      #y = y,
-      #title = !!date_var,
-      #biomass = size),
-    #set_layout_graph, x = x,
-      #color_scale = color
-    #)
-  #)
+  if (is.null(nrow_sp_legend)) {
+    nrow_sp_legend <- 3
+  }
+
     species_colour_legend <- cowplot::get_legend(
       data[[net_var_chr]][[1]] +
     scale_color_manual(values = color, limits = names(color)) +
     labs(colour = "Species", size = "Biomass") +
     guides(
-      colour = guide_legend(nrow = 3, byrow = TRUE, title.position = "left"),
+      colour = guide_legend(nrow = nrow_sp_legend, byrow = TRUE,
+	title.position = "left"),
       size = guide_legend(nrow = 1, byrow = TRUE, title.position = "left")
     ) +
     theme(legend.direction = "vertical", 
@@ -192,7 +245,10 @@ plot_temporal_network <- function(data = NULL, net_var = NULL, date = NULL,
       plot.margin = unit(c(0, 0, 0, 0), "cm"))
     })
     )
-  p <- cowplot::plot_grid(plotlist = data[[net_var_chr]])
+  if (is.null(ncol_graph)) {
+    ncol_graph <- 5 
+  }
+  p <- cowplot::plot_grid(plotlist = data[[net_var_chr]], ncol = ncol_graph)
   cowplot::plot_grid(p, species_colour_legend, nrow = 2, rel_heights = c(1, 0.2))
 }
 
@@ -207,9 +263,9 @@ plot_temporal_network <- function(data = NULL, net_var = NULL, date = NULL,
 set_layout_graph <- function (net = NULL, glay = NULL, x = NULL, y = NULL, title = NULL, biomass = NULL, color_scale= NULL, dead_material = NULL) {
 
   if (any(class(net) == "data.frame")) {
-    net <- graph_from_data_frame(net, directed = TRUE)
+    net <- igraph::graph_from_data_frame(net, directed = TRUE)
   } else if (any(class(net) == "matrix")) {
-    net <- graph_from_adjacency_matrix(net, mode = "directed")
+    net <- igraph::graph_from_adjacency_matrix(net, mode = "directed")
   } else {
     stopifnot(class(net) == "igraph")
   }
@@ -217,7 +273,7 @@ set_layout_graph <- function (net = NULL, glay = NULL, x = NULL, y = NULL, title
   if (is.null(glay)) {
     # for species network:
     llay <- ggraph::create_layout(net, layout = "kk")
-    node_pos <- NetIndices::TrophInd(as_adjacency_matrix(net, sparse = FALSE), Dead = dead_material)$TL - 1
+    node_pos <- NetIndices::TrophInd(igraph::as_adjacency_matrix(net, sparse = FALSE), Dead = dead_material)$TL - 1
     llay$y <- node_pos
     llay$species <- get_species(llay$name)
   } else {
@@ -266,7 +322,8 @@ set_layout_graph <- function (net = NULL, glay = NULL, x = NULL, y = NULL, title
     }
   }
   p <- ggraph::ggraph(llay) +
-    ggraph::geom_edge_fan(aes(alpha = ..index..), show.legend = FALSE)
+    ggraph::geom_edge_fan(aes(alpha = ..index..), show.legend = FALSE) +
+    coord_cartesian(ylim=c(1,4.5))
   if (!is.null(biomass)) {
     stopifnot(all(names(biomass) %in% node_names))
     dataset <- p$data
@@ -286,7 +343,10 @@ set_layout_graph <- function (net = NULL, glay = NULL, x = NULL, y = NULL, title
     foreground     = "steelblue",
     fg_text_colour = "white",
     base_family    = "sans",
-    background     = NA
+    background     = NA,
+    title_size = 11,
+    title_face = "bold",
+    title_margin = 3
   )
   if (!is.null(color_scale) & !is.null(biomass)) {
     p <- p +
@@ -616,7 +676,8 @@ build_diag_from_sem <- function (
   env_x_pos_range = c(from = 0, to = 3),
   env_y_pos = 0,
   env_y_sep = 1,
-  order_env_node = NULL
+  order_env_node = NULL,
+  metamodel = FALSE
   ) {
 
   est <- fit$coefficients
@@ -649,12 +710,13 @@ build_diag_from_sem <- function (
     "log_stab_std", "log_bm", "log_bm_std")
   var_with_rsq <- var_with_rsq[var_with_rsq %in% rsq$Response]
 
+  if (!metamodel) {
   node_name_replacement[names(node_name_replacement) %in% var_with_rsq] <-
     map_chr(names(node_name_replacement)[names(node_name_replacement) %in% var_with_rsq],
       function(x, rsq, node_name) {
 	paste0(node_name[x], "\n", "Rsq = ", rsq[rsq$Response == x,]$Marginal)
       }, rsq = rsq, node_name = node_name_replacement)
-
+  }
   # Get node
   node_set <- est %>%
     dplyr::select(Response, Predictor) %>%
@@ -724,9 +786,8 @@ build_diag_from_sem <- function (
     to = env_x_pos_range["to"],
     length.out = length(type_of_node[["evt"]])
   )
-
   node_df$x <- NA
-  node_df$x[env_node_pos_in_df]       <- env_x_pos
+  node_df$x[node_df$label %in% type_of_node[["evt"]] ] <- env_x_pos
   node_df$x[node_df$label %in% type_of_node[["rich"]] ] <- env_x_pos[3]
   node_df$x[node_df$label %in% type_of_node[["com"]] ]  <- env_x_pos[c(2, 4)]
 
@@ -754,12 +815,14 @@ build_diag_from_sem <- function (
   }
 
   # Replace label to have nice label names 
-  node_name_replacement <-
+  current_node_label_replacement <-
   node_name_replacement[names(node_name_replacement) %in% node_df$label]
-  node_df$label <- str_replace_all(node_df$label, node_name_replacement)
+  node_df$label <- str_replace_all(node_df$label, current_node_label_replacement)
 
-  replace_edge <- as.character(node_df$id) 
-  names(replace_edge) <- node_set$nodes
+  replace_edge <- as.character(node_df$id)
+  # Order node set occording to order_env_node (already taken in account in
+  # node_df$id):
+  names(replace_edge) <- node_set[node_df$id, ]$nodes
 
   # Get path
   all_path <- est %>%
@@ -768,19 +831,32 @@ build_diag_from_sem <- function (
       edge_to = str_replace_all(Response, replace_edge),
       rel = round(Std.Estimate, 2)
       )
+
     
   ## Select significant path
-  if (!is.null(p_val_thd)) {
+  if (!is.null(p_val_thd) & !metamodel) {
     all_path %<>% dplyr::filter(P.Value < p_val_thd)
   }
   
+  ## Metamodel mode: 
+  if (metamodel) {
+    myrep <- function (x) rep(x, times = nrow(all_path)) 
+    penwidth <- myrep(1) 
+    color <- myrep("black")  
+    label <- myrep("")
+  } else {
+    penwidth <- abs(all_path$rel)*5
+    color <- ifelse(all_path$rel < 0, "red", "green")
+    label <- as.character(all_path$rel)
+  }
+
   edge_df <- create_edge_df(
     from = all_path$edge_from, 
     to = all_path$edge_to, 
-    penwidth = abs(all_path$rel)*5,
-    color = ifelse(all_path$rel < 0, "red", "green"),  
+    penwidth = penwidth,
+    color = color,  
     rel = as.character(all_path$rel),
-    label = as.character(all_path$rel),
+    label = label,
     fontsize = 12 
   )
 
@@ -794,7 +870,7 @@ build_diag_from_sem <- function (
   return(graph)
 } 
 
-export_diagram <- function(
+export_diagram <- function (
   fit = NULL,
   format = "png",
   width = 700*2,
@@ -805,7 +881,8 @@ export_diagram <- function(
   env_x_pos_range = c(from = 0, to = 7.5),
   env_y_pos = 0,
   env_y_sep = 1.5,
-  order_env_node = c("RC4", "log_RC3", "RC5", "log_RC1", "log_RC2")  
+  order_env_node = c("RC4", "log_RC3", "RC5", "log_RC1", "log_RC2"),  
+  metamodel = FALSE
   ) {
 
 
@@ -813,11 +890,12 @@ export_diagram <- function(
 
   graph <- build_diag_from_sem(
     fit = fit, 
-    p_val_thd = 0.05,
-    env_x_pos_range = c(from = 0, to = 7.5),
-    env_y_pos = 0,
-    env_y_sep = 1.5,
-    order_env_node = c("RC4", "log_RC3", "RC5", "log_RC1", "log_RC2")  
+    p_val_thd = val_thd,
+    env_x_pos_range = env_x_pos_range,
+    env_y_pos = env_y_pos,
+    env_y_sep = env_y_sep,
+    order_env_node = order_env_node,  
+    metamodel = metamodel 
   )
   graph %<>%
     add_global_graph_attrs(
@@ -972,3 +1050,48 @@ get_min_max <- function (l, var_chr) {
   vec <- purrr::map(l, ~.x[[var_chr]]) %>% unlist
   c(min = min(vec, na.rm = TRUE), max = max(vec, na.rm =TRUE))
   }
+
+
+#' Theme for maps
+#' https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/
+theme_map <- function(...) {
+  theme_minimal() +
+  theme(
+    text = element_text(family = "Ubuntu Regular", color = "#22211d"),
+    axis.line = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    # panel.grid.minor = element_line(color = "#ebebe5", size = 0.2),
+    panel.grid.major = element_line(color = "#ebebe5", size = 0.2),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "#f5f5f2", color = NA), 
+    panel.background = element_rect(fill = "#f5f5f2", color = NA), 
+    legend.background = element_rect(fill = "#f5f5f2", color = NA),
+    panel.border = element_blank(),
+    ...
+  )
+}
+
+get_sem_var_name_replacement <- function () {
+  out <- c(
+    "log_RC1" = "Avg \n river size",
+    "log_RC2" = "Avg \n temperature \n & \n (- Altitude)",
+    "log_RC3" = "CV flow \n & \n Avg enrichment",
+    "RC4" = "CV \n river size",
+    "RC5" = "CV \n enrichment",
+    "ct" = "Connectance",
+    "t_lvl" = "Avg \n trophic level",
+    "log_cv_sp" = "CVsp",
+    "log_sync" = "Synchrony",
+    "log_stab_std" = "Biomass \n stability",
+    "log_stab" = "Biomass \n stability",
+    "log_rich_tot_std" = "Species \n richness",
+    "log_rich_tot" = "Species \n richness",
+    "log_bm_std" = "Total \n biomass",
+    "log_bm" = "Total \n biomass"
+  )
+  return(out)
+}

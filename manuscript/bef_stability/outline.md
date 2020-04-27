@@ -1,4 +1,3 @@
-
 # Outline
 
 1. Introduction
@@ -107,28 +106,23 @@
 
 4.1 Resume of the results and of the question
 
-4.2 Richness decreases stability
-4.2.1 Contrasts with other studies
 
-4.3 Richness increases total biomass
+4.2 Richness decreases stability and had no effect of biomass 
+4.2.1 Contrasts with other studies
 4.3.1 Comparison with other studies (depends on the mecanisms)
 4.3.2 Surprising low effects of environment factors
 4.3.3 High effects of avg trophic level (expected)
 4.3.4 Connectance had no effect (but it was expected to have one)
 
+4.3 Network structure
 
-4.4 Evt on com
 
-4.5 Species richness on stab comp 
+4.4 Evt on stability and biomass
 
 4.6 Cvsp and synchrony relative effect on stab 
 4.6.1 Unexpected 
 4.6.2 Explanation: lack of niche difference + direct strong dependance through
 feeding interaction
-
-4.7 Vertical diversity had little to no effect of stability
-
-4.8 Effect of troph group
 
 
 # The story summary
@@ -190,4 +184,5 @@ to stab/bm
 
 
 9. What does this answer tell us about the broader field?
+
 

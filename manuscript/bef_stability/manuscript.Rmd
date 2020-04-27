@@ -1,12 +1,9 @@
 ---
-title:"""
-  Complex mecanisms linking biomass stability and total biomass with
-species richness and network structure in stream ecosystems 
-"""
-author: Alain Danet, Maud Mouchet, Elisa Thébault and Colin Fontaine
+title: Complex mecanisms linking biomass stability and total biomass with species richness and network structure in stream ecosystems 
+author: Alain Danet, Maud Mouchet, Elisa Thebault and Colin Fontaine
 date: \today 
 output:
-  pdf_document:
+  bookdown::pdf_document2:
     fig_caption: true 
     keep_tex: true
 fontsize: 12pt
@@ -29,6 +26,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.dim = c(7, 7),
+  fig.fullwidth = TRUE,
   fig.show = "hold",
   echo = FALSE,
   message = FALSE,
@@ -78,11 +76,12 @@ resistance to perturbation [@donohue_navigating_2016].
 Species richness has been reported to increase productivity
 [@tilman_productivity_1996, @grace_integrative_2016] through complementarity
 between species in resource exploitation and selection effects
-[@loreau_partioning_2001, @cardinale_species_2002, @fargione_from_2007].
+[@loreau_partitioning_2001, @cardinale_species_2002, @fargione_selection_2007].
 Empirical assessment of the effect of species richness on total biomass showed negative
-[@grace_integrative_2016] and positive relationships [@hector_plant_1999,
-@tilman_biodiversity_2014]. @grace_integrative_2016 showed that the results
-depend on the refinement of the mecanisms involved in the analysis.
+[@grace_integrative_2016] and positive relationships
+[@hector_plant_1999, @tilman_biodiversity_2014]. @grace_integrative_2016 showed
+that the results depend on the refinement of the mecanisms involved in the
+analysis.
 
 #### Shape of BEF: stability 
 
@@ -142,69 +141,43 @@ more than 10 years on the 1995-2018 period. We inferred four thousands potential
 interaction networks corresponding to each sampling event, based on trait
 matching.
 
----
-#- Research questions:
-  #- What are the effects of the community structure on total biomass and stability ? 
-    #1. What are the effects of species richness on total biomass and stability ?
-      #- effect of species richness
-      #- effect of trophic group
-    #2. What are the effects of the community structure on total biomass and stability ?
-      #- What is the relative effect of the environment relative to the community
-	#structure ?
-      #- What is the effect of the community structure on the different
-	#parts of the stability + total biomass?
-	#- Effect of horizontal and vertical diversity
----
-
 We investigated the effects of the community structure on total biomass and
 community variability, which in turn determine community variability. We have
 also included the effect of environmental drivers [@grace_integrative_2016]
 which can directly affect community variability or indirectly via community
 structure.
 
----
-#- Environment can drive stability and biomass:
-  #- forcing: environmental forcing on communities 
-  #- can lead to misleading effect: 
----
 
 
 # Methods
 
-## Community variability 
+```{r}
+matmet_cap <- paste0(
+  "Mat&met figure"
+)
+```
 
----
-#- OFB
-  #- French long term protocol
-  #- standardized
-#- Electric fishing:
-  #- stuned fish
-  #- identification of the fishes
-  #- fish counted  
-  #- length of the fishes in mm by lot (4):
-    #- I: big fishes measured individually
-    #- S/L: fishes are grouped by species and by size 
-      #- 30 random fishes were measured in each lot
-      #- simulate the size of all the fishes of the lot:
-	#- normal distribution truncated at 95% (?)
-	#- mean and sd calculted from the sample of the lot 
-    #- G: little fishes are grouped by species
-      #- min and max size by lot 
-      #- simulate the size of all the fishes of the lot:
-	#- normal distribution truncated at 95% (?)
-	#- mean computed as ???  
-	#- se computed as ??? 
-    #- N:
-#- Protocols type:
-  #- complete
-    #- shallow river
-  #- partial:
-    #- deep and large river
-    #- partial over bank
-    #- partial by point
-    #- fusion of the two Protocols when "by point" all the point were done
-      #over bank
----
+```{r matmet, fig.cap = matmet_cap}
+myload(p_st,temporal_network, dir = mypath("manuscript/bef_stability/figs"))
+p_st <- p_st +
+  theme(legend.position = "none")
+# Network inference
+net_method_path <- mypath("manuscript/bef_stability/figs",
+  "network_inference.pdf")
+net_method <- net_method_path %>%
+  magick::image_read()
+p_net_method <- cowplot::ggdraw() +
+  cowplot::draw_image(net_method)
+
+top <- plot_grid(p_st, p_net_method, ncol = 2, rel_widths = c(.8, 1), labels =
+  "AUTO")
+p_method <- plot_grid(top, temporal_network, nrow = 2, rel_heights = c(1, .3),
+  labels = c("", "C"))
+p_method
+```
+
+
+## Community variability 
 
 #### Protocol 
 
@@ -286,9 +259,10 @@ $$
 $$
 
 Species richness was computed as the total species richness over time in a given
-station. To normalize by sampling effort, we reported total species richness to
+station. To normalize by sampling effort, we reported species richness to
 the sum of surface sampled over the time period, it was expressed in number of
 species by square meter.
+
 
 ## Network building
 
@@ -299,81 +273,94 @@ meta <- metaweb_analysis
 #meta$metaweb[meta$resource, meta$resource]
 ```
 
+To obtain the network structure of the communities, we needed to infer
+ecological interactions between the components of the communities and thus build
+the ecological network. As the interactions were not measured, we used trait
+matching method to infer the presence or absence of an interaction. This method is
+widely used to infer trophic interactions
+[@brose_predator_2019, @poisot_structure_2016, @schneider_body_2012]. Indeed,
+the existence of an trophic interaction between two species have been reported
+to be largely dependant on their body size ratio [cascade model, @cohen_stochastic_1985, @warren_invertebrate_1987, @brose_predator_2019].
 
----
-#- Diet data: 
-  #- 7? species over 57 had a piscivorous stage
-  #- 3? species had a strict piscivorous stage
-  #- ontogenic diet shift based on size
-#- 7 Resource nodes:
-  #- based on diet database
-  #- no information about their biomass
-#- Size class:
-  #- quantile: 9 size class per species
----
+Additionally to body size, we used food diet data to infer trophic
+interactions. The diet of stream fishes, as many organisms, shifts over lifespan.
+For example, alvins feeds on plankton while adults may feed on algae or fishes.
+As we got body size of each fish individuals (cf Biomass inference methods and
+supplementary material), we are able to define trophic interactions beyond
+species level. We thus divided each fish species into nine body size classes,
+each class having the same body size range (percentile method). Each body size
+class constituting a trophic species. We then infered trophic interactions
+between the trophic species. At this stage, it is important to make clear that
+we infered potential trophic interactions and not actual measured interactions.
+We determined network structure in two steps: (1) build a metaweb decribing the
+trophic interactions between all the possible trophic species, then (2)
+determine network of a given community by subtracting the metaweb according to
+the trophic species present in a given community. 
+ 
+### Metaweb
 
----
-#- Interaction:
-  #- Fish-resources and resources: based on diet data 
-  #- Fish-fish:
-    #1. diet data: is piscivorous?
-    #2. allometric relationship: predation range from .03 to .45 of body size
----
+#### Ontogenic diet
 
-Network inference was performed in two steps: determine trophic species,  build
-a metaweb, subtract the metaweb according to the trophic species present in
-community. Diet information were obtained from database and literature. Over
-the 57 fish species, only seven had a piscivorous life stage and only three had
-as strict piscivorous life stage. Fish species were largely omnivorous. Because
-species have ontogenic diet shift, we created nine size classes by species, one
-size class of one species constituting one trophic species. The bounds between
-size classes were equidistant (percentile method). The metaweb described the
-potential trophic interactions between the $`r 57*9`$ ($57\times9$) trophic species. 
-We had seven resource nodes which were present in the diet of the trophic
-species namely detritus, biofilm, phytoplankton, zooplankton, macrophages,
-phytobenthos and zoobenthos. A trophic species belonged to a life stage if the
-median of its size range fell in the range of the life stage. In turn, this
-trophic species has feeding interactions with the resource nodes of its life stage.
-Interactions between resource nodes are determined by literature. For example,
-phytobenthos fed on detritus, while zooplankton fed on zooplankton and
-phytoplankton. Fish-fish trophic interactions were determined by allometric
-relationships as in many studies
+Diet information were obtained from database and literature [REF edeline?]. The
+diet information contained from two to three life stages by species, the life
+stages being defined by the body size of the fishes. Over the 57 fish species,
+only seven had a piscivorous life stage and only three had as strict piscivorous
+life stage. Fish species were largely omnivorous.
+
+#### Define trophic interactions  
+
+The metaweb described the potential trophic interactions between the $`r 57*9`$
+($57\times9$) trophic species. We had seven resource nodes which were present
+in the diet of the trophic species namely detritus, biofilm, phytoplankton,
+zooplankton, macrophages, phytobenthos and zoobenthos.
+
+A trophic species belonged to a life stage if the median of its body size range
+fell in the range of the life stage. In turn, this trophic species has feeding
+interactions with the resource nodes of its life stage. Interactions between
+resource nodes were determined by literature. For example, phytobenthos fed on
+detritus, while zooplankton fed on zooplankton and phytoplankton. Fish-fish
+trophic interactions between a predator and a prey were determined by body size
+ratio as in many studies
 [@brose_predator_2019, @poisot_structure_2016, @schneider_body_2012].
-For a given trophic species, we first determined if its
-size class end up in a life stage containing piscivorous diet. If it did, we
-determined the prey size range of the trophic species from 3% to 45% of the
-median of its size range. A feeding interaction was set for each trophic species
-whose median of its size class fell into the prey range of the predator trophic
-species. To sum up, the metaweb was obtained with allometric feeding
-interactions (1) between trophic species, (2) between trophic species and
-resource nodes and (3) between resource nodes.
+For a given trophic species, we first determined if its size class end up in a
+life stage containing piscivorous diet, i.e. if there was an overlap between
+them. We were more liberal for piscivory determination to not miss potential
+fish-fish trophic interactions which were the main interactions in our
+community. If the trophic species was piscivorous, we determined its prey size range
+from 3% to 45% of the median of its size range. A trophic interaction was set
+for each trophic species whose median of its size class fell into the prey range
+of the predator trophic species. To sum up, the metaweb was obtained with
+allometric feeding interactions (1) between trophic species, (2) between trophic
+species and resource nodes and (3) between resource nodes.
 
-The local networks (i.e. one network for each fish community sampling) was
-obtained by determining the trophic species of each fish individual in the
-community and interactions were set according to the metaweb. All the resource
-nodes were assumed to be present in each local network. Finally, the
-structure of the local networks varied according the presence of the trophic
-species. The inferred interactions represent potential interactions (i.e.
-not measured interactions) and are binary (i.e. presence or absence of feeding
-interactions).
+#### Obtain network of a community 
 
-We computed the connectance ($C = L/N^2$, L and N being resp. the number of
-links and of nodes) and the average trophic level of each network, the average
-trophic level was weighted the biomass of each node (excluding resource nodes
-for which we had no biomass) ($\overline{T} = \sum_i^N{B_iT_i \times
-\sum_i^N{B_i}^{-1}}$, $T_i$ and $B_i$ being resp. the trophic level and the
-biomass of the node $i$). In order to have connectance at the species level
-(i.e. not a trophic species level), we merge the trophic species of the network
-by species and thereby aggregating the link by species.
+The trophic network of a community (i.e. one network for each fish community
+sampling) was obtained by determining the trophic species of each fish
+individual in the community and interactions were set according to the metaweb.
+All the resource nodes were assumed to be present in each local network.
+Finally, the structure of the local networks varied according the presence of
+the trophic species. The inferred interactions represent potential interactions
+(i.e.  not measured interactions) and are binary (i.e. presence or absence of
+feeding interactions).
 
-## Community
+#### Network structure
 
----
-#- Biomass:
-  #- infered by allometric law 
-  #- approximated by $B = 0.01 \times (l^3.03)$
----
+In each network, we computed two network metrics that have been commonly used to
+characterize network structure. Connectance which describes the number of
+interactions compared to the number of possible links,
+ computed as ($C = L / N^2$, L and N being resp. the number of
+links and of nodes). We then computed the average trophic level, the
+average trophic level was weighted by the biomass of each trophic species
+(excluding resource nodes for which we had no biomass) ($\overline{T} =
+\sum_i^N{B_iT_i \times \sum_i^N{B_i}^{-1}}$, $T_i$ and $B_i$ being resp. the
+trophic level and the biomass of the node $i$).
 
+To sum up, we infered binary trophic networks at the scale of trophic species
+(i.e. body size classes by species) to take in account ontogenic diet shifts and
+that fish-fish trophic interaction depends on body size ratio. On the other
+side, the community metrics were defined at the species level, (i.e. species
+richness, average species CV and synchrony).
 
 
 ```{r}
@@ -387,7 +374,6 @@ op_analysis_wo_holes_bbb <- filter(op_analysis_wo_holes, station %in%
   biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
 
 # Compute stability, network metrics, etc with ;he new datasets
-#debug(summarise_network_over_time)
 ##myload(network_metrics, dir = mypath("data", "classes"))
 #network_metrics %>%
   #left_join(op_analysis, by = "opcod") %>%
@@ -408,6 +394,9 @@ sem_data <- compute_sem_dataset(
   basin = st_basin
   )
 
+```
+
+```{r, eval = FALSE}
 stab_div_troph <- com_data$tps_bm_troph %>%
   filter(troph_group != 1) %>%
   mutate(troph_group = as.factor(troph_group),
@@ -424,54 +413,8 @@ stab_div_troph <- com_data$tps_bm_troph %>%
   dplyr::left_join(st_basin, by = "station")
 ```
 
+
 ## Habitat and environment
-
----
-#- Collected during fishing operation:
-  #- River size (width and depth)
-  #- Altitude and slope
-  #- distance to source
-#- Independant dataset from naiades: 
-  #- flow, temperature, DBO
-    #1. moving window average
-    #2. annual average 
-    #3. interpolation along rivers (OpenStars + SSN package)
----
-
-Habitat description were obtained from fish sampling data. We kept variables
-describing the ecosystem size namely the stream width and depth, the ecosystem
-position (altitude and slope). Physico-chemical variables were obtained from
-naiades (http://www.naiades.eaufrance.fr/)[http://www.naiades.eaufrance.fr/].
-We chose flow and temperature as physical variables to describe streams as flow
-impose swimming constraints which filter fish species that can establish [REF].
-Water temperature is linked to physiological constraints namely thermal
-tolerance and oxygen concentration tolerance [REF] since the level of water
-saturation in oxygen is inversely linked to water temperature. We chose
-Biochemical Oxygen Demand (BOD) for a proxy of enrichment in the ecosystem [REF
-mccann]. BOD is also inversely linked to oxygen concentration in water.
-The time resolution was heterogeneous according to the variable considered
-(hourly, daily and monthly for temperature, flow and BOD). For each recording
-station, we applied a moving window averaging (more details in supplementary
-material) to get rid of seasonal effects and took the annual mean (i.e. one
-value by year and by station. As the environmental recording stations were not
-located at the same place than the fish stations, we interpolated data with
-spatial statistical network model [@isaak_applications_2014] implemented in the 
-`SSN` R package [@hoef_ssn:_2014]. The interpolation procedure is detailed
-in supplementary material. For each fish station, environmental variables were
-matched with the year of fish sampling (except for water temperature for which the 
-record began in 2006). Then, the average temperature, flow, BDO, river width
-and depth were computed as well as coefficient of variation ($CV = \sigma
-\mu^{-1}$). As habitat and environmental variables are often colinear,
-a principal component analysis (PCA) was performed on the scaled variables. The
-PCA explained % of the variance. An axis rotation was performed to maximize the
-representation of the variables by the principal components
-(Fig. \@ref{fig:pca-rotated}). We kept five axis, representing respectively the
-(1) river size (river width & depth), (2) the altitude, slope and decreasing
-average temperature, (3) average enrichment (BDO) and CV of flow, (4) river
-size CV (CV of river width and depth) and (5) CV of enrichment (CV of BDO).
-Additionally, we logged the axis one, two and three to normalize their
-distribution and we reversed the third axis to get increasing average
-temperature with increasing values of the axis.
 
 ```{r}
 myload(
@@ -501,21 +444,53 @@ pca_rotated <- compute_rotated_pca(
   .data = pca_pressure[, !names(pca_pressure) %in% "station"],
   naxis = 5 
 )
+
+prop_var_expl_pca <- pca_rotated$rotated$Vaccounted["Proportion Var", ] %>%
+  map_dbl(., ~round(.x * 100))
+
+tot_var_expl_pca <- round(sum(pca_rotated$rotated$Vaccounted["Proportion Var", ]) * 100) 
 ```
+
+
+Habitat description were obtained from fish sampling data. We kept variables
+describing the ecosystem size namely the stream width, depth and the ecosystem
+position (altitude and slope). Physico-chemical variables were obtained from
+naiades web portal [http://www.naiades.eaufrance.fr/](http://www.naiades.eaufrance.fr/).
+We chose flow and temperature as physical variables to describe streams as flow
+impose swimming constraints which filters fish species that can establish
+[@rolls_scaling_2018, @tonkin_flow_2018, @gutierrez-canovas_contrasting_2013].
+Water temperature is linked to physiological constraints namely thermal
+tolerance and oxygen concentration tolerance [REF] since the level of water
+saturation in oxygen is inversely linked to water temperature. We took 
+Biochemical Oxygen Demand (BOD) for a proxy of enrichment in the ecosystem [REF].
+BOD is also inversely linked to oxygen concentration in water.
+The time resolution was heterogeneous according to the variable considered
+(hourly, daily and monthly for temperature, flow and BOD resp.). For each recording
+station, we applied a moving window averaging (more details in supplementary
+material) to get rid of seasonal effects and took the annual mean (i.e. one
+value by year and by station. As the environmental recording stations were not
+located at the same place than the fish stations, we interpolated environmental
+data with spatial statistical network model [@isaak_applications_2014]
+implemented in the `SSN` R package [@hoef_ssn:_2014]. The interpolation
+procedure is detailed in supplementary material. For each fish station,
+environmental variables were matched with the year of fish sampling (except for
+water temperature for which the record began in 2006). Then, the average
+temperature, flow, BOD, river width and depth were computed as well as
+coefficient of variation ($CV = \sigma \mu^{-1}$). As habitat and environmental
+variables are often colinear, a principal component analysis (PCA) was performed
+on the scaled variables. The PCA explained `r tot_var_expl_pca`% of the
+variance. An axis rotation was performed to maximize the representation of the
+variables by the principal components (Fig. \@ref(fig:pca-rotated)). We kept
+five axis, representing respectively the (1) river size (river width & depth),
+(2) the altitude, slope and decreasing average temperature, (3) average
+enrichment (BOD) and CV of flow, (4) river size CV (CV of river width and depth)
+and (5) CV of enrichment (CV of BOD). Additionally, we logged the axis one, two
+and three to normalize their distribution and we reversed the third axis to get
+increasing average temperature with increasing values of the axis.
+
 
 ## Statistical analysis
 
-
-### Relationship between stability and species richness
-
-$$\begin{aligned}
-\log_{10}S_i &= \beta_0 + \beta_R\log_{10}x_{Ri} + \epsilon_{ij}\\
-S_i &= 10^{\beta_0 + \beta_R\log_{10}x_{Ri} + \epsilon_{ij}}\\
-S_i &= 10^{\beta_0} \times 10^{\beta_R\log_{10}x_{Ri}} \times10^{\epsilon_{ij}}\\
-S_i &= 10^{\beta_{0}} \times x_{Ri}10^{\beta_{R}} \times 10^{\epsilon_{ij}}
-\end{aligned}$$
-
-with $i$ being the station $i$.
 
 ```{r get-data, cache = FALSE}
 library(piecewiseSEM)
@@ -526,7 +501,7 @@ library(nlme)
 ctrl_lmer <- lmerControl(optCtrl = list(method = 'optimx'))
 ```
 
-```{r mod-div-total}
+```{r mod-div-total, eval = FALSE}
 stab_div_mod <- lmer(
   data = sem_data,
   control = ctrl_lmer,
@@ -578,7 +553,7 @@ bm_div_pred <- pred %>%
 coef_div <- map(list(stab = stab_div_mod, bm = bm_div_mod), fixef)
 ```
 
-```{r mod-div-troph, fig.show = "hide"}
+```{r mod-div-troph, fig.show = "hide", eval = FALSE}
 stab_troph_mod <- lmer(data = na.omit(stab_div_troph),
   formula = log_stab_std ~ log_rich_tot_std + troph_group + log_rich_tot_std:troph_group + (1 | basin)
   #control = ctrl
@@ -634,7 +609,7 @@ stab_troph_sum <- piecewiseSEM::rsquared(stab_troph_mod, method = "nagelkerke") 
 ## get coeff
 #coef_troph <- map(list(stab = stab_troph_mod, bm = bm_troph_mod), fixed.effects)
 ```
-```{r stab-div-troph}
+```{r stab-div-troph, eval = FALSE}
 stab_div_by_troph <- compute_stat_troph_rich(
   .data = stab_div_troph,
   resp = "log_stab_std"
@@ -651,27 +626,27 @@ troph_perm_test$bm$obs
 troph_perm_test$stab$obs
 troph_perm_test$bm$p_val
 troph_perm_test$stab$p_val
-
-
 ```
 
 
 ### SEM
 
-We computed Structural Equation Modeling (SEM) to unravel mechanisms underlying link
-between environment, community structure and both biomass stability and total
-biomass. Why SEM?
+We seeked to disantangle the unravel the links between
+environment and community structure on both biomass stability and total biomass.
+To investigate complex relationships, direct and indirect, between variables,
+Structural Equation Modeling (SEM) is one promising way  
+[@grace_structural_2008, @grace_causal_2014, @lefcheck_piecewisesem_2016,
+@grace_integrative_2016]. SEM makes possible to set causal relationships between
+variables. This step can be critical, as the estimated parameters can be
+determined by both the choice of the variables and the links between them.
+Therefore, the set of variables and links shoud be supported by theory and
+litterature.
 
-SEM enables to reason in terms of causal relationship between components. We
-aimed to understand the mechanisms behind the negative relationship biomass
-stability and species richness and the positive relationship between total
-biomass and species richness.
-
-We built a metamodel to set up the nodes and the links between the different
-compartment of the SEM. Basically, we tested the links between environmental
-conditions, community structure and stability. Theory in ecology predicts that
-community structure influences stability. In turn, environment influences
-community structure but also directly stability.
+We built a metamodel (set of variables and links between them). Basically, we
+tested the links between environmental conditions, community structure and
+ecosystem properties namely biomass stability on total biomass. Theory in
+ecology predicts that community structure influences stability. In turn,
+environment influences community structure but also directly stability.
 
 #### Variables
 
@@ -679,26 +654,20 @@ To characterize environment, we retained five axis of PCA on habitat and
 climatic variables which represent different types of forcing (constant and
 variability). The two first axis (RC1 and RC2) were linked to the physical
 structure and position of the river and the altitutinal gradient (+temperature).
-The third axis (RC3) was linked to enrichment (Organic Biological Demand) and CV
-of annual flow. The fourth and fifth (RC4 and RC5) axis were associated to
+The third axis (RC3) was linked to enrichment (Biological Demand in Oxygen) and
+CV of annual flow. The fourth and fifth (RC4 and RC5) axis were associated to
 environmental variability, respectively to CV of width and depth of the river
 and CV of enrichment.
 
-The community structure was characterized by total species richness,
-median average weighted trophic level and median connectance.
-Total species richness was the number of unique fish species that were observed
-at a given station over the whole sampling. Both median
-connectance and average trophic level were just computed as the median over the
-temporal period. For the details of the computation of the trophic networks,
-see Network inference part.
-
-
+The community structure was characterized by total species richness, median
+average weighted trophic level and median connectance. Total species richness
+was the number of unique fish species that were observed at a given station over
+the whole sampling. Both median connectance and average trophic level were just
+computed as the median over the time series. For the details of the
+computation of the trophic networks, see Network inference part.
 
 #### Causal relationships
 
----
-# Environment to community attributes and stability  
----
 We linked environmental variables both to community structure and stability
 components. Rooted in assembly theory, environment filters species that can
 establish in a community and thus affect community structure. (+ add specific
@@ -718,31 +687,28 @@ to decrease stability through starvation resulting from high metabolic activity
 ---
 To reveal the mechanisms behind the relationship between species richness and
 biomass stability, causal links were set from species richness to other
-community attributes. (5) We hypothesized also that species richness
-decreased connectance following results from @thebault_stability_2010;
-@winemiller_must_1989. But theoretically, some ecological networks can show the
-inverse relationship [@winemiller_must_1989]. (6) We hypothesized also that species richness
-will modulate average weighted trophic level because of food web assembly
-processes. If *species richness increased and that new species are placed at
-random in the network, we expected a positive relationship between average
-trophic level and species richness because individuals of the higher trophic
-level have a higher body mass [to think again]*. Finally, we set up causal
-relationships from community attributes to stability components. 
+community attributes. In particular, species richness decreased connectance
+following results from @thebault_stability_2010; @winemiller_must_1989. But
+theoretically, some ecological networks can show the inverse relationship
+[@winemiller_must_1989]. (6) We hypothesized also that species richness will
+modulate average weighted trophic level because of food web assembly processes.
+A community with more fish species can support higher trophic level. Finally, we
+set up causal relationships from community attributes to stability components. 
 
 ---
 #  Community attributes to stability
 ---
 We hypothesized that (7) species richness decreased synchrony between species
-[REF] and increased $\overline{CV_{sp}}$ [@tilman_biodiversity_2006] *to
-complete*. (8a) We expected that average trophic level had a positive or
-negative relationship with synchrony, bottom-up effects should result in
-positive whereas top-down in negative relationship. We expected a (8b) negative
-relationship between average trophic level and $\overline{CV_{sp}}$ if predators
-stabilised population
-fluctuations or if the increasing part of biomass in the predators decreased
-$\overline{CV_{sp}}$ because of their higher body mass (if mean increase faster than
-variance). (9a) Connectance was expected to decrease or increase $\overline{CV_{sp}}$
-and (9b) synchrony because of top down effects or bottom up effects.
+[@loreau_species_2008] and increased $\overline{CV_{sp}}$
+[@tilman_biodiversity_2006]. (8a) We expected that average trophic level had a
+positive or negative relationship with synchrony, bottom-up effects should
+result in positive whereas top-down in negative relationships. We expected a (8b)
+negative relationship between average trophic level and $\overline{CV_{sp}}$ if
+predators stabilised prey fluctuations or if the increasing part of
+biomass in the predators decreased $\overline{CV_{sp}}$ because of their higher
+body mass (if mean increase faster than variance). (9a) Connectance was expected
+to decrease or increase $\overline{CV_{sp}}$ and (9b) synchrony because of top
+down effects or bottom up effects.
 
 
 ```{r}
@@ -754,6 +720,20 @@ bm_sem_rich <- compute_prod_sem_rich(.data = sem_data,
   random_effect = as.formula("~1|basin"))
 
 library(DiagrammeR)
+meta_stab_sem_rich <- export_diagram(
+  fit = stab_sem_rich,
+  file_path = mypath("manuscript", "bef_stability", "meta_stab_sem"),
+  format = "png",
+  width = 700*2,
+  height = 900*2  - 900*2*30/100,
+  arrows = "ortho",
+  val_thd = 0.05,
+  env_x_pos_range = c(from = 0, to = 7.5),
+  env_y_pos = 0,
+  env_y_sep = 1.5,
+  order_env_node = c("RC4", "log_RC3", "RC5", "log_RC1", "log_RC2"),
+  metamodel = TRUE
+)
 p_stab_sem_rich <- export_diagram(
   fit = stab_sem_rich,
   file_path = mypath("manuscript", "bef_stability", "stab_sem"),
@@ -768,6 +748,20 @@ p_stab_sem_rich <- export_diagram(
   order_env_node = c("RC4", "log_RC3", "RC5", "log_RC1", "log_RC2")
 )
 
+meta_bm_sem_rich <- export_diagram(
+  fit = bm_sem_rich,
+  file_path = mypath("manuscript", "bef_stability", "meta_bm_sem"),
+  format = "png",
+  width = 700*2,
+  height = 900*2  - 900*2*45/100,
+  arrows = "ortho",
+  val_thd = 0.05,
+  env_x_pos_range = c(from = 0, to = 7.5),
+  env_y_pos = 0,
+  env_y_sep = 1.5,
+  order_env_node = c("RC4", "log_RC3", "RC5", "log_RC1", "log_RC2"),
+  metamodel = TRUE
+)
 p_bm_sem_rich <- export_diagram(
   fit = bm_sem_rich,
   file_path = mypath("manuscript", "bef_stability", "bm_sem"),
@@ -856,38 +850,33 @@ stab_tlvl_pred <- pred_stab_tlvl_mod %>%
 coef_stab_tlvl <- map(list(stab = stab_tlvl_mod), fixed.effects)
 ```
 
----
-#- Fishing operations and station
-  #- kept one protocol type by station
-  #- kept one sampling operation per year (of the season the most sampled in the
-    #time series)
-  #- remove operations which sampling effort (length of river sampled) superior to average
-    #plus or minus 30% of sd (by station)
-  #- kept station that had 10 or more samplings, i.e. followed 10 years or more
----
-
-Only one protocol
-type was kept by station. We kept only one sampling event by year to homogenize
-the dataset [numbers: month of sampling, number of days bw samplings] (detailed
-in Supplementary material).
-
 # Results
 
-## Drivers of total biomass and stability
 
 ```{r}
 sem_caption <- paste0(
-  "Results of the Structural Equation Models for (A) the determinants of biomass stability and (B) total biomass. Red and green represent respectively negative and positive path coefficients. The path coefficients are standardized coeffients. For convenience, only significant paths (i.e, *P < 0.05*) are shown."
+  "Metamodel of the Structural Equation Models for (A) biomass stability and
+  (B) total biomass. ",
+  "Results of the Structural Equation Models for (C) the
+  determinants of biomass stability and (D) total biomass. Red and green
+  represent respectively negative and positive path coefficients. The path
+  coefficients are standardized coeffients. For convenience, only significant
+  paths (i.e, *P < 0.05*) are shown."
 
 )
 ```
 
 
-```{r sem-plot, fig.dim = c(10,10), fig.cap = sem_caption}
+```{r sem-plot, fig.cap = sem_caption}
 #https://tex.stackexchange.com/questions/20496/drawing-different-tikz-shapes-parameterized-by-data-from-a-file?rq=1
 #https://tex.stackexchange.com/questions/83888/how-to-plot-data-from-a-csv-file-using-tikz-and-csvsimple
 
-plot_grid(p_stab_sem_rich, p_bm_sem_rich, labels = LETTERS[1:2], rel_widths = c(.50, .5))
+plot_grid(
+  meta_stab_sem_rich, meta_bm_sem_rich,
+  p_stab_sem_rich, p_bm_sem_rich,
+  labels = LETTERS[1:4], nrow = 2,
+  rel_widths = c(1, .8)
+)
 ```
 
 ```{r get-bm-sem-single-effect}
@@ -896,6 +885,7 @@ bm_sem_coef <- filter(coef_bm_sem, P.Value <= 0.05)
 rich_on_bm <- get_clean_sem_coef(sem = bm_sem_coef, resp = "log_bm_std", pred = "log_rich_tot_std")
 tlvl_on_bm <- get_clean_sem_coef(sem = bm_sem_coef, resp = "log_bm_std", pred = "t_lvl")
 RC1_on_bm <- get_clean_sem_coef(sem = bm_sem_coef, resp = "log_bm_std", pred = "log_RC1")
+RC2_on_bm <- get_clean_sem_coef(sem = bm_sem_coef, resp = "log_bm_std", pred = "log_RC2")
 ```
 
 ```{r get-bm-tot-effect-env}
@@ -914,24 +904,26 @@ tmp_bm_indir_table <- map(list(env_on_bm, rich_on_bm),
 bind_rows()
 ```
 
+## Drivers of total biomass
+
 ---
 # Total biomass
 ---
 
-The average trophic level was the only direct driver of
-total biomass ($r_\delta = `r tlvl_on_bm`$) whereas
-connectance and species richness had no significant effects (Fig.
-\@ref(fig:sem-plot) C). Environmental variables  no direct effects on total
-biomass.
+#### Direct effect
+Species richness and average trophic level had a significant positive direct
+effects on total biomass (resp. $r_\delta = `r rich_on_bm$direct`$ and $r_\delta
+= `r tlvl_on_bm`$) whereas connectance had no significant direct effects (Fig.
+\@ref(fig:sem-plot) B). CV of enrichment had a direct negative effect on total
+while the other environmental variables had no significant direct
+effect.
 
-Species richness had a indirect positive effect on total biomass through
-average trophic level ($`r 0.38*.51`$). The stream size had a total effect on total biomass as strong
-as species richness ($r_\delta =`r env_on_bm["log_RC1"]`$), indirectly through average trophic level
-and species richness. The avg temperature of the river had an indirect positive
-effect on total biomass ($r_\delta = `r env_on_bm["log_RC2"]`$), through
-average trophic level and species richness as well. Avg DBO, CV DBO and CV of
-river size had no or weak indirect effect on total biomass
-(resp. $r_\delta =`r env_on_bm["log_RC3"]`$, $r_\delta =`r env_on_bm["RC5"]`$, $r_\delta =`r env_on_bm["RC4"]`$).
+##### Indirect effect
+Avg river size, avg temperature and avg enrichment had however indirect positive
+effects on total biomass through species richness or/and average trophic level
+(Table XX & Fig.  \@ref(fig:sem-plot) B). Those indirect effects went
+independently by species richness and avg trophic level because species richness
+had no significant effect on avg trophic level. 
 
 ```{r get-sem-single-effect}
 stab_sem_coef <- filter(coef_stab_sem, P.Value < 0.05)
@@ -947,7 +939,6 @@ RC1_on_sync <- get_clean_sem_coef(sem = stab_sem_coef, resp = "log_sync", pred =
 ```
 
 ```{r get-sem-tot-effect-env}
-source(mypath("R", "total_sem_effect.R"))
 stab_all_params <- get_coefficient_piecewisesem(sem = stab_sem_rich, p_val_thl = NULL)
 # effect of env on sync and cv_sp
 env_on_sync <- get_env_on_stab_comp(fit = stab_all_params,
@@ -987,195 +978,50 @@ com_on_stab <- get_com_on_stab(fit = stab_all_params,
 
 tmp_stab_indir_table <- map(list(env_on_stab, rich_on_stab, com_on_stab),
   ~as_tibble(c(.x, list(variable = names(.x[[1]]))))
-
   ) %>%
 bind_rows()
 
+options(knitr.table.format = "latex")
+kable(tmp_stab_indir_table, "latex", booktabs = T, align = "c") 
+kable(tmp_bm_indir_table, "latex", booktabs = T, align = "c") 
+
+#kable(rbind(
+  #mutate(tmp_stab_indir_table, type = "stab"),
+  #mutate(tmp_bm_indir_table, type = "bm")
+  #), "latex", booktabs = T, align = "c") %>%
+  #column_spec(1, bold=T) %>%
+  #collapse_rows(columns = 1:2, latex_hline = "major", valign = "middle")
 ```
 
----
-# Biomass stability
----
+## Biomass stability
 
-$\overline{CV_{sp}}$ ($r_\delta = `r cv_sp_on_stab`$) decreased biomass stability more than
-synchrony ($r_\delta = `r sync_on_stab`$, Figure \@ref(fig:sem-plot)). Species richness had a strong
-positive effect on $\overline{CV_{sp}}$ and a strong negative effect on synchrony
-whereas average trophic level and connectance had no significant effects on either
-$\overline{CV_{sp}}$ nor synchrony. The environmental variables had
-no significant direct effects on either $\overline{CV_{sp}}$ nor synchrony.
+#### Direct effects 
+$\overline{CV_{sp}}$ ($r_\delta = `r cv_sp_on_stab`$) decreased biomass
+stability more than synchrony ($r_\delta = `r sync_on_stab`$, Figure
+\@ref(fig:sem-plot)). Species richness had a strong opposite direct effect on
+$\overline{CV_{sp}}$ and synchrony, positive on $\overline{CV_{sp}}$ ($r_\delta
+= `r cv_sp_on_stab`$) and  negative on synchrony. Average trophic level had a
+negative direct effect on $\overline{CV_{sp}}$ and connectance had no
+significant direct effect on either $\overline{CV_{sp}}$ nor synchrony. Avg
+enrichment had a direct positive effect on $\overline{CV_{sp}}$. The other
+environmental variables had no significant direct effects on either
+$\overline{CV_{sp}}$ nor synchrony.
 
-Indirectly through synchrony and $\overline{CV_{sp}}$, species richness had a total negative
-effect on biomass stability ($r_\delta = `r rich_on_stab`$). Avg river size and
-avg temperature had also a total effect which was negative on biomass stability
-(resp. $r_\delta = `r env_on_stab["log_RC1"]`$ and $r_\delta = `r
-env_on_stab["log_RC2"]`$), going through richness (resp. $r_\delta = `r
-env_on_richness["log_RC1"]`$ and $r_\delta = `r env_on_richness["log_RC2"]`$).
+#### Indirect effects
+Indirectly through synchrony ($r_\delta = `r rich_on_stab$via_sync`$) and
+$\overline{CV_{sp}}$ ($r_\delta = `r rich_on_stab$via_cv_sp`$), species richness
+had a total negative effect on biomass stability
+($r_\delta = `r rich_on_stab$total`$). Avg trophic level had a positive indirect
+effect on
+biomass stability through $\overline{CV_{sp}}$
+($r_\delta = `r com_on_stab$via_cv_sp["t_lvl"]`$).
 
-- Main outcome:
-  - Biomass but stability increased with richness
-  - Higher trophic group was more stable that lower one
-    - Opposite relationship stability/richness
-  - Stability was mainly driven by species richness
-
-
-## Species richness increases total biomass but decreases biomass stability
-
-```{r}
-richness_lab <- expression(bold(paste("Total richness (", m^"-2", ") (Log 10)")))
-stab_lab <- "Biomass stability (Log 10)"
-bm_lab <- expression(bold(paste("Total biomass (", g.m^"-2", ") (Log 10)")))
-
-stab_div_caption <- paste0("Relationship between biomass stability (log 10) (top panel) or total biomass (log 10) (bottom panel) versus total species richness.") 
-```
-
-```{r p-s-div, fig.cap = stab_div_caption}
-lim_log_stab <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_stab_std")
-lim_log_rich_tot <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_rich_tot_std")
-# Plot left  
-
-p_stab_div <- sem_data %>%
-  ggplot(aes(x = log_rich_tot_std, y = log_stab_std))+
-  geom_point() +
-  ylim(lim_log_stab) +
-  xlim(lim_log_rich_tot) +
-  labs(x = richness_lab, y = stab_lab) +
-  geom_line(data = stab_div_pred) +
-  geom_ribbon(data = stab_div_pred, aes(ymin = conf.low, ymax = conf.high), fill
-  = "grey20", alpha = .2) +
-  annotate("text", x = -2.75, y = .75, label = make_label_rsq(rsq = stab_div_sum),
-    parse = TRUE)
-
-# Right plot
-p_stab_div_troph <- make_troph_plot(
-  .data = stab_div_by_troph,
-  resp  = "log_stab_std",
-  x_lim = lim_log_rich_tot,
-  y_lim = lim_log_stab,
-  lab_xy = c(x = richness_lab, y = stab_lab),
-  rsq_xy = c(x = -2.75, y = .75) 
-  )
-
-troph_legend <- get_legend(
-  p_stab_div_troph + 
-    guides(color = guide_legend(nrow = 1)) +
-    theme(legend.position = "bottom")
-) 
-
-p_stab <- plot_grid(
-  p_stab_div,
-  p_stab_div_troph + theme(legend.position = "none"),
-  ncol = 2, rel_widths = c(.4, .6),
-  labels = c("A", "B") 
-)
-```
-
-
-```{r p-p-div}
-lim_log_bm <- get_min_max(list(sem_data, stab_div_troph), var_chr = "log_bm_std")
-
-p_bm_div <- sem_data %>%
-  ggplot(aes(x = log_rich_tot_std, y = log_bm_std))+
-  geom_point() +
-  ylim(lim_log_bm) +
-  xlim(lim_log_rich_tot) +
-  labs(x = richness_lab, y = bm_lab) +
-  geom_line(data = bm_div_pred) +
-  geom_ribbon(data = bm_div_pred, aes(ymin = conf.low, ymax = conf.high), fill
-  = "grey20", alpha = .2) +
-  annotate("text", x = -2.75, y = -1.0, label = make_label_rsq(rsq = bm_div_sum),
-    parse = TRUE)
-
-p_bm_div_troph <- make_troph_plot(
-  .data = bm_div_by_troph,
-  resp  = "log_bm_std",
-  x_lim = lim_log_rich_tot,
-  y_lim = lim_log_bm,
-  lab_xy = c(x = richness_lab, y = bm_lab),
-  rsq_xy = c(x = -2.75, y = -1.0) 
-  )
-  
-p_bm <- plot_grid(
-  p_bm_div,
-  p_bm_div_troph + theme(legend.position = "none"),
-  ncol = 2,
-  rel_widths = c(.4, .6),
-  labels = c("C", "D")
-)
-```
-
-```{r}
-troph_caption <- paste0(
-  "The effect of species richness on biomass stability
-  (upper panel) and total biomass (bottom panel) for the whole community (left
-    panel) and the community splited by trophic group (right panel)."
-)
-```
-
-
-```{r psbm, fig.dim = c(10,5), fig.cap = troph_cap}
-plot_grid(
-  p_stab,
-  p_bm,
-  troph_legend,
-  ncol = 1,
-  rel_heights = c(1, 1, .1)
-)
-
-```
-
-```{r print-coef-stab}
-
-# Coefficients
-s_co_i <- print_coef(coef_div$stab["(Intercept)"])
-s_co_r <- print_coef(coef_div$stab["log_rich_tot_std"])
-s_co_t <- print_coef(coef_troph$stab["troph_group3"])
-s_co_r_t2 <- print_coef(coef_troph$stab["log_rich_tot_std"])
-s_co_r_t3 <- print_coef(coef_troph$stab["log_rich_tot_std"]+coef_troph$stab["log_rich_tot_std:troph_group3"])
-
-s_ci_r <- print_ci(stab_div_ci["beta.log_rich_tot_std",])
-s_ci_t <- print_ci(stab_troph_ci["beta.troph_group3",])
-s_ci_r_t2 <- print_ci(stab_troph_ci["beta.log_rich_tot_std",])
-s_ci_r_t3 <- print_ci(coef_troph$stab["log_rich_tot_std"] + stab_troph_ci["beta.log_rich_tot_std:troph_group3",])
-```
-
-```{r print-coef-bm}
-# Coefficients
-b_co_i <- print_coef(coef_div$bm["(Intercept)"])
-b_co_r <- print_coef(coef_div$bm["log_rich_tot_std"])
-b_co_t <- print_coef(coef_troph$bm["troph_group3"])
-b_co_r_t2 <- print_coef(coef_troph$bm["log_rich_tot_std"])
-b_co_r_t3 <- print_coef(coef_troph$bm["log_rich_tot_std"]+coef_troph$bm["log_rich_tot_std:troph_group3"])
-
-b_ci_r <- print_ci(bm_div_ci["beta.log_rich_tot_std",])
-b_ci_t <- print_ci(bm_troph_ci["beta.troph_group3",])
-b_ci_r_t2 <- print_ci(bm_troph_ci["beta.log_rich_tot_std",])
-b_ci_r_t3 <- print_ci(coef_troph$bm["log_rich_tot_std"] + bm_troph_ci["beta.log_rich_tot_std:troph_group3",])
-```
-
-**Truc chelou sur l'effet du niveau trophique sur la biomasse et la stabilité,
-to check again the computation. Plots look good but the model coefficients does
-not go in the same direction**
-
----
-# Total biomass versus species richness
----
-Species richness increased total biomass (`r b_co_r`% `r b_ci_r` by 1% species
-richness increase). Total biomass was `r b_co_t`% `r b_ci_t` higher in the high
-than in the low trophic
-group. However, the increase of total biomass with the increase of species
-richness was lower in the high than the low trophic group (`r b_co_r_t3`% `r
-b_ci_r_t3` and `r b_co_r_t2`% `r b_ci_r_t2` respectively,  by 1% species
-richness increase).
-
----
-# Stability versus species richness
----
-
-However, biomass stability decreased with species richness (`r s_co_r`% `r s_ci_r` by 1%
-species richness increase). Biomass stability was overall `r s_co_t`% `r s_ci_t` higher for the high
-than the low trophic group. But biomass stability decreased by `r s_co_r_t3`% by
-1% increase in species richness in the high trophic group and increased by `r s_co_r_t2`% `r s_ci_r_t2`
-in the low trophic group.
+Avg temperature had an indirect negative effect on biomass stability through
+$\overline{CV_{sp}}$ ($r_\delta = `r env_on_stab$via_cv_sp["log_RC2"]`$) and
+through species richness ($r_\delta = `r env_on_stab$via_richness["log_RC2"]`$)
+but weakly positive through avg trophic level ($r_\delta = `r env_on_stab$via_com["log_RC2"]`$).
+In sum, avg temperature had a the highest total negative effect  
+on biomass stability ($r_\delta = `r env_on_stab$total["log_RC2"]`$).
 
 # Discussion
 
@@ -1183,92 +1029,90 @@ in the low trophic group.
 # Chapeau
 ---
 
-For the first time, we assessed the determinants of total biomass and temporal
-biomass stability in empirical trophic communities at such high temporal and
-spatial scales. We showed that species richness increased total biomass but 
-decreased biomass stability. In particular, species richness decreased
-synchrony and increased species CV (\LaTeX). Surprisingly, the avg trophic
-level and connectance had no effects on either synchrony nor species CV.
-Finally, we showed that high trophic group was more stable than low trophic
-group but that high trophic group was responsible for the negative
-stability-diversity relationship.
+#### Hat
 
----
-# Negative relationship between stability and richness 
----
+With the aim to find out the determinants of total biomass and temporal
+biomass variability in trophic communities, we analysis a standardized dataset
+at France scale going on from 1995 to 2018. We infer network structure with
+trait matching method and used SEM to disantangle direct and indirect effects of
+environment, community and network structure on both total biomass and biomass
+stability. We fund that species richness increased total biomass but 
+decreased biomass stability. Suprisingly, we found that $\overline{CV_{sp}}$ had
+an negative effect twice higher than synchrony on biomass stability.
+Furthermore, we found that the effects of species richness on stability and
+biomass were independent from the effects of network structure.
 
-Surprisingly, we found a negative relationship biomass stability and species
+#### Richness on stability and biomass 
+
+We found a negative relationship biomass stability and species
 richness whereas there was a positive one between total biomass and species
-richness. Those relationships followed a power law, meaning that they represent
-respectively accelerating and decelerating functions. Overall, it contrasts
-with studies in grasslands [@tilman_biodiversity_2006, @zhang_scale_nodate],
-mesocosms [@pennekamp_biodiversity_2018] or other animals
-[@olivier_independent_nodate] where positive relationships are typically found
-between biomass stability (computed as CV) and species richness. In streams as
-well, @franssen_annual_2011 found that species richness increased biomass
-stability. However other studies found a opposite relationship
-[@yang_effects_2011] or a marginal one [@declerc_species_2006].
+richness. Overall, it contrasts with studies in grasslands
+[@tilman_biodiversity_2006, @zhang_scale_nodate], mesocosms
+[@pennekamp_biodiversity_2018] or other animals [@olivier_independent_nodate]
+where positive relationships are typically found between biomass stability
+and species richness. In streams as well, @franssen_annual_2011
+found that species richness increased biomass stability. However other studies
+found a opposite relationship [@yang_effects_2011] or a marginal one
+[@declerck_species_2006]. We found that species richness increased total biomass
+as found in salt marshes, forests
+[@wu_relationship_2015,@li_relationship_2018]. The positive effect
+of species richness on total biomass might be due to resource use
+complementarity [@cardinale_species_2002]. But opposite relation has been found
+in richness in grasslands
+[@grace_integrative_2016].
+
+#### connectance on stability and biomass
+Our path analysis revealed that, although species richness has a strong effect on
+connectance, connectance itself had little to no effect either on stability nor
+total biomass. This result contradicts precedent theoretical studies on the
+relationship between stability and network structure [@angelis_stability_1975,
+@may_will_1972], although they considered different stability metrics (i.e.
+local stability of equilibrium point). The reason might be that in our inferred
+network, network structure is strongly constraints by assembly processes.
+Indeed, connectance generally decreased with increasing species richness
+[@winemiller_must_1989, @thebault_stability_2010]. It is an effect important to
+consider the link between connectance and ecosystem properties, as this direct
+relationship can be misleading if species richness is not taken into account. 
+
+##### Trophic level on stability and biomass 
+We also found that richness had no effect on average trophic level but average
+trophic level was positively linked to total biomass and biomass stability.
+It means that the effects of richness and avg trophic level are
+independent. Then, it underlied the importance to consider facets of community
+structure related to biological interactions. The positive relation between
+average trophic level and biomass is straitforward. As feeding interactions were
+partly determined by body size and that body mass increase with body size, we
+expected that the more the average biomass is located at higher trophic level,
+the more the total biomass increase. Average trophic level had a positive effect
+on biomass stability by its negative effect on average species CV (i.e. positive
+effect on average species stability). It means that species at higher trophic
+level are more stable than the species at lower trophic levels. But, the
+relations between trophic position and stability more complex
+[@shanafelt_david_w._stability_nodate], even more if we take in account the
+repartition of the biomass across trophic level [@barbier_pyramids_2019].
+Further investigation are needed to understand the interplay between trophic
+level number, their biomass repartition and stability. 
+
+##### Environment on biomass and stability
+
+Precedent researches in plant communities showed that the total biomass was
+primary driven by environmental drivers [@grace_integrative_2016]. We found that
+environmental drivers in general did not directly affect either total biomass
+nor synchrony and CVsp except avg temperature and CV of enrichment which were
+respectively positively linked to CVsp and negatively linked to total biomass.
+It indicates that the effect of environment primary drive community structure
+which in turn affect total biomass and biomass stability. Our results also
+showed that avg temperature had the biggest effect on biomass stability while Cv
+of enrichment had the second biggest impact on total biomass.
 
 
----
-# Total biomass
----
-
-We found that species richness increased total biomass as found in salt
-marshes, forests [@wu_relationship_2014,@shuaifeng_positive_2018]. But opposite
-relation has been found in richness in grasslands [@grace_integrative_2016],
-notably because of light competition. Precedent researches in plant communities
-showed that the total biomass was primary driven by environmental drivers. In
-contrast, we found that the average trophic level was one of the main driver of the
-total biomass, together with the stream size and increasing avg temperature
-(with decreasing altitude). The effect of species richness is 
-goes through its effect on food web assembly and so, avg trophic level.
-The indirect positive effect of species richness on total biomass might be due to
-resource use complementarity [@cardinale_species_2002].
-It was however unexpected that connectance had no effect on total biomass,
-because we could imagine that connectance could also improve resource use, but
-this might be true only under the assumption that all species have the same
-assimilation efficiency.
-We found that the effect of stream size, altitude of the river and its avg
-temperature on total biomass was only indirect through community structure
-(species richness and average trophic level).
-
----
-# Effect of environment on community structure
----
-
-The total effect of river size on biomass stability was negative as avg
-temperature (and low altitude), indicating that big rivers in plains had a high
-negative effect on stability (TO MOVE). We found a mix of both expected and
-unexpected results on the effects on environment on community structure. First,
-we expected that bigger and low altitude streams had higher species richness
-because they might receive more
-confluents streams and so more species through immigration.
-Stream size increased avg trophic level. An increase in mean trophic position
-of piscivorous species in bigger rivers could explain this relation
-[@post_ecosystem_2000]. In our network reconstruction, the fish-fish
-interactions are more resolved than fish-resource interactions.
-@petchey_predicting_2010 predicted that temperature should increase connectance
-but we did not find any relationship but temperature (and
-low altitude) increased avg trophic level (**Bullshit**). 
-CV of enrichment decreased both connectance and avg trophic level, while avg
-enrichment (and CV of flow) increased avg trophic level. The latter might by explained by
-the fact that enrichment can benefit to top trophic level
-[@hulot_functional_2000]. One explanation for the former is that enrichment
-variation might destabilize top predators (REF or Bullshit again).
-
----
-# Effect of synchrony and cv_sp  
----
-
-
+#### Synchrony and CVsp 
 Species richness decreased synchrony and increased $\overline{CV_{sp}}$. Species
 richness can reduce synchrony through decrease of population size, thus raising
 the role of demographic stochasticity [@loreau_species_2008] but also in the
 case where species have different responses to environmental variation
 [@loreau_species_2008]. While the effect of species richness on synchrony is
 well understood, its effect on $\overline{CV_{sp}}$ is more complex. 
-
 In turn, we found that synchrony and $\overline{CV_{sp}}$ both decreased biomass
 stability, as predicted by the formulation of stability based on the CV
 [@thibaut_understanding_2013]. However, it was unexpected that the average
@@ -1280,318 +1124,35 @@ species are for example quite specialized in seed size, flying or soil arthropod
 mammals which gives opportunities for independent dynamics. Plants also can
 achieve independent dynamics either spatial segregation or niche
 differentiation. Because fish species even piscivorous one are quite
-opportunistic in their foraging.
-Secondly, in trophic communities, species directly affect each other through
-feeding interactions, and so could raise synchrony between species
-[@raimondo_interspecific_2004] more than in systems where interactions happen
-more in the form of competitive exploitation.
+opportunistic in their foraging.  Secondly, in trophic communities, species
+directly affect each other through feeding interactions, and so could raise
+synchrony between species [@raimondo_interspecific_2004] more than in systems
+where interactions happen more in the form of competitive exploitation.
 
----
-# Effect of trophic level and connectance are richness effects:
----
+#### Ending paragraph
+This work aims to facilitate the rapprochement between theoretical ecology and
+empirical ecology. While theoretical ecology has focused on the effects of
+network structure on stability and biomass distribution, empirical ecology
+ignored network structure. Furthermore, both fields have largely used different
+stability metrics. We tried to move forward by including network structure in
+the explanation of both total biomass and biomass stability. We showed that
+species richness and network structure can have independent effects on ecosystem
+properties. It opens a promising way for the understanding on how species
+interactions, of different types, can affect both synchrony and CVsp in
+different ecosystems. The reconstruction of ecological network with trait
+matching methods can be a first approach to document such relationship, however
+it will not compensate for close evaluation of measured interaction strength.
+We also believe that SEM methods are particularly helpful to assess complex
+relationship between environment, community structure and ecosystem properties
+in empirical data which necessitate to move from simple bivariate relationships
+[@grace_integrative_2016]. We believe that the integration of network structure
+and species interaction in general will improve our understanding of the
+mechanisms which determines ecosystem properties.
+   
 
-Our path analysis revealed that, although species richness has a strong effect on
-connectance and the average trophic level, network structure  itself had little
-to no effect either on synchrony nor average population stability. This result
-contradicts precedent theoretical studies on the relationship
-between stability and network structure [@angelis_stability_1975,
-@may_will_1972], although they considered different stability metrics (i.e.
-local stability of equilibrium point). The reason might be that in our inferred
-network, network structure is strongly constraints by assembly processes.
-Indeed, connectance generally decreased with increasing species richness
-[@winemiller_must_1989, @thebault_stability_2010], because a small fraction of
-links are realized because of food diet constraints. In theoretical studies,
-connectance can be tuned from 0 (no links) to 1 (all possible links are
-present) [@angelis_stability_1975]. The link between the average trophic level
-and species richness has been less studied. However, we can suppose that
-because species richness increase total biomass, species richness also increase
-both the biomass of prey available for piscivorous fishes and the biomass of
-piscivorous species which in turn, increase the avg trophic level of the
-community. In sum, the biomass stability of freshwater ecosystems can be
-derived by species richness because, through trophic structure constraints,
-species richness determine largely network structure.
-
-
----
-# Trophic group
----
-
-The total biomass of high and low trophic group trophic groups responded both
-positively to species richness but not biomass stability. There is a
-paradox where the high trophic group is overall more stable than the low but
-species richness had a destabilizing effect on the former whereas a stabilizing
-on the latter. @shanafelt_david_w._stability_nodate showed in a theoretical
-study in trophic chains, the top trophic level is the more stable TOEXPLORE.
-The comparison between our study and theoretical studies stays limited because
-fishes in our system have a large diet and consume food item of several trophic
-level while theoretical studies consider system in which one species of one
-trophic level feeds only on the trophic level directly inferior
-[@shanafelt_david_w._stability_nodate] ADD REF.
-
-
-# Appendix
-
-## PCA of environmental variables
-
-```{r, fig.show = "hide"}
-axis_pair <- list(c(1,2), c(1,3), c(2,3), c(1, 4), c(2, 4), c(3,4), c(4,5))
-p_l_rot <- map(axis_pair, 
-  function (axis)
-    pca_rotated_plot <- plot_rotated_pca(
-      pca_rotated = pca_rotated,
-      axis = axis 
-    )
-)
-```
 
 ```{r}
-prop_var_expl_pca <- pca_rotated$rotated$Vaccounted["Proportion Var", ] %>%
-  map_dbl(., ~round(.x * 100))
-
-
-tot_var_expl_pca <- round(sum(pca_rotated$rotated$Vaccounted["Proportion Var", ]) * 100) 
-
-pca_caption <- paste0(
-  "Rotated axis of PCA on environmental variables. The five components
-  explained,", tot_var_expl_pca, "% of the variance (",
-  paste0(names(prop_var_expl_pca), ":", prop_var_expl_pca, "%"), ").",
-  "(A) Axis 1 was positively related to the river size, axis 2 was related to
-  average temperature and negatively related to the river slope and altitude.
-  (B) Axis 3 was negatively related to the CV of flow and average enrichment.
-  Axis 4 was related to the CV of river size. Finally, axis 5 was related to the
-  CV of enrichment.")
+save.image(file = mypath("manuscript", "bef_stability", "result", "workspace.rda"))
 ```
-
-
-```{r pca-rotated, fig.cap = pca_caption}
-to_plot <- c(1, 6, 7)
-plot_grid(plotlist = map(p_l_rot[to_plot], ~.x$rotated),
-  ncol = length(to_plot), labels = LETTERS[1:3])
-```
-
-## Model summary and diagnostics 
-
-### Biomass and stability models
-
-```{r tab-coeff-bm, fig.cap = "Coefficient"}
-# Replacement rules for term
-rp_est <- c(
-  "(Intercept)" =     "intercept",
-  "sd\\_\\(intercept\\)\\.basin" = "sd intercept basin",
-  "log_rich" =     "Median richness (log base 10)",
-  "troph_group3" =     "high trophic group",
-  "log_rich:troph_group3" =     "Median richness (log10) : high trophic group",
-  "sig01.basin" =     "sd intercept basin",
-  "sd_Observation.Residual" =     "residuals",
-  "sigma" = "residuals"
-)
-# Replacement rules for group
-rp_group <- c(
-  "fixed" = "Fixed",
-  "basin" = "Random"
-)
-
-```
-
-```{r}
-coeff_troph <- map2_dfr(list(bm_troph_ci, stab_troph_ci), list(bm_troph_mod, stab_troph_mod),
-  clean_summary_mod, term_rp = rp_est, group_rp = rp_group)
-
-kable(coeff_troph) %>%
-  pack_rows("Biomass", 1, 6) %>%
-  pack_rows("Stab", 7, 12)
-```
-
-
-
-### SEM 
-
-#### Indirect effect
-
-```{r indir-tab, fig.cap = "Indirect effect from SEM"}
-kable(tmp_stab_indir_table)
-kable(tmp_bm_indir_table)
-```
-
-
-## Model residuals
-
-### Biomass and stability models 
-
-```{r}
-mod_list <- list(bm_div_mod, bm_troph_mod, stab_div_mod, stab_troph_mod)
-plot_res <- map(mod_list, ~ plot(.x))
-plot_grid(plotlist = plot_res)
-```
-
-### SEM linear relationships
-
-
-```{r hist-sem-data}
-sem_data %>%
-  select(prod, log_rich_tot, log_sync, log_stab, log_cv_sp, RC1, RC2, RC3, RC4,
-    RC5, t_lvl, ct, log_bm) %>%
-  gather(variable, value) %>%
-  ggplot(aes(x = value)) +
-  geom_histogram() +
-  facet_wrap(~variable, scales = "free")
-
-```
-
-
-
-```{r s-colin-sem, fig.cap = "Variance Inflation factor for each individual model of stability sem"}
-#compute_stab_sem_rich(.data = sem_data, get_sem =TRUE)
-
-mod_stab_list <-
-  list(
-    nlme::lme(log_rich_tot ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,  random = ~ 1 | basin, data = sem_data),
-    #nlme::lme(piel ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
-    nlme::lme(ct ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
-    nlme::lme(t_lvl ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
-    #nlme::lme(beta_bin ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
-    nlme::lme(log_sync ~ log_rich_tot + ct + t_lvl + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,
-      random = ~ 1 | basin, data = sem_data),
-    nlme::lme(log_cv_sp ~ log_rich_tot  + ct + t_lvl
-      + RC1 + log_RC2 + log_RC3 + RC4 + RC5, random = ~ 1 | basin, data = sem_data),
-    lm(log_stab ~ log_cv_sp + log_sync, data = sem_data)
-  )
-names(mod_stab_list) <- c("richness", "connectance", "weighted_mean_trophic_lvl", "synchrony", "cv_sp", "stability") 
-colin_stab_sem <- map(mod_stab_list, car::vif)
-
-tmp <- map(colin_stab_sem, enframe)
-  
-# colinearity table
-colin_stab_sem <- tibble(vif = tmp, mod = names(mod_stab_list)) %>%
-  unnest(vif) %>%
-  spread(name, value)
-
-kable(colin_stab_sem)
-```
-
-```{r}
-plot_residuals <- function (x, y = "Diagnostic") {
-  plot.lme(x, main = y, xlab = "Fitted values", ylab = "Residuals")
-}
-p_resid_stab_sem <- map2(mod_stab_list, names(mod_stab_list) , plot_residuals)
-plot_grid(plotlist = p_resid_stab_sem)
-```
-
-```{r, eval = FALSE}
-mod_tlvl <- nlme::lme(t_lvl ~ scale(RC1) + scale(RC2) + scale(RC3) + scale(RC4) + scale(RC5) + log_rich_tot, random = ~ 1 | basin, data = sem_data)
-plot(mod_tlvl)
-sem_data %>%
-  ggplot(aes(x = log10(richness_tot), y = t_lvl)) +
-  geom_point()+
-  geom_smooth(method = "lm")
-plot(x = log10(sem_data$RC1 + abs(min(sem_data$RC1))), y = sem_data$t_lvl)
-sem_data %>%
-  ggplot(aes(x = log10(RC1), y = t_lvl)) +
-  geom_point()+
-  geom_smooth(method = "lm")
-plot(nlme::lme(t_lvl ~ I(log10(RC1 + abs(min(RC1)))) + log_rich_tot, random = ~ 1 | basin, data = sem_data))
-nlme::lme(t_lvl ~ log_rich_tot, random = ~ 1 | basin, data = sem_data)
-semd_test <- sem_data %>%
-  mutate(RC1b = RC1 + abs(min(RC1)))
-ricker.mixed.fit <- nls(
-  t_lvl ~ (Vm*(RC1 + b) / (K + (RC1 + b)) + d),
- #fixed = Vm + K + b + d ~ 1,
- #random = Vm + K + b + d ~ 1|basin,
- start= c(Vm=1, K = 0.1, b = .5, d = 2.5),
- data = semd_test,
- control = lmeControl(maxIter = 1e8, msMaxIter = 1e8) 
-)
-summary(ricker.mixed.fit)
-x <- seq(min(sem_data$RC1), max(sem_data$RC1), length.out = 100)
-sem_data$test_pred <- predict(ricker.mixed.fit)
-
-semd_test %>%
-  ggplot(aes(x = RC1b, y = t_lvl)) +
-  geom_point() +
-  geom_line(aes(y = test_pred))
-  geom_smooth(method = "lm")
-cor(semd_test$piel, semd_test$t_lvl, method = c("spearman"))
-```
-
-```{r, eval = FALSE}
-library(glmmTMB)
-# Gaussian
-mod_log_rich <- glmmTMB(
-  log_rich_tot ~ log_RC1 + log_RC2 + log_RC3
-  + RC4 + RC5 + (1 | basin), family = gaussian, data = sem_data)
-summary(mod_log_rich)
-plot(y = resid(mod_log_rich), x = fitted(mod_log_rich))
-
-# Poisson 
-mod_log_rich_poi <- glmmTMB(
-  richness_tot ~ log_RC1 + log_RC2 + log_RC3
-  + RC4 + RC5 + (1 | basin), family = poisson, data = sem_data)
-summary(mod_log_rich_poi)
-plot(y = resid(mod_log_rich_poi), x = fitted(mod_log_rich_poi))
-
-# Truncate 
-mod_log_rich_nbinom <- glmmTMB(
-  richness_tot ~ log_RC1 + log_RC2 + log_RC3
-  + RC4 + RC5 + (1 | basin), family = nbinom1, data = sem_data)
-summary(mod_log_rich_nbinom)
-plot(y = resid(mod_log_rich_nbinom), x = fitted(mod_log_rich_nbinom))
-```
-
-#### Total biomass
-
-```{r}
-
-mod_bm_list <-
-  list(
-    nlme::lme(log_rich_tot ~ RC1 + RC2 + RC3 + RC4 + RC5,  random = ~ 1 | basin, data = sem_data),
-    #nlme::lme(piel ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
-    nlme::lme(ct ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
-    nlme::lme(t_lvl ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
-    #nlme::lme(beta_bin ~ RC1 + RC2 + RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = sem_data),
-    nlme::lme(log_bm ~ log_rich_tot + ct + t_lvl + RC1 + RC2 + RC3 + RC4 + RC5,
-      random = ~ 1 | basin, data = sem_data)
-  )
-names(mod_bm_list) <- c("richness", "connectance", "weighted_mean_trophic_lvl", "total_biomass") 
-colin_bm_sem <- map(mod_bm_list, car::vif)
-
-tmp <- map(colin_bm_sem, enframe)
-  
-# colinearity table
-colin_bm_sem <- tibble(vif = tmp, mod = names(mod_bm_list)) %>%
-  unnest(vif) %>%
-  spread(name, value)
-
-kable(colin_bm_sem)
-```
-
-
-## Relationship at the absolute scale, i.e. not the logarythme scale 
-
-```{r}
-ggplot(sem_data, aes(x = richness_med, y = biomass_stab)) +
-  geom_point()
-test <- tibble(
-  richness_med = seq(1,20, length.out = 100),
-  biomass_stab =
-    10^(fixef(stab_div_mod)[1])*richness_med^fixef(stab_div_mod)[2]
-)  
-```
-
-```{r save-plot}
-
-save_plot("~/Documents/thesis/talks/fishcom_fig/stab_div.pdf",
-  p_stab_div,
-  base_height = 3,
-  bg = "transparent",
-  ncol = 1)
-
-save_plot("~/Documents/thesis/talks/fishcom_fig/stab_div_troph.pdf",
-  p_stab_div_troph + theme(legend.position = "bottom"),
-  base_height = 3,
-  bg = "transparent",
-  ncol = 1)
-
-```
-
 
 # References

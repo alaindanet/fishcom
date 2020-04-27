@@ -769,12 +769,7 @@ compute_stat_troph_rich <- function (.data = NULL, resp = NULL) {
 
 }
 
-
-#' Compute PCA and rotated PCA over a list of dataset
-#'
-#' @param .data data.frame
-#' @param naxis integer number of axis to keep. default to 2  
-#'
+#' Compute PCA and rotated PCA over a list of dataset @param .data data.frame @param naxis integer number of axis to keep. default to 2  
 compute_rotated_pca <- function(.data = NULL, naxis = 2) {
       .data %<>% na.omit
       pca <- ade4::dudi.pca(as.data.frame(.data), scannf = FALSE, nf = naxis, center = TRUE, scale = TRUE)

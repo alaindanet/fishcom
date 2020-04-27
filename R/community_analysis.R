@@ -338,13 +338,13 @@ compute_community_temporal_analysis <- function(.op = NULL,
   class_network_analysis <- network_analysis
   rm(network_analysis)
 
-  output[["tps_bm_troph"]] <- summarise_bm_troph_over_time(
-    op = .op,
-    network = class_network_analysis
-  )
-  output[["tps_bm_troph"]] %<>% 
-    tidyr::unnest(troph_group) %>%
-    dplyr::ungroup()
+  #output[["tps_bm_troph"]] <- summarise_bm_troph_over_time(
+    #op = .op,
+    #network = class_network_analysis
+  #)
+  #output[["tps_bm_troph"]] %<>% 
+    #tidyr::unnest(troph_group) %>%
+    #dplyr::ungroup()
 
   cat("Biomass by trophic group done (4/4)\n")
 

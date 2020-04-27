@@ -601,7 +601,8 @@ fill_data_ssn <- function(ssn = NULL, data = NULL, var = NULL,
 #'
 get_basin_station <- function (sf_obj = FALSE) {
 
-  myload(the_8_hydrologic_basin, station_analysis, dir = data_common)
+  mypath <- 
+  myload(the_8_hydrologic_basin, station_analysis, dir = mypath("data"))
 
   station_analysis %<>%
     sf::st_transform(crs = 2154)

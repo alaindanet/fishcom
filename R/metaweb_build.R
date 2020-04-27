@@ -308,7 +308,7 @@ compute_piscivory <- function (size_class, fish_diet_shift, species, low_bound, 
 #' @param pred_win data.frame containing species and the predation window
 #'  parameters (\alpha and \beta).
 #' @param pred_win_method character midpoint, overlap or no_overlap. Default to midpoint.
-#' @param species 
+#' @param species
 #' @param beta_min column name containing beta_min parameters
 #' @param beta_max column name contains beta_max parameters
 #'

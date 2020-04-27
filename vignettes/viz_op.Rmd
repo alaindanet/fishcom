@@ -169,4 +169,15 @@ op_hist <- op_analysis %>%
 op_hist %>%
   ggplot(aes(x = freq)) +
   geom_histogram()
+summarise_at(op_hist, .vars = "freq",
+  .funs = list(
+    nb_st = length,
+    min = min,
+    max = max,
+    mode =  getmode,
+    median = median,
+    sd = sd)
+)
+myload(op_analysis, dir = mypath("data"))
+length(unique(op_analysis$station))
 ```
