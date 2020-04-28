@@ -1,0 +1,36 @@
+---
+title: "Mechanisms of stability richness relationship"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{stability_mechanisms}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+myload(temporal_network_metrics, dir = mypath("data", "classes"))
+temporal_network_metrics_classes <- temporal_network_metrics
+myload(temporal_network_metrics, dir = dest_dir)
+myload(community_metrics, temporal_community_metrics, synchrony, op_analysis, dir = data_common)
+myload(network_analysis, dir = mypath("data", "classes"))
+myload(trophic_level, trophic_class, dir = mypath("data"))
+myload(hab_type, habitat_pressure, dir = mypath("report"))
+source(mypath("R", "synchrony.R"))
+source(mypath("R", "geo_methods.R"))
+source(mypath("R", "local_network_build.R"))
+
+```
+
+```{r}
+temporal_network_metrics_classes %>%
+  select(station, troph_group) %>%
+  unnest(troph_group)
+```
+
