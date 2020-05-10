@@ -55,7 +55,9 @@ monthly_avg_polluants %<>%
     parameter = str_replace_all(parameter, replace_rules)
     )
 # Yearly avg
-mysave(monthly_avg_polluants, dir = mypath("data-raw", "polluants"), overwrite = TRUE)
+mysave(monthly_avg_polluants,
+  dir = mypath("data-raw", "polluants"),
+  overwrite = TRUE)
 
 yearly_avg_polluants <- monthly_avg_polluants %>%
   mutate(year = year(year_month)) %>%

@@ -25,7 +25,7 @@ knitr::opts_chunk$set(
   cache = FALSE,
   collapse = TRUE,
   comment = "#>",
-  fig.dim = c(7, 7),
+  #fig.dim = c(7, 7),
   fig.fullwidth = TRUE,
   fig.show = "hold",
   echo = FALSE,
@@ -57,29 +57,35 @@ theme_set(theme_alain())
 
 # Introduction 
 
-#### Importance of BEF assessment
+#### Biodiversity and ecosystem functioning
 
-Determining the shape of the relationship between species diversity and ecosystem
-functioning has been a central research topic in ecology
-[@may_will_1972, @hector_plant_1999, @loreau_biodiversity_2001, @hooper_effects_2005, @duffy_why_2009, @isbell_forest_quantifying_2018].
-Current biodiversity losses
-in all ecosystems challenge scientists to understand how ecosystems will be
-affected in turn. Studies in Bioversity-Ecosystem Functioning (BEF) usually
-quantify species diversity as species richness (i.e number of species) while
-ecosystem functioning is quantified as total biomass, productivity (biomass
-produced by unit of time) or stability which is quantified in more diverse ways
-such as the variability of species abundance, the resilience to perturbation, or
-resistance to perturbation [@donohue_navigating_2016].
+Biodiversity is essential to determine and maintain ecosytem properties.
+Current biodiversity losses question the ability of how ecosystems will be
+affected in turn.
+
+The relationship between biodiversity and ecosystem functioning has been a
+central research topic in ecology [@may_will_1972; @hector_plant_1999;
+@loreau_biodiversity_2001; @hooper_effects_2005; @duffy_why_2009;
+@isbell_forest_quantifying_2018]. 
+
+Studies in
+Bioversity-Ecosystem
+Functioning (BEF) usually quantify species diversity as species richness (i.e
+number of species) while ecosystem functioning is quantified as total biomass,
+productivity (biomass produced by unit of time) or stability which is quantified
+in more diverse ways such as the variability of species abundance, the
+resilience to perturbation, or resistance to perturbation
+[@donohue_navigating_2016].
 
 #### Shape of BEF: total biomass
 
 Species richness has been reported to increase productivity
-[@tilman_productivity_1996, @grace_integrative_2016] through complementarity
+[@tilman_productivity_1996; @grace_integrative_2016] through complementarity
 between species in resource exploitation and selection effects
-[@loreau_partitioning_2001, @cardinale_species_2002, @fargione_selection_2007].
-Empirical assessment of the effect of species richness on total biomass showed negative
-[@grace_integrative_2016] and positive relationships
-[@hector_plant_1999, @tilman_biodiversity_2014]. @grace_integrative_2016 showed
+[@loreau_partitioning_2001; @cardinale_species_2002; @fargione_selection_2007].
+Empirical assessment of the effect of species richness on total biomass showed
+negative [@grace_integrative_2016] and positive relationships
+[@hector_plant_1999; @tilman_biodiversity_2014]. @grace_integrative_2016 showed
 that the results depend on the refinement of the mecanisms involved in the
 analysis.
 
@@ -87,42 +93,42 @@ analysis.
 
 The relationship between species richness and stability is even more complex
 partly because of the inherent multidimensionality of stability
-[@donohue_dimensionality_2013, @donohue_navigating_2016] and because of the
+[@donohue_dimensionality_2013; @donohue_navigating_2016] and because of the
 different metrics of stability privileged in theoretical (stability of local
 equilibrium, robustness to primary extinction) and empirical work (variability
 of abundance or biomass through time). Empirical studies showed consistently
 that species richness decreased community variability in grasslands
 [@tilman_biodiversity_2006], mesocosms [@pennekamp_biodiversity_2018] and
-vertebrates [@olivier_independent_nodate, @franssen_annual_2011]. Two
-mecanisms are involved into community variability, (1) species
-variability and (2) the species synchrony [@loreau_species_2008, @thibaut_understanding_2013].
-Positive [@tilman_biodiversity_2006], neutral
-[@jiang_different_2009, @olivier_independent_nodate] and negative
-[@franssen_annual_2011, @olivier_independent_nodate] relationships between
-species variability and species richness have been found. On the other side,
-studies consistently found that species richness decreased synchrony between
-species
-[@loreau_species_2008, @thibaut_understanding_2013, @bluthgen_land_2016, @olivier_independent_nodate].
-Beyond species richness, species interactions, which modifies species
-abondance and biomass and make species dynamics interdependant, have been
-largely ignored in empirical assessment.
+vertebrates [@olivier_independent_nodate; @franssen_annual_2011]. Two mecanisms
+are involved into community variability, (1) species variability and (2) the
+species synchrony [@loreau_species_2008; @thibaut_understanding_2013].  Positive
+[@tilman_biodiversity_2006], neutral [@jiang_different_2009;
+@olivier_independent_nodate] and negative [@franssen_annual_2011;
+@olivier_independent_nodate] relationships between species variability and
+species richness have been found. On the other side, studies consistently found
+that species richness decreased synchrony between species [@loreau_species_2008;
+@thibaut_understanding_2013; @bluthgen_land_2016; @olivier_independent_nodate].
+Beyond species richness, species interactions, which modifies species abondance
+and biomass and make species dynamics interdependant, have been largely ignored
+in empirical assessment.
 
 
 #### BEF: Theoretical ecology
 
 Conversely, theoretical ecology display an extensive literature about the
-effects of network structure on stability 
-[@may_will_1972, @angelis_stability_1975, @stouffer_compartmentalization_2011, @thebault_stability_2010, @barbier_pyramids_2019, @shanafelt_david_w._stability_nodate].
-Theoretical ecology generally uses stability definitions related to community
-equilibrium and its stability to small perturbations.
-Connectance (i.e. proportion of realized links in a network) can decrease
-[@angelis_stability_1975, @thebault_stability_2010] or increase resilience of
-trophic network depending on the functioning of networks
-[@angelis_stability_1975].
-The number of trophic levels, the vertical position in the trophic network as
-well as the strength of their biomass regulation (i.e. top-down and bottom-up)
-can determine biomass and stability at equilibrium
-[@hurd_stability_1971, @shanafelt_david_w._stability_nodate, @zhao_horizontal_2019, @barbier_pyramids_2019].
+effects of network structure on stability [@may_will_1972;
+@angelis_stability_1975; @stouffer_compartmentalization_2011;
+@thebault_stability_2010; @barbier_pyramids_2019;
+@shanafelt_david_w._stability_nodate].  Theoretical ecology generally uses
+stability definitions related to community equilibrium and its stability to
+small perturbations.  Connectance (i.e. proportion of realized links in a
+network) can decrease [@angelis_stability_1975; @thebault_stability_2010] or
+increase resilience of trophic network depending on the functioning of networks
+[@angelis_stability_1975].  The number of trophic levels, the vertical position
+in the trophic network as well as the strength of their biomass regulation (i.e.
+top-down and bottom-up) can determine biomass and stability at equilibrium
+[@hurd_stability_1971; @shanafelt_david_w._stability_nodate;
+@zhao_horizontal_2019; @barbier_pyramids_2019].
 
 A large inconsistency remains between theoretical and empirical assessments of
 the relationship between community structure and ecosystem properties.
@@ -133,13 +139,12 @@ communities have ignored the contribution of network structure.
 
 Our goal was to assess the mecanisms determining temporal variability and total
 biomass in natural communities while integrating both species richness and
-network structure. We combined together the effect of vertical
-and horizontal diversity and thus aimed to bridge the current gap between theoretical
-and empirical studies. We used an standardized monitoring of fish
-communities in french streams. More than three hundreds sites were followed
-more than 10 years on the 1995-2018 period. We inferred four thousands potential
-interaction networks corresponding to each sampling event, based on trait
-matching.
+network structure. We combined together the effect of vertical and horizontal
+diversity and thus aimed to bridge the current gap between theoretical and
+empirical studies. We used an standardized monitoring of fish communities in
+french streams. More than three hundreds sites were followed more than 10 years
+on the 1995-2018 period. We inferred four thousands potential interaction
+networks corresponding to each sampling event, based on trait matching.
 
 We investigated the effects of the community structure on total biomass and
 community variability, which in turn determine community variability. We have
@@ -147,39 +152,67 @@ also included the effect of environmental drivers [@grace_integrative_2016]
 which can directly affect community variability or indirectly via community
 structure.
 
+- Q1: diversity-stability, diversity-biomass in aquatic systems
+- Q2: Effect of horizontal and vertical diversity on total biomass and stablity
+- Q3:  
 
 
 # Methods
 
 ```{r}
 matmet_cap <- paste0(
-  "Mat&met figure"
+  "(A) Conceptual model of the hypothesized relationships between environment,
+  species richness, network metrics and total biomass / biomass stability. ",
+  "Solid and dashed arrows represent respectively direct and indirect effects.
+  ",
+  "The blue, green and blue/green dashed arrows being respectively indirect
+  effects going through species richness, network metrics and through both
+  species richness and network metrics.",
+  "(B) Observation sites (black dots) were located across France and monitored
+  on the period 1995-2018. ", "Grey shades highlighted elevalation variation. ",
+  "Inner borders draw the limits of the hydrographic basins. ",
+  "(C) The metaweb. Each trophic species (N = 412) is represented by a node and
+  each color represent a species (S = ). Resource nodes (7) were drawn in grey. ",
+  "(D) Subset over network variation through time."
 )
 ```
 
 ```{r matmet, fig.cap = matmet_cap}
 myload(p_st,temporal_network, dir = mypath("manuscript/bef_stability/figs"))
-p_st <- p_st +
-  theme(legend.position = "none")
+
 # Network inference
 net_method_path <- mypath("manuscript/bef_stability/figs",
-  "network_inference.pdf")
-net_method <- net_method_path %>%
-  magick::image_read()
-p_net_method <- cowplot::ggdraw() +
-  cowplot::draw_image(net_method)
+  "hypothesis.pdf")
+metaweb_path <- mypath("manuscript/bef_stability/figs",
+  "metaweb.png")
+library(magick)
 
-top <- plot_grid(p_st, p_net_method, ncol = 2, rel_widths = c(.8, 1), labels =
+p_net_method <- cowplot::ggdraw() +
+  cowplot::draw_image(magick::image_read_pdf(net_method_path))
+p_metaweb <- cowplot::ggdraw() +
+  cowplot::draw_image(magick::image_read(metaweb_path))
+
+top <- plot_grid(p_net_method, p_st, ncol = 2, rel_widths = c(1, 1), labels =
   "AUTO")
-p_method <- plot_grid(top, temporal_network, nrow = 2, rel_heights = c(1, .3),
+bottom <- plot_grid(p_metaweb, temporal_network, ncol = 2,
+  rel_widths = c(1, 1), labels = c("C", "D"))
+
+p_method <- plot_grid(top, bottom, nrow = 2, rel_heights = c(1, 1),
   labels = c("", "C"))
+save_plot(
+  filename = mypath("manuscript/bef_stability/figs",
+    "method_fig.pdf"),
+  p_method, nrow = 2, ncol =2,
+  base_width = 7/2.54,
+  base_asp = 0.3
+)
 p_method
 ```
 
 
 ## Community variability 
 
-#### Protocol 
+#### Protocol
 
 Fish communities were monitored across streams of France on the period
 1995-2018 by a French governmental agency (OFB, previously AFB and ONEMA). We
@@ -278,9 +311,10 @@ ecological interactions between the components of the communities and thus build
 the ecological network. As the interactions were not measured, we used trait
 matching method to infer the presence or absence of an interaction. This method is
 widely used to infer trophic interactions
-[@brose_predator_2019, @poisot_structure_2016, @schneider_body_2012]. Indeed,
+[@brose_predator_2019; @poisot_structure_2016; @schneider_body_2012]. Indeed;
 the existence of an trophic interaction between two species have been reported
-to be largely dependant on their body size ratio [cascade model, @cohen_stochastic_1985, @warren_invertebrate_1987, @brose_predator_2019].
+to be largely dependant on their body size ratio
+[cascade model; @cohen_stochastic_1985; @warren_invertebrate_1987; @brose_predator_2019].
 
 Additionally to body size, we used food diet data to infer trophic
 interactions. The diet of stream fishes, as many organisms, shifts over lifespan.
@@ -321,7 +355,7 @@ resource nodes were determined by literature. For example, phytobenthos fed on
 detritus, while zooplankton fed on zooplankton and phytoplankton. Fish-fish
 trophic interactions between a predator and a prey were determined by body size
 ratio as in many studies
-[@brose_predator_2019, @poisot_structure_2016, @schneider_body_2012].
+[@brose_predator_2019; @poisot_structure_2016; @schneider_body_2012].
 For a given trophic species, we first determined if its size class end up in a
 life stage containing piscivorous diet, i.e. if there was an overlap between
 them. We were more liberal for piscivory determination to not miss potential
@@ -341,7 +375,7 @@ individual in the community and interactions were set according to the metaweb.
 All the resource nodes were assumed to be present in each local network.
 Finally, the structure of the local networks varied according the presence of
 the trophic species. The inferred interactions represent potential interactions
-(i.e.  not measured interactions) and are binary (i.e. presence or absence of
+(i.e. not measured interactions) and are binary (i.e. presence or absence of
 feeding interactions).
 
 #### Network structure
@@ -458,7 +492,7 @@ position (altitude and slope). Physico-chemical variables were obtained from
 naiades web portal [http://www.naiades.eaufrance.fr/](http://www.naiades.eaufrance.fr/).
 We chose flow and temperature as physical variables to describe streams as flow
 impose swimming constraints which filters fish species that can establish
-[@rolls_scaling_2018, @tonkin_flow_2018, @gutierrez-canovas_contrasting_2013].
+[@rolls_scaling_2018; @tonkin_flow_2018; @gutierrez-canovas_contrasting_2013].
 Water temperature is linked to physiological constraints namely thermal
 tolerance and oxygen concentration tolerance [REF] since the level of water
 saturation in oxygen is inversely linked to water temperature. We took 
@@ -635,7 +669,7 @@ We seeked to disantangle the unravel the links between
 environment and community structure on both biomass stability and total biomass.
 To investigate complex relationships, direct and indirect, between variables,
 Structural Equation Modeling (SEM) is one promising way  
-[@grace_structural_2008, @grace_causal_2014, @lefcheck_piecewisesem_2016,
+[@grace_structural_2008; @grace_causal_2014; @lefcheck_piecewisesem_2016;
 @grace_integrative_2016]. SEM makes possible to set causal relationships between
 variables. This step can be critical, as the estimated parameters can be
 determined by both the choice of the variables and the links between them.
@@ -903,6 +937,89 @@ tmp_bm_indir_table <- map(list(env_on_bm, rich_on_bm),
   ) %>%
 bind_rows()
 ```
+```{r}
+caption_indir_stab_sem <- paste0(
+  "Indirect and total effect of variables on biomass stability from the
+  structural equation model. Indirect effects are computed by multiplying the
+  path coefficients from the variable predictor to the response variable, here
+  biomass stability. Indirect effects are considered as one step from the target
+  variable. For exemple, the indirect effect of species richness on
+  biomass stability via its effect on CVsp is $-0.61$. To compute indirect
+  effect, only the significant direct effects were taken into account. ",
+  "Network structure being the indirect effect that went through both avg trophic
+  level and connectance and Species richness_Network structure being the
+  indirect effect that went through (i) species richness and from (ii) species
+  richness to network structure."
+
+)
+
+caption_indir_bm_sem <- paste0(
+  "Indirect and total effect of variables on total biomass from the
+  structural equation model. See the table (X) for details about computation and
+  meaning." 
+
+)
+```
+
+
+```{r indir-bm, fig.cap = "Indirect effect from SEM"}
+format_table <- function (x = tmp_stab_indir_table) {
+  x <- x[, c("variable", names(x)[!names(x) %in% "variable"])]
+
+  rm_n <- str_remove_all(get_sem_var_name_replacement(), pattern = "\n")
+  names(rm_n) <- names(get_sem_var_name_replacement()) 
+  x$variable <- str_replace_all(x$variable, rm_n)
+
+  colnames(x) %<>% str_remove_all(., pattern = "via_")
+
+  col_replacement <- c(
+    variable = "Variable",
+    cv_sp = "CVsp",
+    sync = "Synchrony",
+    richness = "Horizontal diversity",
+    com = "Vertical diversity",
+    richness_com = "Horizontal & vertical diversity",
+    total = "Total effect"
+  )
+  colnames(x) %<>% str_replace_all(., col_replacement)
+
+  x
+}
+
+kable(format_table(tmp_bm_indir_table),
+  "latex",
+  booktabs = T,
+  caption = caption_indir_bm_sem
+  ) %>%
+kable_styling(latex_options =c("striped", "scale_down"))
+
+```
+
+```{r}
+stab_all_params <- get_coefficient_piecewisesem(sem = stab_sem_rich, p_val_thl = NULL)
+# effect of env on stab
+env_on_stab <- get_env_on_stab(fit = stab_all_params, p_val_thl = 0.05,
+  type = "std")
+rich_on_stab <- get_rich_on_stab(fit = stab_all_params,
+  p_val_thl = 0.05, type = "std")
+com_on_stab <- get_com_on_stab(fit = stab_all_params,
+  p_val_thl = 0.05, type = "std")
+
+tmp_stab_indir_table <- map(list(env_on_stab, rich_on_stab, com_on_stab),
+  ~as_tibble(c(.x, list(variable = names(.x[[1]]))))
+  ) %>%
+bind_rows()
+```
+
+```{r indir-stab}
+kable(format_table(tmp_stab_indir_table),
+  "latex",
+  booktabs = T,
+  caption = caption_indir_stab_sem 
+  ) %>%
+kable_styling(latex_options =c("striped", "scale_down"))
+```
+
 
 ## Drivers of total biomass
 
@@ -939,7 +1056,6 @@ RC1_on_sync <- get_clean_sem_coef(sem = stab_sem_coef, resp = "log_sync", pred =
 ```
 
 ```{r get-sem-tot-effect-env}
-stab_all_params <- get_coefficient_piecewisesem(sem = stab_sem_rich, p_val_thl = NULL)
 # effect of env on sync and cv_sp
 env_on_sync <- get_env_on_stab_comp(fit = stab_all_params,
   p_val_thl = 0.05,
@@ -967,31 +1083,6 @@ rich_on_cv_sp <- get_rich_on_stab_comp(fit = stab_all_params,
   stab_comp = "log_cv_sp", type = "std")
 ```
 
-```{r}
-# effect of env on stab
-env_on_stab <- get_env_on_stab(fit = stab_all_params, p_val_thl = 0.05,
-  type = "std")
-rich_on_stab <- get_rich_on_stab(fit = stab_all_params,
-  p_val_thl = 0.05, type = "std")
-com_on_stab <- get_com_on_stab(fit = stab_all_params,
-  p_val_thl = 0.05, type = "std")
-
-tmp_stab_indir_table <- map(list(env_on_stab, rich_on_stab, com_on_stab),
-  ~as_tibble(c(.x, list(variable = names(.x[[1]]))))
-  ) %>%
-bind_rows()
-
-options(knitr.table.format = "latex")
-kable(tmp_stab_indir_table, "latex", booktabs = T, align = "c") 
-kable(tmp_bm_indir_table, "latex", booktabs = T, align = "c") 
-
-#kable(rbind(
-  #mutate(tmp_stab_indir_table, type = "stab"),
-  #mutate(tmp_bm_indir_table, type = "bm")
-  #), "latex", booktabs = T, align = "c") %>%
-  #column_spec(1, bold=T) %>%
-  #collapse_rows(columns = 1:2, latex_hline = "major", valign = "middle")
-```
 
 ## Biomass stability
 
@@ -1047,7 +1138,7 @@ biomass were independent from the effects of network structure.
 We found a negative relationship biomass stability and species
 richness whereas there was a positive one between total biomass and species
 richness. Overall, it contrasts with studies in grasslands
-[@tilman_biodiversity_2006, @zhang_scale_nodate], mesocosms
+[@tilman_biodiversity_2006; @zhang_scale_nodate]; mesocosms
 [@pennekamp_biodiversity_2018] or other animals [@olivier_independent_nodate]
 where positive relationships are typically found between biomass stability
 and species richness. In streams as well, @franssen_annual_2011
@@ -1055,7 +1146,7 @@ found that species richness increased biomass stability. However other studies
 found a opposite relationship [@yang_effects_2011] or a marginal one
 [@declerck_species_2006]. We found that species richness increased total biomass
 as found in salt marshes, forests
-[@wu_relationship_2015,@li_relationship_2018]. The positive effect
+[@wu_relationship_2015;@li_relationship_2018]. The positive effect
 of species richness on total biomass might be due to resource use
 complementarity [@cardinale_species_2002]. But opposite relation has been found
 in richness in grasslands
@@ -1065,12 +1156,12 @@ in richness in grasslands
 Our path analysis revealed that, although species richness has a strong effect on
 connectance, connectance itself had little to no effect either on stability nor
 total biomass. This result contradicts precedent theoretical studies on the
-relationship between stability and network structure [@angelis_stability_1975,
+relationship between stability and network structure [@angelis_stability_1975;
 @may_will_1972], although they considered different stability metrics (i.e.
 local stability of equilibrium point). The reason might be that in our inferred
 network, network structure is strongly constraints by assembly processes.
 Indeed, connectance generally decreased with increasing species richness
-[@winemiller_must_1989, @thebault_stability_2010]. It is an effect important to
+[@winemiller_must_1989; @thebault_stability_2010]. It is an effect important to
 consider the link between connectance and ecosystem properties, as this direct
 relationship can be misleading if species richness is not taken into account. 
 

@@ -2,30 +2,26 @@
 
 1. Introduction
 
-1.1 Importance of BEF assessment
+1.1 Biodiversity determines community composition and so ecosystem functionning
 
-1.2 Shape of BEF
-1.2.1 Species richness and biomass 
-1.2.1.1 Mechanisms
-1.2.2. Species richness and stability 
-1.2.2.1 different stability for different fields
-1.2.2.2 Components of community variability
+1.3 Diversity increase total biomass
 
-1.3 Effect of network structure on stability and biomass
-1.3.1 connectance & nestedness
-1.3.2 resilience & persistence
+1.4 Diversity increase or decrease stability 
 
-1.4 Inconsistency between theoretical and empirical studies
+1.5 theoretical studies studies vertical diversity,
+but with other stability metrics 
 
-1.5 Goal of our study
-1.5.1 vertical and horizontal diversity
-1.5.2 Observational studies
-1.5.3 Network inference 
+1.6 Fish model is a good model to study vertical and horizontal diversity
 
-1.6 Hypothesis tested
-1.6.1 evt on community and stability components 
-1.6.2 community on stability components 
-1.6.3 synchrony and cv sp on biomass stability
+1.7 Goal of our study
+1.7.1 vertical and horizontal diversity
+1.7.2 Observational studies
+1.7.3 Network inference 
+
+1.8 Hypothesis tested
+1.8.1 evt on community and stability components 
+1.8.2 community on stability components 
+1.8.3 synchrony and cv sp on biomass stability
 
 2. Material & Methods
 

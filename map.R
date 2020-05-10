@@ -52,10 +52,6 @@ get_hill_shade_df <- function(dem = NULL,
 
   return(output)
 }
-plot(hillshade$hillshade)
-head(hillshade$slope)
-plot(hillshade, col=grey.colors(100, start=0, end=1), legend=F, alpha=.8, add=TRUE)
-plot(slope, col=grey.colors(100, start=1, end=0), legend=F, alpha=.2, add=TRUE)
 
 
 # Basin data
@@ -102,7 +98,7 @@ library("rnaturalearthdata")
 world <- ne_countries(scale = "medium", returnclass = "sf") %>%
   st_transform(crs = 2154)
 country_points <- st_centroid(world) %>%
-  filter(name %in% c("France", "Italy", "Spain", "Belgium", "Germany", "Switzerland"))
+  filter(name %in% c("France", "Italy", "Spain", "Belgium", "Germany"))
 country_points <- cbind(country_points, st_coordinates(country_points$geometry))
 country_points[country_points$name == "Germany", c("X", "Y")] <- c(1200000, 7000000) 
 country_points[country_points$name == "Spain", c("X", "Y")] <- c(300000, 6150000) 
@@ -116,17 +112,19 @@ basin_inner <- basin %>%
         as_tibble() %>% 
         st_as_sf()
   #
+# Font size
+font_size <- 10 
     
 p <- ggplot() +
   geom_sf(data = st_geometry(world)) +
   # Coutry
   geom_text(data= country_points,aes(x=X, y=Y, label=toupper(name)),
-    color = "black", fontface = "bold", check_overlap = FALSE) +
+    color = "black", fontface = "bold", size = 2, check_overlap = FALSE) +
   # Ocean + sea
   geom_text(data= ocean,aes(x=X, y=Y, label=toupper(name)),
-    color = "darkblue", fontface = "bold", check_overlap = FALSE) +
+    color = "darkblue", fontface = "bold", check_overlap = FALSE, size = 2) +
   geom_text(data= sea,aes(x=X, y=Y, label=name),
-    color = "darkblue", fontface = "bold", check_overlap = FALSE) +
+    color = "darkblue", fontface = "bold", check_overlap = FALSE, size = 2) +
   #theme_map() +
     # Plot basin
     geom_sf(data = st_geometry(basin_inner)) +
@@ -136,8 +134,8 @@ p <- ggplot() +
     ## use the "alpha hack"
     scale_alpha(name = "", range = c(0.6, 0), guide = F) +
     # Add station
-    geom_sf(data = station, aes(color = as.factor(type))) + 
-    scale_color_manual(values = c("stable" = "black", "unstable"= "darkgrey")) +
+    geom_sf(data = filter(station, type == "stable"), aes(color = type)) + 
+    scale_color_manual(values = c("stable" = "black", "unstable" = "darkgrey")) +
     coord_sf(
       xlim = c(60000, 1100000),
       ylim = c(6100000, 7122216),
@@ -147,22 +145,32 @@ p <- ggplot() +
     )
 
 p_st <- p +
-  annotation_north_arrow(
-    location = "br",
-    which_north = "true",
-    pad_x = unit(0.75, "in"),
-    pad_y = unit(0.5, "in"),
-    style = north_arrow_fancy_orienteering) +
+  labs(x = "Longitude", y = "Latitude") +
+  #annotation_north_arrow(
+    #location = "br",
+    #which_north = "true",
+    #pad_x = unit(0.75, "in"),
+    #pad_y = unit(0.5, "in"),
+    #style = north_arrow_fancy_orienteering) +
   annotation_scale(location = "br", width_hint = 0.25) +
   theme(
+    text = element_text(size = 11),
+    legend.position = "none",
     panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.5),
-    panel.background = element_rect(fill = "aliceblue"))
+    panel.background = element_rect(fill = "aliceblue"),
+    axis.title.x=element_blank(),
+    axis.title.y=element_blank(),
+    axis.text.x=element_blank(),
+    axis.text.y=element_blank(),
+    plot.margin = unit(c(0,0,0,0), units = "mm")
+    #axis.ticks.x=element_blank()
+  )
   #Plot europe
 
-mysave(p_st, dir = mypath("manuscript", "bef_stability", "figs"))
+mysave(p_st, dir = mypath("manuscript", "bef_stability", "figs"), overwrite = TRUE)
 save_plot(
   filename = mypath("manuscript", "bef_stability", "figs", "map.pdf"),
-  plot = p_st#,
-  #base_height = ,
-  #base_width = 
+  plot = p_st,
+  base_height = 7 / 2.54,
+  base_width = 7 / 2.54
 )

@@ -6,30 +6,48 @@
 
 # Second category
 
-- [x] Check connectance computation
+## Intro
+
+- [ ] freshwater paragraph
+- [ ] Present clearly the hypothesis: horizontal and vertical diversity
+- [ ] Paragraphs in general: start from consensus, then pb and refinement
+
+## Methods
+
+- [ ] Org methods by question
+
+- [x] Make a method slide
+  - [x] Map
+  - [/] Network inference
+  - [x] Metaweb 
+  - [x] Hypothesis slide
+  - [x] Temporal network
+- [ ] See [@arnoldi_] 2019 for the links between species abundances and CV
 
 - [ ] Explain SEM
   - [ ] Choice of variables
   - [ ] Choice of SEM type, according to Grace
 
-- [x] Write SEM results 
-  - [x] report direct and indirect effects
-- [ ] Make a method slide
-  - [x] Map
-  - [ ] Network inference 
-  - [x] Temporal network
-- [ ] See [@arnoldi_] 2019 for the links between species abundances and CV 
+## Results
 
-- [x] Explain fishing method
-- [x] Explain fish lot
-- [x] Explain missing datas
-- [x] Explain SAX 
-- [x] Make colinearity tables
+- [ ] Results should stick to the questions and hypothesis
+- [x] Indirect effect table
+
+## Discussion
+
+- [ ] Discussion should stick to the questions asked
+
+## Appendix
+
 - [ ] Make Rsq tables
 - [ ] Estimate basin effects
-- [x] Make residual plots
 - [ ] Show sensibility SEM with different datasets
-- [ ]  
+
+## All
+
+- [ ] First biomass then stability
+- [ ] Separate hypothesis: confirmation and new evidence
+
 
 # Third category
 

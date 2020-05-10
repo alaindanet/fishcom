@@ -19,3 +19,8 @@ report/_main.Rmd
 report/_bookdown_files
 manuscript/bef_stability/manuscript_cache
 manuscript/bef_stability/manuscript_files
+manuscript/bef_stability/*.tex
+manuscript/bef_stability/*.dvi
+manuscript/bef_stability/*.rtf
+internship
+report/stephane

@@ -153,7 +153,7 @@ my_crap_temporal_network <- function (
     ) %>%
   dplyr::select(-troph)
 
-  plot_temporal_network(
+  out <- plot_temporal_network(
     data = net_list,
     net_var = network,
     date = date,
@@ -163,6 +163,7 @@ my_crap_temporal_network <- function (
     color = color,
     ...
   )
+  return(out)
 }
 
 #' Temporal graph for a station
@@ -185,6 +186,7 @@ plot_temporal_network <- function(data = NULL,
   color = NULL,
   ncol_graph = NULL,
   nrow_sp_legend = NULL,
+  return_data = FALSE,
   ...){
 
   net_var <- rlang::enquo(net_var)
@@ -223,19 +225,28 @@ plot_temporal_network <- function(data = NULL,
     nrow_sp_legend <- 3
   }
 
-    species_colour_legend <- cowplot::get_legend(
-      data[[net_var_chr]][[1]] +
-    scale_color_manual(values = color, limits = names(color)) +
-    labs(colour = "Species", size = "Biomass") +
-    guides(
-      colour = guide_legend(nrow = nrow_sp_legend, byrow = TRUE,
-	title.position = "left"),
-      size = guide_legend(nrow = 1, byrow = TRUE, title.position = "left")
-    ) +
-    theme(legend.direction = "vertical", 
-        legend.position = "bottom",
+  species_colour_legend <- cowplot::get_legend(
+    data[[net_var_chr]][[1]] +
+      scale_color_manual(values = color, limits = names(color)) +
+      labs(colour = "Species", size = "Biomass") +
+      guides(
+	colour = guide_legend(nrow = nrow_sp_legend, byrow = TRUE,
+	  title.position = "left"),
+	size = guide_legend(nrow = 1, byrow = TRUE, title.position = "left")
+	) +
+      theme(legend.direction = "vertical", 
+	legend.position = "bottom",
 	legend.box = "horizontal")
   )
+
+  if (return_data) {
+    out <- list(
+      plots = data[[net_var_chr]],
+      legends = species_colour_legend,
+      color = color 
+    )
+   return(out) 
+  }
 
   ## Remove legend in the other plots
   data %<>%
@@ -245,9 +256,12 @@ plot_temporal_network <- function(data = NULL,
       plot.margin = unit(c(0, 0, 0, 0), "cm"))
     })
     )
+
+
   if (is.null(ncol_graph)) {
     ncol_graph <- 5 
   }
+
   p <- cowplot::plot_grid(plotlist = data[[net_var_chr]], ncol = ncol_graph)
   cowplot::plot_grid(p, species_colour_legend, nrow = 2, rel_heights = c(1, 0.2))
 }

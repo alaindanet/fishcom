@@ -20,10 +20,10 @@ st_sp_node <- network_analysis %>%
   ) %>%
   arrange(nbsp)
 
-
 net <- network_analysis %>%
   dplyr::select(opcod, network) %>%
   unnest(cols = c(network)) %>%
+  left_join(., dplyr::select(op_analysis, opcod, station, date)) 
 
 station_to_get <- function (rich = NULL)  {
   tmp <- filter(st_sp_node, nbsp == rich)
@@ -41,31 +41,129 @@ p <- my_crap_temporal_network(
   net = net_ex,
   metaweb = meta$metaweb,
   network_data = network_analysis,
-  nrow_sp_legend = 1,
+  nrow_sp_legend = 2,
+  return_data = TRUE
 )
-p
-save_plot(filename = mypath("manuscript", "bef_stability", "figs", "temporal_network.pdf"),
-  p)
-temporal_network <- p
+legends <- cowplot::get_legend(
+    p$plots[[1]] +
+      scale_color_manual(values = p$color, limits = names(p$color)) +
+      labs(colour = "Species", size = "Biomass") +
+      guides(
+	colour = guide_legend(
+	  label.position = "bottom",
+	  ncol = 7,
+	  byrow = TRUE,
+	  title.position = "left"),
+	size = guide_legend(
+	  nrow = 1,
+	  byrow = TRUE,
+	  title.position = "left"
+	)
+	) +
+      theme(
+	plot.margin = unit(c(0, 0, 0, 0), "cm"),
+	legend.direction = "horizontal", 
+	legend.position = "bottom",
+	legend.box = "vertical",
+	legend.margin = margin(t = 0, b = 0, l = 0, r = 0),
+	legend.spacing.x = unit(.1, 'cm'),
+	legend.spacing.y = unit(.1, 'cm'),
+	text = element_text(size = 8),
+	legend.text = element_text(
+	  size = NULL,
+	  margin = margin(r = 5)
+	)
+      )
+  )
+plots <- map(p$plots, function (x) {
+  x + theme(legend.position = "none",
+    plot.margin = unit(c(0, 0, 0, 0), "cm"))
+  }) 
+
+p_tmp_net <- plot_grid(plotlist = plots[1:4])
+temporal_network <- plot_grid(
+  p_tmp_net,
+  legends,
+  #ncol = 2, rel_widths= c(1, .4)
+  nrow = 2, rel_widths= c(1, .1)
+)
+temporal_network
+
+save_plot(
+  filename = mypath("manuscript", "bef_stability", "figs", "temporal_network.pdf"),
+  temporal_network)
 mysave(temporal_network, dir = mypath("manuscript/bef_stability/figs"), overwrite = TRUE)
 
 ######
 # metaweb   #
 ######
 
+library(igraph)
 metaweb <- meta$metaweb
+meta
+g <- igraph::graph_from_adjacency_matrix(metaweb, mode = "directed")
 
+str(V(g))
 
-llay <- ggraph::create_layout(metaweb, layout = "kk")
-node_pos <- NetIndices::TrophInd(metaweb, Dead = NULL)$TL - 1
-llay$y <- node_pos
-llay$species <- get_species(llay$name)
-
-p <- ggraph::ggraph(llay) +
-  ggraph::geom_edge_fan(aes(alpha = ..index..), show.legend = FALSE) +
-  coord_cartesian(ylim=c(1,4.5))
-save_plot(
-filename = mypath("manuscript/bef_stability/figs", "metaweb.pdf"),
-p
+species_color <- set_color_species(
+  node_list = names(V(g)),
+  species_list = meta$species, 
+  resource_list = meta$resource 
 )
-#p #Too much time to compute
+
+V(g)$color <- map_chr(
+  str_extract(names(V(g)), "[A-Z]{3}|[a-z]+"),
+  function(x){
+  species_color[names(species_color) == x]
+  }
+)
+
+# Define layout
+lay <- layout.fruchterman.reingold(g)
+lay <- layout_with_fr(g)
+# Compute trophic level
+dead_material <- c("det", "biof")
+lay[, 2] <- NetIndices::TrophInd(metaweb, Dead = dead_material)$TL
+
+png(
+  filename = mypath("manuscript/bef_stability/figs",
+    "metaweb.png"), 
+  units = "in",
+  width = 5,
+  height = 5,
+  pointsize = 12*96/72,
+  res = 96 
+)
+
+V(g)$label <- NA
+V(g)$size <- 20 
+org_par <- par(mar = c(5, 4, 0, 0) + 0.1)
+plot(g,
+  layout = lay,
+  edge.arrow.size=.2,
+  edge.curved=0,
+  #vertex.color = "orange",
+  vertex.frame.color="#555555",
+  vertex.label.color="black",
+  rescale = FALSE,
+  asp = 0,
+  axes = FALSE, 
+  ylim = c(1,4),
+  xlim = c(-6.2,2.7),
+  ylab = "Trophic level"
+)
+Axis(side=2, labels=TRUE)
+legend(
+  x      = -9.2,
+  y      = 0.9,
+  legend = names(species_color),
+  pch    = 21,
+  col    = "#777777",
+  pt.bg  = species_color,
+  pt.cex = 0.7,
+  cex    = .5,
+  bty    = "n",
+  ncol   = 7 
+)
+par(org_par)
+dev.off()

@@ -19,11 +19,23 @@ geometry: margin=2cm
 bibliography: references.bib
 ---
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, message = FALSE, collapse = FALSE}
 mypath <- rprojroot::find_package_root_file
 data_common <- mypath("data")
 dest_dir <- mypath("data", "species")
 
+knitr::opts_chunk$set(
+  cache = FALSE,
+  collapse = TRUE,
+  comment = "#>",
+  #fig.dim = c(7, 7),
+  fig.fullwidth = TRUE,
+  fig.show = "hold",
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  results = FALSE
+)
 knitr::opts_chunk$set(
   cache = FALSE,
   collapse = TRUE,
@@ -426,73 +438,6 @@ Please see the main text for the interpretation of the axis.
 
 ####  SEM indirect and total effect
 
-```{r}
-caption_indir_stab_sem <- paste0(
-  "Indirect and total effect of variables on biomass stability from the
-  structural equation model. Indirect effects are computed by multiplying the
-  path coefficients from the variable predictor to the response variable, here
-  biomass stability. Indirect effects are considered as one step from the target
-  variable. For exemple, the indirect effect of species richness on
-  biomass stability via its effect on CVsp is $-0.61$. To compute indirect
-  effect, only the significant direct effects were taken into account. ",
-  "Network structure being the indirect effect that went through both avg trophic
-  level and connectance and Species richness_Network structure being the
-  indirect effect that went through (i) species richness and from (ii) species
-  richness to network structure."
-
-)
-
-caption_indir_bm_sem <- paste0(
-  "Indirect and total effect of variables on total biomass from the
-  structural equation model. See the table (X) for details about computation and
-  meaning." 
-
-)
-```
-
-
-```{r indir-tab, fig.cap = "Indirect effect from SEM"}
-format_table <- function (x = tmp_stab_indir_table) {
-  x <- x[, c("variable", names(x)[!names(x) %in% "variable"])]
-
-  rm_n <- str_remove_all(get_sem_var_name_replacement(), pattern = "\n")
-  names(rm_n) <- names(get_sem_var_name_replacement()) 
-  x$variable <- str_replace_all(x$variable, rm_n)
-
-  colnames(x) %<>% str_remove_all(., pattern = "via_")
-
-  col_replacement <- c(
-    variable = "Variable",
-    cv_sp = "CVsp",
-    sync = "Synchrony",
-    richness = "Species richness",
-    com = "Network structure",
-    richness_com = "Sp. richness and network str.",
-    total = "Total effect"
-  )
-  colnames(x) %<>% str_replace_all(., col_replacement)
-
-  x
-}
-
-kable(format_table(tmp_stab_indir_table),
-  "latex",
-  booktabs = T,
-  caption = caption_indir_stab_sem 
-  ) %>%
-kable_styling(latex_options =c("striped", "scale_down"))
-
-```
-
-```{r}
-
-kable(format_table(tmp_bm_indir_table),
-  "latex",
-  booktabs = T,
-  caption = caption_indir_bm_sem
-  ) %>%
-kable_styling(latex_options =c("striped", "scale_down"))
-```
 
 ### Model linear Relationship
 
