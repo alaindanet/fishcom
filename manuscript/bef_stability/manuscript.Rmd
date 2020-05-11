@@ -57,16 +57,65 @@ theme_set(theme_alain())
 
 # Introduction 
 
-#### Biodiversity and ecosystem functioning
+#### Biodiversity and ecosystem properties 
 
 Biodiversity is essential to determine and maintain ecosytem properties.
 Current biodiversity losses question the ability of how ecosystems will be
-affected in turn.
-
-The relationship between biodiversity and ecosystem functioning has been a
-central research topic in ecology [@may_will_1972; @hector_plant_1999;
+affected in turn. Since 1970s, ecology aims to uncover the complex relationships
+between biodiversity and ecosystem properties [@may_will_1972; @hector_plant_1999;
 @loreau_biodiversity_2001; @hooper_effects_2005; @duffy_why_2009;
-@isbell_forest_quantifying_2018]. 
+@isbell_forest_quantifying_2018]. Because biodiversity largely determines in
+turn both quantity and distribution of biomass or energy across ecosystems, it
+has a tremendous effects on the properties exhibited by an ecosystem, such as
+its size (total biomass) [REF], its production (production of biomass by units of
+time) [REF] and the temporal stability of its biomass [REF].
+
+#### Horizontal and vertical diversity are two ways to look at biodiversity  
+
+Biodiversity can be quantified in numerous ways, as the number of species, i.e.
+species richness [REF] and in number of functional groups, i.e species are
+gathered on what they do [REF]. Those metrics can be gathered into "horizontal
+diversity", describing the list of components present in a community. An
+orthogonal view, based on trophic chains, described species on what they eat. It 
+can be defined as interactions or biomass/energy fluxes between species and how
+they are distributed among species. The latter can be quantified as the number
+of interaction between species or the number of trophic level. This orthogonal
+view of seeing biodiversity, can be gathered into "vertical diversity".  
+Horizontal and vertical diversity are two views of quantifying biodiversity that
+are, however, not independent from each other [@zhao_horizontal_2019]. The add
+or removal of one species can have different effects depending on its vertical
+position in the trophic chain [REF duffy 2007]. Hence, it is crucial to
+study their interplay to increase our understanding of ecosystem dynamics. 
+
+#### horizontal and vertical diversity increase total biomass by common and different mechanisms 
+
+Horizontal and vertical diversity has been shown to promote higher biomass
+production in a variety of ecosystems. Horizontal diversity, as species richness, has been
+reported to increase productivity through complementarity between species in
+resource exploitation and selection effects in plant communities
+[@tilman_productivity_1996; @cardinale_resource_2001; @grace_integrative_2016].
+Regarding total biomass, empirical assessment have
+shown generally positive relationships with species richness in plant
+communities [@hector_plant_1999; @tilman_biodiversity_2014, but see
+@grace_integrative_2016], as in mesocosms [@pennekamp_biodiversity_2018].
+Theoretical models have also confirmed that an increase in horizontal diversity should
+translate into increase in plant biomass  through
+resource complementarity [@loreau_biodiversity_1998] and selection effects [@tilman_plant_1997]. The
+addition of trophic levels, notably consumer on plants generally breaks the
+positive relationship between plant biomass and plant diversity as a significant
+amount of biomass is transfered to consumers. It has been shown both in
+experiments [REF] and theoretical models [@thebault_food-web_2003]. Futhermore,
+at higher trophic level, the resource complementary of consumers can increase as
+the number of consumer species increase [@thebault_food-web_2003]. However, the
+joint effects of horizontal and vertical diversity on total biomass has been
+rarely tested. It is not clear whether horizontal and vertical diversity just
+change the distribution of biomass across trophic level or it increases the
+total amount of  biomass.
+
+One reason might be the focus on plant communities, which are relatively easy to
+manipulate and have an important role on determining the quantity and quality of
+biomass for the other compartments of ecosystems [REF]. One trophic level is
+often considered, and so the comp
 
 Studies in
 Bioversity-Ecosystem
@@ -77,84 +126,138 @@ in more diverse ways such as the variability of species abundance, the
 resilience to perturbation, or resistance to perturbation
 [@donohue_navigating_2016].
 
-#### Shape of BEF: total biomass
+#### Horizontal and vertical diversity stability
 
-Species richness has been reported to increase productivity
-[@tilman_productivity_1996; @grace_integrative_2016] through complementarity
-between species in resource exploitation and selection effects
-[@loreau_partitioning_2001; @cardinale_species_2002; @fargione_selection_2007].
-Empirical assessment of the effect of species richness on total biomass showed
-negative [@grace_integrative_2016] and positive relationships
-[@hector_plant_1999; @tilman_biodiversity_2014]. @grace_integrative_2016 showed
-that the results depend on the refinement of the mecanisms involved in the
-analysis.
+Horizontal and vertical diversity also affects the stability of ecosytem
+properties. Experimental studies showed consistently that species richness
+increase temporal biomass stability in grasslands [@tilman_biodiversity_2006],
+mesocosms [@pennekamp_biodiversity_2018]. While in natural communities,
+same relation has been found for temporal biomass stability in stream fish communities 
+[@franssen_annual_2011] and temporal abundance stability of birds and butterfies
+[@olivier_independent_nodate, but not bats]. Two mecanisms are involved into
+temporal stability of communities, (1) synchrony and (2) variability
+[@loreau_species_2008; @thibaut_understanding_2013]. Synchrony mesures the
+covariation of species through time. Very low synchrony indicates compensatory
+temporal variation between species and so increased temporal stability. studies
+consistently found that species richness decreased synchrony between species
+[@loreau_species_2008; @thibaut_understanding_2013; @bluthgen_land_2016;
+@olivier_independent_nodate]. (*Should I add more details about the
+mecanisms?*). The average temporal variability of species is measured as a
+average coefficient of variation of species, weighted by species
+abundance/biomass. Higher species temporal variabiliy thus results in lower
+temporal stability. Positive [@tilman_biodiversity_2006], neutral
+[@jiang_different_2009; @olivier_independent_nodate] and negative
+[@franssen_annual_2011; @olivier_independent_nodate] relationships between
+species variability and species richness have been found. Hence, synchrony
+has been found to be the main driver of temporal
+stability [@tilman_biodiversity_2006; @olivier_independent_nodate] and
+responsible for the positive relationship between horizontal diversity and
+temporal stability of biomass and abundance.
 
-#### Shape of BEF: stability 
-
-The relationship between species richness and stability is even more complex
-partly because of the inherent multidimensionality of stability
-[@donohue_dimensionality_2013; @donohue_navigating_2016] and because of the
-different metrics of stability privileged in theoretical (stability of local
-equilibrium, robustness to primary extinction) and empirical work (variability
-of abundance or biomass through time). Empirical studies showed consistently
-that species richness decreased community variability in grasslands
-[@tilman_biodiversity_2006], mesocosms [@pennekamp_biodiversity_2018] and
-vertebrates [@olivier_independent_nodate; @franssen_annual_2011]. Two mecanisms
-are involved into community variability, (1) species variability and (2) the
-species synchrony [@loreau_species_2008; @thibaut_understanding_2013].  Positive
-[@tilman_biodiversity_2006], neutral [@jiang_different_2009;
-@olivier_independent_nodate] and negative [@franssen_annual_2011;
-@olivier_independent_nodate] relationships between species variability and
-species richness have been found. On the other side, studies consistently found
-that species richness decreased synchrony between species [@loreau_species_2008;
-@thibaut_understanding_2013; @bluthgen_land_2016; @olivier_independent_nodate].
-Beyond species richness, species interactions, which modifies species abondance
-and biomass and make species dynamics interdependant, have been largely ignored
-in empirical assessment.
-
-
-#### BEF: Theoretical ecology
-
-Conversely, theoretical ecology display an extensive literature about the
-effects of network structure on stability [@may_will_1972;
-@angelis_stability_1975; @stouffer_compartmentalization_2011;
-@thebault_stability_2010; @barbier_pyramids_2019;
-@shanafelt_david_w._stability_nodate].  Theoretical ecology generally uses
+Vertical diversity, represented by network structure, has been central to the
+the literature of diversity-stability debate and largely explored by theoretical
+ecology [@may_will_1972; @angelis_stability_1975;
+@stouffer_compartmentalization_2011; @thebault_stability_2010;
+@barbier_pyramids_2019; @shanafelt_david_w._stability_nodate]. Because species
+interactions make species dynamics interdependant, they have a tremendous role
+on stability notably through its effects on the propagation of perturbation.
+However, it is important to note that theoretical ecology generally uses
 stability definitions related to community equilibrium and its stability to
-small perturbations.  Connectance (i.e. proportion of realized links in a
-network) can decrease [@angelis_stability_1975; @thebault_stability_2010] or
-increase resilience of trophic network depending on the functioning of networks
-[@angelis_stability_1975].  The number of trophic levels, the vertical position
-in the trophic network as well as the strength of their biomass regulation (i.e.
-top-down and bottom-up) can determine biomass and stability at equilibrium
-[@hurd_stability_1971; @shanafelt_david_w._stability_nodate;
-@zhao_horizontal_2019; @barbier_pyramids_2019].
+small perturbations [@may_will_1972; @angelis_stability_1975;
+@barbier_pyramids_2019; @shanafelt_david_w._stability_nodate] or to the number
+of secondary extinctions of perturbation [@duffy_why_2009]. Those stability 
+metrics harly relates to empirical temporal stability [see
+@arnoldi_resilience_2016]. However, the work of @thebault_trophic_2005 shows
+that asynchrony consistenly increase temporal stability and the positive
+relationship between temporal stability and species richness. However asynchrony
+can also increase species variability through interspecic competition, which
+amplifies species fluctuations. Furthermore species interactions, considered as 
+as competition strength and niche breath of consumers can results in negative or
+positive temporal stability-species richness relationships
+[@thebault_trophic_2005]. Vertical diversity, as network structure, can have
+strong effects on temporal stability. However, there are few assesments of the
+effects of horizontal and diversity on temporal stability in natural
+communities.
 
-A large inconsistency remains between theoretical and empirical assessments of
-the relationship between community structure and ecosystem properties.
-Theoretical studies have ignored temporal variability and then the relative
-contribution of synchrony and species variability on community variability while
-empirical studies about temporal variability and total biomass in natural
-communities have ignored the contribution of network structure.
+#### Stream fish communities is a good model to study effects of horizontal & vertical diversity
 
-Our goal was to assess the mecanisms determining temporal variability and total
-biomass in natural communities while integrating both species richness and
-network structure. We combined together the effect of vertical and horizontal
-diversity and thus aimed to bridge the current gap between theoretical and
-empirical studies. We used an standardized monitoring of fish communities in
-french streams. More than three hundreds sites were followed more than 10 years
-on the 1995-2018 period. We inferred four thousands potential interaction
-networks corresponding to each sampling event, based on trait matching.
+Stream fish communities constitutes good model to study the joint effects of
+horizontal & vertical diversity on total biomass and the temporal stability of
+biomass. Despite that fish trophic interactions are not recorded in nature, a
+consequent body of litterature supports that they can be infered through body
+size and diet informations [@gravel_inferring_2013; @jennings_weak_2001;
+@brose_predator_2019]. Most of the biomass-diversity and
+stability-diversity relationships have been assessed in terrestrial ecosytems
+while there is a evident need to test such relationships in a variety of
+ecosystem types. Stream ecosystems are caracterized by the flowing water and
+depends for the large part from the input of terrestrial ecosystems
+. Furthermore, the biotic activity in stream ecosystems
+determines for a large part the water quality [@cummins_structure_1974] and thus  
+are crucial to maintain **human selfish goals (I can do better than that)**.
 
-We investigated the effects of the community structure on total biomass and
-community variability, which in turn determine community variability. We have
-also included the effect of environmental drivers [@grace_integrative_2016]
-which can directly affect community variability or indirectly via community
-structure.
+
+#### Environment plays a big role in structuring communities 
+
+Environment also largely structure communities and is important to take in
+account when considering natural communities. Environment directly affects
+organism performance, and subsequently, abundance of species and in turn
+determines total biomass [Add general ref; @grace_integrative_2016] and temporal
+stability [@de-boeck_patterns_2017; @hansen_climate_2013; @bluthgen_land_2016;
+@oliver_heterogeneous_2010; @fried-peterson_drivers_2020]. Hydrology of streams
+constraints the composition of fish communities [REF toulouse à balle], and is
+also related to fish population temporal stability [@franssen_annual_2011].
+However it is not clear which is the relative strength of direct and indirect
+effects of environment on total biomass and its temporal stability (Figure
+\@ref(fig:matmet) A).
+
+#### SEM is perfect and our metamodel too 
+
+To reveal the direct and indirect effects of environment, horizontal & vertical
+diversity on both total biomass and its temporal stability, we used Structural
+Equation Modeling (SEM). It is one promising way to go beyond bivarite
+relationships and to investigate complex relationships, direct and indirect,
+between variables  [@grace_structural_2008; @grace_causal_2014;
+@lefcheck_piecewisesem_2016; @grace_integrative_2016]. SEM makes possible to set
+causal relationships between variables. This step can be critical, as the
+estimated parameters can be determined by both the choice of the variables and
+the links between them.  Therefore, the set of variables and links shoud be
+supported by theory and litterature. We built a metamodel (set of variables and
+links between them). Basically, we tested the links between environmental
+conditions, horizontal & vertical diversity and both total biomass and its temporal
+stability (Figure \@ref(fig:matmet) A). We considered that environment can
+directly affect horizontal and vertical diversity, as well as total biomass and
+its temporal stability. Horizontal diversity, measured as species richness
+directly affects vertical diversity, total biomass and
+its temporal stability. Food web structure was shown to be constrained by
+species richness. In turn vertical diversity affects total biomass and
+its temporal stability (Figure \@ref(fig:matmet) A). Two other questions can
+only be answered when considering both direct & indirect relationships. (1) What
+is the magnitude of environmental effects on total biomass and
+its temporal stability compared to horizontal and vertical diversity? (2) Which
+is the pathway of environment, horizontal & vertical diversity on total biomass
+and its temporal stability ? (2a) For environment, is it mainly (i) direct,
+indirect (ii) through horizontal diversity, (iii) through horizontal & vertical
+diversity or (iv) indirect through only vertical diversity? (2b) For horizontal
+diversity, is it mainly (i) direct, or (ii) indirect through vertical diversity?
+Finally for temporal stability, how do environement, horizontal & vertical
+diversity affect synchrony & species stability ?
+
+We used an standardized monitoring of fish communities in french streams. 99
+sites were followed more than 10 years on the 1995-2018 period. We inferred
+(**XXX**) potential interaction networks corresponding to each sampling event,
+based on trait matching. Horizontal diversity was measured as species richness
+while vertical diversity was as connectance and average trophic level.
+Environment was characterized by the stream size, temperature, flow,
+enrichment, altitude and their stability (expect for altitude). Finally total
+biomass was measured as median total biomass over the sampling period while its
+temporal stability was quantified as the inverse of the CV.
+
+Mid point used in niche model to characterize feeding links [@dunne__2006] 
 
 - Q1: diversity-stability, diversity-biomass in aquatic systems
 - Q2: Effect of horizontal and vertical diversity on total biomass and stablity
-- Q3:  
+- Q3: Relative contribution of environment and community structure to biomass
+  and stability 
 
 
 # Methods
@@ -665,22 +768,6 @@ troph_perm_test$stab$p_val
 
 ### SEM
 
-We seeked to disantangle the unravel the links between
-environment and community structure on both biomass stability and total biomass.
-To investigate complex relationships, direct and indirect, between variables,
-Structural Equation Modeling (SEM) is one promising way  
-[@grace_structural_2008; @grace_causal_2014; @lefcheck_piecewisesem_2016;
-@grace_integrative_2016]. SEM makes possible to set causal relationships between
-variables. This step can be critical, as the estimated parameters can be
-determined by both the choice of the variables and the links between them.
-Therefore, the set of variables and links shoud be supported by theory and
-litterature.
-
-We built a metamodel (set of variables and links between them). Basically, we
-tested the links between environmental conditions, community structure and
-ecosystem properties namely biomass stability on total biomass. Theory in
-ecology predicts that community structure influences stability. In turn,
-environment influences community structure but also directly stability.
 
 #### Variables
 

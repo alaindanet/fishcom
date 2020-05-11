@@ -4,6 +4,10 @@
 
 1.1 Biodiversity determines community composition and so ecosystem functionning
 
+
+
+1.2 Horizontal and vertical diversity 
+
 1.3 Diversity increase total biomass
 
 1.4 Diversity increase or decrease stability 
