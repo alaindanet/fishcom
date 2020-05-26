@@ -1034,6 +1034,51 @@ make_troph_plot <- function (
 
 
 
+##############
+#  PCA plot  #
+##############
+my_pca_plot <- function (.data = pca_rotated$rotated, xaxis = NULL, yaxis = NULL, ctb_thld = .4) {
+
+  pca_data <- .data$loadings[1:nrow(.data$loadings),]
+  pca_data %<>%
+    as_tibble() %>%
+    mutate(variable = row.names(pca_data),
+      variable = str_replace_all(variable, get_pca_var_name_replacement())
+    )
+ pca_label <- filter(pca_data, abs(.data[[xaxis]]) > ctb_thld | abs(.data[[yaxis]]) > ctb_thld) 
+
+
+ var_exp <- round(.data$Vaccounted["Proportion Var",]* 100)
+
+ggplot() +
+  ggforce::geom_circle(aes(x0 = 0, y0 = 0, r = 1),
+    inherit.aes = FALSE
+  ) +
+  geom_segment(
+    data = tibble(
+      x = c(-1, 0), xend = c(1, 0),
+      y = c(0, -1), yend = c(0, 1)
+      ),
+    aes(x = x, y = y, xend = xend, yend = yend),
+    size = .25
+  ) +
+  xlim(-1, 1) +
+  ylim(-1, 1) +
+  labs(
+    x = paste0(xaxis, " (",var_exp[xaxis], "%)"),
+    y = paste0(yaxis, " (",var_exp[yaxis], "%)")
+    ) +
+  geom_segment(data = pca_data, aes_string(x = 0, y = 0, xend = xaxis, yend = yaxis),
+    arrow = arrow(angle = 20, length = unit(0.05, "inches"),
+           ends = "last", type = "open"),
+	 size = .25
+  ) +
+  ggrepel::geom_label_repel(data = pca_label,
+    aes_string(x = xaxis, y = yaxis, label = "variable"),
+    size = 2, force = 10, box.padding = .1, label.padding = .1
+  )
+}
+
 ################################################################################
 #                                 Plot labels                                  #
 ################################################################################
@@ -1091,11 +1136,11 @@ theme_map <- function(...) {
 
 get_sem_var_name_replacement <- function () {
   out <- c(
-    "log_RC1" = "Avg \n river size",
+    "log_RC1" = "Avg \n stream size",
     "log_RC2" = "Avg \n temperature \n & \n (- Altitude)",
-    "log_RC3" = "CV flow \n & \n Avg enrichment",
-    "RC4" = "CV \n river size",
-    "RC5" = "CV \n enrichment",
+    "log_RC3" = "CV \n stream size",
+    "RC4" = "CV \n enrichment",
+    "RC5" = "CV flow \n & \n Avg enrichment",
     "ct" = "Connectance",
     "t_lvl" = "Avg \n trophic level",
     "log_cv_sp" = "CVsp",
@@ -1108,4 +1153,27 @@ get_sem_var_name_replacement <- function () {
     "log_bm" = "Total \n biomass"
   )
   return(out)
+}
+
+get_pca_var_name_replacement <- function () {
+
+  out <- c(
+    "slope" = "Slope",
+    "alt" = "Altitude",
+    "d_source" = "Distance from source",
+    "strahler" = "Strahler order",
+    "width_river_mean" = "Avg stream width",
+    "avg_depth_station_mean" = "Avg stream depth",
+    "width_river_cv" = "CV stream width",
+    "avg_depth_station_cv" = "CV stream depth",
+    "DBO_med" = "Avg BOD",
+    "flow_med" = "Avg flow",
+    "temperature_med" = "Avg temperature",
+    "DBO_cv" = "CV BOD",
+    "flow_cv" = "CV flow",
+    "temperature_cv" = "CV temperature"
+  )
+
+  return(out)
+
 }

@@ -686,10 +686,10 @@ compute_bm_sem_indirect <- function (sem = NULL, p_val_thl = NULL) {
 #'
 #' @inheritParams compute_community_temporal_analysis
 #'
-build_dataset_get_sem_coefficient <- function (.op = NULL, sem_fun = compute_stab_sem_rich_beta, dest_dir = NULL) {
+build_dataset_get_sem_coefficient <- function (.op = NULL, sem_fun = compute_stab_sem_rich_beta) {
 
   # Compute stability, network metrics, etc with the new datasets
-  com_data <- compute_community_temporal_analysis(.op = .op, dest_dir = dest_dir)
+  com_data <- compute_community_temporal_analysis(.op = .op)
 
   # Compute sem dataset 
   sem_data <- compute_sem_dataset(

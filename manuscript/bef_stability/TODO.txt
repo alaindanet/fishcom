@@ -1,16 +1,13 @@
 
 # First category
 
-- [x] Make appear PCA axis
-- [x] Make metamodel SEMs 
+- [ ] Add network description
 
 # Second category
 
 ## Intro
 
-- [ ] freshwater paragraph
-- [ ] Present clearly the hypothesis: horizontal and vertical diversity
-- [ ] Paragraphs in general: start from consensus, then pb and refinement
+- [ ] Detail total biomass and stability mecanisms 
 
 ## Methods
 
@@ -24,36 +21,44 @@
   - [x] Temporal network
 - [ ] See [@arnoldi_] 2019 for the links between species abundances and CV
 
+- [ ] Mid point used in niche model to characterize feeding links [@dunne__2006] 
+
 - [ ] Explain SEM
   - [ ] Choice of variables
   - [ ] Choice of SEM type, according to Grace
 
 ## Results
 
-- [ ] Results should stick to the questions and hypothesis
-- [x] Indirect effect table
+- [ ] PCA
+  - [x] scatter plot
+  - [x] contribution table
+  - [ ] Nicer plot
+  - [ ] Plot temperature altitude
+  - [x] Covaration variables
+
+- [ ] Make idw temperature and flow
 
 ## Discussion
 
-- [ ] Discussion should stick to the questions asked
+- [ ] hypothesis-evt: CV (mainly sync and CVsp) versus mean (mainly biomass and
+  community str)
 
 ## Appendix
 
-- [ ] Make Rsq tables
-- [ ] Estimate basin effects
-- [ ] Show sensibility SEM with different datasets
+- [x] Make Rsq tables
+- [x] Estimate basin effects
+- [ ] Comment basin effects 
+- [x] Show sensibility SEM with different datasets
+- [ ] Comment sensibility analysis 
+- [ ] Add latex metamodel with references
 
 ## All
 
-- [ ] First biomass then stability
-- [ ] Separate hypothesis: confirmation and new evidence
+- [x] First biomass then stability
+- [x] Separate hypothesis: confirmation and new evidence
 
+- 
 
 # Third category
 
-- [x] Write methods
-- [x] Write results 
-- [x] Write discussion 
-- [x] Write introduction 
 - [ ] Write abstract 
-- [ ] Write appendix

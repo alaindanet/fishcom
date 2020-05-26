@@ -21,9 +21,10 @@ pdf:	$(PDFS)
 all: convert_main convert appendix
 
 convert_main:
-	latex manuscript.tex 
+	pdflatex manuscript.tex 
 	bibtex manuscript
-	latex manuscript.tex
+	pdflatex manuscript.tex
+	pdflatex manuscript.tex
 	mylatex2rtf manuscript.tex
 	
 
