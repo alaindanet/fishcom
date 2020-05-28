@@ -32,16 +32,13 @@
 - [ ] PCA
   - [x] scatter plot
   - [x] contribution table
-  - [ ] Nicer plot
-  - [ ] Plot temperature altitude
+  - [x] Nicer plot
+  - [x] Plot temperature altitude
   - [x] Covaration variables
 
 - [ ] Make idw temperature and flow
 
 ## Discussion
-
-- [ ] hypothesis-evt: CV (mainly sync and CVsp) versus mean (mainly biomass and
-  community str)
 
 ## Appendix
 

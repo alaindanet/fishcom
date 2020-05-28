@@ -98,26 +98,26 @@ get_env_on_stab <- function (fit = NULL, p_val_thl = NULL, type = "std") {
   }
 
   via_cv_sp <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
+    x = sem_env_var(),
     zz = c("log_cv_sp"),
     zzz = c(stab_var) 
   )
   
   via_sync <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
+    x = sem_env_var(),
     zz = c("log_sync"),
     zzz = c(stab_var) 
   )
   # effect of env through richness 
   via_richness <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
+    x = sem_env_var(),
     y = c(rich_var),
     zz = c("log_sync", "log_cv_sp"),
     zzz = c(stab_var) 
   )
   # effect of env through richness through com 
   via_richness_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
+    x = sem_env_var(),
     y = c(rich_var),
     z = c("ct", "t_lvl"),
     zz = c("log_sync", "log_cv_sp"),
@@ -126,7 +126,7 @@ get_env_on_stab <- function (fit = NULL, p_val_thl = NULL, type = "std") {
 
   # effect of env through com 
   via_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
+    x = sem_env_var(),
     z = c("ct", "t_lvl"),
     zz = c("log_sync", "log_cv_sp"),
     zzz = c(stab_var)
@@ -153,23 +153,34 @@ get_env_on_stab_comp <- function (fit = NULL, p_val_thl = NULL,
   }
 
   direct <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
+    x = sem_env_var(),
     zz = stab_comp
   )
   # effect of env through richness 
   via_richness <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
+    x = sem_env_var(),
     y = c(rich_var),
     zz = stab_comp
   )
   # effect of env through com 
-  via_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
+  via_richness_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
+    x = sem_env_var(),
     y = c(rich_var),
     z = c("ct", "t_lvl"),
     zz = stab_comp
   )
-  to_sum <- list(direct = direct, via_richness = via_richness, via_com = via_com)
+
+  via_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
+    x = sem_env_var(),
+    z = c("ct", "t_lvl"),
+    zz = stab_comp
+  )
+  to_sum <- list(
+    direct = direct,
+    via_richness = via_richness,
+    via_rich_com = via_richness_com,
+    via_com = via_com
+  )
 
   return(get_indir_common_output(.data = to_sum))
 }
@@ -183,12 +194,12 @@ get_env_on_com <- function (fit = NULL, p_val_thl = NULL, com = NULL, type = "st
   }
 
   direct <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
+    x = sem_env_var(),
     zz = com 
   )
   # effect of env through richness 
   via_richness <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
+    x = sem_env_var(),
     y = c(rich_var),
     zz = com 
   )
@@ -205,7 +216,7 @@ get_env_on_rich <- function (fit = NULL, p_val_thl = NULL, type = "std") {
   }
 
   direct <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
+    x = sem_env_var(),
     zz = rich_var 
   )
   to_sum <- list(direct = direct)
@@ -317,26 +328,26 @@ get_env_on_bm <- function (fit = NULL, p_val_thl = NULL, type = "std") {
   }
 
   direct <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
+    x = sem_env_var(),
     zzz = c(bm_var) 
   )
   # effect of env through richness 
   via_richness <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
+    x = sem_env_var(),
     y = c(rich_var),
     zzz = c(bm_var) 
   )
 
   # effect via richness and com 
   via_richness_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
+    x = sem_env_var(),
     y = c(rich_var),
     z = c("ct", "t_lvl"),
     zzz = c(bm_var) 
   )
   # effect of env through com 
   via_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5))),
+    x = sem_env_var(),
     z = c("ct", "t_lvl"),
     zzz = c(bm_var) 
   )
@@ -434,3 +445,13 @@ get_coefficient_piecewisesem <- function (sem = NULL, p_val_thl = NULL) {
 
 }
 
+sem_env_var <- function() {
+  #c(paste0("log_RC", seq(1,3)), paste0("RC", c(4,5)))
+  paste0("log_RC", seq(1,2))
+}
+
+get_clean_sem_coef <- function(sem = NULL, resp = NULL, pred = NULL) {
+  out <- sem[sem$Response == resp & sem$Predictor == pred, ]$Std.Estimate
+  out <- ifelse(length(out) == 0, 0, out)
+  round(out, 2)
+}

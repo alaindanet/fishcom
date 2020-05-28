@@ -16,7 +16,7 @@ geometry: margin=2cm
 bibliography: references.bib
 ---
 
-```{r, echo = FALSE, results = FALSE}
+```{r, echo = FALSE, results = FALSE, message = FALSE}
 mypath <- rprojroot::find_package_root_file
 data_common <- mypath("data")
 dest_dir <- mypath("data", "species")
@@ -52,7 +52,7 @@ source(mypath("R", "synchrony.R"))
 theme_set(theme_alain())
 ```
 
-```{r}
+```{r, results = FALSE}
 knitr::opts_chunk$set(
   results = TRUE 
 )
@@ -61,21 +61,19 @@ knitr::opts_chunk$set(
 
 # Abstract
 
-
-
 # Introduction 
 
 #### Biodiversity and ecosystem properties 
 
-Biodiversity is essential to determine and maintain ecosystem properties
-[@duffy_why_2009].  Current biodiversity losses and global changes question the
+Biodiversity is a key to determine ecosystem properties
+[@duffy_why_2009]. Current biodiversity losses and global changes question the
 way in which ecosystems will be affected in turn [@bellard_impacts_2012]. Since
-1970s and the @may_will_1972 seminal paper, ecology aims to uncover the complex
-relationships between biodiversity and ecosystem properties [@hector_plant_1999;
+the seminal of paper of @may_will_1972, the relationships between
+biodiversity and ecosystem properties have received a lot of attention [@hector_plant_1999;
 @loreau_biodiversity_2001; @hooper_effects_2005; @dunne_network_2006;
 @duffy_why_2009; @isbell_forest_quantifying_2018]. Because biodiversity largely
-determines both quantity and distribution of biomass or energy across
-ecosystems, it has a tremendous effects on the properties exhibited by an
+determines both the quantity and the distribution of matter and energy across
+ecosystems, it has a tremendous effect on the properties exhibited by an
 ecosystem, such as its total biomass [@hector_plant_1999;
 @tilman_biodiversity_2014; @grace_integrative_2016;
 @pennekamp_biodiversity_2018]], its biomass production
@@ -87,47 +85,47 @@ and the temporal stability of its biomass [@thebault_trophic_2005;
 #### Horizontal and vertical diversity are two ways to look at biodiversity  
 
 Biodiversity can be quantified in numerous ways, as the number of species, i.e.
-species richness and in number of functional groups, i.e species are
-gathered on what they do. Those metrics can be gathered into "horizontal
-diversity", describing the list of components present in a community, i.e. here
-species and functional groups. An
-orthogonal view, based on trophic chains, described species on what they eat. It 
-can be defined as interactions (or biomass/energy fluxes) between species and how
-they are distributed among communities. It can be quantified as the number
-of interaction between species or the number of trophic level. This orthogonal
-view of seeing biodiversity, can be gathered into "vertical diversity".  
-Horizontal and vertical diversity are two views of quantifying biodiversity that
-are, however, not independent from each other [@duffy_functional_2007; @zhao_horizontal_2019]. The add
-or removal of one species can have different effects depending on its vertical
-position in the trophic chain [@duffy_functional_2007]. Hence, it is crucial to
-study their interplay to improve our understanding of ecosystem dynamics. 
+species richness and in number of functional groups, i.e. species are
+gathered on what they do [@tilman_biodiversity_2014]. Those metrics can be
+gathered into "horizontal diversity", describing the list of components present
+in a community, i.e. here species and functional groups. An orthogonal
+perspective, based on trophic chains, described species on what they eat. It can
+be defined as interactions (or biomass/energy fluxes) between species and how
+they are distributed among communities. It can be quantified as the number of
+interaction between species or the number of trophic level. This orthogonal view
+of seeing biodiversity, can be gathered into "vertical diversity". Horizontal
+and vertical diversity are, however, not independent from each other
+[@duffy_functional_2007; @zhao_horizontal_2019]. The add or removal of one
+species can have different effects depending on its vertical position in the
+trophic chain [@duffy_functional_2007]. Hence, it is crucial to study their
+interplay to improve our understanding of ecosystem dynamics. 
 (*This paragraph is surely too simplistic*)
 
 #### horizontal and vertical diversity increase total biomass by common and different mechanisms 
 
 Horizontal and vertical diversity has been shown to promote higher biomass
-production in a variety of ecosystems. Horizontal diversity, as species richness, has been
-reported to increase productivity through complementarity between species in
-resource exploitation and selection effects in plant communities
-[@tilman_productivity_1996; @cardinale_species_2002; @grace_integrative_2016].
-Regarding total biomass, empirical assessment have
+production in a variety of ecosystems. Horizontal diversity, as species
+richness, has been reported to increase productivity through complementarity
+between species in resource exploitation and selection effects in plant
+communities [@tilman_productivity_1996; @cardinale_species_2002;
+@grace_integrative_2016].  Regarding total biomass, empirical assessment have
 shown generally positive relationships with species richness in plant
 communities [@hector_plant_1999; @tilman_biodiversity_2014, but see
 @grace_integrative_2016], as in mesocosms [@pennekamp_biodiversity_2018].
-Theoretical models have also confirmed that an increase in horizontal diversity should
-translate into increase in plant biomass through resource complementarity
+Theoretical models have also confirmed that an increase in horizontal diversity
+should translate into increase in plant biomass through resource complementarity
 [@loreau_biodiversity_1998] and selection effects [@tilman_plant_1997]. The
 addition of trophic levels, notably consumer on plants generally breaks the
 positive relationship between plant biomass and plant diversity as a significant
-amount of biomass is transfered to consumers [@thebault_food-web_2003]. It has been shown both in
-experiments [REF] and theoretical models [@thebault_food-web_2003].
-@thebault_relationship_2006 have shown with a theoretical model that total biomass should increase with
-the increase species diversity at two trophic level. However, the joint effects
-of horizontal and vertical diversity on total biomass has been
-rarely tested, especially in natural communities. It is not clear whether
-horizontal and vertical diversity just change the distribution of biomass across
-trophic level or it increases the total amount of  biomass (*It misses a lot of
-references here*).
+amount of biomass is transfered to consumers [@thebault_food-web_2003]. It has
+been shown both in experiments [REF] and theoretical models
+[@thebault_food-web_2003].  @thebault_relationship_2006 have shown with a
+theoretical model that total biomass should increase with the increase species
+diversity at two trophic level. However, the joint effects of horizontal and
+vertical diversity on total biomass has been rarely tested, especially in
+natural communities. It is not clear whether horizontal and vertical diversity
+just change the distribution of biomass across trophic level or it increases the
+total amount of  biomass (*It misses a lot of references here*).
 
 #### Horizontal and vertical diversity versus temporal stability
 
@@ -217,8 +215,8 @@ organism performance, and subsequently, abundance of species and in turn
 determines total biomass [Add general ref; @grace_integrative_2016] and temporal
 stability [@de_boeck_patterns_2017; @hansen_climate_2013; @bluthgen_land_2016;
 @oliver_heterogeneous_2010; @friedpetersen_drivers_2020]. Hydrology of streams
-constraints the composition of fish communities [REF toulouse à balle], and is
-also related to fish population temporal stability [@franssen_annual_2011].
+constraints the composition of fish communities [REF toulouse à balle], and has
+already been related to fish population temporal stability [@franssen_annual_2011].
 However it is not clear which is the relative strength of direct and indirect
 effects of environment on total biomass and its temporal stability (Figure
 \@ref(fig:matmet) A).
@@ -270,8 +268,7 @@ sites were followed more than 10 years on the 1995-2018 period. We inferred
 (**XXX**) potential interaction networks, based on body size and food diet.
 Horizontal diversity was quantified as species richness while vertical diversity
 was as connectance and average trophic level. Environment was characterized by
-the stream size, altitude, slope, and the temperature, flow, enrichment and
-their temporal variability (expect for altitude and slope). Finally total
+the stream size, altitude, slope, and the temperature, flow and enrichment. Finally total
 biomass was measured as median total biomass over the sampling period while its
 temporal stability was quantified as the inverse of the CV.
 
@@ -465,8 +462,10 @@ richness, average species CV and synchrony).
 
 
 ```{r}
-myload(nmds, habitat_pressure, dir = mypath("report"))
+# Basin
 st_basin <- get_basin_station(sf_obj = FALSE)
+
+# Select fishing operation 
 myload(op_analysis, op_analysis_wo_holes, dir = mypath("data"))
 myload(biomass_ts_sax, dir = mypath("data"))
 op_analysis_bbb <- filter(op_analysis, station %in%
@@ -474,50 +473,9 @@ op_analysis_bbb <- filter(op_analysis, station %in%
 op_analysis_wo_holes_bbb <- filter(op_analysis_wo_holes, station %in%
   biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
 
-# Compute stability, network metrics, etc with ;he new datasets
-##myload(network_metrics, dir = mypath("data", "classes"))
-#network_metrics %>%
-  #left_join(op_analysis, by = "opcod") %>%
-  #select(opcod, station, composition) %>%
-  #unnest(composition) %>%
-  #group_by(station, troph_group) %>%
-  #summarise(richness_tot = length(unique(species)))
-com_data <- compute_community_temporal_analysis(.op = op_analysis_bbb,
- type_network_metrics = "classes" 
-)
-# Compute sem dataset 
-sem_data <- compute_sem_dataset(
-  com = com_data[["tps_com"]],
-  network = com_data[["tps_net"]],
-  hab_press = habitat_pressure,
-  sync = com_data[["sync_std"]],
-  nmds = NULL,
-  basin = st_basin
-  )
-
 ```
 
-```{r, eval = FALSE}
-stab_div_troph <- com_data$tps_bm_troph %>%
-  filter(troph_group != 1) %>%
-  mutate(troph_group = as.factor(troph_group),
-    log_rich = log10(richness_med),
-    log_rich_std = log10(rich_std_med),
-    log_rich_tot = log10(richness_tot),
-    log_rich_tot_std = log10(rich_tot_std),
-    log_bm = log10(biomass_med),
-    log_bm_std = log10(bm_std_med),
-    log_stab = log10(biomass_stab),
-    log_stab_std = log10(bm_std_stab)
-    ) %>%
-  dplyr::select(station, troph_group, biomass_stab, richness_med, richness_tot, log_rich, log_rich_std, log_rich_tot, log_rich_tot_std, log_stab, log_stab_std, log_bm, log_bm_std, biomass_med, bm_std_med, richness_tot, rich_tot_std) %>%
-  dplyr::left_join(st_basin, by = "station")
-```
-
-
-## Environment
-
-```{r}
+```{r, fig.show = "hide"}
 myload(
   hab_analysis,
   temporal_station_desc,
@@ -531,27 +489,56 @@ habitat_press <- build_habitat_pressure_dataset(
   .tmp_st_desc = temporal_station_desc,
   .geo_st = geo_station 
 )
-```
 
-```{r, fig.show = "hide"}
-evt_var_mean <- c("flow_med", "temperature_med", "width_river_mean",
-  "avg_depth_station_mean", "slope", "alt", "d_source", "strahler", "DBO_med")
-evt_var_cv <- c("flow_cv", "temperature_cv", "width_river_cv",
-  "avg_depth_station_cv", "DBO_cv")
-pca_pressure <- habitat_press[, names(habitat_press) %in% c(evt_var_mean, evt_var_cv, "station")] %>%
-  na.omit
+# Make PCA 
+habitat_press %<>% na.omit()
+mask <- names(habitat_press) %in% names(get_pca_var_name_replacement())
 
 pca_rotated <- compute_rotated_pca(
-  .data = pca_pressure[, !names(pca_pressure) %in% "station"],
-  naxis = 5 
+  .data = habitat_press[, mask],
+  naxis = 2
 )
+habitat_pressure <- 
+  cbind(habitat_press[, c("station", "temperature_med", "alt")], pca_rotated$rotated$score) %>%
+  as_tibble
+ggplot(habitat_pressure, aes(x = RC2, y = temperature_med)) +
+  geom_point()
 
-prop_var_expl_pca <- pca_rotated$rotated$Vaccounted["Proportion Var", ] %>%
-  map_dbl(., ~round(.x * 100))
+ggplot(
+  pivot_longer(habitat_pressure, cols = c("RC1", "RC2"),
+    names_to = "variable", values_to = "value"
+  )
+  , aes(x = value)) +
+geom_histogram() +
+facet_grid(cols = vars(variable))
 
-tot_var_expl_pca <- round(sum(pca_rotated$rotated$Vaccounted["Proportion Var", ]) * 100) 
 ```
 
+```{r}
+prop_var_expl_pca <- pca_rotated$rotated$Vaccounted["Proportion Var", ] %>%
+  map_dbl(., ~round(.x * 100))
+tot_var_expl_pca <- sum(prop_var_expl_pca) 
+```
+
+```{r, message = FALSE, results = FALSE}
+# Com
+com_data <- compute_community_temporal_analysis(.op = op_analysis_bbb,
+ type_network_metrics = "classes"
+)
+# Compute sem dataset
+sem_data <- compute_sem_dataset(
+  com = com_data[["tps_com"]],
+  network = com_data[["tps_net"]],
+  hab_press = habitat_pressure,
+  sync = com_data[["sync_std"]],
+  nmds = NULL,
+  basin = st_basin
+  )
+
+```
+
+
+## Environment
 
 Habitat description, obtained from fish sampling data, describing the ecosystem
 size namely the stream width, depth and position (altitude and
@@ -576,8 +563,10 @@ fish sampling (except for water temperature for which the record began in 2006).
 Then, the average temperature, flow, BOD, river width and depth were computed as
 well as coefficient of variation ($CV = \sigma \mu^{-1}$). As habitat and
 environmental variables are often collinear, a principal component analysis (PCA)
-was performed on the scaled variables. The PCA explained `r tot_var_expl_pca`%
-of the variance. An axis rotation was performed to maximize the representation
+was performed on the scaled variables. We kept in the analysis the two first
+principal components based on eigen values distribution (Fig. SXX).
+The PCA explained `r tot_var_expl_pca`%
+of the variance. An varimax axis rotation was performed to maximize the representation
 of the variables by the principal components (Fig. \@ref(fig:pca-rotated)).
 Five principal components were used in the analysis, representing respectively
 the (1) river size (river width & depth), (2) altitude, slope and decreasing
@@ -606,9 +595,6 @@ text are standardized in order to compare their magnitude ($r_\delta = \beta
 and $\sigma_y$ being respectively the standard deviation of the predictive
 variable $x$ and of the response variable $y$). In the main text, only the
 slopes which had $P$ value inferior to $0.05$ were reported (but see Table SXX).
-Linear models and SEMs were computed with respectively the `nlme` and
-`piecewieseSEM` R packages. The code used for the analysis are accessible on
-github.
 
 The structural equation models used for total biomass and its temporal stability
 contains respectively 4 and 6 response variables, 35 and 26 direct paths.
@@ -623,6 +609,11 @@ indirect effects. Finally total effects were computed as the sum of direct and
 indirect effects.
 
 
+Environmental variables were interpolated with the `openStars` and `SSN`
+packages. Linear models and SEMs were computed with respectively the `nlme` and
+`piecewieseSEM` R packages. The code used for the analysis and the Rmarkdown
+used to generate this document are accessible on github.
+
 ```{r get-data, cache = FALSE}
 library(piecewiseSEM)
 library(lme4)
@@ -632,134 +623,6 @@ library(nlme)
 ctrl_lmer <- lmerControl(optCtrl = list(method = 'optimx'))
 ```
 
-```{r mod-div-total, eval = FALSE}
-stab_div_mod <- lmer(
-  data = sem_data,
-  control = ctrl_lmer,
-  formula = log_stab_std ~ log_rich_tot_std + (1 | basin)
-)
-stopifnot(!isSingular(stab_div_mod, tol = 1e-05))
-stab_div_boot <- bootMer(stab_div_mod, mySumm2, nsim = 100)
-stab_div_ci <- confint(stab_div_boot)
-#stab_div_colin <- car::vif(stab_div_mod) not use if one response
-stab_div_sum <- piecewiseSEM::rsquared(stab_div_mod, method = "nagelkerke") %>%
-  mutate_at(vars(Conditional, Marginal), ~round(., 2))
-
-pred <- ggpredict(stab_div_mod, terms = c("log_rich_tot_std"), type = "fe")
-stab_div_pred <- pred %>%
-  as_tibble() %>%
-  rename(
-    log_stab_std = predicted,
-    log_rich_tot_std = x,
-    basin = group
-  )
-stab_div_pred %<>%
-  mutate(
-    stab = 10^log_stab_std, # FALSE
-    rich = 10^log_rich_tot_std,
-    cl10 =  10^conf.low,
-    ch10 =  10^conf.high
-  )
-
-#
-bm_div_mod <- lmer(data = sem_data,
-  formula = log_bm_std ~ log_rich_tot_std + (1 | basin)
-)
-bm_div_boot <- bootMer(bm_div_mod, mySumm2, nsim = 100)
-bm_div_ci <- confint(bm_div_boot)
-bm_div_sum <- piecewiseSEM::rsquared(bm_div_mod, method = "nagelkerke") %>%
-  mutate_at(vars(Conditional, Marginal), ~round(., 2))
-
-pred <- ggpredict(bm_div_mod, terms = c("log_rich_tot_std"), type = "fe")
-#plot(pred, add.data = TRUE)
-bm_div_pred <- pred %>%
-  as_tibble() %>%
-  rename(
-    log_bm_std = predicted,
-    log_rich_tot_std = x,
-    basin = group
-  )
-
-# get coeff
-coef_div <- map(list(stab = stab_div_mod, bm = bm_div_mod), fixef)
-```
-
-```{r mod-div-troph, fig.show = "hide", eval = FALSE}
-stab_troph_mod <- lmer(data = na.omit(stab_div_troph),
-  formula = log_stab_std ~ log_rich_tot_std + troph_group + log_rich_tot_std:troph_group + (1 | basin)
-  #control = ctrl
-)
-
-stab_troph_mod <- lmer(data = na.omit(stab_div_troph),
-  formula = log_stab_std ~  troph_group + (1 | basin)
-  #control = ctrl
-)
-
-
-stab_troph_boot <- bootMer(stab_troph_mod, mySumm2, nsim = 100)
-stab_troph_ci <- confint(stab_troph_boot)
-
-#stab_troph_colin <- car::vif(stab_troph_mod)
-stab_troph_sum <- piecewiseSEM::rsquared(stab_troph_mod, method = "nagelkerke") %>%
-  mutate_at(vars(Conditional, Marginal), ~round(., 2))
-
-#pred_troph_mod <- ggpredict(stab_troph_mod, terms = c("log_rich_tot_std", "troph_group"), type = "fe")
-##plot(pred_troph_mod, add.data = TRUE)
-#stab_troph_pred <- pred_troph_mod %>%
-  #as_tibble() %>%
-  #rename(
-    #log_stab_std = predicted,
-    #log_rich_tot_std = x,
-    #troph_group = group
-  #)
-
-## Productivity and troph group
-
-#bm_troph_mod <- lmer(data = na.omit(stab_div_troph),
-  ##fixed = log_bm ~ log_rich_tot * troph_group,
-  #formula = log_bm_std ~ log_rich_tot_std + troph_group + log_rich_tot_std:troph_group + (1 | basin)
-  ##random = ~ 1 + log_rich_tot * troph_group | basin,
-  ##control = ctrl 
-#)
-#bm_troph_boot <- bootMer(bm_troph_mod, mySumm2, nsim = 100)
-#bm_troph_ci <- confint(bm_troph_boot)
-
-#bm_troph_sum <- piecewiseSEM::rsquared(bm_troph_mod, method = "nagelkerke") %>%
-  #mutate_at(vars(Conditional, Marginal), ~round(., 2))
-
-#pred_troph_mod <- ggpredict(bm_troph_mod, terms = c("log_rich_tot_std", "troph_group"), type = "fe")
-##plot(pred_troph_mod, add.data = TRUE)
-#bm_troph_pred <- pred_troph_mod %>%
-  #as_tibble() %>%
-  #rename(
-    #log_bm_std = predicted,
-    #log_rich_tot_std = x,
-    #troph_group = group
-  #)
-
-## get coeff
-#coef_troph <- map(list(stab = stab_troph_mod, bm = bm_troph_mod), fixed.effects)
-```
-```{r stab-div-troph, eval = FALSE}
-stab_div_by_troph <- compute_stat_troph_rich(
-  .data = stab_div_troph,
-  resp = "log_stab_std"
-)
-
-bm_div_by_troph <- compute_stat_troph_rich(
-  .data = stab_div_troph,
-  resp = "log_bm_std"
-)
-troph_perm_test <- map(c(stab = "log_stab_std", bm = "log_bm_std"),
-  ~test_troph(.data = stab_div_troph, var = .x)
-  )
-troph_perm_test$bm$obs
-troph_perm_test$stab$obs
-troph_perm_test$bm$p_val
-troph_perm_test$stab$p_val
-```
-
-
 ```{r}
 # Compute SEMs
 stab_sem_rich <- compute_stab_sem_rich(.data = sem_data,
@@ -768,7 +631,8 @@ stab_sem_rich <- compute_stab_sem_rich(.data = sem_data,
 bm_sem_rich <- compute_prod_sem_rich(.data = sem_data,
   random_effect = as.formula("~1|basin"))
 
-def_env_x_pos <- c(from = 0, to = 6)
+def_env_x_pos <- c(from = 0, to = 3)
+asp <- 1.6
 
 library(DiagrammeR)
 meta_stab_sem_rich <- export_diagram(
@@ -776,13 +640,13 @@ meta_stab_sem_rich <- export_diagram(
   file_path = mypath("manuscript", "bef_stability", "meta_stab_sem"),
   format = "png",
   width = 700*2,
-  height = 900*2  - 900*2*30/100,
+  height = 700*2 * asp,
   arrows = "ortho",
   val_thd = 0.05,
   env_x_pos_range = def_env_x_pos,
   env_y_pos = 0,
   env_y_sep = 1.5,
-  order_env_node = c("RC4", "log_RC3", "RC5", "log_RC1", "log_RC2"),
+  order_env_node = c("log_RC1", "log_RC2"),
   metamodel = TRUE
 )
 p_stab_sem_rich <- export_diagram(
@@ -790,13 +654,13 @@ p_stab_sem_rich <- export_diagram(
   file_path = mypath("manuscript", "bef_stability", "stab_sem"),
   format = "png",
   width = 700*2,
-  height = 900*2  - 900*2*30/100,
+  height = 700*2 * asp,
   arrows = "ortho",
   val_thd = 0.05,
   env_x_pos_range = def_env_x_pos,
   env_y_pos = 0,
   env_y_sep = 1.5,
-  order_env_node = c("RC4", "log_RC3", "RC5", "log_RC1", "log_RC2")
+  order_env_node = c("log_RC1", "log_RC2")
 )
 
 meta_bm_sem_rich <- export_diagram(
@@ -804,13 +668,13 @@ meta_bm_sem_rich <- export_diagram(
   file_path = mypath("manuscript", "bef_stability", "meta_bm_sem"),
   format = "png",
   width = 700*2,
-  height = 900*2  - 900*2*45/100,
+  height = 700*2 * asp,
   arrows = "ortho",
   val_thd = 0.05,
   env_x_pos_range = def_env_x_pos,
   env_y_pos = 0,
   env_y_sep = 1.5,
-  order_env_node = c("RC4", "log_RC3", "RC5", "log_RC1", "log_RC2"),
+  order_env_node = c("log_RC1", "log_RC2"),
   metamodel = TRUE
 )
 p_bm_sem_rich <- export_diagram(
@@ -818,13 +682,13 @@ p_bm_sem_rich <- export_diagram(
   file_path = mypath("manuscript", "bef_stability", "bm_sem"),
   format = "png",
   width = 700*2,
-  height = 900*2  - 900*2*45/100,
+  height = 700*2 * asp,
   arrows = "ortho",
   val_thd = 0.05,
   env_x_pos_range = def_env_x_pos,
   env_y_pos = 0,
   env_y_sep = 1.5,
-  order_env_node = c("RC4", "log_RC3", "RC5", "log_RC1", "log_RC2")
+  order_env_node = c("log_RC1", "log_RC2")
 )
 ```
 
@@ -839,70 +703,7 @@ coef_bm_sem <- coef(bm_sem_rich) %>%
   filter(P.Value < 0.05)
 ```
 
-```{r stab-network, fig.show = "hide"}
-sem_data %>%
-  select(sync, cv_sp, ct, t_lvl) %>%
-  gather(network, metrics, ct, t_lvl) %>%
-  gather(stab_comp, value, sync, cv_sp) %>%
-  ggplot(aes(y = value, x = metrics)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  facet_grid(stab_comp ~ network, scales = "free_x")
-
-stab_ct_mod <- lmer(data = sem_data,
-  #fixed = log_bm ~ log_rich_tot * troph_group,
-  formula = log_stab_std ~ ct + (1 | basin)
-  #random = ~ 1 + log_rich_tot * troph_group | basin,
-  #control = ctrl 
-)
-stab_ct_boot <- bootMer(stab_ct_mod, mySumm2, nsim = 100)
-stab_ct_ci <- confint(stab_ct_boot)
-
-stab_ct_sum <- piecewiseSEM::rsquared(stab_ct_mod, method = "nagelkerke") %>%
-  mutate_at(vars(Conditional, Marginal), ~round(., 2))
-
-pred_stab_ct_mod <- ggpredict(stab_ct_mod, terms = c("ct"), type = "fe")
-#plot(pred_troph_mod, add.data = TRUE)
-stab_ct_pred <- pred_stab_ct_mod %>%
-  as_tibble() %>%
-  rename(
-    log_stab_std = predicted,
-    log_rich_tot_std = x,
-    troph_group = group
-  )
-
-# get coeff
-coef_stab_ct <- map(list(stab = stab_ct_mod), fixed.effects)
-
-
-stab_tlvl_mod <- lmer(data = sem_data,
-  #fixed = log_bm ~ log_rich_tot * troph_group,
-  formula = log_stab_std ~ t_lvl + (1 | basin)
-  #random = ~ 1 + log_rich_tot * troph_group | basin,
-  #control = ctrl 
-)
-stab_tlvl_boot <- bootMer(stab_tlvl_mod, mySumm2, nsim = 100)
-stab_tlvl_ci <- confint(stab_tlvl_boot)
-
-stab_tlvl_sum <- piecewiseSEM::rsquared(stab_tlvl_mod, method = "nagelkerke") %>%
-  mutate_at(vars(Conditional, Marginal), ~round(., 2))
-
-pred_stab_tlvl_mod <- ggpredict(stab_tlvl_mod, terms = c("t_lvl"), type = "fe")
-#plot(pred_troph_mod, add.data = TRUE)
-stab_tlvl_pred <- pred_stab_tlvl_mod %>%
-  as_tibble() %>%
-  rename(
-    log_stab_std = predicted,
-    log_rich_tot_std = x,
-    troph_group = group
-  )
-
-# get coeff
-coef_stab_tlvl <- map(list(stab = stab_tlvl_mod), fixed.effects)
-```
-
 # Results
-
 
 ```{r}
 sem_caption <- paste0(
@@ -934,6 +735,7 @@ plot_grid(
 bm_sem_coef <- filter(coef_bm_sem, P.Value <= 0.05)
 
 rich_on_bm <- get_clean_sem_coef(sem = bm_sem_coef, resp = "log_bm_std", pred = "log_rich_tot_std")
+rich_on_tlvl <- get_clean_sem_coef(sem = bm_sem_coef, resp = "t_lvl", pred = "log_rich_tot_std")
 tlvl_on_bm <- get_clean_sem_coef(sem = bm_sem_coef, resp = "log_bm_std", pred = "t_lvl")
 RC1_on_bm <- get_clean_sem_coef(sem = bm_sem_coef, resp = "log_bm_std", pred = "log_RC1")
 RC2_on_bm <- get_clean_sem_coef(sem = bm_sem_coef, resp = "log_bm_std", pred = "log_RC2")
@@ -973,7 +775,6 @@ caption_indir_bm_sem <- paste0(
   "Indirect and total effect of variables on total biomass from the
   structural equation model. See the table 1 for details about computation and
   meaning." 
-
 )
 ```
 
@@ -995,29 +796,6 @@ bind_rows()
 
 
 ```{r indir-stab}
-format_table <- function (x = tmp_stab_indir_table) {
-  x <- x[, c("variable", names(x)[!names(x) %in% "variable"])]
-
-  rm_n <- str_remove_all(get_sem_var_name_replacement(), pattern = "\n")
-  names(rm_n) <- names(get_sem_var_name_replacement()) 
-  x$variable <- str_replace_all(x$variable, rm_n)
-
-  colnames(x) %<>% str_remove_all(., pattern = "via_")
-
-  col_replacement <- c(
-    variable = "Variable",
-    cv_sp = "CVsp",
-    sync = "Synchrony",
-    richness = "Horizontal diversity",
-    com = "Vertical diversity",
-    richness_com = "Horizontal & vertical diversity",
-    total = "Total effect"
-  )
-  colnames(x) %<>% str_replace_all(., col_replacement)
-
-  x
-}
-
 kable(format_table(tmp_stab_indir_table),
   format = "latex",
   booktabs = T,
@@ -1028,7 +806,6 @@ kable_styling(latex_options =c("striped", "scale_down"))
 ```
 
 ```{r indir-bm}
-
 kable(format_table(tmp_bm_indir_table),
   format = "latex",
   booktabs = T,
@@ -1038,19 +815,13 @@ kable(format_table(tmp_bm_indir_table),
 kable_styling(latex_options =c("striped", "scale_down"))
 ```
 
-
-
 ```{r get-sem-single-effect}
 stab_sem_coef <- filter(coef_stab_sem, P.Value < 0.05)
-get_clean_sem_coef <- function(sem = NULL, resp = NULL, pred = NULL) {
-  out <- sem[sem$Response == resp & sem$Predictor == pred, ]$Std.Estimate
-  out <- ifelse(length(out) == 0, 0, out)
-  round(out, 2)
-}
 
 sync_on_stab <- get_clean_sem_coef(sem = stab_sem_coef, resp = "log_stab_std", pred = "log_sync")
 cv_sp_on_stab <- get_clean_sem_coef(sem = stab_sem_coef, resp = "log_stab_std", pred = "log_cv_sp")
 RC1_on_sync <- get_clean_sem_coef(sem = stab_sem_coef, resp = "log_sync", pred = "log_RC1")
+tlvl_on_cv_sp <- get_clean_sem_coef(sem = stab_sem_coef, resp = "log_cv_sp", pred = "t_lvl")
 ```
 
 ```{r get-sem-tot-effect-env}
@@ -1072,6 +843,14 @@ env_on_richness <- get_env_on_rich(fit = stab_all_params,
   p_val_thl = 0.05, type = "std")
 ```
 
+
+Overall, the structural equation models explained a large part of the variation
+of connectance, synchrony, $\overline{CV_{sp}}$ and total biomass (resp. $R^2 =
+.45$, $.47$, $.49$ and $.38$) but not of average trophic level ($R^2 =
+.18$, Figure \@ref(fig:sem-plot) C and D).
+
+## Horizontal diversity increased total biomass but decreased its temporal stability 
+
 ```{r get-sem-tot-effect-rich}
 rich_on_sync <- get_rich_on_stab_comp(fit = stab_all_params,
   p_val_thl = 0.05,
@@ -1080,13 +859,6 @@ rich_on_cv_sp <- get_rich_on_stab_comp(fit = stab_all_params,
   p_val_thl = 0.05,
   stab_comp = "log_cv_sp", type = "std")
 ```
-
-Overall, the structural equation models explained a large part of the variation
-of connectance, synchrony, $\overline{CV_{sp}}$ and total biomass (resp. $R^2 =
-.45$, $.47$, $.49$ and $.38$) but not of average trophic level ($R^2 =
-.18$, Figure \@ref(fig:sem-plot) C and D).
-
-## Horizontal diversity increased total biomass but decreased its temporal stability 
 
 Species richness had a significant positive direct effect on total biomass
 $r_\delta = `r rich_on_bm$direct`$ (Figure \@ref(fig:sem-plot) D, Table
@@ -1109,7 +881,8 @@ Average trophic level had a positive effect on total biomass ($r_\delta
 = `r tlvl_on_bm`$) but connectance had no significant effect (Figure
 \@ref(fig:sem-plot) D). Average trophic level had a total positive effect on
 temporal stability ($r_\delta = `r com_on_stab$via_cv_sp["t_lvl"]`$, Table
-\@ref(tab:indir-stab)) by decreasing $\overline{CV_{sp}}$ ($r_\delta = -0.26$,
+\@ref(tab:indir-stab)) by decreasing $\overline{CV_{sp}}$
+($r_\delta = `r tlvl_on_cv_sp`$,
 Figure \@ref(fig:sem-plot) C). Again, connectance had no significant effect on
 temporal stability (Figure \@ref(fig:sem-plot) C, Table SXX).
 
@@ -1119,40 +892,45 @@ We described above that species richess had respectively a positive and a negati
 on total biomass and its temporal stability whereas average trophic level had a
 positive effect on both (Table \@ref(tab:indir-bm) and \@ref(tab:indir-stab)).
 The total effect of average trophic level on total biomass was of the same
-magnitude than the one of species richness (resp. $0.30$ and $0.36$, Table
-\@ref(tab:indir-bm)). It was also true for temporal stability (resp. $0.34$ and
-$-0.24$, Table \@ref(tab:indir-stab)). Average trophic level was
-independent of species richness because species richness had no significant
-effect on average trophic level. However species richness had a strong negative
-effect on connectance ($r_\delta = -0.64$, Figure \@ref(fig:sem-plot) C and D).
-But, in turn, connectance had no significant effect on either total biomass nor
+magnitude than the one of species richness (resp. $`r tlvl_on_bm`$ and
+$`r rich_on_bm$total`$, Table
+\@ref(tab:indir-bm)). It was also true for temporal stability (resp.
+$`r com_on_stab$total["t_lvl"]`$ and
+$`r rich_on_stab$total`$, Table \@ref(tab:indir-stab)). Average trophic level was
+dependent of species richness because species richness had a significant
+negative effect on average trophic level ($r_\delta = `r rich_on_tlvl`$). 
+Species richness had also a strong negative effect on connectance ($r_\delta =
+`r rich_on_stab$total`$, Figure \@ref(fig:sem-plot) C and D).  But, in turn,
+connectance had no significant effect on either total biomass nor
 its temporal stability.
 
 ## Environment had an high effect on total biomass and its temporal stability 
 
-The CV of enrichment had a direct negative effect on total biomass ($r_\delta =
--0.24$, Figure \@ref(fig:sem-plot) D). The other environmental variables had no
-significant direct effects on total biomass (Table SXX). Avg temperature and
-altitude respectively increased and decreased total biomass ($r_\delta = 0.30$,
-Table \@ref(tab:indir-bm)), mainly through species richness ($r_\delta = 0.21$,
-Table \@ref(tab:indir-bm)). Average stream size had a positive effect on total
-biomass ($r_\delta = 0.18$, Table \@ref(tab:indir-bm)), equally through species
-richness and average trophic level ($r_\delta = 0.09$, Table
-\@ref(tab:indir-bm)). Average temperature and altitude effects on total biomass
-were of the same magnitude than the effects on species richness and average
-trophic level.
+The environmental variables had no significant direct effects on total biomass
+(Table SXX), but indirect (Table \@ref(tab:indir-bm)). Average temperature and
+altitude respectively increased and decreased total biomass ($r_\delta =
+`r env_on_bm$direct["log_RC2"]`$, Table \@ref(tab:indir-bm)), mainly through
+species richness ($r_\delta = `r env_on_bm$via_richness["log_RC2"]`$, Table
+\@ref(tab:indir-bm)).  Average stream size had a positive effect on total
+biomass ($r_\delta = `r env_on_bm$total["log_RC1"]`$, Table \@ref(tab:indir-bm)),
+equally through species richness and average trophic level 
+($r_\delta = `r env_on_bm$via_richness["log_RC1"]`$ and
+$`r env_on_bm$via_com["log_RC1"]`$ resp., Table \@ref(tab:indir-bm)). Average
+temperature and altitude effects on total biomass were of the same magnitude
+than the effects on species richness and average trophic level.
 
 Average temperature and altitude had a negative and a positive effect on
-temporal stability ($r_\delta = -.43$, Table \@ref(tab:indir-stab)) mainly
-through a direct positive effect on $\overline{CV_{sp}}$ ($r_\delta = -.40$,
-Table \@ref(tab:indir-stab)). Interesting, average temperature (and reverse of
+temporal stability ($r_\delta = `r env_on_stab$total["log_RC2"]`$, Table \@ref(tab:indir-stab)) mainly
+through a direct positive effect on $\overline{CV_{sp}}$
+($r_\delta = `r env_on_cv_sp$direct["log_RC2"]`$, Table \@ref(tab:indir-stab)).
+Interesting, average temperature (and reverse of
 altitude, *chiant cette variable composite*) had also a negative effect on
 temporal stability through species richness but a positive one through average
-trophic level (resp. $r_\delta = -.14$ and $r_\delta = .10$, Table
-\@ref(tab:indir-stab)). This was also true for average river size but effects
-were weak. Finally, the effect of average temperature on temporal stability had
-a magnitude higher than species richness and average trophic level (Table
-\@ref(tab:indir-stab)).
+trophic level (resp. $r_\delta = `r env_on_stab$via_richness["log_RC2"]`$ and
+$r_\delta = `r env_on_stab$via_com["log_RC2"]`$, Table \@ref(tab:indir-stab)).
+This was also true for average river size but effects were weak. Finally, the
+effect of average temperature on temporal stability had a magnitude higher than
+species richness and average trophic level (Table \@ref(tab:indir-stab)).
   
 # Discussion
 
@@ -1268,13 +1046,13 @@ fondamental interplay between connectance, species richness and average
 interaction strength (*Add ref and develop a bit*).
 
 
-## Horizontal and vertical diversity had common, opposite and independant effects on total biomass and its temporal stability 
+## Horizontal and vertical diversity had common, opposite and dependant effects on total biomass and its temporal stability 
 
 We found that species richness had a positive and a negative effect on
 respectively total biomass and its temporal stability whereas average trophic
 level had a positive effect on both. It confirms that more investigation is needed to
 understand the mechanisms leading to common and opposite effects of
-horizontal and vertical diversity.  @thibaut_understanding_2013 have
+horizontal and vertical diversity. @thibaut_understanding_2013 have
 theoretically shown that a highly positive relationship between species variance
 and mean together with a positive relationship between mean species abundance
 (i.e. dominance) and species richness should drive to a negative temporal
@@ -1289,51 +1067,51 @@ and its temporal stability.
 We found that connectance covaries negatively with species richness
 [@winemiller_must_1989; @dunne_network_2006; @thebault_stability_2010],
 connectance had itself no effects on both total biomass and its temporal
-stability. On the other side, we found species richness was not related to
-average trophic level but average trophic level covariated positively with total
-biomass and its temporal stability. It indicates that the effects of horizontal
-and vertical diversity had independant pathways and the
-importance to consider both horizontal and vertical diversity.
+stability. On the other side, we found species richness was negatively related
+to average trophic level and average trophic level covariated positively with
+total biomass and its temporal stability. Hence, horizontal diversity had a
+direct positive and negative effect respectively on total biomass and its
+stability but a negative and positive effect through vertical diversity. It
+indicates the importance to consider both horizontal, vertical diversity and
+their dependance.
 
 ## Environment had an high effect on total biomass and its temporal stability 
 
 - add [@yang_effects_2011]
 
 Precedent researches in plant communities showed that the total biomass was
-primary driven by environmental drivers [@grace_integrative_2016]. We found that
-environmental drivers in general did not directly affect total biomass, but CV
-of enrichment was negatively linked to total biomass. Hence, average temperature
-(& inverse altitude) and average stream size had indirect effects on total
-biomass. The former had positive effect on total biomass mainly through species
-richness while the latter had a positive effect equally through species richness
-and average trophic level. It is not straightforward to explain why the effect
-average temperature and altitude was going through horizontal diversity and why
-average stream size is going through both horizontal and vertical diversity.
-(*Add more biological interpretations about total effect? Until now, what I have
-in mind is a bit bullshit and those explanations are not the heart of the paper.
-What do you think?*). 
-Overall it indicates that environment affects primarily community
-structure and then affects total biomass. Furthermore, one can notice that
-average temperature had a positive effect on total of the same magnitude than
-horizontal & vertical diversity. It underlines that environment should not be
-ignored in natural communities studies and that its effects can be mainly
-indirect and in this case, path analysis should more relevant than bivariate
-relationships [@grace_causal_2014; @grace_integrative_2016]. 
+primary driven by environmental drivers [@grace_integrative_2016]. We did not
+find direct but indirect effects of environmental drivers on total biomass. The
+average temperature (& inverse altitude) was positively linked to total biomass
+mainly through species richness while the average stream size had a positive
+link equally through species richness and average trophic level. It is not
+straightforward to explain why the effect average temperature and altitude was
+going through horizontal diversity and why average stream size is going through
+both horizontal and vertical diversity.  (*Add more biological interpretations
+about total effect? Until now, what I have in mind is a bit bullshit and those
+explanations are not the heart of the paper.  What do you think?*).  Overall it
+indicates that environment affects primarily community structure and then
+affects total biomass. Furthermore, one can notice that average temperature had
+a positive effect on total of the same magnitude than horizontal & vertical
+diversity. It underlines that environment should not be ignored in natural
+communities studies and that its effects can be mainly indirect and in this
+case, path analysis should more relevant than bivariate relationships
+[@grace_causal_2014; @grace_integrative_2016]. 
 
 Average temperature (& inverse of altitude) had a negative effect on temporal
 stability, mainly by an direct positive CVsp. Two mecanisms might explain this
 pattern: (i) temperature is negatively linked to concentration of dissolved
-oxygen and so might be linked to respiration stress, (ii) temperature might lead be
-to higher metabolic activity and so higher variability [@taby_warming_2019]. Interestingly, average
-temperature (& inverse of altitude) had also a negative effect on temporal
-stability through species richness but a positive one through average trophic
-level. Then, the effect of temperature on temporal stability might be more
-complex than previously thought and call for further investigations.
-Furthermore, average temperature and altitude had a stronger effect on temporal
-stability than horizontal and vertical diversity. Considering big effects of
-temperature on both total biomass and its temporal stability might suggest the
-crucial role of climate change on stream ecosystems. (*Not convinced: may be to
-discuss together*)
+oxygen and so might be linked to respiration stress, (ii) temperature might lead
+be to higher metabolic activity and so higher variability [@taby_warming_2019].
+Interestingly, average temperature (& inverse of altitude) had also a negative
+effect on temporal stability through species richness but a positive one through
+average trophic level. Then, the effect of temperature on temporal stability
+might be more complex than previously thought and call for further
+investigations. Furthermore, average temperature and altitude had a stronger
+effect on temporal stability than horizontal and vertical diversity. Considering
+big effects of temperature on both total biomass and its temporal stability
+might suggest the crucial role of climate change on stream ecosystems. (*Not
+convinced: may be to discuss together*)
 
 # Conclusion and perspectives 
 

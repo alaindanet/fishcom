@@ -793,35 +793,44 @@ build_diag_from_sem <- function (
       node_df[env_node_pos_in_df, ]
   }
    
-
   # Set node placement
+
+  ## Mask
+  evt_node_mask <- node_df$label %in% type_of_node[["evt"]]
+  rich_node_mask <- node_df$label %in% type_of_node[["rich"]]
+  com_node_mask <- node_df$label %in%  type_of_node[["com"]]
+
+  # Pos
   env_x_pos <- seq(
     from = env_x_pos_range["from"],
     to = env_x_pos_range["to"],
-    length.out = length(type_of_node[["evt"]])
+    length.out = length(which(evt_node_mask))
   )
+
+  mid_pos <- (max(env_x_pos) - min(env_x_pos)) / 2
+
   node_df$x <- NA
-  node_df$x[node_df$label %in% type_of_node[["evt"]] ] <- env_x_pos
-  node_df$x[node_df$label %in% type_of_node[["rich"]] ] <- env_x_pos[3]
-  node_df$x[node_df$label %in% type_of_node[["com"]] ]  <- env_x_pos[c(2, 4)]
+  node_df$x[evt_node_mask] <- env_x_pos
+  node_df$x[rich_node_mask] <- mid_pos 
+  node_df$x[com_node_mask]  <- env_x_pos[c(1,2)]
 
   node_df$y <- NA
-  node_df$y[node_df$label %in%  type_of_node[["evt"]] ]  <- env_y_pos
-  node_df$y[node_df$label %in%  type_of_node[["rich"]] ] <- env_y_pos - env_y_sep
-  node_df$y[node_df$label %in%  type_of_node[["com"]] ]  <- env_y_pos - 2 * env_y_sep
+  node_df$y[evt_node_mask]  <- env_y_pos
+  node_df$y[rich_node_mask] <- env_y_pos - env_y_sep
+  node_df$y[com_node_mask]  <- env_y_pos - 2 * env_y_sep
 
   # Adapt if SEM is for stab or bm:
   if (any(node_df$label %in% type_of_node[["stab"]])) {
 
-    node_df$x[node_df$label %in% type_of_node[["stab_comp"]] ] <- env_x_pos[c(2, 4)]
-    node_df$x[node_df$label %in% type_of_node[["stab"]] ]      <- env_x_pos[3]
+    node_df$x[node_df$label %in% type_of_node[["stab_comp"]] ] <- env_x_pos[c(1, 2)]
+    node_df$x[node_df$label %in% type_of_node[["stab"]] ]      <- mid_pos
 
     node_df$y[node_df$label %in%  type_of_node[["stab_comp"]] ] <- env_y_pos - 3 * env_y_sep
     node_df$y[node_df$label %in%  type_of_node[["stab"]] ]      <- env_y_pos - 4 * env_y_sep
     
   } else if (any(node_df$label %in% type_of_node[["bm"]])) {
 
-    node_df$x[node_df$label %in% type_of_node[["bm"]] ]  <- env_x_pos[3]
+    node_df$x[node_df$label %in% type_of_node[["bm"]] ]  <- mid_pos 
     node_df$y[node_df$label %in%  type_of_node[["bm"]] ] <- env_y_pos - 3 * env_y_sep
     
   } else {
@@ -1176,4 +1185,31 @@ get_pca_var_name_replacement <- function () {
 
   return(out)
 
+}
+
+##################
+#  Format table  #
+##################
+
+format_table <- function (x = tmp_stab_indir_table) {
+  x <- x[, c("variable", names(x)[!names(x) %in% "variable"])]
+
+  rm_n <- str_remove_all(get_sem_var_name_replacement(), pattern = "\n")
+  names(rm_n) <- names(get_sem_var_name_replacement()) 
+  x$variable <- str_replace_all(x$variable, rm_n)
+
+  colnames(x) %<>% str_remove_all(., pattern = "via_")
+
+  col_replacement <- c(
+    variable = "Variable",
+    cv_sp = "CVsp",
+    sync = "Synchrony",
+    richness = "Horizontal diversity",
+    com = "Vertical diversity",
+    richness_com = "Horizontal & vertical diversity",
+    total = "Total effect"
+  )
+  colnames(x) %<>% str_replace_all(., col_replacement)
+
+  x
 }

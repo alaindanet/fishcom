@@ -493,7 +493,7 @@ tendancies (with respect to our methodology).
 rotated_eigen_values <- 
   tibble(
     name = paste0("RC", seq(1,14)),
-    type = c(rep("Kept", 5), rep("No kept", 9)),
+    type = c(rep("Kept", 2), rep("No kept", 14 - 2)),
     value = pca_rotated$rotated$values
   )
 eigen_rotated_plot <-
@@ -513,7 +513,6 @@ caption_contrib_pca <- paste0(
   "
 )
 
-
 loadings_pca <- matrix(
   as.matrix(round(pca_rotated$rotated$Structure, 2)),
   nrow = 14,
@@ -523,10 +522,9 @@ loadings_pca <- matrix(
   mutate(
     Variable = str_replace_all(
       dimnames(pca_rotated$rotated$Structure)[[1]],
-      pca_var_replacement)
+      get_pca_var_name_replacement())
   ) %>%
-  select(Variable, RC1, RC2, RC3, RC4, RC5)
-
+  select(Variable, RC1, RC2)
 kable(
   x = loadings_pca,
   format = "latex",
@@ -582,14 +580,14 @@ pca_caption <- paste0(
 
 ```{r pca-rotated, fig.cap = pca_caption, fig.asp = 1}
 p1 <- my_pca_plot(xaxis = "RC1", yaxis = "RC2", ctb_thld = .4)
-p2 <- my_pca_plot(xaxis = "RC3", yaxis = "RC4", ctb_thld = .4)
-p3 <- my_pca_plot(xaxis = "RC4", yaxis = "RC5", ctb_thld = .4)
+#p2 <- my_pca_plot(xaxis = "RC3", yaxis = "RC4", ctb_thld = .4)
+#p3 <- my_pca_plot(xaxis = "RC4", yaxis = "RC5", ctb_thld = .4)
 
-pca_plot <- plot_grid(p1, p2, p3, eigen_rotated_plot, nrow = 2)
+pca_plot <- plot_grid(p1, eigen_rotated_plot, nrow = 1)
 save_plot(
   filename = mypath("manuscript", "bef_stability", "figs", "pca_plot.pdf"),
   pca_plot,
-  nrow = 2, ncol = 2,
+  nrow = 1, ncol = 2,
   base_height = 6/2.54, base_asp = 1, base_width = NULL 
   )
 pca_plot
@@ -1076,4 +1074,66 @@ mod_log_rich_nbinom <- glmmTMB(
   + RC4 + RC5 + (1 | basin), family = nbinom1, data = sem_data)
 summary(mod_log_rich_nbinom)
 plot(y = resid(mod_log_rich_nbinom), x = fitted(mod_log_rich_nbinom))
+```
+
+```{r stab-network, eval = FALSE}
+sem_data %>%
+  select(sync, cv_sp, ct, t_lvl) %>%
+  gather(network, metrics, ct, t_lvl) %>%
+  gather(stab_comp, value, sync, cv_sp) %>%
+  ggplot(aes(y = value, x = metrics)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  facet_grid(stab_comp ~ network, scales = "free_x")
+
+stab_ct_mod <- lmer(data = sem_data,
+  #fixed = log_bm ~ log_rich_tot * troph_group,
+  formula = log_stab_std ~ ct + (1 | basin)
+  #random = ~ 1 + log_rich_tot * troph_group | basin,
+  #control = ctrl 
+)
+stab_ct_boot <- bootMer(stab_ct_mod, mySumm2, nsim = 100)
+stab_ct_ci <- confint(stab_ct_boot)
+
+stab_ct_sum <- piecewiseSEM::rsquared(stab_ct_mod, method = "nagelkerke") %>%
+  mutate_at(vars(Conditional, Marginal), ~round(., 2))
+
+pred_stab_ct_mod <- ggpredict(stab_ct_mod, terms = c("ct"), type = "fe")
+#plot(pred_troph_mod, add.data = TRUE)
+stab_ct_pred <- pred_stab_ct_mod %>%
+  as_tibble() %>%
+  rename(
+    log_stab_std = predicted,
+    log_rich_tot_std = x,
+    troph_group = group
+  )
+
+# get coeff
+coef_stab_ct <- map(list(stab = stab_ct_mod), fixed.effects)
+
+
+stab_tlvl_mod <- lmer(data = sem_data,
+  #fixed = log_bm ~ log_rich_tot * troph_group,
+  formula = log_stab_std ~ t_lvl + (1 | basin)
+  #random = ~ 1 + log_rich_tot * troph_group | basin,
+  #control = ctrl 
+)
+stab_tlvl_boot <- bootMer(stab_tlvl_mod, mySumm2, nsim = 100)
+stab_tlvl_ci <- confint(stab_tlvl_boot)
+
+stab_tlvl_sum <- piecewiseSEM::rsquared(stab_tlvl_mod, method = "nagelkerke") %>%
+  mutate_at(vars(Conditional, Marginal), ~round(., 2))
+
+pred_stab_tlvl_mod <- ggpredict(stab_tlvl_mod, terms = c("t_lvl"), type = "fe")
+#plot(pred_troph_mod, add.data = TRUE)
+stab_tlvl_pred <- pred_stab_tlvl_mod %>%
+  as_tibble() %>%
+  rename(
+    log_stab_std = predicted,
+    log_rich_tot_std = x,
+    troph_group = group
+  )
+
+# get coeff
+coef_stab_tlvl <- map(list(stab = stab_tlvl_mod), fixed.effects)
 ```
