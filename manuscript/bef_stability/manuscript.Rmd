@@ -65,66 +65,107 @@ knitr::opts_chunk$set(
 
 #### Biodiversity and ecosystem properties 
 
-Biodiversity is a key to determine ecosystem properties
-[@duffy_why_2009]. Current biodiversity losses and global changes question the
-way in which ecosystems will be affected in turn [@bellard_impacts_2012]. Since
-the seminal of paper of @may_will_1972, the relationships between
-biodiversity and ecosystem properties have received a lot of attention [@hector_plant_1999;
-@loreau_biodiversity_2001; @hooper_effects_2005; @dunne_network_2006;
-@duffy_why_2009; @isbell_forest_quantifying_2018]. Because biodiversity largely
-determines both the quantity and the distribution of matter and energy across
-ecosystems, it has a tremendous effect on the properties exhibited by an
-ecosystem, such as its total biomass [@hector_plant_1999;
-@tilman_biodiversity_2014; @grace_integrative_2016;
-@pennekamp_biodiversity_2018]], its biomass production
+
+Current biodiversity losses and global changes affect ecosystems in complex and
+unpredictable ways [@bellard_impacts_2012]. Since the seminal of paper of
+@may_will_1972, the relationships between biodiversity and ecosystem properties
+have received a lot of attention [@hector_plant_1999; @loreau_biodiversity_2001;
+@hooper_effects_2005; @dunne_network_2006; @duffy_why_2009;
+@isbell_forest_quantifying_2018]. Biodiversity largely determines both the
+amount and the distribution of matter and energy fluxes within ecosystems, and
+has hence a tremendous effect on ecosystem properties [@duffy_why_2009], such as
+its total biomass [@hector_plant_1999; @tilman_biodiversity_2014;
+@grace_integrative_2016; @pennekamp_biodiversity_2018]], biomass production
 [@tilman_productivity_1996; @cardinale_species_2002; @grace_integrative_2016]
-and the temporal stability of its biomass [@thebault_trophic_2005;
+and the biomass temporal stability [@thebault_trophic_2005;
 @thebault_relationship_2006; @tilman_biodiversity_2006;
 @olivier_independent_nodate].
 
 #### Horizontal and vertical diversity are two ways to look at biodiversity  
 
-Biodiversity can be quantified in numerous ways, as the number of species, i.e.
-species richness and in number of functional groups, i.e. species are
-gathered on what they do [@tilman_biodiversity_2014]. Those metrics can be
-gathered into "horizontal diversity", describing the list of components present
-in a community, i.e. here species and functional groups. An orthogonal
-perspective, based on trophic chains, described species on what they eat. It can
-be defined as interactions (or biomass/energy fluxes) between species and how
-they are distributed among communities. It can be quantified as the number of
-interaction between species or the number of trophic level. This orthogonal view
-of seeing biodiversity, can be gathered into "vertical diversity". Horizontal
-and vertical diversity are, however, not independent from each other
+Biodiversity can be quantified in numerous ways: either as the number of species
+(i.e.  species richness) and in number of functional groups, which are usually
+defined based on the trophic ecology of species, namely the way they acquire
+food [@allan_stream_2007]. Those metrics can be organized into (i) "horizontal
+diversity", which captures the overall diversity of components (i.e. species)
+present in a community, and (ii) "vertical diversity" which captures diversity
+of components across functional groups, such as the amount trophic categories,
+often termed guilds or levels [@allan_stream_2007; @loreau_population_2010;
+@zhao_horizontal_2019; @wang_biodiversity_2017]. Vertical diversity has been
+primarily quantified as food chain length [@loreau_population_2010;
+@zhao_horizontal_2019; @wang_biodiversity_2017] but it can also be characterized
+by the food web structure [@wang_biodiversity_2017] such as connectance and
+average trophic level. Horizontal and vertical diversity are, however, not
+independent from each other. Connectance is known to covary negatively with
+species richness [@winemiller_must_1989; @dunne_network_2006;
+@thebault_stability_2010].
+
+**Horizontal and vertical diversity are, however, not independent from each other
 [@duffy_functional_2007; @zhao_horizontal_2019]. The add or removal of one
-species can have different effects depending on its vertical position in the
+species (i.e. ) can have different effects depending on its vertical position in the
 trophic chain [@duffy_functional_2007]. Hence, it is crucial to study their
-interplay to improve our understanding of ecosystem dynamics. 
-(*This paragraph is surely too simplistic*)
+interplay to improve our understanding of ecosystem dynamics.**
 
 #### horizontal and vertical diversity increase total biomass by common and different mechanisms 
 
-Horizontal and vertical diversity has been shown to promote higher biomass
-production in a variety of ecosystems. Horizontal diversity, as species
-richness, has been reported to increase productivity through complementarity
-between species in resource exploitation and selection effects in plant
-communities [@tilman_productivity_1996; @cardinale_species_2002;
-@grace_integrative_2016].  Regarding total biomass, empirical assessment have
-shown generally positive relationships with species richness in plant
-communities [@hector_plant_1999; @tilman_biodiversity_2014, but see
-@grace_integrative_2016], as in mesocosms [@pennekamp_biodiversity_2018].
-Theoretical models have also confirmed that an increase in horizontal diversity
-should translate into increase in plant biomass through resource complementarity
-[@loreau_biodiversity_1998] and selection effects [@tilman_plant_1997]. The
-addition of trophic levels, notably consumer on plants generally breaks the
-positive relationship between plant biomass and plant diversity as a significant
-amount of biomass is transfered to consumers [@thebault_food-web_2003]. It has
-been shown both in experiments [REF] and theoretical models
-[@thebault_food-web_2003].  @thebault_relationship_2006 have shown with a
-theoretical model that total biomass should increase with the increase species
-diversity at two trophic level. However, the joint effects of horizontal and
-vertical diversity on total biomass has been rarely tested, especially in
-natural communities. It is not clear whether horizontal and vertical diversity
-just change the distribution of biomass across trophic level or it increases the
+Horizontal diversity has been shown to promote higher biomass production in a
+variety of ecosystems. Horizontal diversity, as species richness, has been
+reported to increase primary productivity [@cardinale_species_2002,
+@tilman_productivity_1996; @grace_integrative_2016]. Two mechanisms have been
+proposed to rise this effect [@loreau_partitioning_2001]. The complementarity in
+resource use, rising through niche differentiation and interspecific
+facilitation, increase the total amount of resource used
+[@loreau_biodiversity_1998; @cardinale_species_2002; @loreau_partitioning_2001].
+Positive select effect arise when species richness leads to an higher dominance
+of the most productive species [@tilman_plant_1997; @loreau_partitioning_2001].
+As for total biomass, empirical studies have generally demonstrated positive
+relationships with species richness in plant communities [@hector_plant_1999;
+@tilman_biodiversity_2014; but see @grace_integrative_2016] and mesocosms
+[@pennekamp_biodiversity_2018]. When adding the vertical diversity, e.g.
+consumers species, @gamfelt_species_2005 and @thebault_relationship_2006 have found that total
+biomass increased with increasing species diversity at two trophic levels.
+But this positive relation seems to strongly depend on the niche differentiation of
+the consumer species, i.e. their resource complementarity,
+@thebault_relationship_2006. Hence, the total biomass-species richness
+relationship seems to be supported by the same mechanisms within consumers and
+within plants. (also duffy_ecosystem_2005)
+
+The effect of the vertical diversity itself does not seem to affect total
+biomass. But seek food chain length, connectance
+
+You should connect average trophic level to biomass repartition (good when lots
+of omnivory and no trophic chain)
+
+- Effect of food web structure on total biomass are relatively absent
+
+However, increasing consumer species richness
+results in higher consumer biomass to the detriment of primary producer biomass
+[@gamfelt_species_2005; @thebault_relationship_2006].
+
+- Horizontal div at different trophic levels (v & h )
+- Vertical div: 
+
+The food web structure, vertical diversity, also modulates total biomass and
+productivity [@thebault_food-web_2003; @thebault_trophic_2005;
+@ogorman_multiple_2012; @dossena_warming_2012; @schneider_animal_2016;
+@gamfelt_species_2005]. Both in theoretical and experimental study,
+
+The addition of trophic levels, consumer usually
+breaks the positive relationship between plant biomass and plant diversity as a
+significant amount of biomass is transfered to consumers
+[@thebault_food-web_2003].
+
+It has been shown both in experiments
+[@ogorman_multiple_2012; @dossena_warming_2012]
+and theoretical models [@thebault_food-web_2003; @schneider_animal_2016;
+@wang_biodiversity_2017].
+
+Theoretical models @thebault_relationship_2006
+have shown with a theoretical model that total biomass should increase with the
+increase species diversity at two trophic level *+[]*. However, the joint effects of horizontal and vertical
+diversity on total biomass has been rarely tested, especially in natural
+communities. It is not clear whether horizontal and vertical diversity just
+change the distribution of biomass across trophic level or it increases the
 total amount of  biomass (*It misses a lot of references here*).
 
 #### Horizontal and vertical diversity versus temporal stability
