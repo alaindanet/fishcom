@@ -310,6 +310,7 @@ places than the fish samplings.
 
 
 ```{r, fig.height = 20/2.54}
+pca_pressure <- habitat_press
 myload(fourier, dir = mypath("data-raw", "polluants"))
 myload(flow_temp_metrics, dir = mypath("data"))
 sf_pressure <- station_analysis %>% 
@@ -719,8 +720,7 @@ hist_var_caption <- paste0(
 ```
 ```{r hist-sem-data, fig.cap = hist_var_caption}
 sem_data %>%
-  select(log_bm_std, log_rich_tot_std, log_sync, log_stab_std, log_cv_sp, log_RC1, log_RC2, log_RC3, RC4,
-    RC5, t_lvl, ct, log_bm) %>%
+  select(log_bm_std, log_rich_tot_std, log_sync, log_stab_std, log_cv_sp, log_RC1, log_RC2, t_lvl, ct, log_bm) %>%
   gather(variable, value) %>%
   mutate(variable = str_replace_all(variable, get_sem_var_name_replacement())) %>%
   ggplot(aes(x = value)) +
@@ -734,16 +734,16 @@ sem_data %>%
 
 mod_stab_list <-
   list(
-    nlme::lme(log_rich_tot_std ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,  random = ~ 1 | basin, data = sem_data),
-    nlme::lme(ct ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot_std, random = ~ 1 | basin, data = sem_data),
-    nlme::lme(t_lvl ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot_std, random = ~ 1 | basin, data = sem_data),
-    nlme::lme(log_sync ~ log_rich_tot_std + ct + t_lvl + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,
+    nlme::lme(log_rich_tot_std ~ log_RC1 + log_RC2,  random = ~ 1 | basin, data = sem_data),
+    nlme::lme(ct ~ log_RC1 + log_RC2 + log_rich_tot_std, random = ~ 1 | basin, data = sem_data),
+    nlme::lme(t_lvl ~ log_RC1 + log_RC2 + log_rich_tot_std, random = ~ 1 | basin, data = sem_data),
+    nlme::lme(log_sync ~ log_rich_tot_std + ct + t_lvl + log_RC1 + log_RC2,
       random = ~ 1 | basin, data = sem_data),
     nlme::lme(log_cv_sp ~ log_rich_tot_std  + ct + t_lvl
-      + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5, random = ~ 1 | basin, data = sem_data),
+      + log_RC1 + log_RC2, random = ~ 1 | basin, data = sem_data),
     lm(log_stab_std ~ log_cv_sp + log_sync, data = sem_data),
     nlme::lme(log_bm_std ~ log_rich_tot_std  + ct + t_lvl
-      + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5, random = ~ 1 | basin, data = sem_data)
+      + log_RC1 + log_RC2, random = ~ 1 | basin, data = sem_data)
   )
 names(mod_stab_list) <- c(
   "Species richness",
