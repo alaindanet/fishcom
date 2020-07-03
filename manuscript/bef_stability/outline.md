@@ -2,30 +2,39 @@
 
 1. Introduction
 
-1.1 Biodiversity determines community composition and so ecosystem functionning
+1.1 Species richness drives total biomass and its temporal stability
 
+1.1.1 Species richness increases total biomass
 
+experimentally, natural and theoretically
 
-1.2 Horizontal and vertical diversity 
+wide range of organisms and ecosystems
 
-1.3 Diversity increase total biomass
+1.1.2 Species richness increases temporal stability
 
-1.4 Diversity increase or decrease stability 
+experimentally, natural and theoretically
 
-1.5 theoretical studies studies vertical diversity,
-but with other stability metrics 
+wide range of organisms and ecosystems
 
-1.6 Fish model is a good model to study vertical and horizontal diversity
+1.2 the effect of network structure on biomass and its temporal stability is
+poorly documented
 
-1.7 Goal of our study
-1.7.1 vertical and horizontal diversity
-1.7.2 Observational studies
-1.7.3 Network inference 
+theoretical work shows that network structure plays a big role for biomass and
+its temporal stability
 
-1.8 Hypothesis tested
-1.8.1 evt on community and stability components 
-1.8.2 community on stability components 
-1.8.3 synchrony and cv sp on biomass stability
+But no empirical data available
+
+1.3 General problematic
+
+1.4 Environment can migigate community structure, biomass and stability of
+biomass
+
+1.6 Fish model is a good model to study species richness and network structure
+
+1.7 Hypothesis tested
+1.7.1 evt on community and stability components 
+1.7.2 community on stability components 
+1.7.3 synchrony and cv sp on biomass stability
 
 2. Material & Methods
 
@@ -50,10 +59,10 @@ but with other stability metrics
 2.6 Habitat and environment
 2.6.1 Origin of data
 2.6.2 Interpolation 
-2.6.3 CV and avg 
+2.6.3 CV and avg
 2.6.3 PCA
 
-2.7 Statistical analysis
+2.7 Statistical analysis =*TO REVISE*=
 
 2.7.1 SEM
 
@@ -106,9 +115,17 @@ but with other stability metrics
 
 4.1 Resume of the results and of the question
 
+4.2 Species increases biomass but decreases its temporal stability 
+
+4.2.1 Biomass: mecanisms 
+
+4.2.2 Stability and species richness: contrasts with previous findings
+
+4.2.3 Species richness on synchrony and cvsp 
 
 4.2 Richness decreases stability and had no effect of biomass 
 4.2.1 Contrasts with other studies
+
 4.3.1 Comparison with other studies (depends on the mecanisms)
 4.3.2 Surprising low effects of environment factors
 4.3.3 High effects of avg trophic level (expected)
