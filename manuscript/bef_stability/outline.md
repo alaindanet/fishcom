@@ -115,21 +115,13 @@ biomass
 
 4.1 Resume of the results and of the question
 
-4.2 Species increases biomass but decreases its temporal stability 
+4.2 Species richness increases biomass but decreases its temporal stability 
 
 4.2.1 Biomass: mecanisms 
 
 4.2.2 Stability and species richness: contrasts with previous findings
 
-4.2.3 Species richness on synchrony and cvsp 
-
-4.2 Richness decreases stability and had no effect of biomass 
-4.2.1 Contrasts with other studies
-
-4.3.1 Comparison with other studies (depends on the mecanisms)
-4.3.2 Surprising low effects of environment factors
-4.3.3 High effects of avg trophic level (expected)
-4.3.4 Connectance had no effect (but it was expected to have one)
+4.2.3 Species richness on synchrony and cvsp
 
 4.3 Network structure
 
