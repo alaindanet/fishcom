@@ -98,14 +98,14 @@ library("rnaturalearthdata")
 world <- ne_countries(scale = "medium", returnclass = "sf") %>%
   st_transform(crs = 2154)
 country_points <- st_centroid(world) %>%
-  filter(name %in% c("France", "Italy", "Spain", "Belgium", "Germany"))
+  filter(name %in% c("France"))
 country_points <- cbind(country_points, st_coordinates(country_points$geometry))
 country_points[country_points$name == "Germany", c("X", "Y")] <- c(1200000, 7000000) 
 country_points[country_points$name == "Spain", c("X", "Y")] <- c(300000, 6150000) 
 country_points[country_points$name == "Italy", c("X", "Y")] <- c(1300000, 6450000) 
 
 ocean <- data.frame(X = 200000, Y = 6500000, name = "atlantic \n ocean")
-sea <- data.frame(X = c(450000, 1000000), Y = c(7025000, 6150000), name = c("Manche \n sea", "Mediterranean \n sea"))
+sea <- data.frame(X = c(450000, 900000), Y = c(7025000, 6180000), name = c("Manche \n sea", "Mediterranean \n sea"))
 
 basin_inner <- basin %>% 
         rmapshaper::ms_innerlines() %>% 
@@ -129,8 +129,8 @@ p <- ggplot() +
     # Plot basin
     geom_sf(data = st_geometry(basin_inner)) +
     # raster comes as the first layer, municipalities on top
-    geom_raster(data = hillshade,
-      aes(x = x, y = y, alpha = value)) +
+    #geom_raster(data = hillshade,
+      #aes(x = x, y = y, alpha = value)) +
     ## use the "alpha hack"
     scale_alpha(name = "", range = c(0.6, 0), guide = F) +
     # Add station
@@ -152,18 +152,20 @@ p_st <- p +
     #pad_x = unit(0.75, "in"),
     #pad_y = unit(0.5, "in"),
     #style = north_arrow_fancy_orienteering) +
-  annotation_scale(location = "br", width_hint = 0.25) +
+  annotation_scale(location = "bl", width_hint = 0.25) +
   theme(
     text = element_text(size = 11),
     legend.position = "none",
-    panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.5),
+    panel.grid.major = element_blank(),
     panel.background = element_rect(fill = "aliceblue"),
     axis.title.x=element_blank(),
     axis.title.y=element_blank(),
     axis.text.x=element_blank(),
     axis.text.y=element_blank(),
-    plot.margin = unit(c(0,0,0,0), units = "mm")
-    #axis.ticks.x=element_blank()
+    plot.margin = unit(c(0,0,0,0), units = "mm"),
+    axis.ticks.x=element_blank(),
+    axis.ticks.y=element_blank()
+
   )
   #Plot europe
 

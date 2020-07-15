@@ -6,6 +6,7 @@ output:
   pdf_document:
     fig_caption: true 
     keep_tex: true
+    toc: true
 fontsize: 12pt
 header-includes:
    - \usepackage{booktabs}
@@ -59,25 +60,27 @@ source(mypath("R", "synchrony.R"))
 theme_set(theme_alain())
 ```
 
-```{r}
+```{r, echo = FALSE}
+package <- c("openSTARS", "SSN", "nlme", "piecewiseSEM")
+purrr::map_(package, ~ toBibtex(citation(.x)))
+
+toBibtex(citation())
+
+#print(cm, bibtex = TRUE)
 # Load manuscript results
 ```
 
-# Sampling protocols
+# Data collection and preparation 
 
 ## Fishing
 
 ### Protocol
 
-```{r}
-```
-
-
 The fish community sampling took place in a variety of stream size, shape and
 depth. This diversity constraints the type of protocol that can take place.  For
 the small streams (depth < 0.7m across the entire width), the complete protocol
 is used. It consists in placing anodes every X meter across the width of the
-river (**Add the precise procedure?**). The fishermen made from one to three row
+river. The fishermen made from one to three row
 of fishing. We kept only the first row for analysis to homogenize the sampling
 effort. For deeper and wider streams, the sampling was partial over the bank and
 the channel and performed by boat and by foot (along the bank). We kept only
@@ -784,7 +787,7 @@ caption_mod_res <- paste0(
 ) 
 ```
 
-```{r mod-res, fig.cap = caption_mod_res}
+```{r mod-res, fig.height = 7, fig.cap = caption_mod_res}
 library(nlme)
 plot_residuals <- function (x, y = "Diagnostic") {
   plot.lme(x, main = y, xlab = "Fitted values", ylab = "Residuals")

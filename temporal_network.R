@@ -50,14 +50,14 @@ legends <- cowplot::get_legend(
       labs(colour = "Species", size = "Biomass") +
       guides(
 	colour = guide_legend(
-	  label.position = "bottom",
-	  ncol = 7,
+	  label.position = "left",
+	  ncol = 4,
 	  byrow = TRUE,
-	  title.position = "left"),
+	  title.position = "top"),
 	size = guide_legend(
 	  nrow = 1,
 	  byrow = TRUE,
-	  title.position = "left"
+	  title.position = "top"
 	)
 	) +
       theme(
@@ -77,7 +77,7 @@ legends <- cowplot::get_legend(
   )
 plots <- map(p$plots, function (x) {
   x + theme(legend.position = "none",
-    plot.margin = unit(c(0, 0, 0, 0), "cm"))
+    plot.margin = unit(c(1, 0, 0, 0), "cm"))
   }) 
 
 p_tmp_net <- plot_grid(plotlist = plots[1:4])
@@ -85,7 +85,7 @@ temporal_network <- plot_grid(
   p_tmp_net,
   legends,
   #ncol = 2, rel_widths= c(1, .4)
-  nrow = 2, rel_widths= c(1, .1)
+  nrow = 2, rel_heights= c(1, .5)
 )
 temporal_network
 

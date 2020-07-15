@@ -1194,19 +1194,21 @@ get_pca_var_name_replacement <- function () {
 format_table <- function (x = tmp_stab_indir_table) {
   x <- x[, c("variable", names(x)[!names(x) %in% "variable"])]
 
-  rm_n <- str_remove_all(get_sem_var_name_replacement(), pattern = "\n")
+  rm_n <- str_remove_all(get_sem_var_name_replacement(), pattern = "\n ")
   names(rm_n) <- names(get_sem_var_name_replacement()) 
   x$variable <- str_replace_all(x$variable, rm_n)
 
   colnames(x) %<>% str_remove_all(., pattern = "via_")
 
   col_replacement <- c(
+    direct = "Direct",
     variable = "Variable",
     cv_sp = "CVsp",
     sync = "Synchrony",
-    richness = "Horizontal diversity",
-    com = "Vertical diversity",
-    richness_com = "Horizontal & vertical diversity",
+    #richness_com = "Species richness and network structure",
+    richness = "Species richness",
+    com = "Network structure",
+    `_` = " and ",
     total = "Total effect"
   )
   colnames(x) %<>% str_replace_all(., col_replacement)
