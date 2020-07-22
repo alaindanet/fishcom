@@ -2,7 +2,7 @@
 #                           Routine for the cluster                            #
 ################################################################################
 
-CLUSTER?=migale
+CLUSTER?=pcia
 RUN=analysis
 EXEC=my_job
 RUN_DIR:=~/fishcom

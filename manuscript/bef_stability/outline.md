@@ -1,32 +1,40 @@
-
 # Outline
 
 1. Introduction
 
-1.1 Importance of BEF assessment
+1.1 Species richness drives total biomass and its temporal stability
 
-1.2 Shape of BEF
-1.2.1 Species richness and biomass 
-1.2.1.1 Mechanisms
-1.2.2. Species richness and stability 
-1.2.2.1 different stability for different fields
-1.2.2.2 Components of community variability
+1.1.1 Species richness increases total biomass
 
-1.3 Effect of network structure on stability and biomass
-1.3.1 connectance & nestedness
-1.3.2 resilience & persistence
+experimentally, natural and theoretically
 
-1.4 Inconsistency between theoretical and empirical studies
+wide range of organisms and ecosystems
 
-1.5 Goal of our study
-1.5.1 vertical and horizontal diversity
-1.5.2 Observational studies
-1.5.3 Network inference 
+1.1.2 Species richness increases temporal stability
 
-1.6 Hypothesis tested
-1.6.1 evt on community and stability components 
-1.6.2 community on stability components 
-1.6.3 synchrony and cv sp on biomass stability
+experimentally, natural and theoretically
+
+wide range of organisms and ecosystems
+
+1.2 the effect of network structure on biomass and its temporal stability is
+poorly documented
+
+theoretical work shows that network structure plays a big role for biomass and
+its temporal stability
+
+But no empirical data available
+
+1.3 General problematic
+
+1.4 Environment can migigate community structure, biomass and stability of
+biomass
+
+1.6 Fish model is a good model to study species richness and network structure
+
+1.7 Hypothesis tested
+1.7.1 evt on community and stability components 
+1.7.2 community on stability components 
+1.7.3 synchrony and cv sp on biomass stability
 
 2. Material & Methods
 
@@ -51,10 +59,10 @@
 2.6 Habitat and environment
 2.6.1 Origin of data
 2.6.2 Interpolation 
-2.6.3 CV and avg 
+2.6.3 CV and avg
 2.6.3 PCA
 
-2.7 Statistical analysis
+2.7 Statistical analysis =*TO REVISE*=
 
 2.7.1 SEM
 
@@ -107,28 +115,23 @@
 
 4.1 Resume of the results and of the question
 
-4.2 Richness decreases stability
-4.2.1 Contrasts with other studies
+4.2 Species richness increases biomass but decreases its temporal stability 
 
-4.3 Richness increases total biomass
-4.3.1 Comparison with other studies (depends on the mecanisms)
-4.3.2 Surprising low effects of environment factors
-4.3.3 High effects of avg trophic level (expected)
-4.3.4 Connectance had no effect (but it was expected to have one)
+4.2.1 Biomass: mecanisms 
+
+4.2.2 Stability and species richness: contrasts with previous findings
+
+4.2.3 Species richness on synchrony and cvsp
+
+4.3 Network structure
 
 
-4.4 Evt on com
-
-4.5 Species richness on stab comp 
+4.4 Evt on stability and biomass
 
 4.6 Cvsp and synchrony relative effect on stab 
 4.6.1 Unexpected 
 4.6.2 Explanation: lack of niche difference + direct strong dependance through
 feeding interaction
-
-4.7 Vertical diversity had little to no effect of stability
-
-4.8 Effect of troph group
 
 
 # The story summary
@@ -190,4 +193,5 @@ to stab/bm
 
 
 9. What does this answer tell us about the broader field?
+
 

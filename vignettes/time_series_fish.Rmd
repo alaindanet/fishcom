@@ -200,3 +200,42 @@ ggplot(cor_press, aes(x = corelation)) +
   geom_histogram() +
   facet_wrap(~category)
 ```
+
+# Talk figures
+
+
+```{r}
+pattern_dist <- ts_biomass %>%
+  group_by(sax) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count))
+ggplot(ts_biomass, aes(x = sax)) +
+  geom_histogram(stat = "count")
+
+filter(pattern_dist, count > 10)
+```
+
+```{r}
+test <- ts_biomass %>%
+  filter(sax %in% c("cba", "bbb", "abc")) %>%
+  group_by(sax) %>%
+  sample_n(5) %>%
+  mutate(
+    paa2 = map2(data, zts, function (x, zts) {
+      cbind(x[,1], zts)
+  }),
+    id_sta = as.character(seq(1,n()))
+  ) %>%
+  select(station, id_sta, paa2) %>%
+  unnest(paa2)
+
+p <- ggplot(test, aes(x = date, y = zts)) +
+  geom_line(aes(color = id_sta)) +
+  facet_wrap(~ sax) +
+  theme_cowplot() +
+  labs(y = "Scaled biomass", x = "Year") +
+  theme(legend.position = "none")
+
+save_plot(filename = "~/Documents/thesis/talks/fishcom_fig/bm_trajectory_classification.png", p)
+```
+

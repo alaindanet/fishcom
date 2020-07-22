@@ -2,19 +2,36 @@
 #                           Routine for the cluster                            #
 ################################################################################
 
-FILE?=manuscript
+MEXT = tex 
 
-clean:
-	ssh mesu "cd $(RUN_DIR)/run && rm temporal_networks.*"
-	rm $(DEST)/run/temporal_networks.*
+## All markdown files in the working directory
+SRC = $(wildcard *.$(MEXT))
+#@echo $(SRC)
 
-convert:
-	latex $(FILE).tex
-	bibtex $(FILE)
-	mylatex2rtf $(FILE).tex
+PDFS=$(SRC:.tex=.pdf)
+
+pdf:	$(PDFS)
+
+%.pdf:	%.tex
+	pdflatex $< 
+	bibtex $<
+	pdflatex $<
+	mylatex2rtf $< 
+
+all: convert_main convert appendix
+
+convert_main:
+	pdflatex manuscript.tex 
+	bibtex manuscript
+	pdflatex manuscript.tex
+	pdflatex manuscript.tex
+	mylatex2rtf manuscript.tex
 	
 
-
-
+convert_appendix:
+	pdflatex appendix.tex 
+	bibtex appendix
+	pdflatex appendix.tex
+	mylatex2rtf appendix.tex
 
 

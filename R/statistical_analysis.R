@@ -57,7 +57,7 @@ compute_sem_dataset <- function (
 
   # Habitat -----------------------------------------------------------------
   habitat_sem <- hab_press %>% 
-    dplyr::select(station, RC1, RC2, RC3, RC4, RC5)
+    dplyr::select(station, RC1, RC2)
 
 
   # Network -----------------------------------------------------------------
@@ -87,8 +87,7 @@ compute_sem_dataset <- function (
       log_bm = log10(prod),
       log_bm_std = log10(prod_std),
       log_RC1 = log10(RC1 + abs(min(RC1)) + 1),
-      log_RC2 = log10(RC2 + abs(min(RC2)) + 1),
-      log_RC3 = log10((RC3)*(-1) + abs(min((RC3)*(-1))) + 1)
+      log_RC2 = log10(RC2*(-1) + abs(min(RC2*(-1))) + 1)
     )
   return(dsem)
 
@@ -101,15 +100,13 @@ compute_sem_dataset <- function (
 compute_stab_sem_rich <- function(.data, random_effect = "~ 1 | basin", get_sem = FALSE) {
 
   mod_list <- list(
-    nlme::lme(log_rich_tot_std ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
-    #nlme::lme(piel ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
-    nlme::lme(ct ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot_std, random = ~ 1 | basin, data = .data),
-    nlme::lme(t_lvl ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot_std, random = ~ 1 | basin, data = .data),
-    #nlme::lme( ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot, random = ~ 1 | basin, data = .data),
-    nlme::lme(log_sync ~ log_rich_tot_std + ct + t_lvl + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,
+    nlme::lme(log_rich_tot_std ~ log_RC1 + log_RC2,  random = ~ 1 | basin, data = .data),
+    nlme::lme(ct ~ log_RC1 + log_RC2 + log_rich_tot_std, random = ~ 1 | basin, data = .data),
+    nlme::lme(t_lvl ~ log_RC1 + log_RC2 + log_rich_tot_std, random = ~ 1 | basin, data = .data),
+    nlme::lme(log_sync ~ log_rich_tot_std + ct + t_lvl + log_RC1 + log_RC2,
       random = ~ 1 | basin, data = .data),
     nlme::lme(log_cv_sp ~ log_rich_tot_std + ct + t_lvl
-       + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
+       + log_RC1 + log_RC2, random = ~ 1 | basin, data = .data),
     lm(log_stab_std ~ log_cv_sp + log_sync, data = .data)
   )
   sem <-  piecewiseSEM::as.psem(mod_list)
@@ -218,12 +215,10 @@ compute_prod_sem <- function(.data, random_effect = "~ 1 | basin") {
 }
 compute_prod_sem_rich <- function(.data, random_effect = "~ 1 | basin") {
   corsem <- piecewiseSEM::psem(
-    nlme::lme(log_rich_tot_std ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,  random = ~ 1 | basin, data = .data),
-    #nlme::lme(piel ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
-    nlme::lme(ct ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot_std, random = ~ 1 | basin, data = .data),
-    nlme::lme(t_lvl ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5 + log_rich_tot_std, random = ~ 1 | basin, data = .data),
-    #nlme::lme(beta_bin_c ~ log_RC1 + log_RC2 + log_RC3 + RC4 + RC5, random = ~ 1 | basin, data = .data),
-    nlme::lme(log_bm_std ~ log_rich_tot_std + ct + t_lvl + log_RC1 + log_RC2 + log_RC3 + RC4 + RC5,
+    nlme::lme(log_rich_tot_std ~ log_RC1 + log_RC2,  random = ~ 1 | basin, data = .data),
+    nlme::lme(ct ~ log_RC1 + log_RC2 + log_rich_tot_std, random = ~ 1 | basin, data = .data),
+    nlme::lme(t_lvl ~ log_RC1 + log_RC2 + log_rich_tot_std, random = ~ 1 | basin, data = .data),
+    nlme::lme(log_bm_std ~ log_rich_tot_std + ct + t_lvl + log_RC1 + log_RC2,
       random = ~ 1 | basin, data = .data)
   )
   output <- summary(corsem, .progressBar = F)
@@ -686,10 +681,10 @@ compute_bm_sem_indirect <- function (sem = NULL, p_val_thl = NULL) {
 #'
 #' @inheritParams compute_community_temporal_analysis
 #'
-build_dataset_get_sem_coefficient <- function (.op = NULL, sem_fun = compute_stab_sem_rich_beta, dest_dir = NULL) {
+build_dataset_get_sem_coefficient <- function (.op = NULL, sem_fun = compute_stab_sem_rich_beta) {
 
   # Compute stability, network metrics, etc with the new datasets
-  com_data <- compute_community_temporal_analysis(.op = .op, dest_dir = dest_dir)
+  com_data <- compute_community_temporal_analysis(.op = .op)
 
   # Compute sem dataset 
   sem_data <- compute_sem_dataset(
@@ -769,12 +764,7 @@ compute_stat_troph_rich <- function (.data = NULL, resp = NULL) {
 
 }
 
-
-#' Compute PCA and rotated PCA over a list of dataset
-#'
-#' @param .data data.frame
-#' @param naxis integer number of axis to keep. default to 2  
-#'
+#' Compute PCA and rotated PCA over a list of dataset @param .data data.frame @param naxis integer number of axis to keep. default to 2  
 compute_rotated_pca <- function(.data = NULL, naxis = 2) {
       .data %<>% na.omit
       pca <- ade4::dudi.pca(as.data.frame(.data), scannf = FALSE, nf = naxis, center = TRUE, scale = TRUE)

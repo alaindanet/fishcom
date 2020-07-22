@@ -58,7 +58,10 @@ abundance <- weight_analysis %>%
 myload(op_analysis, dir = data_common)
 st_timing <- op_analysis %>%
   dplyr::select(opcod, station, year) %>%
-  mutate(times = year)
+  dplyr::mutate(times = year)
+sampling_effort <- op_analysis %>%
+  dplyr::select(opcod, surface)
+
 rm(op_analysis)
 
 # Sum biomass by op
@@ -66,20 +69,31 @@ biomass <- left_join(weight_analysis, st_timing, by = "opcod") %>%
   group_by(opcod, station, times) %>%
   nest()
 
+
+biomass_node <- weight_analysis %>%
+  left_join(sampling_effort, by = "opcod") %>%
+  group_by(opcod, sp_class) %>%
+  summarise(n = n())
+
 # Associate biomass to network 
 biomass_node <- weight_analysis %>%
-  group_by(opcod, sp_class) %>%
-  summarise(biomass = sum(weight))
+  dplyr::group_by(opcod, sp_class) %>%
+  dplyr::summarise(biomass = sum(weight)) %>%
+  dplyr::ungroup %>%
+  dplyr::left_join(sampling_effort, by = "opcod") %>%
+  dplyr::mutate(bm_std = biomass / surface) %>%
+  dplyr::select(-surface)
 network_composition <-
-  left_join(abundance, biomass_node, by = c("opcod", "sp_class")) %>%
-  group_by(opcod) %>%
-  nest(.key = composition)
+  dplyr::left_join(abundance, biomass_node, by = c("opcod", "sp_class")) %>%
+  dplyr::group_by(opcod) %>%
+  tidyr::nest() %>%
+  dplyr::rename(composition = data)
 
 if ("composition" %in% colnames(network_analysis)) {
- network_analysis %<>% select(-composition)
+ network_analysis %<>% dplyr::select(-composition)
 }
 network_analysis <-
-  left_join(network_analysis, network_composition, by = "opcod")
+  dplyr::left_join(network_analysis, network_composition, by = "opcod")
 
 
 mysave(network_analysis, dir = dest_dir, overwrite = TRUE)
@@ -98,9 +112,9 @@ g <- igraph::graph_from_adjacency_matrix(metaweb_analysis$metaweb,
 dead_material <- c("det", "biof")
 ## Compute trophic level by node with metaweb:
 trophic_level <- NetIndices::TrophInd(metaweb_analysis$metaweb, Dead = dead_material) %>%
-  mutate(sp_class = colnames(metaweb_analysis$metaweb)) %>%
-  rename(troph_level = TL) %>%
-  select(sp_class, troph_level)
+  dplyr::mutate(sp_class = colnames(metaweb_analysis$metaweb)) %>%
+  dplyr::rename(troph_level = TL) %>%
+  dplyr::select(sp_class, troph_level)
 summary(trophic_level)
 ## Split trophic level in three classes:
 trophic_class <- split_in_classes(trophic_level$troph_level, class_method = "percentile",
@@ -109,7 +123,7 @@ mysave(trophic_level, trophic_class, dir = data_common, overwrite = TRUE)
 
 ## Assign trophic group to each node
 trophic_level %<>%
-  mutate(
+  dplyr::mutate(
     troph_group = get_size_class(trophic_level, NULL, troph_level, trophic_class)
   )
 
@@ -121,14 +135,89 @@ if (!is.null(options("network.type")) & options("network.type") == "species") {
 } else {
   var_chr <- "sp_class"
 }
+# Compute obs_troph_lvl
+
+## Get the proper network: 
 network_analysis %<>%
   mutate(
-  composition = furrr::future_map(composition, function (compo, troph_group, var2join){
-    if ("troph_group" %in% colnames(network_analysis)) {
-      compo %<>% select(-troph_group)
+    network = future_map(network, igraph::graph_from_data_frame, directed = TRUE),
+    network = future_map(network, igraph::as_adjacency_matrix, sparse = FALSE),
+    troph = future_map(network, NetIndices::TrophInd)
+    )
+
+network_analysis %>%
+  select(opcod, troph) %>%
+  unnest(troph) %>%
+  filter(is.na(TL))
+
+## get obs_troph_level
+network_analysis %<>%
+  mutate(
+    obs_troph_level = map(troph, function (x) {
+      out <- tibble(
+	!!sym(var_chr) := row.names(x),
+	obs_troph_level = x$TL
+      )
+      return(out)
+	  })
+    )
+## Put obs_troph_level in composition
+network_analysis %<>%
+  mutate(
+  composition = furrr::future_map2(composition, obs_troph_level, function (compo, troph_group, var2join){
+
+    if ("obs_troph_level" %in% names(compo)) {
+      compo %<>% dplyr::select(-obs_troph_level)
     }
     left_join(compo, troph_group, by = var2join)
-}, troph_group = trophic_level, var2join = var_chr))
+}, var2join = var_chr))
+
+## define trophic group
+myload(trophic_level, trophic_class, dir = data_common)
+split_in_classes(trophic_level$troph_level, class_method = "percentile",
+  nb_class = 3, round_limits = FALSE)
+
+all_obs_troph_lvl <- network_analysis$obs_troph_level %>%
+  map(., ~.x$obs_troph_level) %>%
+  unlist()
+
+obs_trophic_class <- split_in_classes(all_obs_troph_lvl, class_method = "percentile",
+  nb_class = 3, round_limits = FALSE)
+
+# Assign trophic group to each 
+composition_tmp <- network_analysis %>%
+  select(opcod, composition) %>%
+  unnest(composition) %>%
+  select(-surface)
+
+network_analysis %>%
+  select(opcod, obs_troph_level) %>%
+  unnest(obs_troph_level) %>%
+  group_by(opcod) %>%
+  summarise(n = n()) %>%
+  filter(opcod == 20099)
+  filter(sp_class == "TRF_7", opcod == 20099)
+
+composition_tmp %>%
+  group_by(opcod) %>%
+  summarise(n = n()) %>%
+  filter(opcod == 20099)
+  filter(is.na(obs_troph_level))
+
+
+composition_tmp$troph_group <- get_size_class(
+  data = na.omit(composition_tmp), NULL,
+  obs_troph_level,
+  obs_trophic_class)
+network_analysis %>%
+  dplyr::mutate(
+    troph_group = map(composition, ~get_size_class(
+      .x,
+      NULL,
+      obs_troph_level,
+      obs_trophic_class)
+    )
+  )
 
 ## Compute trophic level by species:
 if (!is.null(options("network.type")) & options("network.type") == "species") {
@@ -139,7 +228,9 @@ if (!is.null(options("network.type")) & options("network.type") == "species") {
     group_by(opcod, species) %>%
     summarise(
       # Average species trophic level by biomass:
-      troph_level = sum(biomass * troph_level) / sum(biomass),
+      troph_level_std = sum(bm_std * obs_troph_level) / sum(bm_std),
+      troph_level = sum(biomass * obs_troph_level) / sum(biomass),
+      bm_std = sum(bm_std),
       biomass = sum(biomass)
     ) %>%
     ungroup() 
@@ -159,10 +250,12 @@ if (!is.null(options("network.type")) & options("network.type") == "species") {
 	group_by(troph_group) %>%
 	summarise(
 	  biomass = sum(biomass),
+	  bm_std = sum(bm_std),
 	  nbnode  = n(), #nb nodes only of fishes
 	  richness = n()
 	  ) %>%
-	ungroup()
+	ungroup() # Add richness std with surface
+	)
     })
 } else {
   # for network with classes:
@@ -174,10 +267,17 @@ if (!is.null(options("network.type")) & options("network.type") == "species") {
 	group_by(troph_group) %>%
 	summarise(
 	  biomass = sum(biomass),
+	  bm_std = sum(bm_std),
 	  nbnode  = n(),
 	  richness = str_extract_all(sp_class, "[A-Z]") %>% unique %>% length
 	  ) %>%
-	ungroup()
+	ungroup() %>%
+	left_join(sampling_effort, by = "opcod") %>%
+	mutate(
+	nbnode_std = nbnode / surface,
+	rich_std = richness / surface
+	)
+
     })
 }
 
@@ -462,9 +562,6 @@ troph_group_std <- network_analysis %>%
   nest(.key = "troph_group")
 
 network_metrics %<>%
-  select(-troph_group) %>%
-  left_join(troph_group_std, by = "opcod")
-network_analysis %<>%
   select(-troph_group) %>%
   left_join(troph_group_std, by = "opcod")
 

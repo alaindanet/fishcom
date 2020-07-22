@@ -1,22 +1,61 @@
 
 # First category
 
-- [ ] Make appear PCA axis
+- [ ] Add network description
 
 # Second category
+
+## Intro
+
+- [ ] Detail total biomass and stability mecanisms 
+
+## Methods
+
+- [ ] Org methods by question
+
+- [x] Make a method slide
+  - [x] Map
+  - [/] Network inference
+  - [x] Metaweb 
+  - [x] Hypothesis slide
+  - [x] Temporal network
+- [ ] See [@arnoldi_] 2019 for the links between species abundances and CV
+
+- [ ] Mid point used in niche model to characterize feeding links [@dunne__2006] 
 
 - [ ] Explain SEM
   - [ ] Choice of variables
   - [ ] Choice of SEM type, according to Grace
-- [ ] Write SEM results 
-  - [ ] report direct and indirect effects
-- [ ] Make a method slide
-- [ ] See [@arnoldi_] 2019 for the links between species abundances and CV 
+
+## Results
+
+- [ ] PCA
+  - [x] scatter plot
+  - [x] contribution table
+  - [x] Nicer plot
+  - [x] Plot temperature altitude
+  - [x] Covaration variables
+
+- [ ] Make idw temperature and flow
+
+## Discussion
+
+## Appendix
+
+- [x] Make Rsq tables
+- [x] Estimate basin effects
+- [ ] Comment basin effects 
+- [x] Show sensibility SEM with different datasets
+- [ ] Comment sensibility analysis 
+- [ ] Add latex metamodel with references
+
+## All
+
+- [x] First biomass then stability
+- [x] Separate hypothesis: confirmation and new evidence
+
+- 
 
 # Third category
 
-- [ ] Write methods
-- [ ] Write results 
-- [ ] Write discussion 
-- [ ] Write introduction 
-- [ ] Write abstract 
+- [ ] Write abstract 
