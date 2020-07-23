@@ -11,7 +11,8 @@ if (is.null(argv) | length(argv) < 1) {
 repos <- "https://cran.rstudio.com"
 
 ## this makes sense on Debian where no packages touch /usr/local
-lib.loc <- "~/.local/share/R-3.6.1/library/"
+#lib.loc <- "~/.local/share/R-3.6.1/library/"
+lib.loc <- "~/.local/share/R-4.0.2/library/"
 
 ## Remove from the list already installed packages
 already_installed <- installed.packages()[, "Package"]
@@ -23,6 +24,3 @@ if (is.null(argv) | length(argv) < 1) {
   install.packages(argv, lib.loc, repos)
   cat("The following packages have been installed:\n", argv, ".\n")
 }
-
-
-

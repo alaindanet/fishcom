@@ -10,8 +10,9 @@
 
 
 # Load R library: 
-R_LIBS_USER="$R_LIBS_USER:$HOME/.local/share/R-3.4.2/library/"
+R_LIBS_USER="$R_LIBS_USER:$HOME/.local/share/R-4.0.2/library/"
 export R_LIBS_USER
+echo R_LIBS_USER
 
 # Chargement des modules
 module load userspace/tr17.10
@@ -21,14 +22,14 @@ module load lapack/3.7.1
 module load jags/4.3.0 
 module load proj.4/4.9.3 
 module load geos/3.6.2 
-module load R/3.4.2
+module load R/4.0.2
 
 # Launch the good guys: 
 
 #./00_dependancies.sh
-wait
-./01_install_packages.sh
-wait
+#wait
+#./01_install_packages.sh
+#wait
 # Build network species
 ./02_run_analysis.R "Slurm" "species"
 wait
