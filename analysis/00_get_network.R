@@ -5,7 +5,7 @@
 # Dep 
 library(tidyverse)
 library(magrittr)
-devtools::load_all()
+source_dir(path = mypath("R"))
 
 
 #############
@@ -13,7 +13,7 @@ devtools::load_all()
 #############
 # Load data
 cat("Load data\n")
-myload(pred_win, diet_shift, resource_diet_shift, length_analysis, dir = data_common)
+myload(pred_win, fish_diet_shift, resource_diet_shift, length_analysis, dir = data_common)
 cat("Load data: done\n")
 
 # Build metaweb
