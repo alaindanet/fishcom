@@ -7,11 +7,35 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r}
+mypath <- rprojroot::find_package_root_file
+data_common <- mypath("data")
+dest_dir <- mypath("data", "classes")
+#dest_dir <- mypath("data", "species")
+```
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.show = "hold",
+  fig.dim = c(7, 7)
 )
+library(tidyverse)
+library(magrittr)
+library(ggpmisc)
+library(cowplot)
+library(kableExtra)
+library(igraph)
+library(NetIndices)
+library(tidygraph)
+library(ggraph)
+library(lubridate)
+library(sf)
+#devtools::load_all()
+source(mypath("R", "misc.R"))
+source(mypath("R", "plot_methods.R"))
+theme_set(theme_alain())
 ```
 
 ```{r setup}
@@ -19,18 +43,99 @@ myload(temporal_network_metrics, dir = mypath("data", "classes"))
 temporal_network_metrics_classes <- temporal_network_metrics
 myload(temporal_network_metrics, dir = dest_dir)
 myload(community_metrics, temporal_community_metrics, synchrony, op_analysis, dir = data_common)
+op_analysis %<>% ungroup()
 myload(network_analysis, dir = mypath("data", "classes"))
 myload(trophic_level, trophic_class, dir = mypath("data"))
 myload(hab_type, habitat_pressure, dir = mypath("report"))
 source(mypath("R", "synchrony.R"))
 source(mypath("R", "geo_methods.R"))
 source(mypath("R", "local_network_build.R"))
+```
+
+# Pielou vs richness
+
+```{r}
+temporal_community_metrics %>%
+  left_join(select(synchrony, station, rich_tot_std)) %>%
+  ggplot(aes(y = pielou_med, x = rich_tot_std)) +
+  geom_point()
+```
+
+# Relationships between mean and variance 
+
+
+```{r}
+bm_sp <-
+  network_analysis %>%
+  unnest(composition) %>%
+  select(opcod, sp_class, bm_std) %>%
+  left_join(select(op_analysis, station, opcod), by = "opcod") %>% 
+  filter(!is.na(station)) %>%
+  mutate(species = get_species(sp_class)[,1]) %>%
+  group_by(opcod, species) %>%
+  summarise(bm_std = sum(bm_std)) %>%
+  ungroup(opcod) %>%
+  mutate(bm_std = replace_na(bm_std, 0)) %>%
+  left_join(select(op_analysis, station, opcod), by = "opcod")
+
+mv_sp <- 
+  bm_sp %>%
+  group_by(station, species) %>%
+  summarise(avg = mean(bm_std), variance = var(bm_std)) %>%
+  ungroup() %>%
+  mutate(log_avg = log(avg + 1), log_variance = log(variance + 1))
+
+mv_mod <- 
+  mv_sp %>%
+  group_by(species) %>%
+  nest() %>%
+  mutate(
+    model = purrr::map(data, ~lm(log_variance ~ log_avg, .x)),
+    coeff = purrr::map(model, broom::tidy),
+    pred = purrr::map(model, broom::augment) #predict
+  ) %>%
+  select(-data) %>%
+  ungroup()
+
+mv_pred <- 
+  mv_mod %>%
+  unnest(pred) %>%
+  select(1, 5:last_col()) %>%
+  rename(raw_variance = `log_variance`, log_variance = .fitted)
+summary(mv_pred)
+
+mv_sp %>%
+  ggplot(aes(x = log_avg, y = log_variance, color = species)) +
+  geom_point() +
+  geom_line(data = mv_pred, inherit.aes = TRUE)+
+  theme(legend.position = "bottom")
+
+
+mv_mod %>%
+  select(1, 3:4) %>%
+  unnest(coeff) %>%
+  filter(term == "log_avg") %>%
+  ggplot(aes(x = estimate)) +
+  geom_histogram()
 
 ```
 
 ```{r}
-temporal_network_metrics_classes %>%
-  select(station, troph_group) %>%
-  unnest(troph_group)
+mv_sp %>%
+  group_by(station) %>%
+  summarise(avg = mean(avg)) %>%
+  left_join(select(synchrony, station, rich_tot_std)) %>%
+  ggplot(aes(y = log(avg), x = log(rich_tot_std))) +
+  geom_point() +  
+  labs(y = "Mean species biomass", x = "Total species richness by square meter")
+
+bm_sp %>%
+  group_by(station) %>%
+  summarise(total = sum(bm_std)) %>%
+  left_join(select(synchrony, station, rich_tot_std)) %>%
+  ggplot(aes(y = log(total), x = log(rich_tot_std))) +
+  geom_point() +  
+  labs(y = "Total community biomass", x = "Total species richness by square meter")
 ```
+
 
