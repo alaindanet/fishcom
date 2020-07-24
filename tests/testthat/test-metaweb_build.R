@@ -2,6 +2,7 @@ context("metaweb_build")
 
 library('tidyverse')
 library('magrittr')
+data(fish_length_toy)
 
 #######################
 #  Size distribution  #
@@ -53,7 +54,7 @@ test_that("Class dataframe is correct", {
     )
   expect_identical(classes_species, expected_df)
 
-  classes_species <- compute_classes(fish_length_toy, species, length, nb_class = nb_class)
+  fish_classes_species <- compute_classes(fish_length_toy, species, length, nb_class = nb_class)
   fish_length_toy[1, "length"] <- NA
   # Test success:
   expect_error(compute_classes(fish_length_toy, species, length, nb_class = nb_class, na.rm = TRUE), NA)
@@ -91,7 +92,7 @@ test_that("classification handles df", {
 #######################
 #  Compute prey size  #
 #######################
-fake_prey_win <- distinct(fake, species) %>%
+fake_prey_win <- distinct(classes_species, species) %>%
   dplyr::select(species) %>%
   mutate(
     beta_min = .03,
@@ -126,7 +127,10 @@ fake_onto_diet_shift <- tibble(
     )
 piscivory_table <- compute_piscivory(classes_species, fake_onto_diet_shift, species = species, low_bound = min, upper_bound = max, fish = pisc)
 test_that("piscivory is well computed", {
-   expected_table <- th_prey_size %>%
+   expected_table <- 
+     compute_prey_size(
+       classes_species, fake_prey_win, species,
+       beta_min, beta_max, pred_win_method = "midpoint") %>%
      mutate(pisc_index = c(rep(0, 2), rep(1, 7), 0, rep(1, 8))) %>%
      dplyr::select(-min_prey, -max_prey)
    expect_identical(piscivory_table, expected_table)
