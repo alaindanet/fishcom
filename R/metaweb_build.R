@@ -329,6 +329,19 @@ compute_prey_size <- function (class_size, pred_win, species, beta_min, beta_max
   if (pred_win_method != "midpoint") {
     message("Other methods are not yet implemented")
   }
+
+  # check species concondance
+  class_sp <- dplyr::select(class_size, !!species)[[1]] %>% unique()
+  pred_sp <- dplyr::select(pred_win, !!species)[[1]] %>% unique()
+  missing_sp <- which(!class_sp %in% pred_sp)
+  if (length(missing_sp) > 0) {
+    msg <- paste0(
+      "The following species ", 
+      class_sp[missing_sp],
+      " have no predation windows defined.", collapse = "\n")
+    stop(msg)
+  }
+
   dplyr::left_join(class_size, pred_win, by = rlang::quo_name(species)) %>%
     dplyr::mutate(
       min_prey = !!beta_min * ( (lower + upper) / 2),

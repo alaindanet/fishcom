@@ -143,8 +143,8 @@ assign_size_class <- function (data, species, var, classes) {
       class_id = purrr::pmap(list(data = data, species_name = !! species ),
 	get_size_class, var = !!var, classes = classes))
 
-  classes_assigned %>% tidyr::unnest() %>%
-    #dplyr::select(-!!var) %>%
+  classes_assigned %>%
+    tidyr::unnest(cols = c(data, class_id)) %>%
     dplyr::mutate(class_id = as.integer(class_id)) %>%
     dplyr::select(!!species, class_id, !!var, tidyselect::everything())
 
