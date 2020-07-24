@@ -42,7 +42,7 @@ if (!is.null(options("network.type")) & options("network.type") == "species") {
 cat("Working directory:\n")
 cat(getwd(), "\n")
 
-source("../R/misc.R")
+source(mypath("R", "misc.R"))
 
 source(mypath("analysis", "00_get_network.R"))
 cat("Got networks!\n")
