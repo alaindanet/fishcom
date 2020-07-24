@@ -407,7 +407,8 @@ compute_classes <- function(size, group_var, var, class_method = "quantile",
     dplyr::select(-data)
 
   output <- nested_size %>%
-    tidyr::unnest(classes)
+    tidyr::unnest(classes) %>%
+    dplyr::ungroup()
 
   if (replace_min_by_one) {
     output[output$class_id == 1, "lower"] <- 1
