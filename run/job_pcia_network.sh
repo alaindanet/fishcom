@@ -9,9 +9,6 @@
 #SBATCH -t 06:00:00
 
 
-# Load R library: 
-R_LIBS_USER="$R_LIBS_USER:$HOME/.local/share/R-3.4.2/library/"
-export R_LIBS_USER
 
 # Chargement des modules
 module load userspace/tr17.10
@@ -22,6 +19,10 @@ module load jags/4.3.0
 module load proj.4/4.9.3 
 module load geos/3.6.2 
 module load R/3.4.2
+
+# Load R library: 
+R_LIBS_USER="$R_LIBS_USER:$HOME/.local/share/R-3.4.2/library/"
+export R_LIBS_USER
 
 # Launch the good guys: 
 
