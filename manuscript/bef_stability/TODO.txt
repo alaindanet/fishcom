@@ -6,56 +6,22 @@
 # Second category
 
 ## Intro
-
-- [ ] Detail total biomass and stability mecanisms 
-
 ## Methods
 
-- [ ] Org methods by question
-
-- [x] Make a method slide
-  - [x] Map
-  - [/] Network inference
-  - [x] Metaweb 
-  - [x] Hypothesis slide
-  - [x] Temporal network
-- [ ] See [@arnoldi_] 2019 for the links between species abundances and CV
-
-- [ ] Mid point used in niche model to characterize feeding links [@dunne__2006] 
-
-- [ ] Explain SEM
-  - [ ] Choice of variables
-  - [ ] Choice of SEM type, according to Grace
+- [ ] Figure 1:Add ref to list of species
 
 ## Results
-
-- [ ] PCA
-  - [x] scatter plot
-  - [x] contribution table
-  - [x] Nicer plot
-  - [x] Plot temperature altitude
-  - [x] Covaration variables
-
-- [ ] Make idw temperature and flow
-
 ## Discussion
 
 ## Appendix
 
-- [x] Make Rsq tables
-- [x] Estimate basin effects
+- [ ] all bivariates relationships
+- [ ]  
 - [ ] Comment basin effects 
-- [x] Show sensibility SEM with different datasets
 - [ ] Comment sensibility analysis 
 - [ ] Add latex metamodel with references
 
 ## All
 
-- [x] First biomass then stability
-- [x] Separate hypothesis: confirmation and new evidence
-
-- 
-
 # Third category
 
-- [ ] Write abstract 
