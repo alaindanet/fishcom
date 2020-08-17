@@ -1,6 +1,6 @@
 ---
 title: Species richness and network structure jointly drive total biomass and its temporal stability in fish communities
-author: Alain Danet, Maud Mouchet, (Willem Bonnaffe ici?), Elisa Thebault and Colin Fontaine
+author: Alain Danet, Maud Mouchet, Willem Bonnaffe, Elisa Thebault, Colin Fontaine
 date: \today 
 output:
   bookdown::pdf_document2:
@@ -69,7 +69,7 @@ knitr::opts_chunk$set(
 - Author contributions: AD, CF, MM and ET designed the study. WB designed the
   network inference method and collected the food diet data. AD performed the
   data analysis and wrote the first draft of the manuscript. All authors
-  contributed substantially to revisions.  
+  contributed substantially to revisions.
 
 - Data accessibility statement: the ONEMA database is available upon request to 
   eddy.cosson@afbiodiversite.fr and thierry.point@afbiodiversite.fr. The code
@@ -79,19 +79,19 @@ knitr::opts_chunk$set(
 - Article type: Letters
 
 - Number of words:
-  - Abstract: 208 
-  - Main text: XXXX 
+  - Abstract: 142 
+  - Main text: 4929 
 
 - Number of references: XXX
 - Number of figures: 2
-- Number of tables: 2
+- Number of tables: 1
 - Number of text boxes: 0 
 
 - Coresponding author:
   - Alain Danet
   - UMR 7204 CESCO, BP 61; 45, rue Buffon, 75005 Paris, France
   - alain.danet@mnhn.fr 
-  - +331XXXXXXXX
+  - +33140798134
 
 # Abstract
 
@@ -128,7 +128,6 @@ between species richness and network structure, highlighting that their effects
 should be assessed conjointly. Overall, our study opens fruitful perspectives on
 the link between species richness, network structure and ecosystem properties.
 
-(142/150 words)
 
 # Introduction 
 
@@ -333,11 +332,12 @@ matmet_cap <- paste0(
   "Inner borders draw the limits of the hydrographic basins. ",
   "(B) The metaweb. Each trophic species (N = 412) is represented by a node and
   each color represent a species (S = 45). Resource nodes (7) were drawn in grey. ",
-  "(C) Subset over network variation through time."
+  "(C) Subset over network variation through time. The species names
+  corresponding to the three digit codes are found in Table SXX."
 )
 ```
 
-```{r matmet, fig.cap = matmet_cap, cache = FALSE}
+```{r matmet, fig.cap = matmet_cap}
 myload(p_st,temporal_network, dir = mypath("manuscript/bef_stability/figs"))
 
 # Network inference
@@ -683,7 +683,7 @@ were computed with respectively the `nlme` and `piecewieseSEM` R packages
 analysis and the manuscript are accessible on github. The analysis were
 performed with R version 3.6.3 [@r_core_team_r_2020].
 
-```{r get-data, cache = FALSE}
+```{r get-data}
 library(piecewiseSEM)
 library(lme4)
 library(nlme)
@@ -959,7 +959,7 @@ This was also true for the PCA1, related to stream size, but effects were weaker
 than for PCA2.
 
 
-```{r indir-stab, cache = TRUE, results = TRUE}
+```{r indir-stab, results = TRUE}
 caption_sem <- paste0(
   "Direct, indirect and total effect of environment, species richness and
   network structure, i.e. connectance and mean trophic level on total biomass
@@ -995,8 +995,6 @@ pack_rows("Temporal stability of biomass", 4, 8)
 
 # Discussion
 
-#### Hat
-
 
 We found that species richness and mean
 trophic level had a positive effect on total biomass. In contrast, species
@@ -1012,8 +1010,6 @@ richness and network structure, and the first direct assessment of a possible
 joint effect of species richness and network structure.
 
 ## Species richness increased total biomass but decreased its temporal stability 
-
-#### Species and total biomass
 
 We found that species richness increased total biomass as found in salt marshes,
 grasslands and forests [@hector_plant_1999; @tilman_biodiversity_2014;
