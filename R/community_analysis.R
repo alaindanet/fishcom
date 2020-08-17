@@ -458,3 +458,18 @@ compute_synchrony_over_basin <- function(com = NULL, basin = NULL, .op = NULL) {
   synchrony
 
 }
+
+#' Compute fish body mass 
+#' @param length in mm numeric 
+#' @param gram logical TRUE (default), miligram if not
+calc_fish_body_mass <- function (length = NULL, unit = "gram") {
+
+  weight  <- 0.01 * (length ^ 3.03)
+
+  if (unit == "gram") {
+    weight <- weight * 10 ^ -3 #in grams
+  }
+
+  return(weight)
+
+}

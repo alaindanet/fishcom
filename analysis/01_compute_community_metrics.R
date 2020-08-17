@@ -33,12 +33,7 @@ wl %<>% dplyr::select(species_code, a, b) %>%
 myload(length_analysis, dir = data_common)
 
 weight_analysis <- length_analysis %>%
-  #left_join(., wl, by = "species") %>%
-  mutate(
-    #weight = a * (length ^ b), #in miligrams
-    weight = 0.01 * (length ^ 3.03), #in miligrams
-    weight = weight * 10 ^ -3 #in grams
-  ) %>%
+  mutate(weight = calc_fish_body_mass(length)) %>%
   dplyr::select(opcod, species, length, weight)
 # length is given in milimeters
 

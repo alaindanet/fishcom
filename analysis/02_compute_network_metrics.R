@@ -572,10 +572,51 @@ network_metrics %>%
 mysave(network_metrics, network_analysis,
   dir = mypath("data", "classes"), overwrite = TRUE)
 
-################################
-#  Compute motif distribution  #
-################################
+##################################
+#  Compute weighted interaction  #
+##################################
 
+myload(network_metrics, network_analysis, dir = mypath("data", "classes"))
+
+test <- get_fish_fish_adj_matrix(network_analysis$network[[1]])
+test[sort(colnames(test)), sort(colnames(test))]
+get_predator_biomass_demand(network_analysis$data[[1]])
+
+undebug(get_weighted_fish_fish_adj_matrix)
+test <- get_weighted_fish_fish_adj_matrix(
+  .data = get_predator_biomass_demand(network_analysis$data[[1]]),
+  network = get_fish_fish_adj_matrix(network_analysis$network[[1]])
+)
+test[, rownames(test) == "TRF_4"]
+get_predator_biomass_demand(network_analysis$data[[1]])
+
+sp_names <- c("bernard", "ermite", "crevette")
+pred_mat <- matrix(
+  c(rep(0, 3), c(0, 1, 0), rep(1, 3)),
+  byrow = FALSE, ncol = 3, dimnames = list(sp_names, sp_names))
+
+pred_bm_demand <- 
+  tibble(sp_class = colnames(pred_mat),
+    nind = c(1, 10, 100),
+    bm_prod = c(100, 10, 1)
+    ) %>%
+  sample_n(3)
+
+expected_mat <- matrix(
+  c(rep(0, 3),
+    c(0, 10, 0),
+    c(1 * 1/111, 10/111, 100/111)),
+  ncol = 3,
+  byrow = FALSE,
+  dimnames = list(sp_names, sp_names)
+) 
+get_weighted_fish_fish_adj_matrix(
+  .data = pred_bm_demand,
+  network = pred_mat  
+)
+
+network_analysis$composition[[1]]
+network_analysis$data[[1]]
 
 cat("-----------------------\n")
 cat("End of network metrics computation\n")
