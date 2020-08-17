@@ -255,7 +255,6 @@ if (!is.null(options("network.type")) & options("network.type") == "species") {
 	  richness = n()
 	  ) %>%
 	ungroup() # Add richness std with surface
-	)
     })
 } else {
   # for network with classes:

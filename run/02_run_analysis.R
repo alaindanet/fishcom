@@ -38,6 +38,9 @@ if (!is.null(options("network.type")) & options("network.type") == "species") {
   }
 }
 
+# Remove the new friendly warning of dplyr 
+#https://stackoverflow.com/questions/62140483/how-to-interpret-dplyr-message-summarise-regrouping-output-by-x-override
+options(dplyr.summarise.inform=F)
 
 cat("Working directory:\n")
 cat(getwd(), "\n")
