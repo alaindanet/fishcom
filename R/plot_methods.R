@@ -701,10 +701,10 @@ build_diag_from_sem <- function (
 
   # Replace names
   node_name_replacement <- c(
-    "log_RC1" = "Avg \n river size",
-    "log_RC2" = "Avg \n temperature \n & \n (- Altitude)",
+    "log_RC1" = "PCA1 \n Avg \n stream size",
+    "log_RC2" = "PCA2 \n Avg \n temperature",
     "log_RC3" = "CV flow \n & \n Avg enrichment",
-    "RC4" = "CV \n river size",
+    "RC4" = "CV \n stream size",
     "RC5" = "CV \n enrichment",
     "ct" = "Connectance",
     "t_lvl" = "Avg \n trophic level",

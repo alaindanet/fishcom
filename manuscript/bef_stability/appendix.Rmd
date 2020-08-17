@@ -29,7 +29,7 @@ dest_dir <- mypath("data", "species")
 load(file = mypath("manuscript", "bef_stability", "result", "workspace.rda"))
 
 knitr::opts_chunk$set(
-  cache = FALSE,
+  cache = TRUE,
   collapse = TRUE,
   comment = "#>",
   #fig.dim = c(7, 7),
@@ -62,7 +62,7 @@ theme_set(theme_alain())
 
 ```{r, echo = FALSE}
 package <- c("openSTARS", "SSN", "nlme", "piecewiseSEM")
-purrr::map_(package, ~ toBibtex(citation(.x)))
+purrr::map(package, ~ toBibtex(citation(.x)))
 
 toBibtex(citation())
 
@@ -277,9 +277,9 @@ prey range of the predator trophic species. To sum up, the metaweb was obtained
 with allometric feeding interactions (1) between trophic species, (2) between
 trophic species and resource nodes and (3) between resource nodes.
 
-#### Obtain network of a community 
+#### Local trophic network 
 
-The trophic network of a community (i.e. one network for each fish community
+The local trophic network (i.e. one network for each fish community
 sampling) was obtained by determining the trophic species of each fish
 individual in the community and interactions were set according to the metaweb.
 All the resource nodes were assumed to be present in each local network.
@@ -315,7 +315,7 @@ places than the fish samplings.
 ```{r, fig.height = 20/2.54}
 pca_pressure <- habitat_press
 myload(fourier, dir = mypath("data-raw", "polluants"))
-myload(flow_temp_metrics, dir = mypath("data"))
+myload(flow_temp_metrics, station_analysis, the_8_hydrologic_basin, dir = mypath("data"))
 sf_pressure <- station_analysis %>% 
   select(id) %>%
   left_join(rename(pca_pressure, id = station)) %>%
@@ -459,6 +459,33 @@ recorded in the dataset for flow, (temperature?) and BOD, we replaced the
 predicted value by respectively the minimum and the maximum value found in the
 dataset. We ran the interpolation four times and we kept the predicted value
 which had the least standard deviation.
+
+# Species list and food diet data
+
+```{r sp-list}
+myload(species, fish_diet_shift, dir = mypath("data"))
+kable(species,
+  format = "latex",
+  booktabs = T,
+  label = paste0("indir-sem"),
+  caption = "Fish species list."
+  ) %>%
+kable_styling(latex_options =c("striped", "scale_down"))
+
+```
+
+
+```{r food}
+kable(fish_diet_shift,
+  format = "latex",
+  booktabs = T,
+  label = paste0("indir-sem"),
+  caption = "Ontogenic diet shift for each species"
+  ) %>%
+kable_styling(latex_options =c("striped", "scale_down"))
+
+```
+
 
 # Analysis
 

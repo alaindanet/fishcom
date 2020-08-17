@@ -27,6 +27,10 @@ R_LIBS_USER="$R_LIBS_USER:$HOME/.local/share/R-4.0.2/library/"
 export R_LIBS_USER
 echo R_LIBS_USER
 
+# Load R library: 
+R_LIBS_USER="$R_LIBS_USER:$HOME/.local/share/R-3.4.2/library/"
+export R_LIBS_USER
+
 # Launch the good guys: 
 
 #./00_dependancies.sh
