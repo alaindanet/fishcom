@@ -73,18 +73,72 @@ nb_st_basin <- station_analysis %>%
 
 ```{r}
 myload(metaweb_analysis, dir = data_common)
-meta <- metaweb_analysis; rm(metaweb_analysis)
+metaweb <- meta$metaweb
+meta
+g <- igraph::graph_from_adjacency_matrix(metaweb, mode = "directed")
 
-g <- igraph::graph_from_adjacency_matrix(meta$metaweb, mode = "directed")
+species_color <- set_color_species(
+  node_list = names(V(g)),
+  species_list = meta$species, 
+  resource_list = meta$resource 
+)
+
+V(g)$color <- map_chr(
+  str_extract(names(V(g)), "[A-Z]{3}|[a-z]+"),
+  function(x){
+  species_color[names(species_color) == x]
+  }
+)
 
 # Define layout
 lay <- layout.fruchterman.reingold(g)
+lay <- layout_with_fr(g)
 # Compute trophic level
 dead_material <- c("det", "biof")
-lay[, 2] <- TrophInd(meta$metaweb, Dead = dead_material)$TL
-# Plot
-par(mar=rep(5, 4))
-plot.igraph(g,layout=lay,vertex.label=NA,vertex.size=2,edge.arrow.size=.5,edge.width=.5)
+lay[, 2] <- NetIndices::TrophInd(metaweb, Dead = dead_material)$TL
+
+png(
+  filename = mypath("manuscript/bef_stability/figs",
+    "metaweb.png"), 
+  units = "in",
+  width = 5,
+  height = 5,
+  pointsize = 12*96/72,
+  res = 96 
+)
+
+V(g)$label <- NA
+V(g)$size <- 20 
+org_par <- par(mar = c(5, 4, 0, 0) + 0.1)
+plot(g,
+  layout = lay,
+  edge.arrow.size=.2,
+  edge.curved=0,
+  #vertex.color = "orange",
+  vertex.frame.color="#555555",
+  vertex.label.color="black",
+  rescale = FALSE,
+  asp = 0,
+  axes = FALSE, 
+  ylim = c(1,4),
+  xlim = c(-6.2,2.7),
+  ylab = "Trophic level"
+)
+Axis(side=2, labels=TRUE)
+legend(
+  x      = -9.2,
+  y      = 0.9,
+  legend = names(species_color),
+  pch    = 21,
+  col    = "#777777",
+  pt.bg  = species_color,
+  pt.cex = 0.7,
+  cex    = .5,
+  bty    = "n",
+  ncol   = 7 
+)
+par(org_par)
+dev.off()
 
 ```
 
@@ -183,7 +237,7 @@ as.data.frame(round(cor_cv,2)) %>%
 ```
 
 ```{r}
-cor_med <- temporal_network_metrics %>%
+cor_med <- na.omit(temporal_network_metrics) %>%
   select_at(vars(dplyr::matches("med"))) %>%
   cor()
 as.data.frame(round(cor_med,2)) %>%

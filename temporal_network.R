@@ -103,8 +103,6 @@ metaweb <- meta$metaweb
 meta
 g <- igraph::graph_from_adjacency_matrix(metaweb, mode = "directed")
 
-str(V(g))
-
 species_color <- set_color_species(
   node_list = names(V(g)),
   species_list = meta$species, 

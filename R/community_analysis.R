@@ -288,7 +288,7 @@ compute_community_temporal_analysis <- function(.op = NULL,
     op = .op,
     species_network = species_network_metrics,
     class_network = class_network_metrics,
-    metrics = c("connectance", "w_trph_lvl_avg"),
+    metrics = c("weighted_connectance", "connectance", "w_trph_lvl_avg"),
     type_metrics = type_network_metrics
   )
 
