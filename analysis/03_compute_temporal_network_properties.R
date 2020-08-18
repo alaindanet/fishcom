@@ -18,15 +18,18 @@ devtools::load_all()
 
 source(mypath("R", "community_analysis.R"))
 myload(op_analysis, metaweb_analysis, dir = data_common)
-myload(network_metrics, dir = dest_dir)
-#debug(summarise_network_over_time)
+myload(network_metrics, dir = mypath("data", "classes"))
+
+debug(summarise_network_over_time)
 temporal_network_metrics <- summarise_network_over_time(
-  op = op_analysis,
-  network = network_metrics,
+  op = ungroup(op_analysis),
+  class_network = network_metrics,
+  type_metrics = "classes",
   metrics = 
     c("connectance",
       #"nestedness", 
       #"connectance_corrected",
+      "weighted_connectance",
       "nbnode",
       "mean_troph_level",
       #"mean_troph_level_corrected",

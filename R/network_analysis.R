@@ -55,6 +55,43 @@ compute_weighted_avg_trophic_level <- function(
   return(weighted_mean_trophic_lvl)
 }
 
+
+
+#' Calc weighted connectance 
+#' @param network a matrix 
+#' @references https://link.springer.com/article/10.1007/s12080-015-0291-7
+calc_weighted_connectance <- function (network = NULL) {
+
+  if (!(class(network) %in% c("dgCMatrix", "matrix"))) {
+    return(NA)
+  }
+
+  if (class(network) != "matrix") {
+    network <- as.matrix(network)
+    network[network == 0] <- NA # To manage log
+  }
+
+  # Shannon
+  total_fluxes <- sum(network, na.rm = TRUE)
+  weighted_fluxes <- network / total_fluxes
+  shannon <- - sum(weighted_fluxes * log(weighted_fluxes), na.rm = TRUE)
+  #return(list(total_fluxes, weighted_fluxes, shannon))
+
+  # Average mutual information
+  Ti <- rowSums(network, na.rm = TRUE)
+  Ti[Ti == 0] <- NA # To manage log
+  Tj <- colSums(network, na.rm = TRUE)
+  Tj[Tj == 0] <- NA # To manage log
+  A  <- sum(weighted_fluxes * log( (network * total_fluxes) / (Ti * Tj) ), na.rm = TRUE)
+
+  # Effective connectance per node
+  m <- exp((shannon - A) / 2)
+
+  connectance <- m / nrow(network)
+  return(connectance)
+}
+
+
 #' Get fish-fish adjacency matrix 
 #' @param network a df with the "from" and "to" columns
 get_fish_fish_adj_matrix <- function (network = NULL) {
@@ -81,9 +118,13 @@ get_fish_fish_adj_matrix <- function (network = NULL) {
 #' @param  df output from get_predator_biomass_demand()
 get_weighted_fish_fish_adj_matrix <- function (.data = NULL, network = NULL) {
   
+  # If no piscivory in the network 
+  if (all(network == 0)) return(NA)
+
   # Ensure ordering
-  stopifnot(nrow(.data) == nrow(network))
-  stopifnot(rownames(network) == colnames(network))
+  # If one species has no interaction, she is not in the network
+  #stopifnot(nrow(.data) == nrow(network))
+  stopifnot(all(rownames(data) %in% colnames(network)))
   .data <- .data[match(rownames(network), .data$sp_class), ] 
 
   for (i in seq_along(colnames(network))) {
@@ -122,19 +163,12 @@ get_predator_biomass_demand <- function (.data = NULL) {
     )
 
   #1. Production of biomass by population
-  bm_prod_pop <- .data %>% 
-    dplyr::group_by(sp_class) %>%
-    summarise(bm_prod = sum(bm_prod))
-
-  prod_pred <- bm_prod_pop[["bm_prod"]]
-  names(prod_pred) <- bm_prod_pop[["sp_class"]]
-
   #2. For each predator, get relative of its prey 
   .data %<>% 
     dplyr::group_by(sp_class) %>%
     dplyr::summarise(
       bm_prod = sum(bm_prod),
-      nind = n()
+      nind = dplyr::n()
     )
 
   return(.data)
@@ -149,3 +183,5 @@ get_predator_biomass_demand <- function (.data = NULL) {
 calc_biomass_production <- function (weight = NULL) {
   exp(25.22 + log(weight) * 0.76)
 }
+
+
