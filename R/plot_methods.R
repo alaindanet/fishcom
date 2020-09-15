@@ -477,6 +477,54 @@ plot_dyn_sp_biomass <- function (sync = NULL, station = NULL, trophic_level = NU
   return(p)
 }
 
+plot_temporal_biomass <- function (bm_data = NULL, biomass_var = NULL, com = NULL, .log = FALSE) {
+
+  #main_title <- paste0("Stab = ", round(1/(sync$cv_com), 2),", ", "Sync = ",
+    #round(sync$synchrony, 2),", ", "CVsp = ", round(sync$cv_sp, 2))
+  sym_bm_var <- rlang::sym(biomass_var)
+  # Total
+  total_biomass <- bm_data %>% 
+  group_by(date) %>%
+  summarise(!!sym_bm_var := sum(!!sym_bm_var, na.rm = FALSE))
+  
+  p <- bm_data %>%
+    mutate(label = if_else(date == max(date), as.character(species), NA_character_)) %>%
+  ggplot(aes_string(x = "date", y = biomass_var, color = "species")) + 
+  geom_line() +
+  lims(y = c(0, max(total_biomass[[biomass_var]]))) +
+  labs(
+  #title = main_title, subtitle = paste0("Station: ", station),
+    y = "Biomass (g)", x = "Sampling date"
+  ) +
+  ggrepel::geom_label_repel(aes(label = label),
+    size = 2.5, nudge_x = 1, na.rm = TRUE) 
+  
+  # Add total biomass
+  p2 <- p +
+    geom_line(data = total_biomass, aes(color = "black", size = 3)) +
+    theme(legend.position = "none")
+
+  # Add summary: richness, connectance, stab, t_lvl, sync, cv_sp 
+  label <- paste(
+    "S = ", com$bm_std_stab,
+    "sync = ", com$sync,
+    "CVsp = ", com$cv_sp,
+    "R = ", com$rich_tot_std,
+    "C = ", com$ct,
+    "Tlvl = ", com$t_lvl
+  ) 
+
+  p3 <- p2 +
+    annotate("text", x = median(total_biomass$date),
+      y = 15, label = "Some text")
+
+  if (.log) {
+    p3 <- p3 + scale_y_log10() 
+  }
+
+  return(p3)
+}
+
 ###############
 #  Labellers  #
 ###############
