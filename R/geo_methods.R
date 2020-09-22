@@ -326,7 +326,7 @@ prepare_ssn <- function (grass_path = "/usr/lib/grass76/", mnt_path = NULL,
     pred_sites = pred_path
   )
   openSTARS::derive_streams()
-  #rgrass7::use_sp()
+  rgrass7::use_sp()
 
   cj <- openSTARS::check_compl_junctions()
   #cj <- openSTARS::check_compl_confluences()
