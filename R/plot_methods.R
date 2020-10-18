@@ -67,6 +67,7 @@ my_crap_temporal_network <- function (
   metaweb = parent.frame()$meta$metaweb,
   network_data = parent.frame()$network_analysis,
   bm_var = "biomass",
+  my_y_lim = NULL,
   ...) {
 
   # Get network list
@@ -98,7 +99,7 @@ my_crap_temporal_network <- function (
     arrange(date) %>%
     group_by(date) %>%
     nest() %>%
-    mutate(biomass = map(data,
+    mutate(!!bm_var_sym := map(data,
 	function(x){
 	val <- x[[bm_var]]
 	names(val) <- x[[sp_var]]
@@ -163,7 +164,61 @@ my_crap_temporal_network <- function (
     color = color,
     ...
   )
-  return(out)
+
+  out$plots[[1]] <- out$plots[[1]] +
+    labs(y = "Trophic level") +
+    theme(
+      axis.line.y = element_line(),
+      axis.ticks.y = element_line(),
+      axis.text.y = element_text(),
+      axis.title.y = element_text(),
+    )
+
+    out$legends <- cowplot::get_legend(
+      out$plots[[1]] +
+	scale_color_manual(values = out$color, limits = names(out$color)) +
+	labs(colour = "Species", size = "Biomass") +
+	guides(
+	  colour = guide_legend(
+	    label.position = "left",
+	    ncol = 4,
+	    byrow = TRUE,
+	    title.position = "top"),
+	  size = guide_legend(
+	    nrow = 1,
+	    byrow = TRUE,
+	    title.position = "top"
+	  )
+	  ) +
+	theme(
+	  plot.margin = unit(c(0, 0, 0, 0), "cm"),
+	  legend.direction = "horizontal", 
+	  legend.position = "bottom",
+	  legend.box = "vertical",
+	  legend.margin = margin(t = 0, b = 0, l = 0, r = 0),
+	  legend.spacing.x = unit(.1, 'cm'),
+	  legend.spacing.y = unit(.1, 'cm'),
+	  text = element_text(size = 8),
+	  legend.text = element_text(
+	    size = NULL,
+	    margin = margin(r = 5)
+	  )
+	)
+    )
+    out$plots <- map(out$plots, function (x) {
+      x + theme(legend.position = "none",
+	plot.margin = unit(c(0, 0, 0, 0), "cm"), 
+	axis.title.x = element_text()
+      )
+    }) 
+
+    if (!is.null(my_y_lim)) {
+    out$plots <- map(out$plots, function (x) {
+      x + ylim(my_y_lim) 
+    })
+    }
+
+    return(out)
 }
 
 #' Temporal graph for a station
@@ -274,7 +329,11 @@ plot_temporal_network <- function(data = NULL,
 #' @param title chr
 #'
 #' @return a ggraph object
-set_layout_graph <- function (net = NULL, glay = NULL, x = NULL, y = NULL, title = NULL, biomass = NULL, color_scale= NULL, dead_material = NULL) {
+set_layout_graph <- function (
+  net = NULL, glay = NULL,
+  x = NULL, y = NULL, title = NULL,
+  biomass = NULL, color_scale= NULL,
+  dead_material = NULL) {
 
   if (any(class(net) == "data.frame")) {
     net <- igraph::graph_from_data_frame(net, directed = TRUE)
@@ -336,7 +395,7 @@ set_layout_graph <- function (net = NULL, glay = NULL, x = NULL, y = NULL, title
     }
   }
   p <- ggraph::ggraph(llay) +
-    ggraph::geom_edge_fan(aes(alpha = ..index..), show.legend = FALSE) +
+    ggraph::geom_edge_fan(color = "grey80", alpha = .3, strength = .5, show.legend = FALSE) +
     coord_cartesian(ylim=c(1,4.5))
   if (!is.null(biomass)) {
     stopifnot(all(names(biomass) %in% node_names))
@@ -347,20 +406,20 @@ set_layout_graph <- function (net = NULL, glay = NULL, x = NULL, y = NULL, title
     dataset$biomass <- numeric(nrow(dataset))
     dataset$biomass[mask_sp][order(factor(dataset$name[mask_sp]))] <-
       biomass[order(factor(names(biomass)))]
-    dataset$biomass[!mask_sp] <- 10
+    dataset$biomass[!mask_sp] <- .01 
 
   }
   if (!is.null(title)) {
-    p <- p + labs(title = title)
+    p <- p + labs(x = title)
   }
   p <- p + ggraph::theme_graph(
-    foreground     = "steelblue",
+    foreground     = NULL,
     fg_text_colour = "white",
     base_family    = "sans",
     background     = NA,
     title_size = 11,
     title_face = "bold",
-    title_margin = 3
+    title_margin = 0
   )
   if (!is.null(color_scale) & !is.null(biomass)) {
     p <- p +
@@ -505,6 +564,9 @@ plot_temporal_biomass <- function (bm_data = NULL, biomass_var = NULL, com = NUL
     theme(legend.position = "none")
 
   # Add summary: richness, connectance, stab, t_lvl, sync, cv_sp 
+  com %<>%
+    mutate_if(is.double, round(., 2))
+
   label <- paste(
     "S = ", com$bm_std_stab,
     "sync = ", com$sync,
@@ -516,7 +578,7 @@ plot_temporal_biomass <- function (bm_data = NULL, biomass_var = NULL, com = NUL
 
   p3 <- p2 +
     annotate("text", x = median(total_biomass$date),
-      y = 15, label = "Some text")
+      y = 15, label = label)
 
   if (.log) {
     p3 <- p3 + scale_y_log10() 
@@ -739,7 +801,8 @@ build_diag_from_sem <- function (
   env_y_pos = 0,
   env_y_sep = 1,
   order_env_node = NULL,
-  metamodel = FALSE
+  metamodel = FALSE,
+  inverse_y_node_pose = FALSE
   ) {
 
   est <- fit$coefficients
@@ -863,9 +926,16 @@ build_diag_from_sem <- function (
   node_df$x[com_node_mask]  <- env_x_pos[c(1,2)]
 
   node_df$y <- NA
-  node_df$y[evt_node_mask]  <- env_y_pos
-  node_df$y[rich_node_mask] <- env_y_pos - env_y_sep
-  node_df$y[com_node_mask]  <- env_y_pos - 2 * env_y_sep
+
+  if (inverse_y_node_pose) {
+    node_df$y[evt_node_mask]  <- env_y_pos
+    node_df$y[rich_node_mask] <- env_y_pos + env_y_sep
+    node_df$y[com_node_mask]  <- env_y_pos + 2 * env_y_sep
+  } else {
+    node_df$y[evt_node_mask]  <- env_y_pos
+    node_df$y[rich_node_mask] <- env_y_pos - env_y_sep
+    node_df$y[com_node_mask]  <- env_y_pos - 2 * env_y_sep
+  }
 
   # Adapt if SEM is for stab or bm:
   if (any(node_df$label %in% type_of_node[["stab"]])) {
@@ -873,13 +943,23 @@ build_diag_from_sem <- function (
     node_df$x[node_df$label %in% type_of_node[["stab_comp"]] ] <- env_x_pos[c(1, 2)]
     node_df$x[node_df$label %in% type_of_node[["stab"]] ]      <- mid_pos
 
-    node_df$y[node_df$label %in%  type_of_node[["stab_comp"]] ] <- env_y_pos - 3 * env_y_sep
-    node_df$y[node_df$label %in%  type_of_node[["stab"]] ]      <- env_y_pos - 4 * env_y_sep
+    if (inverse_y_node_pose) {
+      node_df$y[node_df$label %in%  type_of_node[["stab_comp"]] ] <- env_y_pos + 3 * env_y_sep
+      node_df$y[node_df$label %in%  type_of_node[["stab"]] ]      <- env_y_pos + 4 * env_y_sep
+    } else {
+      node_df$y[node_df$label %in%  type_of_node[["stab_comp"]] ] <- env_y_pos - 3 * env_y_sep
+      node_df$y[node_df$label %in%  type_of_node[["stab"]] ]      <- env_y_pos - 4 * env_y_sep
+    }
     
   } else if (any(node_df$label %in% type_of_node[["bm"]])) {
 
     node_df$x[node_df$label %in% type_of_node[["bm"]] ]  <- mid_pos 
-    node_df$y[node_df$label %in%  type_of_node[["bm"]] ] <- env_y_pos - 3 * env_y_sep
+
+    if (inverse_y_node_pose) {
+      node_df$y[node_df$label %in%  type_of_node[["bm"]] ] <- env_y_pos + 3 * env_y_sep
+    } else {
+      node_df$y[node_df$label %in%  type_of_node[["bm"]] ] <- env_y_pos - 3 * env_y_sep
+    }
     
   } else {
     stop("SEM has no stability or total biomass. Function cannot set node position.")
@@ -953,7 +1033,8 @@ export_diagram <- function (
   env_y_pos = 0,
   env_y_sep = 1.5,
   order_env_node = c("RC4", "log_RC3", "RC5", "log_RC1", "log_RC2"),  
-  metamodel = FALSE
+  metamodel = FALSE,
+  inverse_y_node_pose = FALSE
   ) {
 
 
@@ -966,7 +1047,8 @@ export_diagram <- function (
     env_y_pos = env_y_pos,
     env_y_sep = env_y_sep,
     order_env_node = order_env_node,  
-    metamodel = metamodel 
+    metamodel = metamodel, 
+    inverse_y_node_pose = inverse_y_node_pose
   )
   graph %<>%
     add_global_graph_attrs(
@@ -1193,9 +1275,10 @@ theme_map <- function(...) {
 
 get_sem_var_name_replacement <- function () {
   out <- c(
-    "log_RC1" = "Avg \n stream size",
-    "log_RC2" = "Avg \n temperature \n & \n (- Altitude)",
-    "log_RC3" = "CV \n stream size",
+
+    "log_RC1" = "PCA1 \n Avg \n stream size",
+    "log_RC2" = "PCA2 \n Avg \n temperature",
+    "log_RC3" = "CV flow \n & \n Avg enrichment",
     "RC4" = "CV \n enrichment",
     "RC5" = "CV flow \n & \n Avg enrichment",
     "ct" = "Connectance",
@@ -1246,16 +1329,18 @@ format_table <- function (x = tmp_stab_indir_table) {
   names(rm_n) <- names(get_sem_var_name_replacement()) 
   x$variable <- str_replace_all(x$variable, rm_n)
 
-  colnames(x) %<>% str_remove_all(., pattern = "via_")
+  #colnames(x) %<>% str_remove_all(., pattern = "via_")
 
   col_replacement <- c(
     direct = "Direct",
     variable = "Variable",
-    cv_sp = "CVsp",
-    sync = "Synchrony",
+    via_cv_sp = "CVsp",
+    via_sync = "Synchrony",
     #richness_com = "Species richness and network structure",
-    richness = "Species richness",
-    com = "Network structure",
+    via_richness = "Species richness",
+    via_ct = "Connectance",
+    via_tlvl = "Avg trophic level",
+    via_com = "Network structure",
     `_` = " and ",
     total = "Total effect"
   )

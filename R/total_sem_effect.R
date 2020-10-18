@@ -83,8 +83,8 @@ get_indirect_effect <- function (fit = NULL, p_val_thl = NULL, ...) {
   }
 
   }
-
-  return(tmp[, order(names(tmp))])
+ tmp <- tmp[, order(names(tmp))]
+  return(tmp[, c("a", "indir")])
 }
 
 #' Get env effect on stab 
@@ -103,6 +103,7 @@ get_env_on_stab <- function (fit = NULL, p_val_thl = NULL, type = "std") {
     zzz = c(stab_var) 
   )
   
+  
   via_sync <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     x = sem_env_var(),
     zz = c("log_sync"),
@@ -116,18 +117,33 @@ get_env_on_stab <- function (fit = NULL, p_val_thl = NULL, type = "std") {
     zzz = c(stab_var) 
   )
   # effect of env through richness through com 
-  via_richness_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
+  via_richness_ct <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     x = sem_env_var(),
     y = c(rich_var),
-    z = c("ct", "t_lvl"),
+    z = c("ct"),
+    zz = c("log_sync", "log_cv_sp"),
+    zzz = c(stab_var)
+  )
+
+  via_richness_tlvl <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
+    x = sem_env_var(),
+    y = c(rich_var),
+    z = c("t_lvl"),
     zz = c("log_sync", "log_cv_sp"),
     zzz = c(stab_var)
   )
 
   # effect of env through com 
-  via_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
+  via_ct <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     x = sem_env_var(),
-    z = c("ct", "t_lvl"),
+    z = c("ct"),
+    zz = c("log_sync", "log_cv_sp"),
+    zzz = c(stab_var)
+  )
+
+  via_tlvl <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
+    x = sem_env_var(),
+    z = c("t_lvl"),
     zz = c("log_sync", "log_cv_sp"),
     zzz = c(stab_var)
   )
@@ -135,9 +151,9 @@ get_env_on_stab <- function (fit = NULL, p_val_thl = NULL, type = "std") {
   to_sum <- list(
     via_cv_sp = via_cv_sp,
     via_sync = via_sync,
-    via_richness = via_richness,
-    via_com = via_com,
-    via_richness_com = via_richness_com
+    via_richness = rbind(via_richness, via_richness_ct, via_richness_tlvl),
+    via_ct = via_ct,
+    via_tlvl = via_tlvl
   )
 
   return(get_indir_common_output(.data = to_sum))
@@ -247,9 +263,15 @@ get_rich_on_stab <- function (fit = NULL, p_val_thl = NULL, type = "std") {
     zzz = c(stab_var) 
   )
 
-  via_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
+  via_ct <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     y = c(rich_var),
-    z = c("ct", "t_lvl"),
+    z = c("ct"),
+    zz = c("log_sync", "log_cv_sp"),
+    zzz = c(stab_var) 
+  )
+  via_tlvl <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
+    y = c(rich_var),
+    z = c("t_lvl"),
     zz = c("log_sync", "log_cv_sp"),
     zzz = c(stab_var) 
   )
@@ -257,7 +279,8 @@ get_rich_on_stab <- function (fit = NULL, p_val_thl = NULL, type = "std") {
   to_sum <- list(
     via_cv_sp = via_cv_sp,
     via_sync = via_sync,
-    via_com = via_com
+    via_ct = via_ct,
+    via_tlvl = via_tlvl
   )
 
   return(get_indir_common_output(.data = to_sum))
@@ -287,7 +310,7 @@ get_rich_on_stab_comp <- function (fit = NULL,
 }
 
 #' Get com on stab
-get_com_on_stab <- function (fit = NULL,
+get_ct_on_stab <- function (fit = NULL,
   p_val_thl = NULL, stab_comp = NULL, type = "std") {
 
   rich_var <- "log_rich_tot"
@@ -298,13 +321,13 @@ get_com_on_stab <- function (fit = NULL,
   }
 
   via_cv_sp <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = c("ct", "t_lvl"),
+    x = c("ct"),
     zz = c("log_cv_sp"),
     zzz = c(stab_var) 
   )
   
   via_sync <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = c("ct", "t_lvl"),
+    x = c("ct"),
     zz = c("log_sync"),
     zzz = c(stab_var) 
   )
@@ -316,6 +339,37 @@ get_com_on_stab <- function (fit = NULL,
 
   return(get_indir_common_output(.data = to_sum))
 }
+
+get_tlvl_on_stab <- function (fit = NULL,
+  p_val_thl = NULL, stab_comp = NULL, type = "std") {
+
+  rich_var <- "log_rich_tot"
+  stab_var <- "log_stab"
+  if (type == "std") {
+   rich_var <- paste0(rich_var, "_", type)
+   stab_var <- paste0(stab_var, "_", type)
+  }
+
+  via_cv_sp <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
+    x = c("t_lvl"),
+    zz = c("log_cv_sp"),
+    zzz = c(stab_var) 
+  )
+  
+  via_sync <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
+    x = c("t_lvl"),
+    zz = c("log_sync"),
+    zzz = c(stab_var) 
+  )
+
+  to_sum <- list(
+    via_cv_sp = via_cv_sp,
+    via_sync = via_sync
+  )
+
+  return(get_indir_common_output(.data = to_sum))
+}
+
 
 #' Get env effect on bm 
 get_env_on_bm <- function (fit = NULL, p_val_thl = NULL, type = "std") {
@@ -339,21 +393,34 @@ get_env_on_bm <- function (fit = NULL, p_val_thl = NULL, type = "std") {
   )
 
   # effect via richness and com 
-  via_richness_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
+  via_richness_ct <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     x = sem_env_var(),
     y = c(rich_var),
-    z = c("ct", "t_lvl"),
-    zzz = c(bm_var) 
-  )
-  # effect of env through com 
-  via_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
-    x = sem_env_var(),
-    z = c("ct", "t_lvl"),
+    z = c("ct"),
     zzz = c(bm_var) 
   )
 
-  to_sum <- list(direct = direct, via_richness = via_richness,
-    via_richness_com = via_richness_com, via_com = via_com)
+  via_richness_tlvl <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
+    x = sem_env_var(),
+    y = c(rich_var),
+    z = c("t_lvl"),
+    zzz = c(bm_var) 
+  )
+  # effect of env through com 
+  via_tlvl <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
+    x = sem_env_var(),
+    z = c("t_lvl"),
+    zzz = c(bm_var) 
+  )
+  via_ct <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
+    x = sem_env_var(),
+    z = c("ct"),
+    zzz = c(bm_var) 
+  )
+
+  to_sum <- list(direct = direct,
+    via_richness = rbind(via_richness, via_richness_ct, via_richness_tlvl),
+    via_ct = via_ct, via_tlvl = via_tlvl)
 
   return(get_indir_common_output(.data = to_sum))
 }
@@ -372,12 +439,17 @@ get_rich_on_bm <- function (fit = NULL, p_val_thl = NULL, type = "std") {
     x = rich_var,
     zzz = c(bm_var) 
   )
-  via_com <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
+  via_ct <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
     y = c(rich_var),
-    z = c("ct", "t_lvl"),
-    zzz = c(bm_var) 
+    z = c("ct"),
+    zzz = c(bm_var)
   )
-  to_sum <- list(direct = direct, via_com = via_com)
+  via_tlvl <- get_indirect_effect(fit = fit, p_val_thl = 0.05,
+    y = c(rich_var),
+    z = c("t_lvl"),
+    zzz = c(bm_var)
+  )
+  to_sum <- list(direct = direct, via_ct = via_ct, via_tlvl = via_tlvl)
 
 
   return(get_indir_common_output(.data = to_sum))

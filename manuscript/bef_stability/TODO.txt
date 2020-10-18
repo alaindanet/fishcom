@@ -1,12 +1,9 @@
 
 # First category
 
-- [ ] Add network description
+- [ ] biomass estimation: how many individuals
 
 # Second category
-
-## Intro
-## Methods
 
 - [ ] Figure 1:Add ref to list of species
 

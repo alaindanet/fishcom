@@ -84,15 +84,15 @@ river. The fishermen made from one to three row
 of fishing. We kept only the first row for analysis to homogenize the sampling
 effort. For deeper and wider streams, the sampling was partial over the bank and
 the channel and performed by boat and by foot (along the bank). We kept only
-sampling done over the bank because channel sampling was not always done.  Two
+sampling done over the bank because channel sampling was not always done. Two
 types of partial protocols takes place: partial over bank and partial by points.
 The former is continuous while the latter is discrete. Furthermore, in partial
 by point protocol the channel can be sampled as well. We kept only the partial
 by point fish sampling which all the sampling point were done over the bank to
-homogenize the sampling.  Then, we merged partial over bank and partial over
+homogenize the sampling. Then, we merged partial over bank and partial over
 point protocols. Some sampling stations had mix characteristics in which mix of
 partial and complete protocols were applied depending of the depth of the river
-at the time of sampling. Those stations were removed from the analysis.
+at the time of sampling. 
 
 Heterogeneity in the sampling period may introduce variability that is not related
 to ecological processes such as the presence of juveniles. In order to reduce

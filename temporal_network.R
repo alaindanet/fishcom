@@ -23,7 +23,9 @@ st_sp_node <- network_analysis %>%
 net <- network_analysis %>%
   dplyr::select(opcod, network) %>%
   unnest(cols = c(network)) %>%
-  left_join(., dplyr::select(op_analysis, opcod, station, date)) 
+  left_join(., dplyr::select(op_analysis, opcod, station, date)) %>%
+  mutate(date = lubridate::year(date)) 
+
 
 station_to_get <- function (rich = NULL)  {
   tmp <- filter(st_sp_node, nbsp == rich)
@@ -33,66 +35,128 @@ station_to_get <- function (rich = NULL)  {
 }
 choice <- station_to_get(6)
 
-net_ex <- filter(net, station == 11329) %>% #choice
-  mutate(date = lubridate::year(date)) %>%
-  filter(date %in% seq(2000, 2004))
+# Choose two stations: stable / not stable 
+myload(sem_data, dir = mypath("data"))
+quant <- quantile(sem_data$bm_std_stab, na.rm = TRUE)[c("25%", "75%")]
+# the two stations closest to first and third quantile
+qt_station <- sem_data %>%
+  select(station, bm_std_stab) %>%
+  slice(which.min(abs(bm_std_stab - quant[1])), which.min(abs(bm_std_stab - quant[2])))
 
+
+net_ex <- filter(net, station == qt_station$station[1])
+
+net_temp <- net_ex %>%
+  dplyr::select(date, from, to) %>%
+    arrange(date) %>%
+    group_by(date) %>%
+    nest(.key = "network") %>%
+    mutate(
+      igraph_obj = map(network, igraph::graph_from_data_frame,
+        directed = TRUE),
+      adj_mat = map(igraph_obj, igraph::as_adjacency_matrix,
+        sparse = FALSE),
+      troph = map(adj_mat, ~NetIndices::TrophInd(.x)),
+      obs_troph_level_vector = map(troph, function (x) {
+	#out <- x$TL
+	#names(out) <- rownames(x)
+	tibble(
+	  TL = x$TL, 
+	  name = rownames(x)
+	)
+	#return(out)
+	}
+      )
+    )
+
+#library(ggnetwork)
+##install.packages("ggnetwork")
+#test <- ggnetwork(net_temp$igraph_obj[[1]]) %>%
+  #left_join(net_temp$obs_troph_level_vector[[1]] , by = "name") %>%
+  #mutate(
+    #TLend = TL + y - yend
+  #)
+#ggplot(test, aes(y = TL, x = x, xend = xend, yend = TLend)) +
+  #geom_edges()
+#ggplot(test, aes(y = y, x = x, xend = xend, yend = yend)) +
+  #geom_edges() +
+  #geom_nodes()
+
+#plot_temporal_network
+
+library(tidygraph)
+library(ggraph)
+unique(net_ex$date)
+source(mypath("R", "plot_methods.R"))
+#debugonce(my_crap_temporal_network)
 p <- my_crap_temporal_network(
   net = net_ex,
   metaweb = meta$metaweb,
   network_data = network_analysis,
   nrow_sp_legend = 2,
-  return_data = TRUE
+  return_data = TRUE,
+  my_y_lim = c(0, 4.1),
+  bm_var = "bm_std"
 )
-legends <- cowplot::get_legend(
-    p$plots[[1]] +
-      scale_color_manual(values = p$color, limits = names(p$color)) +
-      labs(colour = "Species", size = "Biomass") +
-      guides(
-	colour = guide_legend(
-	  label.position = "left",
-	  ncol = 4,
-	  byrow = TRUE,
-	  title.position = "top"),
-	size = guide_legend(
-	  nrow = 1,
-	  byrow = TRUE,
-	  title.position = "top"
-	)
-	) +
-      theme(
-	plot.margin = unit(c(0, 0, 0, 0), "cm"),
-	legend.direction = "horizontal", 
-	legend.position = "bottom",
-	legend.box = "vertical",
-	legend.margin = margin(t = 0, b = 0, l = 0, r = 0),
-	legend.spacing.x = unit(.1, 'cm'),
-	legend.spacing.y = unit(.1, 'cm'),
-	text = element_text(size = 8),
-	legend.text = element_text(
-	  size = NULL,
-	  margin = margin(r = 5)
-	)
-      )
-  )
-plots <- map(p$plots, function (x) {
-  x + theme(legend.position = "none",
-    plot.margin = unit(c(1, 0, 0, 0), "cm"))
-  }) 
+names(p)
+# Modify for biomass std 
+# normal edge
+# 
 
-p_tmp_net <- plot_grid(plotlist = plots[1:4])
-temporal_network <- plot_grid(
-  p_tmp_net,
-  legends,
-  #ncol = 2, rel_widths= c(1, .4)
-  nrow = 2, rel_heights= c(1, .5)
+p2 <- my_crap_temporal_network(
+  net = filter(net, station == qt_station$station[2]),
+  metaweb = meta$metaweb,
+  network_data = network_analysis,
+  nrow_sp_legend = 2,
+  return_data = TRUE,
+  my_y_lim = c(0, 4.1),
+  bm_var = "bm_std"
 )
-temporal_network
+
+temporal_network <- plot_grid(plotlist = p$plots[-1], ncol = 4)
+temporal_network2 <- plot_grid(plotlist = p2$plots, ncol = 4)
+
+
+myload(p_st,temporal_network, final_temporal_network, dir = mypath("manuscript/bef_stability/figs"))
+
+# Network inference
+net_method_path <- mypath("manuscript/bef_stability/figs",
+  "hypothesis.pdf")
+metaweb_path <- mypath("manuscript/bef_stability/figs",
+  "metaweb.png")
+
+library(magick)
+p_net_method <- cowplot::ggdraw() +
+  cowplot::draw_image(magick::image_read_pdf(net_method_path))
+p_metaweb <- cowplot::ggdraw() +
+  cowplot::draw_image(magick::image_read(metaweb_path), hjust = 0) 
+
+final_temporal_network <- plot_grid(
+  temporal_network2,
+  temporal_network,
+  nrow = 2, rel_heights= c(1, 1),
+  align = "none",
+  labels = c("C", "D"),
+  vjust = c(-.5, .5), hjust = 0
+  )
+
+fig1 <- plot_grid(
+  plot_grid(p_st, p_metaweb, labels = "AUTO", vjust = 2, hjust = -0.5),
+  final_temporal_network,  ncol = 1,
+  rel_heights = c(.6, 1)
+)
 
 save_plot(
-  filename = mypath("manuscript", "bef_stability", "figs", "temporal_network.pdf"),
-  temporal_network)
-mysave(temporal_network, dir = mypath("manuscript/bef_stability/figs"), overwrite = TRUE)
+  filename = mypath("manuscript", "bef_stability", "figs", "fig1.pdf"),
+  fig1, base_height = 10,
+  base_asp = .6
+)
+
+save_plot(
+  filename = mypath("manuscript", "bef_stability", "figs", "final_temporal_network.pdf"),
+  final, base_height = 3, base_asp = 2)
+mysave(final_temporal_network, dir = mypath("manuscript/bef_stability/figs"), overwrite = TRUE)
+
 
 ######
 # metaweb   #
