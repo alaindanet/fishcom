@@ -62,7 +62,7 @@ basin <- rmapshaper::ms_simplify(input = basin) %>%
   st_as_sf()
 
 # Station
-myload(biomass_ts_sax, op_analysis, dir = mypath("data"))
+myload(biomass_ts_sax, op_analysis, qt_station, dir = mypath("data"))
 op_analysis_bbb <- filter(op_analysis, station %in%
   biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
 station <- get_basin_station(sf_obj = TRUE)
@@ -72,7 +72,8 @@ station %<>%
 station %<>%
   mutate(type = ifelse(
       station %in% unique(op_analysis_bbb$station),
-      "stable", "unstable")
+      "stable", "unstable"),
+    st_temporal = ifelse(station %in% qt_station$station, TRUE, FALSE)
   )
 
 
@@ -127,15 +128,15 @@ p <- ggplot() +
     color = "darkblue", fontface = "bold", check_overlap = FALSE, size = 2) +
   #theme_map() +
     # Plot basin
-    geom_sf(data = st_geometry(basin_inner)) +
+    geom_sf(data = basin_inner) +
     # raster comes as the first layer, municipalities on top
     #geom_raster(data = hillshade,
       #aes(x = x, y = y, alpha = value)) +
     ## use the "alpha hack"
-    scale_alpha(name = "", range = c(0.6, 0), guide = F) +
+    #scale_alpha(name = "", range = c(0.6, 0), guide = F) +
     # Add station
-    geom_sf(data = filter(station, type == "stable"), aes(color = type)) + 
-    scale_color_manual(values = c("stable" = "black", "unstable" = "darkgrey")) +
+    geom_sf(data = filter(station, type == "stable"), aes(color = st_temporal)) + 
+    scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black")) +
     coord_sf(
       xlim = c(60000, 1100000),
       ylim = c(6100000, 7122216),
@@ -145,19 +146,12 @@ p <- ggplot() +
     )
 
 p_st <- p +
-  labs(x = "Longitude", y = "Latitude") +
-  #annotation_north_arrow(
-    #location = "br",
-    #which_north = "true",
-    #pad_x = unit(0.75, "in"),
-    #pad_y = unit(0.5, "in"),
-    #style = north_arrow_fancy_orienteering) +
   annotation_scale(location = "bl", width_hint = 0.25) +
   theme(
     text = element_text(size = 11),
     legend.position = "none",
-    panel.grid.major = element_blank(),
-    panel.background = element_rect(fill = "aliceblue"),
+    #panel.grid.major = element_blank(),
+    panel.background = element_rect(fill = "white"),
     axis.title.x=element_blank(),
     axis.title.y=element_blank(),
     axis.text.x=element_blank(),
@@ -165,7 +159,6 @@ p_st <- p +
     plot.margin = unit(c(0,0,0,0), units = "mm"),
     axis.ticks.x=element_blank(),
     axis.ticks.y=element_blank()
-
   )
   #Plot europe
 

@@ -156,15 +156,19 @@ save_plot(
   filename = mypath("manuscript", "bef_stability", "figs", "final_temporal_network.pdf"),
   final, base_height = 3, base_asp = 2)
 mysave(final_temporal_network, dir = mypath("manuscript/bef_stability/figs"), overwrite = TRUE)
+mysave(qt_station, dir = mypath("data"), overwrite = TRUE)
 
 
 ######
 # metaweb   #
 ######
-
 library(igraph)
+
+myload(metaweb_analysis, dir = mypath("data"))
+meta <- metaweb_analysis 
+
 metaweb <- meta$metaweb
-meta
+#meta
 g <- igraph::graph_from_adjacency_matrix(metaweb, mode = "directed")
 
 species_color <- set_color_species(
@@ -199,7 +203,9 @@ png(
 
 V(g)$label <- NA
 V(g)$size <- 20 
+
 org_par <- par(mar = c(5, 4, 0, 0) + 0.1)
+
 plot(g,
   layout = lay,
   edge.arrow.size=.2,
@@ -211,13 +217,19 @@ plot(g,
   asp = 0,
   axes = FALSE, 
   ylim = c(1,4),
-  xlim = c(-6.2,2.7),
+  xlim = c(min(lay[,1]),max(lay[,1])),
   ylab = "Trophic level"
 )
 Axis(side=2, labels=TRUE)
+
+# write complete resource name:
+names(species_color)[names(species_color) %in% meta$resource] <- 
+  c("detritivore", "biofilm", "phytobenthos", "macrophage", "phytoplankton", "zooplankton", "zoobenthos")
+
 legend(
-  x      = -9.2,
+  x      = min(lay[,1]) -4,
   y      = 0.9,
+  #x      = "bottomleft",
   legend = names(species_color),
   pch    = 21,
   col    = "#777777",
@@ -225,7 +237,10 @@ legend(
   pt.cex = 0.7,
   cex    = .5,
   bty    = "n",
-  ncol   = 7 
+  x.intersp = 1,
+  text.width = 1, 
+  ncol   = 6 
+
 )
 par(org_par)
 dev.off()
