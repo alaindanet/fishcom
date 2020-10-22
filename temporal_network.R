@@ -88,6 +88,7 @@ library(tidygraph)
 library(ggraph)
 unique(net_ex$date)
 source(mypath("R", "plot_methods.R"))
+myload(species_color_temporal_plot, dir = mypath("data"))
 #debugonce(my_crap_temporal_network)
 p <- my_crap_temporal_network(
   net = net_ex,
@@ -96,12 +97,9 @@ p <- my_crap_temporal_network(
   nrow_sp_legend = 2,
   return_data = TRUE,
   my_y_lim = c(0, 4.1),
-  bm_var = "bm_std"
+  bm_var = "bm_std",
+  color_node = species_color_temporal_plot
 )
-names(p)
-# Modify for biomass std 
-# normal edge
-# 
 
 p2 <- my_crap_temporal_network(
   net = filter(net, station == qt_station$station[2]),
@@ -110,14 +108,15 @@ p2 <- my_crap_temporal_network(
   nrow_sp_legend = 2,
   return_data = TRUE,
   my_y_lim = c(0, 4.1),
-  bm_var = "bm_std"
+  bm_var = "bm_std",
+  color_node = species_color_temporal_plot
 )
 
 temporal_network <- plot_grid(plotlist = p$plots[-1], ncol = 4)
 temporal_network2 <- plot_grid(plotlist = p2$plots, ncol = 4)
 
 
-myload(p_st,temporal_network, final_temporal_network, dir = mypath("manuscript/bef_stability/figs"))
+myload(p_st, dir = mypath("manuscript/bef_stability/figs"))
 
 # Network inference
 net_method_path <- mypath("manuscript/bef_stability/figs",
@@ -154,7 +153,7 @@ save_plot(
 
 save_plot(
   filename = mypath("manuscript", "bef_stability", "figs", "final_temporal_network.pdf"),
-  final, base_height = 3, base_asp = 2)
+  final_temporal_network, base_height = 3, base_asp = 2)
 mysave(final_temporal_network, dir = mypath("manuscript/bef_stability/figs"), overwrite = TRUE)
 mysave(qt_station, dir = mypath("data"), overwrite = TRUE)
 
@@ -175,6 +174,10 @@ species_color <- set_color_species(
   node_list = names(V(g)),
   species_list = meta$species, 
   resource_list = meta$resource 
+)
+species_color_temporal_plot <- species_color
+mysave(species_color_temporal_plot, dir = mypath("data"),
+  overwrite = TRUE
 )
 
 V(g)$color <- map_chr(

@@ -68,6 +68,7 @@ my_crap_temporal_network <- function (
   network_data = parent.frame()$network_analysis,
   bm_var = "biomass",
   my_y_lim = NULL,
+  color_node = NULL,
   ...) {
 
   # Get network list
@@ -131,11 +132,13 @@ my_crap_temporal_network <- function (
   names(node_position) <- layout$name
 
   #color of the nodes:
-  color <- set_color_species(
-    node_list = node,
-    species_list = NULL,
-    resource_list = NULL,
-    col_resource = NULL)
+  if (!is.null(color_node)) {
+    color <- set_color_species(
+      node_list = node,
+      species_list = NULL,
+      resource_list = NULL,
+      col_resource = NULL)
+  }
 
   # Trophic level 
   net_list %<>%

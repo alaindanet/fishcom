@@ -5,7 +5,9 @@
 
 # Second category
 
-- [ ] Figure 1:Add ref to list of species
+- [ ] Figure 1:Add ref to list of species in appendix
+- [ ] Species color temporal network: same as metaweb
+- [x] Correction Maud
 
 ## Results
 ## Discussion
