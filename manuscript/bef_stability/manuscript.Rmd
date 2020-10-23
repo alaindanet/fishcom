@@ -90,9 +90,9 @@ knitr::opts_chunk$set(
 
 - Number of words:
   - Abstract: 172
-  - Main text: 4929
+  - Main text: 5383
 
-- Number of references: XXX
+- Number of references: 87 
 - Number of figures: 2
 - Number of tables: 1
 - Number of text boxes: 0 
@@ -316,9 +316,9 @@ matmet_cap <- paste0(
 
 ```
 
-```{r matmet, fig.cap = matmet_cap, results = "fig.show"}
+```{r matmet, fig.cap = matmet_cap, results = "fig.show", out.height="80%"}
 library(knitr)
-include_graphics(path = mypath("manuscript", "bef_stability", "figs", "fig1.pdf"))
+include_graphics(path = mypath("manuscript", "bef_stability", "figs", "fig1.pdf"),)
 ```
 
 ```{r}
@@ -445,9 +445,9 @@ meta <- metaweb_analysis
 
 We determined the network structure in two steps: (1) build a metaweb describing the
 trophic interactions between all trophic species and the resources (Figure
-\@ref(fig:matmet) C), then (2) determine network of a given community by
+\@ref(fig:matmet) B), then (2) determine network of a given community by
 extracting the metaweb according to the trophic species present at a given
-site and sampling event (Figure \@ref(fig:matmet) D).
+site and sampling event (Figure \@ref(fig:matmet) C and D).
 
 Trophic interaction network was inferred from body size and ontogenic diet shift
 following previous studies [@gravel_inferring_2013; @brose_predator_2019;
@@ -459,7 +459,7 @@ fishes. Each fish species was hence divided in nine body size classes, each
 corresponding to a trophic species (Figure S2). Additionally to the fish trophic
 species, we added seven resource nodes present in the ontogenic food diet database:
 detritus, biofilm, phytoplankton, zooplankton, macrophages, phytobenthos and
-zoobenthos (grey nodes in Figure \@ref(fig:matmet) C & D). The fish trophic
+zoobenthos (grey nodes in Figure \@ref(fig:matmet) B, C & D). The fish trophic
 species and the resources constituted the 412 nodes of the metaweb, 45 fish
 species divided into nine body size classes plus seven resource nodes. The inference
 of trophic interactions was shown to be more accurate when considering body size
@@ -470,7 +470,7 @@ by both its species identity and its body size. Species identity allowed to
 differentiate between piscivorous and non piscivorous species, to know which
 resources the trophic species are feeding on and to know the minimum size at
 which a piscivorous species begin to feed on fishes. The ontogenic fish diet
-database was filled according to fishbase and literature (cf Bonnaffe ref). Each
+database was filled according to fishbase and literature [REF WILLEM]. Each
 fish species had two or three life stages which are delimited by a body size
 range (Figure S2). The life stage of a fish trophic species was determined with
 the center of its body size range, hereafter midpoint (Figure S2).
@@ -608,13 +608,13 @@ indirect, between variables [@grace_structural_2008; @grace_causal_2014;
 @lefcheck_piecewisesem_2016; @grace_integrative_2016]. The structural equation
 model explaining the annual total biomass allowed the environment
 to affect directly species richness and network structure, as well as annual total
-biomass (Figure \@ref(fig:sem-plot) B). We assumed that both species richness
+biomass (Figure \@ref(fig:sem-plot) A). We assumed that both species richness
 and network structure directly affect total biomass (Figure \@ref(fig:sem-plot)
-B) and that species richness affected foodweb structure
+A) and that species richness affected foodweb structure
 [@winemiller_must_1989; @dunne_network_2006; @thebault_stability_2010].  
 
 We used the same model structure for temporal stability of biomass (Figure
-\@ref(fig:sem-plot) A). Instead of the annual total biomass, we modelled the
+\@ref(fig:sem-plot) C). Instead of the annual total biomass, we modelled the
 synchrony and population variability which in turn determined the temporal
 stability of biomass. The structural equation models used for annual total
 biomass and its temporal stability contained respectively 4 and 6 response
@@ -744,12 +744,12 @@ coef_bm_sem <- coef(bm_sem_rich) %>%
 
 ```{r}
 sem_caption <- paste0(
-  "Metamodel of the Structural Equation Models for (A) biomass stability and
-  (B) total biomass. ",
-  "Results of the Structural Equation Models for (C) the
-  determinants of biomass stability and (D) total biomass. Red and green arrows
-  represent respectively negative and positive path coefficients. The path
-  coefficients are standardized. For convenience, only significant
+  "Metamodel of the Structural Equation Models for the (A) median of annual
+  total biomass (in grams by square meter) and (C) its temporal stability.",
+  "Results of the Structural Equation Models for
+  (B) the determinants of the median of annual total biomass and (D) its temporal stability. Red and green
+  arrows represent respectively negative and positive path coefficients. The
+  path coefficients are standardized. For convenience, only significant
   paths (i.e. $P < 0.05$) are shown. Rsq: Ajusted $R^2$; Avg:
   Average, CVsp: weighted temporal CV of the population; PCA1 and PCA2: respectively the first and
   second axis of the PCA."
@@ -852,10 +852,10 @@ env_on_richness <- get_env_on_rich(fit = stab_all_params,
 The structural equation models explained a large part of the variation
 of connectance, synchrony, $\overline{CV_{sp}}$ and total biomass (resp. $R^2 =
 .45$, $.47$, $.49$ and $.38$) but less so for mean trophic level ($R^2 =
-.18$, Figure \@ref(fig:sem-plot) C and D). We found that species richness had a
+.18$, Figure \@ref(fig:sem-plot) B and D). We found that species richness had a
 significant negative effect on mean trophic level ($r_\delta = 
 `r rich_on_tlvl`$) and connectance ($r_\delta = `r rich_on_stab$total`$, Figure
-\@ref(fig:sem-plot) C and D), meaning that a part of the effects of species richness went 
+\@ref(fig:sem-plot) B and D), meaning that a part of the effects of species richness went 
 through network structure.
 
 ## Species richness and average trophic level are positively correlated to total biomass
@@ -871,10 +871,10 @@ rich_on_cv_sp <- get_rich_on_stab_comp(fit = stab_all_params,
 
 Species richness and mean trophic level had a significant positive direct effect
 on total biomass ($r_\delta = `r rich_on_bm$direct`$ and 
-$r_\delta = `r tlvl_on_bm`$ resp., Figure \@ref(fig:sem-plot) D, Table
+$r_\delta = `r tlvl_on_bm`$ resp., Figure \@ref(fig:sem-plot) B, Table
 \@ref(tab:indir-sem)),
 while connectance had no direct effect on total biomass (Figure
-\@ref(fig:sem-plot) D).
+\@ref(fig:sem-plot) B).
 
 The two PCA axis capturing environmental variables had no significant direct effects on total biomass
 , but indirect (Table \@ref(tab:indir-sem)). The first axis, PCA1,
@@ -905,7 +905,7 @@ thereby decreasing biomass stability ($r_\delta = `r rich_on_stab$via_cv_sp`$, T
 \@ref(tab:indir-sem)). The negative effect of $\overline{CV_{sp}}$ on temporal
 stability was twice higher than the negative effect of synchrony (resp.
 $r_\delta = `r cv_sp_on_stab`$ and $r_\delta = `r sync_on_stab`$, Figure
-\@ref(fig:sem-plot) C).
+\@ref(fig:sem-plot) D).
 
 The total effect of mean trophic level on temporal stability of biomass was of
 the same magnitude than the one of species richness (resp.
@@ -913,11 +913,11 @@ $`r tlvl_on_stab$total["t_lvl"]`$ and $`r rich_on_stab$total`$, Table
 \@ref(tab:indir-sem)).
 The mean trophic level had only a direct negative effect on
 $\overline{CV_{sp}}$ ($r_\delta = `r tlvl_on_cv_sp`$,
-Figure \@ref(fig:sem-plot) C) and thereby had a total positive
+Figure \@ref(fig:sem-plot) D) and thereby had a total positive
 effect on temporal stability ($r_\delta = `r tlvl_on_stab$via_cv_sp["t_lvl"]`$,
 Table \@ref(tab:indir-sem)). Connectance had no significant direct effect on either
 $\overline{CV_{sp}}$ nor synchrony and thus no effect on temporal stability
-(Figure \@ref(fig:sem-plot) C, Table \@ref(tab:indir-sem)).
+(Figure \@ref(fig:sem-plot) D, Table \@ref(tab:indir-sem)).
  
 The total effect of PCA2, related to average annual temperature and inversely to
 altitude, on temporal stability was of higher magnitude than the effects of
@@ -1064,7 +1064,7 @@ lead to more fluctuations in population biomass.
 ## Average trophic level increased total biomass and its temporal stability
 
 The average trophic level was positively linked to total biomass.
-Experimental and theoretical work suggested that a higher trophic level is the
+Experimental and theoretical work suggested that a higher trophic level can be the
 result of a stronger top-down effect, meaning higher predation rates and biomass
 fluxes to higher trophic levels [@kratina_warming_2012], hence leading to an
 increase in total biomass with trophic length. Furthermore,
