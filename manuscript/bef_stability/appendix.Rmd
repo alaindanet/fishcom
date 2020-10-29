@@ -38,7 +38,7 @@ knitr::opts_chunk$set(
   echo = FALSE,
   message = FALSE,
   warning = FALSE,
-  results = TRUE 
+  results = TRUE
 )
 
 library(tidyverse)
@@ -56,15 +56,16 @@ source(mypath("R", "total_sem_effect.R"))
 source(mypath("R", "press_methods.R"))
 source(mypath("R", "geo_methods.R"))
 source(mypath("R", "synchrony.R"))
+source(mypath("R", "cleaning_methods.R"))
 
 theme_set(theme_alain())
 ```
 
 ```{r, echo = FALSE}
 package <- c("openSTARS", "SSN", "nlme", "piecewiseSEM")
-purrr::map(package, ~ toBibtex(citation(.x)))
+#purrr::map(package, ~ toBibtex(citation(.x)))
 
-toBibtex(citation())
+#toBibtex(citation())
 
 #print(cm, bibtex = TRUE)
 # Load manuscript results
@@ -79,7 +80,7 @@ toBibtex(citation())
 The fish community sampling took place in a variety of stream size, shape and
 depth. This diversity constraints the type of protocol that can take place.  For
 the small streams (depth < 0.7m across the entire width), the complete protocol
-is used. It consists in placing anodes every X meter across the width of the
+is used. It consists in placing anodes every X meters across the width of the
 river. The fishermen made from one to three row
 of fishing. We kept only the first row for analysis to homogenize the sampling
 effort. For deeper and wider streams, the sampling was partial over the bank and
@@ -102,7 +103,7 @@ collected. Finally, most of the fish sampling occurred in September (Median:
 mid-August) and the median standard deviation of the sampling month was inferior
 to one (0.7) within station. Additionally, we removed sampling events, in a
 given station, which the sampled length along the stream was outside the median
-length sampled more or less 30%. Finally, we standardadized the biomass record
+length sampled more or less 30%. Finally, we standardized the biomass record
 and species richness by the sampled surface to get rid of sampling effort
 effects. 
 
@@ -117,7 +118,7 @@ the body size of the individuals of those batches is recorded. The batches S/L
 contains fishes of intermediate sizes. Inside each S/L batches, the operator
 tries to make batches as homogeneous as possible in body size. Then, the body
 size of a subsample of X individuals are recorded. The G batches contain
-individuals of low body size, with care that body size is as homogenous as
+individuals of low body size, with care that body size is as homogeneous as
 possible in the batches. Then body size of the shortest and the longest
 individuals are recorded.
 
@@ -151,7 +152,7 @@ body_size_caption <- paste0(
   type N and I, the body size of all the individuals was recorded. In the
   batches, S/L, the body size of a subsample of the individuals was recorded.
   Finally, only the body size of the littlest and of the tallest individual was
-  recorded. ",
+  recorded in the G batches. ",
   "Then, (3) we inferred the body size distribution in the S/L and G batches by
   assuming that it followed a normal distribution. The mean and the standard
   deviation were estimated with the measured subsample."
@@ -204,7 +205,7 @@ species. In total, we removed `r nrow(removed_ind)` over
 `r nrow(length_sem_analysis)` individuals and `r length(removed_sp)`.
 
 During fish sampling, some species are identified based on morphotype but they
-belong to the same species based on fecundation criteria (CHECK with Eric).
+belong to the same species based on fecundation criteria.
 We merged those morphotype species into one species. There was
 `r length(unique(names(sp_to_replace())))` to merge which belonged to 
 `r length(unique(sp_to_replace()))` species.
@@ -292,31 +293,35 @@ feeding interactions).
 
 The procedure to obtain altitude, slope, width depth of the streams are fully
 explained in main text. Because those measurements were collected during the
-fishing protocol, they were easier to manage in the analysis. Then, we detailled
+fishing protocol, they were easier to manage in the analysis. Then, we detailed
 in the following sections how water temperature, flow and BOD were obtained. 
 
 ### Preparation
 
-Water temperature, flow and BOD (Biogical Oxygen Demand) were obtained from the
+Water temperature, flow and BOD (Biological Oxygen Demand) were obtained from the
 [naiades database](http://www.naiades.eaufrance.fr/).
 Water temperature, flow and BOD were respectively collected at a hourly, daily
 and monthly frequency. Water temperature and flow are recorded by automated
-sendors while BOD is collected manually because it necessitates analysis in a
+sensors while BOD is collected manually because it necessitates analysis in a
 laboratory. BOD data collection is coordinated by the Agence de l'eau which
 realized the analysis itself or order it to a company.
 It is crucial to make clear that those variables are collected at different
 places than the fish samplings.
 
-
-- Number of station
-- Space repartition
+```{r}
+pressure_cap <- paste0(
+  "Map of environmental variables obtained for the 99 sites used in the analysis."
+)
+```
 
 
 ```{r, fig.height = 20/2.54}
 pca_pressure <- habitat_press
 myload(fourier, dir = mypath("data-raw", "polluants"))
 myload(flow_temp_metrics, station_analysis, the_8_hydrologic_basin, dir = mypath("data"))
+
 sf_pressure <- station_analysis %>% 
+  filter(id %in% op_analysis_bbb$station) %>%
   select(id) %>%
   left_join(rename(pca_pressure, id = station)) %>%
   na.omit()
@@ -324,8 +329,8 @@ sf_pressure <- station_analysis %>%
 p <- ggplot() +
   geom_sf(data = the_8_hydrologic_basin)
 
-var_to_plot <- colnames(sf_pressure)[
-  !colnames(sf_pressure) %in% c("id", "geometry")]
+var_to_plot <- colnames(pca_rotated$normal$tab)
+
 var_replacement <- c(
   "slope" = "Slope",
   "alt" = "Altitude",
@@ -345,16 +350,18 @@ var_replacement <- c(
 
 map_pressure <- map(var_to_plot,
 ~p +
-  geom_sf(data = sf_pressure, aes_string(color = .x)) +
+  geom_sf(data = sf_pressure, aes_string(color = .x), size = .5) +
+  viridis::scale_color_viridis() +
   labs(title = str_replace_all(.x, var_replacement)) +
   theme(legend.title = element_blank(),
+    text = element_text(size = 8),
     axis.text = element_blank(),
     axis.ticks = element_blank()
-  )
+  ) +
+ guides(fill = guide_colourbar(barwidth = 0.5, barheight = 10))
 )
 
-plot_grid(plotlist = map_pressure, ncol = 2)
-
+plot_grid(plotlist = map_pressure, ncol = 3)
 ```
 
 
@@ -367,8 +374,8 @@ variable (i.e. one value by year and by station).
  
 Several characteristics of the streams make the interpolation more complicated
 than along terrestrial surface. Interpolations in terrestrial areas are roughly
-based on euclidian distance. Euclidian distance is more complicated to consider
-in streams because it had the follow the path of the streams. Futhermore,
+based on euclidean distance. Euclidean distance is more complicated to consider
+in streams because it had the follow the path of the streams. Furthermore,
 two streams can be close by but not connected and the value of their variables
 could be not related or a only a few. For those reason, we used stream spatial
 network methods to interpolate temperature, flow and BOD.
@@ -376,10 +383,10 @@ network methods to interpolate temperature, flow and BOD.
 We reconstructed the stream network and the connection between sites with the
 `openSTARS` R package. The reconstruction was done with a raster of digital
 elevation model at a resolution of 250 meters [(IGN)](https://wxs.ign.fr/jvam1hsjm11u8voorw81v2xb/telechargement/prepackage/BDALTI-75M_PACK_FXX_2018-01-24%24BDALTIV2_2-0_75M_ASC_LAMB93-IGN69_FRANCE_2018-01-15/file/BDALTIV2_2-0_75M_ASC_LAMB93-IGN69_FRANCE_2018-01-15.7z)
-and a theoretical hydrologic network [put a link](test) [@pella_reseau_2012].
+and a theoretical hydrologic network [@pella_reseau_2012].
 
 The procedure was done by hydrographic basin because of convergence problem
-when the interpolation was done at the France scale. We had to make a tradeoff
+when the interpolation was done at the France scale. We had to make a trade-off
 between the number of data (to keep enough high to perform the interpolation)
 and the level of dataset splitting. We then merge some hydrographic basin to end
 up with four region of interpolation: West, East, South and North. (XXX ADD 
@@ -418,7 +425,6 @@ cv_dbo_temp_flow <- map2_dfr(
       ungroup
   })
 
-
 cv_dbo_temp_flow %>%
   mutate_if(is.double, ~signif(., 2)) %>%
   kable(
@@ -438,24 +444,13 @@ cv_bias_caption <- paste0(
 )
 ```
 
-```{r cv-biais, fig.cap = cv_bias_caption}
-cv_dbo_temp_flow %>%
-  rename(Bias = bias_avg) %>%
-  ggplot(aes(x = Bias)) +
-  geom_histogram() +
-  facet_wrap(~Variable, scales = "free_x")
-```
-
 The performance of the interpolation was evaluated with leave one out
 cross-validation (already implemented in the SSN package). The value of the
 interpolated variable of each station was predicted after removing it from the
-dataset. ADD SUMMARIES ABOUT CV.
-
-With the model, we then simply predicted variable values at the location of the
-fish stations.
+dataset.  
 
 When predicted values were below the minimum value or above the maximum value
-recorded in the dataset for flow, (temperature?) and BOD, we replaced the
+recorded in the dataset for flow, temperature and BOD, we replaced the
 predicted value by respectively the minimum and the maximum value found in the
 dataset. We ran the interpolation four times and we kept the predicted value
 which had the least standard deviation.
@@ -467,23 +462,20 @@ myload(species, fish_diet_shift, dir = mypath("data"))
 kable(species,
   format = "latex",
   booktabs = T,
-  label = paste0("indir-sem"),
+  label = paste0("fish-sp"),
   caption = "Fish species list."
   ) %>%
-kable_styling(latex_options =c("striped", "scale_down"))
-
+kable_styling(latex_options =c("striped"))
 ```
 
-
 ```{r food}
-kable(fish_diet_shift,
+kable(select(fish_diet_shift, - species_name, -remark),
   format = "latex",
   booktabs = T,
-  label = paste0("indir-sem"),
+  label = paste0("onto-diet"),
   caption = "Ontogenic diet shift for each species"
   ) %>%
 kable_styling(latex_options =c("striped", "scale_down"))
-
 ```
 
 
@@ -501,21 +493,21 @@ method (SAX) which is commonly used in time series analysis and implemented in
 the `jmotif` R package. This method classifies time series rather than
 quantifies trends and so is generic enough to encompass the diversity of time
 series shapes. The classification necessitates three steps. First, the time
-series are normalized (i.e. substracting the mean and divide by the standard
+series are normalized (i.e. Substituting the mean and divide by the standard
 deviation). The second step is to reduce the dimensionality of the time series
-by Piecewise Aggregation Approximation (PAA) method. Each time series is divived
+by Piecewise Aggregation Approximation (PAA) method. Each time series is divided
 in $N$ frames of equal size that allows to the reduce the dimensionality of the
 time series. For each frame, we simply kept the mean value of the time series.
 The last step is to qualify each frame into string. Because values of
 normalized time series typically follows a normal distribution ($N(0,1)$), a
 breakpoints can be computed by dividing the area under the normal distribution
-in equal parts. The algoritm attributes a alphabetic letter to each part from
+in equal parts. The algorithm attributes a alphabetic letter to each part from
 the lowest to the highest ($a$, $b$, $c$, ...). We set three breakpoints, so
 $a$, $b$ and $c$. Finally, the trajectory of each time series is classified as
 a combination of $a$, $b$, $c$ letters. $abc$ and $cba$ time series represent
-respectively monoton increasing and decreasing trajectories. For data analysis,
+respectively monotonic increasing and decreasing trajectories. For data analysis,
 we kept only the $bbb$ which represent time series that showed no temporal
-tendancies (with respect to our methodology).
+tendencies, with respect to our methodology.
 
 
 ## PCA of environmental variables
@@ -563,7 +555,7 @@ kable(
   label = "contrib-pca",
   caption = caption_contrib_pca
   ) %>%
-kable_styling(latex_options = c("striped", "scale_down"))
+kable_styling(latex_options = c("striped"))
 ```
 
 ```{r}
@@ -609,7 +601,7 @@ pca_caption <- paste0(
   Finally, axis 5 was related to the CV of flow and average enrichment.")
 ```
 
-```{r pca-rotated, fig.cap = pca_caption, fig.asp = 1}
+```{r pca-rotated, fig.cap = pca_caption}
 p1 <- my_pca_plot(xaxis = "RC1", yaxis = "RC2", ctb_thld = .4)
 #p2 <- my_pca_plot(xaxis = "RC3", yaxis = "RC4", ctb_thld = .4)
 #p3 <- my_pca_plot(xaxis = "RC4", yaxis = "RC5", ctb_thld = .4)
@@ -619,7 +611,7 @@ save_plot(
   filename = mypath("manuscript", "bef_stability", "figs", "pca_plot.pdf"),
   pca_plot,
   nrow = 1, ncol = 2,
-  base_height = 6/2.54, base_asp = 1, base_width = NULL 
+  base_height = 6/2.54, base_asp = 1.6, base_width = NULL 
   )
 pca_plot
 ```
@@ -655,6 +647,7 @@ caption_rc2_map <- paste0(
 ```{r rc2-map, fig.cap = caption_rc2_map}
 p +
   geom_sf(data = rc2_sf, aes(color = log(value + abs(min(value)) + 1 ))) +
+  viridis::scale_color_viridis() +
   labs(title = "RC2 (Log)") +
   theme(legend.title = element_blank())
 ```
@@ -692,6 +685,7 @@ kable(
   caption = "Variable description and transformation"
   ) %>%
 kable_styling(latex_options = c("striped", "scale_down"))
+sem_variable_table
 ```
 
 ### SEM hypothesis
@@ -745,12 +739,15 @@ down effects or bottom up effects.
 
 ```{r}
 hist_var_caption <- paste0(
-  "Distribution of the variables (before transformation) used in the Structural Equation Modeling."
+  "Distribution of the variables used in the Structural Equation Modeling. The
+  biomass stability, the CV of species (CVsp), PCA1, PCA2, species richness,
+  synchrony and total biomass were logged."
 )
 ```
+
 ```{r hist-sem-data, fig.cap = hist_var_caption}
 sem_data %>%
-  select(log_bm_std, log_rich_tot_std, log_sync, log_stab_std, log_cv_sp, log_RC1, log_RC2, t_lvl, ct, log_bm) %>%
+  select(log_bm_std, log_rich_tot_std, log_sync, log_stab_std, log_cv_sp, log_RC1, log_RC2, t_lvl, ct) %>%
   gather(variable, value) %>%
   mutate(variable = str_replace_all(variable, get_sem_var_name_replacement())) %>%
   ggplot(aes(x = value)) +
@@ -760,8 +757,15 @@ sem_data %>%
 
 ### Colinearity tables
 
-```{r s-colin-sem, fig.cap = "Variance Inflation factor for each individual model of stability sem"}
+```{r}
+colin_sem_cap <- paste0(
+  "Variance Inflation Factor for each individual linear model of the structural
+  equation models."
+) 
+```
 
+
+```{r s-colin-sem, fig.cap = ""}
 mod_stab_list <-
   list(
     nlme::lme(log_rich_tot_std ~ log_RC1 + log_RC2,  random = ~ 1 | basin, data = sem_data),
@@ -792,6 +796,7 @@ tmp <- map(colin_stab_sem, enframe)
 # colinearity table
 colin_stab_sem <- tibble(vif = tmp, mod = names(mod_stab_list)) %>%
   unnest(vif) %>%
+  rename(`Response variable` = mod) %>%
   mutate(
     value = round(value, 1),
     name = str_replace_all(name, get_sem_var_name_replacement())
@@ -810,19 +815,18 @@ kable_styling(latex_options = c("striped", "scale_down"))
 ```{r}
 caption_mod_res <- paste0(
   "Residuals versus fitted values of the linear models used in the structural
-  equation modelings."
+  equation models."
 ) 
 ```
 
-```{r mod-res, fig.height = 7, fig.cap = caption_mod_res}
+```{r mod-res, fig.height = 8, fig.cap = caption_mod_res}
 library(nlme)
 plot_residuals <- function (x, y = "Diagnostic") {
   plot.lme(x, main = y, xlab = "Fitted values", ylab = "Residuals")
 }
 p_resid_stab_sem <- map2(mod_stab_list, names(mod_stab_list) , plot_residuals)
-plot_grid(plotlist = p_resid_stab_sem)
+plot_grid(plotlist = p_resid_stab_sem, ncol = 2)
 ```
-
 
 ### Biomass and stability models
 
@@ -841,13 +845,12 @@ format_coef_table <- function (sem = NULL) {
 
   params
 }
-
 ```
 
 ```{r}
 est_stab_sem_caption <- paste0(
-  "Estimate of the effects for the biomass stability structural equation
-  modeling."
+  "Estimate of the effects for the temporal stability of annual biomass of the structural equation
+  model."
 
 )
 
@@ -861,8 +864,8 @@ kable_styling(latex_options = c("striped", "scale_down"))
 
 ```{r}
 est_bm_sem_caption <- paste0(
-  "Estimate of the effects for the total biomass structural equation
-  modeling."
+  "Estimate of the effects for the structural equation
+  model of the median of annual total biomass."
 )
 
 kable(format_coef_table(bm_sem_rich),
@@ -915,20 +918,40 @@ rp_group <- c(
 ```{r}
 mask_drop_lm <- names(mod_stab_list) %in% "Biomass stability"
 random_coeff_sem <- map(mod_stab_list[!mask_drop_lm], random.effects)
+test <- getVarCov(mod_stab_list[!mask_drop_lm][[2]])
 
-format_random <- function (x, y) {
-  tibble(
-    Variable = y, 
-    `Hydrographic basin` = rownames(x),
-    Intercept = x[[1]]
-  )
+get_intercept_variance <- function (mod) {
+  vc <- VarCorr(mod)
+  suppressWarnings(storage.mode(vc) <- "numeric")
+  enframe(vc[1,])
 }
-formated_random_effects <- do.call(rbind, map2(random_coeff_sem, names(random_coeff_sem), format_random))
+random_coeff_sem <- map(mod_stab_list[!mask_drop_lm],
+  get_intercept_variance) %>%
+  enframe(name = "variable") %>%
+  unnest(value) %>%
+  pivot_wider(names_from = "name", values_from = "value")
+get_intercept <- function (mod) {
+  mod[["coefficients"]]$fixed["(Intercept)"]
+}
+intercept_sem <- map_dbl(mod_stab_list[!mask_drop_lm],
+  get_intercept) %>%
+enframe(name = "variable", value = "Intercept")
+
+formated_random_effects <- intercept_sem %>% 
+  left_join(random_coeff_sem, by = "variable") %>%
+  rename(`Response variable` = variable)
+#format_random <- function (x, y) {
+  #tibble(
+    #Variable = y, 
+    #`Hydrographic basin` = rownames(x),
+    #Intercept = x[[1]]
+  #)
+#}
+#formated_random_effects <- do.call(rbind, map2(random_coeff_sem, names(random_coeff_sem), format_random))
 
 caption_random_effect <- paste0(
   "Estimated random effect of hydrographic basin on the intercept of the linear
   models performed in structural equation modeling."
-
 )
 
 kable(formated_random_effects,
@@ -936,12 +959,13 @@ kable(formated_random_effects,
   booktabs = T,
   caption = caption_random_effect
   ) %>%
-kable_styling(latex_options = c("striped", "scale_down"))
+kable_styling(latex_options = c("striped"))
 ```
 
 ### Robustness to different dataset selection 
 
-```{r sensitivity, fig.dim = c(10, 7), fig.cap = "Sensivity analysis with different dataset", cache = TRUE}
+
+```{r sensitivity, message = FALSE, fig.dim = c(10, 7), fig.cap = "Sensivity analysis with different dataset", cache = FALSE}
 library(furrr)
 
 myload(op_analysis, op_analysis_wo_holes, op_analysis_ov, dir = mypath("data"))
@@ -951,16 +975,17 @@ op_analysis_bbb <- filter(op_analysis, station %in%
 op_analysis_wo_holes_bbb <- filter(op_analysis_wo_holes, station %in%
   biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
 
-#myload(network_metrics, dir = mypath("data", "classes"))
+myload(network_metrics, dir = mypath("data", "classes"))
 sem_sensivity_data <- list(full = op_analysis, bbb = op_analysis_bbb,
   without_holes = op_analysis_wo_holes, bbb_without_holes = op_analysis_wo_holes_bbb)
 
-sem_stab_l_data <- furrr::future_map(sem_sensivity_data,
+sem_stab_l_data <- 
+  furrr::future_map(sem_sensivity_data,
 
   ~build_dataset_get_sem_coefficient(
     .op = .x,
     sem_fun = compute_stab_sem_rich
-)
+  )
   )
 
 nb_station <- map_int(sem_sensivity_data, ~length(unique(.x$station))) 
@@ -973,11 +998,7 @@ sem_stab_results <- map(sem_stab_l_data,
 
 # Reformat
 colnames(sem_stab_results) <- str_to_lower(colnames(sem_stab_results))
-sem_stab_results %>%
-  mutate(r_p = str_c(response, predictor, sep = "~")) %>%
-  ggplot(aes(x = r_p, y = std.estimate)) +
-  geom_point(aes(color = dataset)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+mysave(sem_stab_results, dir = mypath("data"), overwrite = TRUE)
 ```
 
 ```{r sem-sens-bm, cache = TRUE, fig.cap = "Sensivity analysis for Biomass"}
@@ -994,176 +1015,37 @@ sem_bm_results <- map(sem_bm_l_data,
 
 # Reformat
 colnames(sem_bm_results) <- str_to_lower(colnames(sem_bm_results))
-sem_bm_results %>%
-  mutate(r_p = str_c(response, predictor, sep = "~")) %>%
-  ggplot(aes(x = r_p, y = std.estimate)) +
-  geom_point(aes(color = dataset)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+mysave(sem_bm_results, dir = mypath("data"), overwrite = TRUE)
 ```
-
 
 ```{r}
-knitr::opts_chunk$set(eval = FALSE)
-```
-
-
-```{r}
-coeff_troph <- map2_dfr(list(bm_troph_ci, stab_troph_ci), list(bm_troph_mod, stab_troph_mod),
-  clean_summary_mod, term_rp = rp_est, group_rp = rp_group)
-
-kable(coeff_troph) %>%
-  pack_rows("Biomass", 1, 6) %>%
-  pack_rows("Stab", 7, 12)
-```
-
-## Relationship at the absolute scale, i.e. not the logarythme scale 
-
-```{r}
-ggplot(sem_data, aes(x = richness_med, y = biomass_stab)) +
-  geom_point()
-test <- tibble(
-  richness_med = seq(1,20, length.out = 100),
-  biomass_stab =
-    10^(fixef(stab_div_mod)[1])*richness_med^fixef(stab_div_mod)[2]
-)  
-```
-
-```{r save-plot, eval = FALSE}
-
-save_plot("~/Documents/thesis/talks/fishcom_fig/stab_div.pdf",
-  p_stab_div,
-  base_height = 3,
-  bg = "transparent",
-  ncol = 1)
-
-save_plot("~/Documents/thesis/talks/fishcom_fig/stab_div_troph.pdf",
-  p_stab_div_troph + theme(legend.position = "bottom"),
-  base_height = 3,
-  bg = "transparent",
-  ncol = 1)
-
-```
-
-### Ecological modeling fun
-
-```{r, eval = FALSE}
-mod_tlvl <- nlme::lme(t_lvl ~ scale(RC1) + scale(RC2) + scale(RC3) + scale(RC4) + scale(RC5) + log_rich_tot, random = ~ 1 | basin, data = sem_data)
-plot(mod_tlvl)
-sem_data %>%
-  ggplot(aes(x = log10(richness_tot), y = t_lvl)) +
-  geom_point()+
-  geom_smooth(method = "lm")
-plot(x = log10(sem_data$RC1 + abs(min(sem_data$RC1))), y = sem_data$t_lvl)
-sem_data %>%
-  ggplot(aes(x = log10(RC1), y = t_lvl)) +
-  geom_point()+
-  geom_smooth(method = "lm")
-plot(nlme::lme(t_lvl ~ I(log10(RC1 + abs(min(RC1)))) + log_rich_tot, random = ~ 1 | basin, data = sem_data))
-nlme::lme(t_lvl ~ log_rich_tot, random = ~ 1 | basin, data = sem_data)
-semd_test <- sem_data %>%
-  mutate(RC1b = RC1 + abs(min(RC1)))
-ricker.mixed.fit <- nls(
-  t_lvl ~ (Vm*(RC1 + b) / (K + (RC1 + b)) + d),
- #fixed = Vm + K + b + d ~ 1,
- #random = Vm + K + b + d ~ 1|basin,
- start= c(Vm=1, K = 0.1, b = .5, d = 2.5),
- data = semd_test,
- control = lmeControl(maxIter = 1e8, msMaxIter = 1e8) 
+sens_cap <- paste0(
+  "Sensivity analysis of the Structural Equation models for total biomass
+  and its temporal stability."," The Constant dataset is the one kepting only the
+  sites that had not a significant temporal trend in biomass; ", "Constant/
+    without holes dataset kept only the constant sites plus the ones that had not
+  holes in their sampling period; ", "Complete is the dataset containing all the
+  site that have been followed ten years or more, as the other dataset;", "Without holes dataset is
+  the dataset containing only the sites that had no holes in the their sampling period."
 )
-summary(ricker.mixed.fit)
-x <- seq(min(sem_data$RC1), max(sem_data$RC1), length.out = 100)
-sem_data$test_pred <- predict(ricker.mixed.fit)
-
-semd_test %>%
-  ggplot(aes(x = RC1b, y = t_lvl)) +
-  geom_point() +
-  geom_line(aes(y = test_pred))
-  geom_smooth(method = "lm")
-cor(semd_test$piel, semd_test$t_lvl, method = c("spearman"))
 ```
 
-```{r, eval = FALSE}
-library(glmmTMB)
-# Gaussian
-mod_log_rich <- glmmTMB(
-  log_rich_tot ~ log_RC1 + log_RC2 + log_RC3
-  + RC4 + RC5 + (1 | basin), family = gaussian, data = sem_data)
-summary(mod_log_rich)
-plot(y = resid(mod_log_rich), x = fitted(mod_log_rich))
 
-# Poisson 
-mod_log_rich_poi <- glmmTMB(
-  richness_tot ~ log_RC1 + log_RC2 + log_RC3
-  + RC4 + RC5 + (1 | basin), family = poisson, data = sem_data)
-summary(mod_log_rich_poi)
-plot(y = resid(mod_log_rich_poi), x = fitted(mod_log_rich_poi))
+```{r, fig.height = 8, fig.cap = sens_cap}
+p_sens_bm <- plot_sensivity_analysis(.data = sem_bm_results) +
+  theme(legend.position = "none")
 
-# Truncate 
-mod_log_rich_nbinom <- glmmTMB(
-  richness_tot ~ log_RC1 + log_RC2 + log_RC3
-  + RC4 + RC5 + (1 | basin), family = nbinom1, data = sem_data)
-summary(mod_log_rich_nbinom)
-plot(y = resid(mod_log_rich_nbinom), x = fitted(mod_log_rich_nbinom))
-```
-
-```{r stab-network, eval = FALSE}
-sem_data %>%
-  select(sync, cv_sp, ct, t_lvl) %>%
-  gather(network, metrics, ct, t_lvl) %>%
-  gather(stab_comp, value, sync, cv_sp) %>%
-  ggplot(aes(y = value, x = metrics)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  facet_grid(stab_comp ~ network, scales = "free_x")
-
-stab_ct_mod <- lmer(data = sem_data,
-  #fixed = log_bm ~ log_rich_tot * troph_group,
-  formula = log_stab_std ~ ct + (1 | basin)
-  #random = ~ 1 + log_rich_tot * troph_group | basin,
-  #control = ctrl 
+p_sens_stab <- plot_sensivity_analysis(.data = sem_stab_results) +
+  guides(color = guide_legend(direction = "horizontal", nrow = 2))
+legend_b <- get_legend(p_sens_stab)
+p_sens_stab %<>% + theme(legend.position = "none")
+p <- plot_grid(
+  p_sens_bm, p_sens_stab, legend_b, nrow = 3,
+  rel_heights = c(1, 1, .1),
+  labels = c("Total biomass", "Biomass stability")
 )
-stab_ct_boot <- bootMer(stab_ct_mod, mySumm2, nsim = 100)
-stab_ct_ci <- confint(stab_ct_boot)
-
-stab_ct_sum <- piecewiseSEM::rsquared(stab_ct_mod, method = "nagelkerke") %>%
-  mutate_at(vars(Conditional, Marginal), ~round(., 2))
-
-pred_stab_ct_mod <- ggpredict(stab_ct_mod, terms = c("ct"), type = "fe")
-#plot(pred_troph_mod, add.data = TRUE)
-stab_ct_pred <- pred_stab_ct_mod %>%
-  as_tibble() %>%
-  rename(
-    log_stab_std = predicted,
-    log_rich_tot_std = x,
-    troph_group = group
-  )
-
-# get coeff
-coef_stab_ct <- map(list(stab = stab_ct_mod), fixed.effects)
-
-
-stab_tlvl_mod <- lmer(data = sem_data,
-  #fixed = log_bm ~ log_rich_tot * troph_group,
-  formula = log_stab_std ~ t_lvl + (1 | basin)
-  #random = ~ 1 + log_rich_tot * troph_group | basin,
-  #control = ctrl 
-)
-stab_tlvl_boot <- bootMer(stab_tlvl_mod, mySumm2, nsim = 100)
-stab_tlvl_ci <- confint(stab_tlvl_boot)
-
-stab_tlvl_sum <- piecewiseSEM::rsquared(stab_tlvl_mod, method = "nagelkerke") %>%
-  mutate_at(vars(Conditional, Marginal), ~round(., 2))
-
-pred_stab_tlvl_mod <- ggpredict(stab_tlvl_mod, terms = c("t_lvl"), type = "fe")
-#plot(pred_troph_mod, add.data = TRUE)
-stab_tlvl_pred <- pred_stab_tlvl_mod %>%
-  as_tibble() %>%
-  rename(
-    log_stab_std = predicted,
-    log_rich_tot_std = x,
-    troph_group = group
-  )
-
-# get coeff
-coef_stab_tlvl <- map(list(stab = stab_tlvl_mod), fixed.effects)
+p
 ```
+
+# References
+

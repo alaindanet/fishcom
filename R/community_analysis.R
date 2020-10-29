@@ -272,7 +272,7 @@ compute_com_synchrony <- function (.op = NULL, com = NULL, ...) {
 #'
 #'
 compute_community_temporal_analysis <- function(.op = NULL,
-  type_network_metrics = "species") {
+  type_network_metrics = "species", msg = FALSE) {
 
   output <- vector("list", length = 4)
   names(output) <- c("tps_net", "tps_com", "tps_bm_troph", "sync")
@@ -292,7 +292,9 @@ compute_community_temporal_analysis <- function(.op = NULL,
     type_metrics = type_network_metrics
   )
 
-  cat("Network done (1/4)\n")
+  if (msg) {
+    cat("Network done (1/4)\n")
+  }
 
   # Beta-diversity ---------------------------------------------------
   if(!exists("community_analysis")) {
@@ -300,12 +302,16 @@ compute_community_temporal_analysis <- function(.op = NULL,
   }
   betadiv <- compute_temporal_betadiv(.op = .op, com = community_analysis)
 
-  cat("Beta-diversity done (1.5/4)\n")
+  if (msg) {
+    cat("Beta-diversity done (1.5/4)\n")
+  }
 
   # Synchrony of species ---------------------------------------------
   output[["sync"]] <- compute_com_synchrony(.op = .op, com = community_analysis)
 
-  cat("Synchrony done (2/4)\n")
+  if (msg) {
+    cat("Synchrony done (2/4)\n")
+  }
   # 
   com_std <- community_analysis %>%
     dplyr::ungroup() %>%
@@ -318,7 +324,9 @@ compute_community_temporal_analysis <- function(.op = NULL,
 
   output[["sync_std"]] <- compute_com_synchrony(.op = .op, com = com_std)
 
-  cat("Synchrony standardized done (2.5/4)\n")
+  if (msg) {
+    cat("Synchrony standardized done (2.5/4)\n")
+  }
 
   # Biomass ---------------------------------------------------------- 
   if(!exists("community_metrics")) {
@@ -331,7 +339,9 @@ compute_community_temporal_analysis <- function(.op = NULL,
   output[["tps_com"]] %<>%
     dplyr::left_join(dplyr::select(betadiv, -data, -com), by = "station")
 
-  cat("Community description done (3/4)\n")
+  if (msg) {
+    cat("Community description done (3/4)\n")
+  }
 
   # Biomass by trophic group -----------------------------------------
   myload(network_analysis, dir = mypath("data", "classes"))
@@ -346,8 +356,9 @@ compute_community_temporal_analysis <- function(.op = NULL,
     #tidyr::unnest(troph_group) %>%
     #dplyr::ungroup()
 
-  cat("Biomass by trophic group done (4/4)\n")
-
+  if (msg) {
+    cat("Biomass by trophic group done (4/4)\n")
+  }
   return(output)
 }
 

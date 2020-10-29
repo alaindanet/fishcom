@@ -13,17 +13,6 @@ compute_sem_dataset <- function (
   nmds = NULL,
   basin = NULL
   ) {
-  # Check:
-  #stopifnot(
-    #any(
-      ##map_lgl(list("com", "network", "hab_press", "sync", "nmds"), ~missing(get(.x)))
-      #missing(nmds),
-      #missing(com),
-      #missing(network),
-      #missing(hab_press),
-      #missing(sync)
-      #)
-  #)
 
   # Community -----------------------------------------------------------------
 
@@ -681,10 +670,12 @@ compute_bm_sem_indirect <- function (sem = NULL, p_val_thl = NULL) {
 #'
 #' @inheritParams compute_community_temporal_analysis
 #'
-build_dataset_get_sem_coefficient <- function (.op = NULL, sem_fun = compute_stab_sem_rich_beta) {
+build_dataset_get_sem_coefficient <- function (.op = NULL, sem_fun = compute_stab_sem_rich) {
 
   # Compute stability, network metrics, etc with the new datasets
-  com_data <- compute_community_temporal_analysis(.op = .op)
+  com_data <- compute_community_temporal_analysis(.op = .op,
+    type_network_metrics = "classes"
+  )
 
   # Compute sem dataset 
   sem_data <- compute_sem_dataset(
