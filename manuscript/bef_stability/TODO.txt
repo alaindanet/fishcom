@@ -14,11 +14,19 @@
 
 ## Appendix
 
-- [ ] all bivariates relationships
-- [ ]  
-- [ ] Comment basin effects 
-- [ ] Comment sensibility analysis 
-- [ ] Add latex metamodel with references
+- [x] Remove map RC2
+- [x] Add legend for variable map
+- [ ] Table 2 and 3: cut on several pages
+- [x] Fig 3 (right panel): axis not clear
+- [x] Remove table 5?
+- [x] Check std dev for the basin random effect
+- [x] Reframe plan: statistics
+- [x] Magnify tables (8 and 9)
+- [x] Update table 6 (variable description)
+- [x] Put a left margin to sensibility plot 
+
+
+
 
 ## All
 

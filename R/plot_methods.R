@@ -1352,21 +1352,35 @@ format_table <- function (x = tmp_stab_indir_table) {
   x
 }
 
-plot_sensivity_analysis <- function (.data = NULL, y_lim = c(-1.26, .75)) {
-  .data %>%
+plot_sensivity_analysis <- function (.data = NULL, y_lim = c(-1.26, .75), inverse_label_order = FALSE) {
+  .data %<>%
     mutate(
       r_p = str_c(response, predictor, sep = " ~ "),
       r_p = str_replace_all(r_p, get_sem_var_name_replacement()),
-      r_p = str_remove_all(r_p, pattern = "\n "),
-      ) %>%
-  ggplot(aes(x = r_p, y = std.estimate)) +
-  labs(x = "Terms of the linear models",
-    y = "Standardized estimate", color = "Dataset type") +
-  ylim(y_lim) +
-  geom_point(aes(color = dataset)) +
-  scale_color_hue(labels = c(
-      "Constant (N=99)", "Constant / Without holes (N=65)",
-      "Complete (N=403)", "Without holes (N=275)")
-    ) +
-  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+      r_p = str_remove_all(r_p, pattern = "\n ")
+      ) 
+  
+  if (inverse_label_order) {
+    .data$r_p <- factor(
+      .data$r_p,
+      levels = unique(.data$r_p))
+    #sizes <- factor(sizes, levels=rev(levels(sizes)))
+    p <- .data %>%
+      ggplot(aes(x = factor(r_p, levels = rev(levels(r_p))),
+	  y = std.estimate)) 
+  } else {
+    p <- .data %>%
+      ggplot(aes(x = r_p, y = std.estimate)) 
+  }
+
+  p +
+    labs(x = "Terms of the linear models",
+      y = "Standardized estimate", color = "Dataset type") +
+    ylim(y_lim) +
+    geom_point(aes(color = dataset)) +
+    scale_color_hue(labels = c(
+	"Constant (N=99)", "Constant / Without holes (N=65)",
+	"Complete (N=403)", "Without holes (N=275)")
+      ) +
+    theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
 }

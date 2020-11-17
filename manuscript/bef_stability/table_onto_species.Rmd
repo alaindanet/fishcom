@@ -1,0 +1,84 @@
+---
+title: List of species and ontogenic diet data
+author: Alain Danet, Maud Mouchet, Willem Bonnaffé, Elisa Thébault and Colin Fontaine
+date: \today 
+output:
+  pdf_document:
+    fig_caption: true 
+    keep_tex: true
+    toc: false 
+fontsize: 12pt
+header-includes:
+   -  \newcommand{\beginsupplement}{\setcounter{table}{0}  \renewcommand{\thetable}{S\arabic{table}} \setcounter{figure}{0} \renewcommand{\thefigure}{S\arabic{figure}}} 
+   - \usepackage{pdfpages}
+   - \usepackage{longtable}
+   - \usepackage{booktabs}
+   - \usepackage{makecell}
+   - \usepackage{float}
+   - \usepackage{setspace}
+   - \doublespacing
+   - \usepackage{lineno}
+   - \linenumbers
+geometry: margin=2cm
+bibliography: references.bib
+---
+
+```{r, echo = FALSE, message = FALSE, collapse = FALSE}
+
+mypath <- rprojroot::find_package_root_file
+data_common <- mypath("data")
+dest_dir <- mypath("data", "species")
+
+#load(file = mypath("manuscript", "bef_stability", "result", "workspace.rda"))
+
+knitr::opts_chunk$set(
+  cache = TRUE,
+  collapse = TRUE,
+  comment = "#>",
+  #fig.dim = c(7, 7),
+  fig.fullwidth = TRUE,
+  fig.show = "hold",
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  results = TRUE
+)
+
+library(tidyverse)
+library(magrittr)
+library(ggeffects)
+library(cowplot)
+library(kableExtra)
+library(sf)
+library(nlme)
+source(mypath("R", "misc.R"))
+source(mypath("R", "plot_methods.R"))
+source(mypath("R", "community_analysis.R"))
+source(mypath("R", "community_methods.R"))
+source(mypath("R", "statistical_analysis.R"))
+source(mypath("R", "total_sem_effect.R"))
+source(mypath("R", "press_methods.R"))
+source(mypath("R", "geo_methods.R"))
+source(mypath("R", "synchrony.R"))
+source(mypath("R", "cleaning_methods.R"))
+
+theme_set(theme_alain())
+```
+
+\beginsupplement
+
+```{r sp-list}
+myload(species, metaweb_analysis, fish_diet_shift, dir = mypath("data"))
+species %<>%
+  filter(code %in% metaweb_analysis$species) %>%
+  select(-max_size) %>%
+  rename(`Common name` = common_name, `Latin name` = latin_name)
+kable(species,
+  format = "latex",
+  longtable = T,
+  booktabs = T,
+  label = paste0("fish-sp"),
+  caption = "Fish species list.") %>%
+kable_styling(latex_options =c("striped", latex_options = c("repeat_header")))
+```
+
