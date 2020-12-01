@@ -113,8 +113,9 @@ comb %<>%
 
 debugonce(plot_temporal_biomass)
 plot_temporal_biomass(bm_data = comb,
-  biomass_var = "mv_win", com = sem_data,
-  net_metrics = NULL, .log = FALSE)
+  biomass_var = "mv_win",
+  com = filter(sem_data, station == 1755),
+  .log = FALSE)
 
 # Get biomass by sp node:
 net_sp_troph <- select(network_analysis, opcod, composition) %>%

@@ -705,7 +705,7 @@ kable(
   booktabs = T,
   caption = "Variable description and transformation"
   ) %>%
-kable_styling(latex_options = c("striped"))
+kable_styling(latex_options = c("striped", "scale_down"))
 sem_variable_table
 ```
 
