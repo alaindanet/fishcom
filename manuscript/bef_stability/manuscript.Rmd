@@ -114,7 +114,7 @@ theoretical studies with very little empirical testing. To fill this gap, we lin
 species richness, foodweb structure, annual biomass and its temporal
 stability using a standardized monitoring of fish communities in French streams
 running from 1995 to 2018. We inferred trophic interactions from
-body size recorded and diet literature. We reveal that species richness and average
+individual body size and diet literature. We reveal that species richness and average
 trophic level had a positive relationship with annual biomass of fish
 communities while they had respectively a negative and positive effect on its
 temporal stability. We also found that the effects of stream size and
@@ -235,10 +235,11 @@ found in experimental and in natural settings can be similar
 [e.g., @wu_relationship_2015; @li_relationship_2018], negative or non
 significant effects of species richness on total biomass have been found in some
 natural communities such as forests [@szwagrzyk_above-ground_2007;
-@jacob_productivity_2010; @seidel_relationship_2013]. Some authors suggest that
-the lack of resource complementarity or environmental harshness might be
-responsible for negligible, or negative effects of species richness
-[@loreau_biodiversity_2001; @he_global_2013; @wu_relationship_2015].
+@jacob_productivity_2010; @seidel_relationship_2013] and marine fishes [@maureaud_biodiversityecosystem_2019]. Some authors suggest that
+the lack of resource complementarity, environmental harshness or past human
+pressures might be responsible for negligible, or negative effects of species
+richness [@loreau_biodiversity_2001; @he_global_2013; @wu_relationship_2015;
+@maureaud_biodiversityecosystem_2019].
 
 
 
@@ -251,7 +252,7 @@ richness, total biomass and species richness might also arise from effects of
 the environment on both diversity and ecosystem functions
 [@loreau_biodiversity_2001; @he_global_2013;
 @grace_integrative_2016]. Environment affects organism performance directly, and
-thereby, species abundances, total biomass [@grace_integrative_2016] and temporal
+thereby, species abundances, total biomass [@grace_integrative_2016; @woods_testing_2020] and temporal
 stability [@de_boeck_patterns_2017; @hansen_climate_2013; @bluthgen_land_2016;
 @oliver_heterogeneous_2010; @franssen_annual_2011; @friedpetersen_drivers_2020].
 For example, larger ecosystem might increase the number of available
@@ -1030,7 +1031,8 @@ equal or superior to the effects of species richness and mean trophic level.
 
 We found that species richness increased total biomass as found in salt marshes,
 grasslands and forests [@hector_plant_1999; @tilman_biodiversity_2014;
-@wu_relationship_2015; @li_relationship_2018]. The positive effect of species
+@wu_relationship_2015; @li_relationship_2018] as well as in streams
+[@woods_testing_2020]. The positive effect of species
 richness on total biomass might be due to resource use complementarity
 [@carey_determining_2011], which is held by niche differentiation
 [@loreau_biodiversity_1998; @loreau_partitioning_2001] or to the higher
@@ -1168,10 +1170,10 @@ biomass was of the magnitude of effects of network structure and species
 richness, in line with the mounting body of work reporting important effects of
 temperature on the structure and biomass of aquatic system [e.g.
 @dossena_warming_2012; @edeline_ecological_2013; @emmrich_geographical_2014;
-@hattab_forecasting_2016]. Contrasting with a previous study in experimental
-plant communities [@grace_integrative_2016] and in fish communities
-[@yvondurocher_warming_2011; @dossena_warming_2012], we found that environmental
-drivers overall affect total biomass indirectly rather than directly.
+@hattab_forecasting_2016; @woods_testing_2020]. Contrasting with previous studies in experimental
+plant communities [@grace_integrative_2016], aquatic mesocosms [@yvondurocher_warming_2011; @dossena_warming_2012] and marine fish communities [@maureaud_biodiversityecosystem_2019]
+, we found that environmental drivers overall affect total biomass indirectly
+rather than directly [@woods_testing_2020].
 
 Interestingly, the two PCA axis related to environmental conditions had indirect
 effects on stability through two conflicting pathways, either stabilising, via
@@ -1186,7 +1188,6 @@ has a destabilising effect. This result is interesting in that both
 pathways had not been evidenced to jointly play, to the best of our knowledge.
 Furthermore, it is unclear which pathway is dominating, and under which circumstances,
 opening an interesting avenue for further investigations.
-
 
 ---
 ## Final thoughts about empirical foodwebs
