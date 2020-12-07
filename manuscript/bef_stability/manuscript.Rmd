@@ -129,134 +129,112 @@ temporal stability.
 #### Biodiversity and ecosystem properties 
 ---
 
-Current biodiversity losses and further global change has the potential to affect
-ecosystems in complex ways [@loreau_biodiversity_2001; @tilman_biodiversity_2014]. Biodiversity has a
-tremendous effect on ecosystem properties because it largely determines both the
-amount and the distribution of matter and energy fluxes
-within and among ecosystems [@loreau_meta-ecosystems:_2003]. Biodiversity thus affects biomass
-production [@tilman_productivity_1996; @cardinale_species_2002;
-@grace_integrative_2016], distribution [@thebault_relationship_2006] and
-stability [@thebault_trophic_2005; @thebault_relationship_2006;
-@tilman_biodiversity_2006]. The relationship between biodiversity and
-ecosystem properties is a central topic in ecology [@hector_plant_1999;
-@loreau_biodiversity_2001; @hooper_effects_2005; @dunne_network_2006;
-@duffy_why_2009; @isbell_forest_quantifying_2018] and our understanding of it is 
-crucial to better anticipate the impacts of global change. 
+Current biodiversity losses and further global change have the potential to
+affect ecosystems in complex ways [@loreau_biodiversity_2001;
+@tilman_biodiversity_2014]. Biodiversity has indeed a tremendous effect on
+ecosystem functions and their stability in response to perturbations
+[@hector_plant_1999; @loreau_biodiversity_2001; @hooper_effects_2005;
+@dunne_network_2006; @duffy_why_2009], because it largely determines both the
+amount and the distribution of matter and energy fluxes within and among
+ecosystems [@loreau_meta-ecosystems:_2003]. Understanding the relationship
+between biodiversity and ecosystem properties is thus crucial to better
+anticipate the impacts of global change. 
 
 ---
 #### Species richness increases total biomass
 ---
 
-Species richness promotes higher biomass production in a variety of ecosystems
-and taxons. Indeed species richness generally increases primary productivity and
+Biodiversity affects biomass production [@tilman_productivity_1996;
+@cardinale_species_2002; @grace_integrative_2016], distribution
+[@thebault_relationship_2006] and stability [@thebault_trophic_2005;
+@thebault_relationship_2006; @tilman_biodiversity_2006].
+Species richness has been shown to promote higher biomass production and  
+higher temporal stability of total biomass in a variety of ecosystems
+and taxa. 
+Indeed species richness generally increases primary productivity and
 total biomass in experimental plant communities [@tilman_productivity_1996;
 @grace_integrative_2016; @hector_plant_1999; @tilman_biodiversity_2014;
 @grace_integrative_2016], but also in briophyte communities
 [@mulder_physical_2001], stream feeders, [@cardinale_species_2002] and aquatic
-bacterial consumers [@pennekamp_biodiversity_2018]. Despite the diversity of
-ecosystems and taxons studied, the relationship between diversity and ecosystem
-functioning remains traditionally focused on single trophic levels, ignoring the
-effects of foodweb structure. Theoretical models have recently moved from
-single trophic [@tilman_plant_1997;
-@loreau_biodiversity_2001] to multitrophic communities [@thebault_food-web_2003;
-@poisot_dissimilarity_2012; @schneider_animal_2016; @wang_biodiversity_2018]. 
-These models show that both complementarity in the use of resources and selection effects,
-the two main mechanisms previously highlighted in single-trophic studies, are
-also important to understand diversity effects in foodwebs
-[@thebault_food-web_2003; @poisot_dissimilarity_2012; @schneider_animal_2016].
-However, they also reveal new mechanisms such as positive effects of 
-the number of trophic levels, i.e. associated with higher trophic levels, on ecosystem
-functioning [@wang_biodiversity_2018]. Theoretical studies also showed that food
-web properties, such as interaction distribution and strength, affect the
-distribution of biomass among adjacent trophic levels
-[@thebault_relationship_2006; @schneider_animal_2016; @barbier_pyramids_2019].
-Despite these theoretical evidence that structure affects biomass, we are
-lacking empirical studies that assess jointly how foodweb structure and species
-diversity affect total biomass and its production.   
-
----
-#### Single and multitrophic communities
----
-
-Further than biomass production, many studies showed that species richness
-increases temporal stability of communities, i.e. variation through time, often
-quantified by the temporal CV of biomass.  Such positive relationship between
+bacterial consumers [@pennekamp_biodiversity_2018]. 
+In parallel, such positive relationship between
 species richness and temporal stability of biomass has been reported in
 experimental grasslands and aquatic bacterial systems
 [@tilman_biodiversity_2006; @pennekamp_biodiversity_2018] as well as in natural
 settings, such as stream fish communities [@franssen_annual_2011], bird and
-butterfly communities [@olivier_urbanization_2020]. However, this relationship
-has been mostly explored in single trophic level systems or without accounting
-for foodweb structure, even more so than the relationship between diversity and
-biomass production. 
+butterfly communities [@olivier_urbanization_2020].
+Despite the diversity of
+ecosystems and taxa studied, the relationship between diversity and ecosystem
+functioning in experimental and empirical studies remains mostly focused
+on single trophic levels, ignoring the effects of foodweb structure. 
+This gap is even more striking for the relationship between diversity and
+temporal stability of ecosystem functioning, in spite of long-standing interest
+for the links between food web complexity and stability in theoretical ecology
+[e.g. @may_will_1972; @dunne_network_2006; @neutel_reconciling_2007;
+@duffy_why_2009; @stouffer_compartmentalization_2011].
 
-Several theoretical studies considering a single trophic level have
-clarified which mechanisms generate this positive relationship between species
-richness and temporal
-stability [@loreau_species_2008; @thibaut_understanding_2013], (1) species
-synchrony and (2) species variability. Species synchrony captures to what extent
-the fluctuations of abundances or biomasses through time are correlated among
-species. A low synchrony in species fluctuations, i.e. asynchrony, is
-synonymous of compensatory dynamic, where the decrease in abundance of a species
-is compensated by the increase of an other. Asynchrony is generally the main
-mechanism which species richness has a stabilizing effect on temporal
-stability [@tilman_biodiversity_2006; @olivier_urbanization_2020]. Asynchrony is
-expected to increase with the variability of species responses to perturbations. Though most
-often positive, the relationship between species diversity and asynchrony has
-also been evidenced to be neutral or negative in natural settings
-[@tilman_biodiversity_2006; @thibaut_understanding_2013;
-@olivier_urbanization_2020; @valencia_synchrony_2020]. 
+Overall, the evidence from theoretical models suggests that both species
+richness and foodweb structure should modulate ecosystem propertiestotal
+biomass and their stability of communities. Complementarity in the use of
+resources, a main mechanism previously highlighted in single-trophic studies, is
+important to understand the effects of species richness in food webs [@thebault_food-web_2003;
+@poisot_trophic_2013; @schneider_animal_2016], but in that case it also depends
+on food web connectance [@thebault_food-web_2003; @poisot_trophic_2013].
 
-In addition to diversity,
-foodweb structure is expected to strongly affect the stability of communities
-and ecosystems, as outlined by the large body of theoretical studies on this
-topic [@may_will_1972; @dunne_network_2006; @neutel_reconciling_2007;
-@duffy_why_2009; @stouffer_compartmentalization_2011]. In particular, predation
-has cascading effects on both species variability and synchrony
-[@teng_dynamics_2004; @shanafelt_stability_2018] and it also affects
-synchrony between species. 
+As classically found in studies considering a single trophic level,
+[@tilman_biodiversity_2006; @loreau_species_2008; olivier_urbanization_2020],
+asynchrony in species temporal variations is also explaining a significant part
+of the stabilizing effects of species richness on total biomass in food webs
+[@thebault_trophic_2005]. Indeed, a low synchrony in species fluctuations,
+i.e. asynchrony, is synonymous of compensatory dynamics, where the decrease in
+abundance of a species is compensated by the increase of an other. However,
+higher connectance can in some cases reverse the positive effects of species
+richness on temporal stability of total biomass, by leading to a negative
+relationship between species richness and species temporal variability
+[@thebault_trophic_2005]. In addition, recent models revealed new mechanisms by
+which food web structure affects total ecosystem biomass and its temporal
+variability. In particular, the number of trophic levels in food webs, which is
+associated with the presence of species at higher trophic levels, increases
+total primary production [@wang_biodiversity_2018]. The addition of predators has
+also cascading effects on both species variability and synchrony at lower
+trophic levels [@teng_dynamics_2004; @shanafelt_stability_2018].
+Overall, these theoretical studies show that the effects of species richness and
+network structure, such as connectance and average trophic level, are
+potentially conflicting or synergistic in such a way that they need to be
+addressed jointly.
 
----
-#### Problematic
----
+The gap in studies that consider jointly effects of diversity and food web
+structure on ecosystem functions can be explained by the challenges associated
+with manipulating both species richness and food web complexity in an
+experimental context [e.g. @sander_ecological_2017] and by the fact that describing
+trophic interactions between species is highly labour intensive. These
+challenges are even more acute for the study of the stability of ecosystem
+properties, which additionally requires time-series data and longer-term
+analyses. In this context, recent developments to predict species trophic
+interactions [@gravel_inferring_2013], combined with observational long-term surveys
+of ecological communities, can offer an opportunity to investigate the links
+between diversity, food web structure and the stability of total community
+biomass in natural settings. 
 
-
-
-Overall, the evidence suggests that both species richness and network structure
-should modulate total biomass and stability of communities. The effects of
-species richness and network structure, such as connectance and average trophic
-level, are potentially conflicting or synergistic in such a way that they need
-to be addressed jointly. Despite the long-standing interest for the links
-between foodweb complexity and stability in ecology, we still have very few
-evidence of the relationship between network structure and the temporal
-stability of multitrophic communities in natural settings.
-Although the relationships between diversity, total biomass and its stability
-found in experimental and in natural settings can be similar
-[e.g., @wu_relationship_2015; @li_relationship_2018], negative or non
-significant effects of species richness on total biomass have been found in some
-natural communities such as forests [@szwagrzyk_above-ground_2007;
-@jacob_productivity_2010; @seidel_relationship_2013] and marine fishes [@maureaud_biodiversityecosystem_2019]. Some authors suggest that
-the lack of resource complementarity, environmental harshness or past human
-pressures might be responsible for negligible, or negative effects of species
-richness [@loreau_biodiversity_2001; @he_global_2013; @wu_relationship_2015;
-@maureaud_biodiversityecosystem_2019].
-
-
-
----
-#### Environment can mitigate community structure and ecosystem properties 
----
-
-When analyzing data from natural communities, the relationships among species
-richness, total biomass and species richness might also arise from effects of
-the environment on both diversity and ecosystem functions
-[@loreau_biodiversity_2001; @he_global_2013;
-@grace_integrative_2016]. Environment affects organism performance directly, and
-thereby, species abundances, total biomass [@grace_integrative_2016; @woods_testing_2020] and temporal
-stability [@de_boeck_patterns_2017; @hansen_climate_2013; @bluthgen_land_2016;
-@oliver_heterogeneous_2010; @franssen_annual_2011; @friedpetersen_drivers_2020].
-For example, larger ecosystem might increase the number of available
-resources and thus total biomass [@post_ecosystem_2000; @doi_resource_2009].
+Such approach based on data from natural communities can in addition give
+insights on the effects of environmental variables on ecosystem properties and
+their stability. Environment affects organism performance directly, and thereby,
+species abundances, total biomass [@grace_integrative_2016; @woods_testing_2020]
+and its temporal stability [@de_boeck_patterns_2017; @hansen_climate_2013;
+@bluthgen_land_2016; @oliver_heterogeneous_2010; @franssen_annual_2011;
+@friedpetersen_drivers_2020]. For example, larger ecosystem might increase the
+number of available resources and thus total biomass [@post_ecosystem_2000;
+@doi_resource_2009] while temperature affects ecosystem respiration and biomass
+distribution [@yvondurocher_warming_2011; @schwarz_warming_2017]. Environment also
+directly affect species richness and food web structure. For instance, larger
+ecosystems host food webs with higher diversity and trophic levels
+[@mchugh_dual_2010] while temperature can affect food web diversity and
+structure in contrasted ways depending on the ecosystem studied
+[@ogorman_unexpected_2017; @gauzens_biodiversity_2020]. When analyzing data
+from natural communities, the relationships among species richness, total
+biomass and its temporal stability might also arise from effects of the
+environment on both diversity and ecosystem functions
+[@loreau_biodiversity_2001; @he_global_2013; @grace_integrative_2016].
 @li_relationship_2018 have notably shown that climate moisture has a positive
 direct effect on total biomass, but also indirect through a positive effect on
 species richness. Accounting for environment also allow for an overall
