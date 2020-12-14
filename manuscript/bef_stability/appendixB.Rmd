@@ -1,5 +1,5 @@
 ---
-title: Appendix of Species richness and network structure jointly drive total biomass and its temporal stability in fish communities
+title: Appendix B of Species richness and network structure jointly drive total biomass and its temporal stability in fish communities
 author: Alain Danet, Maud Mouchet, Willem Bonnaffé, Elisa Thébault and Colin Fontaine
 date: \today 
 output:
@@ -84,47 +84,48 @@ package <- c("openSTARS", "SSN", "nlme", "piecewiseSEM")
 The fish community sampling took place in a variety of stream size, shape and
 depth. This diversity constraints the type of protocol that can take place.  For
 the small streams (depth < 0.7m across the entire width), the complete protocol
-is used. It consists in placing anodes every X meters across the width of the
-river. The fishermen made from one to three row
+is used. It consists in placing anodes across the width of the
+stream. The fishermen made from one to three row
 of fishing. We kept only the first row for analysis to homogenize the sampling
 effort. For deeper and wider streams, the sampling was partial over the bank and
 the channel and performed by boat and by foot (along the bank). We kept only
 sampling done over the bank because channel sampling was not always done. Two
 types of partial protocols takes place: partial over bank and partial by points.
-The former is continuous while the latter is discrete. Furthermore, in partial
-by point protocol the channel can be sampled as well. We kept only the partial
-by point fish sampling which all the sampling point were done over the bank to
-homogenize the sampling. Then, we merged partial over bank and partial over
-point protocols. Some sampling stations had mix characteristics in which mix of
-partial and complete protocols were applied depending of the depth of the river
-at the time of sampling. 
+The former is continuous while the latter is discrete. Furthermore, in the "partial
+by point" protocol, the channel can be sampled as well. We kept only the "partial
+by point" sampling in which all the sampling points were done over the bank to
+homogenize the sampling. Then, we merged partial over bank and partial by 
+point protocols. Some sampled stations had mixed characteristics in which mix of
+partial and complete protocols were applied depending of the depth of the stream 
+at the time of sampling. In this case, we kept only the protocol that was the
+most used. 
 
 Heterogeneity in the sampling period may introduce variability that is not related
 to ecological processes such as the presence of juveniles. In order to reduce
 heterogeneity in sampling time, only one sampling per year was retained if there
-was two in a given year, the one with with the most species and then individual
+was two in a given year, the one with the most species and then individual
 collected. Finally, most of the fish sampling occurred in September (Median:
 mid-August) and the median standard deviation of the sampling month was inferior
-to one (0.7) within station. Additionally, we removed sampling events, in a
-given station, which the sampled length along the stream was outside the median
+to one (0.7) within stations. Additionally, we removed sampling events, in a
+given station, in which the sampled length along the stream was outside the median
 length sampled more or less 30%. Finally, we standardized the biomass record
 and species richness by the sampled surface to get rid of sampling effort
 effects. 
 
 ### Batches definition and body size measurement 
 
-During the electric fishing, and before that fish body size are measured, they
-are regrouped by batches. Each batches contains one species but there can be
-several batches by species. Body size assessment are different according to the
-batches. There are four types of batches: N, I, S/L and G. The batches N and
-I contains the biggest individuals, there are normally less numerous and then
-the body size of the individuals of those batches is recorded. The batches S/L
+During the electric fishing, and before that fish body size are measured, the
+fishes are regrouped by batches. Each batch contains one species but there can
+be several batches by species. Body size assessment are different according to
+the batches. There are four types of batches: N, I, S/L and G. The batches N and
+I contains the biggest individuals which are normally less numerous. Then
+the body size of all the individuals in the N and I batches is recorded. The batches S/L
 contains fishes of intermediate sizes. Inside each S/L batches, the operator
-tries to make batches as homogeneous as possible in body size. Then, the body
-size of a subsample of X individuals are recorded. The G batches contain
-individuals of low body size, with care that body size is as homogeneous as
-possible in the batches. Then body size of the shortest and the longest
-individuals are recorded.
+tries to make batches as homogeneous as possible in terms of body size. Then, the body
+size of a subsample of at least 20 individuals is recorded. The G batches
+contain individuals of small body size, with care that body size is as
+homogeneous as possible in a given batches. Then body size of the shortest and the
+longest individuals are recorded.
 
 ## Body size inference
 
@@ -148,29 +149,29 @@ the OFB agency, which has defined the sampling protocols, supervised the data
 collection and performed analysis for multiple purpose including stream
 management.
 
-```{r}
+```{r, cache = FALSE}
 body_size_caption <- paste0(
   "Body size inference of the fishes. ",
   "(1) Sampled fishes were attributed to batch type according to their size and
   the number of individuals. A batch contains one species only. (2) In the batch
   type N and I, the body size of all the individuals was recorded. In the
   batches, S/L, the body size of a subsample of the individuals was recorded.
-  Finally, only the body size of the littlest and of the tallest individual was
+  Finally, only the body size of the smallest and of the largest individual were
   recorded in the G batches. ",
   "Then, (3) we inferred the body size distribution in the S/L and G batches by
-  assuming that it followed a normal distribution. The mean and the standard
+  assuming a normal distribution. The mean and the standard
   deviation were estimated with the measured subsample."
 ) 
 ```
 
-```{r p-body-size, fig.cap=body_size_caption}
+```{r p-body-size, cache = FALSE, fig.cap=body_size_caption}
 knitr::include_graphics(mypath("manuscript", "bef_stability", "figs", "length_inference.pdf"))
 ```
 
 With the information contained in the batch record, we inferred the body size of
 the fishes in the community. No inference were needed for the N and I batches
-because the body size of the individuals were recorded. The body size ($l$) of the
-fishes in the S/L and G were inferred under the assumption that its distribution
+because the body size of all individuals was recorded. The body size ($l$) of the
+fishes in the S/L and G was inferred under the assumption that its distribution
 followed a normal law ($l ~ N(\mu , \sigma)$).
 For a S/L batch, the mean $\mu$ and the standard deviation $\sigma$ were simply
 the average and the standard deviation of the body size of the subsample
@@ -186,11 +187,11 @@ batches. Body size distribution were generated using the R function
 `truncdist::rtrunc`.
 
 We removed batches that did not satisfied the following conditions. First, we
-removed batches which the total number of individuals was not recorded. In lot
-"G", we removed batches were  $l_{min} \geq l_{max}$ or if at least one of the
+removed batches in which the total number of individuals was not recorded. In lot
+"G", we removed batches where $l_{min} \geq l_{max}$ or if at least one of the
 measurement was missing. Additionally, G batches were removed when number of
 individuals fell below five, as G batches normally contained more individuals.
-In the S/L lot, we removed batches were the number of individuals in the
+In the S/L lot, we removed batches in which the number of individuals in the
 recorded individuals fell below 10. In sum, those sanity check allowed to
 exclude potentially problematic batches. Finally, in the dataset used in the
 analysis, `r na_length` individuals had missing length over 
@@ -210,23 +211,23 @@ removed_sp <- unique(removed_ind$species)
 
 We removed rare fish species, species from lake, crayfish species, and migratory
 species. In total, we removed `r nrow(removed_ind)` over 
-`r nrow(length_sem_analysis)` individuals and `r length(removed_sp)`.
+`r nrow(length_sem_analysis)` individuals and `r length(removed_sp)` species.
 
 During fish sampling, some species are identified based on morphotype but they
 belong to the same species based on fecundation criteria.  We merged those
-morphotype species into one species. There was `r
-length(unique(names(sp_to_replace())))` to merge which belonged to `r
-length(unique(sp_to_replace()))` species.
+morphotype species into one species. There was 
+`r length(unique(names(sp_to_replace())))` species to merge which belonged to 
+`r length(unique(sp_to_replace()))` species.
 
 ### Metaweb
 
 #### Ontogenic diet
 
-Diet information were obtained from fishbase.org and literature (Appendix A, Table S2). The
+Diet information were obtained from fishbase.org and literature (Appendix a, Table S2). The
 diet information contained from two to three life stages by species, the life
 stages being defined by the body size of the fishes. Over the 57 fish species,
-only seven had a piscivorous life stage and only three had as strict piscivorous
-life stage. Fish species were largely omnivorous.
+only seven had a piscivorous life stage and only three had a strict piscivorous
+life stage. Fish species were then largely omnivorous.
 
 
 ```{r food, eval = FALSE}
@@ -304,14 +305,13 @@ individuals.
 A trophic species belonged to a life stage if the median of its body size range
 fell in the range of the life stage. In turn, this trophic species has feeding
 interactions with the resource nodes of its life stage. Interactions between
-resource nodes were determined by literature. For example, phytobenthos fed on
-detritus, while zooplankton fed on zooplankton and phytoplankton. Fish-fish
 trophic interactions between a predator and a prey were determined by body size
 ratio as in many studies [@brose_predator_2019; @poisot_structure_2016;
 @schneider_body_2012].  For a given trophic species, we first determined if its
-size class end up in a life stage containing piscivorous diet, i.e. if there was
-an overlap between them. We were more liberal for piscivory determination to not
-miss potential fish-fish trophic interactions which were the main interactions
+size class ends up in a life stage containing piscivorous diet, i.e. if there was
+an overlap between them. We were more liberal for piscivory determination to
+avoid 
+missing potential fish-fish trophic interactions which were the main interactions
 in our community. If the trophic species was piscivorous, we determined its prey
 size range from 3% to 45% of the median of its size range. A trophic interaction
 was set for each trophic species whose median of its size class fell into the
@@ -408,10 +408,10 @@ plot_grid(plotlist = map_pressure, ncol = 3)
 
 The time resolution was heterogeneous according to the variable considered
 (hourly, daily and monthly for temperature, flow and BOD resp.). For each
-recording station, we applied a moving window averaging (more details in
-supplementary material) to get rid of seasonal effects. For temperature, the
-moving was performed on daily average temperature. Then we took the annual
-average of each year and each variable (i.e. one value by year and by station).
+recording station, we applied a moving window averaging to get rid of seasonal
+effects. For temperature, the moving was performed on daily average temperature.
+Then we took the annual average of each year and each variable (i.e. one value
+by year and by station).
  
 Several characteristics of the streams make the interpolation more complicated
 than along terrestrial surface. Interpolations in terrestrial areas are roughly
@@ -419,9 +419,9 @@ based on euclidean distance. Euclidean distance is more complicated to consider
 in streams because it had the follow the path of the streams. Furthermore, two
 streams can be close by but not connected and the value of their variables could
 be not related or a only a few. For those reason, we used stream spatial network
-methods to interpolate temperature, flow and BOD.
+methods to interpolate water temperature, flow and BOD.
 
-We reconstructed the stream network and the connection between sites with the
+We reconstructed the stream network and the connection between stations with the
 `openSTARS` R package [@kattwinkel_preparing_2020]. The reconstruction was done with a raster of digital
 elevation model at a resolution of 250 meters [(IGN)](https://wxs.ign.fr/jvam1hsjm11u8voorw81v2xb/telechargement/prepackage/BDALTI-75M_PACK_FXX_2018-01-24%24BDALTIV2_2-0_75M_ASC_LAMB93-IGN69_FRANCE_2018-01-15/file/BDALTIV2_2-0_75M_ASC_LAMB93-IGN69_FRANCE_2018-01-15.7z)
 and a theoretical hydrologic network [@pella_reseau_2012].
@@ -430,15 +430,14 @@ The procedure was done by hydrographic basin because of convergence problem
 when the interpolation was done at the France scale. We had to make a trade-off
 between the number of data (to keep enough high to perform the interpolation)
 and the level of dataset splitting. We then merge some hydrographic basin to end
-up with four region of interpolation: West, East, South and North. (XXX ADD 
-basins merged) 
+up with four region of interpolation: West, East, South and North.
 
 Then we modeled each variable as dependant only on the covariation between sites
 and taking in account stream network. To model the autocovariance between sites,
 we used the linear-sill and mariah functions for taildown and tailup
 autocovariance, according to their prediction performance. The interpolations
 were done with the `SSN` R package 
-[@isaak_applications_2014, @hoef_ssn:_2014].
+[@isaak_applications_2014; @hoef_ssn:_2014].
 
 
 ### Performance and post check
@@ -486,7 +485,7 @@ cv_bias_caption <- paste0(
 ```
 
 The performance of the interpolation was evaluated with leave one out
-cross-validation (already implemented in the SSN package). The value of the
+cross-validation (already implemented in the SSN package), i.e. the value of the
 interpolated variable of each station was predicted after removing it from the
 dataset.  
 
@@ -503,7 +502,9 @@ which had the least standard deviation.
 
 # Data analysis
 
-The CV of biomass over can cover multiple dynamics, including increases,
+## Temporal series classification
+
+The CV of biomass over time can cover multiple dynamics, including increases,
 stable, decreases and a mix of them. Theoretically, however, the CV computed to
 quantify stability is often represented with the assumption that the overall
 dynamic of the biomass varies around an equilibrium. In order to approach this
@@ -513,7 +514,7 @@ method (SAX) which is commonly used in time series analysis and implemented in
 the `jmotif` R package. This method classifies time series rather than
 quantifies trends and so is generic enough to encompass the diversity of time
 series shapes. The classification necessitates three steps. First, the time
-series are normalized (i.e. Substituting the mean and divide by the standard
+series are normalized (i.e. substituting the mean and divide by the standard
 deviation). The second step is to reduce the dimensionality of the time series
 by Piecewise Aggregation Approximation (PAA) method. Each time series is divided
 in $N$ frames of equal size that allows to the reduce the dimensionality of the
@@ -530,6 +531,7 @@ we kept only the $bbb$ which represent time series that showed no temporal
 tendencies, with respect to our methodology.
 
 
+## PCA over environmental variables
 
 ```{r eig-plot}
 rotated_eigen_values <- 
@@ -606,7 +608,7 @@ kable(
 kable_styling(latex_options = c("striped", "scale_down"))
 ```
 
-```{r}
+```{r, cache = FALSE}
 prop_var_expl_pca <- pca_rotated$rotated$Vaccounted["Proportion Var", ] %>%
   map_dbl(., ~round(.x * 100))
 
@@ -616,14 +618,17 @@ pca_caption <- paste0(
   "Rotated axis of PCA on environmental variables. The five components
   explained,", tot_var_expl_pca, "% of the variance (",
   paste0(names(prop_var_expl_pca), ":", prop_var_expl_pca, "%"), ").",
-  "(A) Axis 1 was positively related to the river size, axis 2 was related to
-  average temperature and negatively related to the river slope and altitude.
-  (B) Axis 3 was negatively related to the CV of stream size.
-  Axis 4 was related to the CV of enrichment.
-  Finally, axis 5 was related to the CV of flow and average enrichment.")
+  "(A) Axis 1 was positively related to the stream size, axis 2 was related to
+  the stream slope and altitude and negatively related to average water temperature and
+  BOD. (B) Eigenvalues distribution, we kept the first two axis for the data analysis. ",
+  "Please note that we took the inverse of the second axis in the data analysis,
+  to make the axis more easily interpretable, i.e. positively related de average
+  water temperature."
+
+  )
 ```
 
-```{r pca-rotated, fig.cap = pca_caption}
+```{r pca-rotated, cache = FALSE, fig.cap = pca_caption}
 p1 <- my_pca_plot(xaxis = "RC1", yaxis = "RC2", ctb_thld = .4)
 #p2 <- my_pca_plot(xaxis = "RC3", yaxis = "RC4", ctb_thld = .4)
 #p3 <- my_pca_plot(xaxis = "RC4", yaxis = "RC5", ctb_thld = .4)
@@ -642,11 +647,6 @@ pca_plot
 ```{r}
 print_prop_var_pca <- prop_var_expl_pca[order(names(prop_var_expl_pca))]
 ```
-
-
-The five axis of the rotated PCA explained respectively
-`r paste0(prop_var_expl_pca, "%", collapse = ", ")` of the variance.
-Please see the main text for the interpretation of the axis. 
 
 ```{r }
 rc2 <- tibble(
@@ -694,9 +694,9 @@ sem_variable_table <- tibble(
   variable = c(paste0("PCA axis", seq(1, 2)), "Species richness", "Connectance", "Average trophic level", "Synchrony", "CVsp", "Total biomass"),
   unit = c(rep("unitless", 2), "# by square meter", rep("unitless", 4), "gram by square meter"
     ),
-  transformation = c(rep("Log base 10", 2), "Log base 10", rep("No", 2), rep("Log base 10", 3)),
+  transformation = c("Log base 10", "Log base 10 and inversion", "Log base 10", rep("No", 2), rep("Log base 10", 3)),
   interpretation = c("linked to stream size",
-    "linked to average temperature",
+    "linked to average temperature and BOD",
     "Total species richness over the temporal series",
     "Median of annual link density", "Median of annual average trophic level", "", "",
     "Median of annual total biomass")) %>%
@@ -709,50 +709,52 @@ kable_styling(latex_options = c("striped", "scale_down"))
 sem_variable_table
 ```
 
-### SEM hypothesis
-
-We linked environmental variables both to community structure and stability
-components. Rooted in assembly theory, environment filters species that can
-establish in a community and thus affect community structure. (+ add specific
-hypothesis about physical and climate). (1) We hypothesized that enrichment
-(characterized by DBO) and mean annual temperature will increase species turnover
-[@friedpetersen_drivers_2020]. (2) We hypothesized environmental forcing can also
-decrease biomass stability directly without going by community structure. First,
-instability of habitat and environmental factors may in turn drive biomass
-instability [@hansen_climate_2013]. Secondly, average environmental conditions
-such as enrichment can increase directly CV by increasing species biomass
-fluctuations [@tabi_warming_2019]. Increasing temperature was also hypothesized
-to decrease stability through starvation resulting from high metabolic activity
-[@tabi_warming_2019].
-
 ---
-# Species richness to community attributes 
+#### SEM hypothesis
+#
+#We linked environmental variables both to community structure and stability
+#components. Rooted in assembly theory, environment filters species that can
+#establish in a community and thus affect community structure. (+ add specific
+#hypothesis about physical and climate). (1) We hypothesized that enrichment
+#(characterized by DBO) and mean annual temperature will increase species turnover
+#[@friedpetersen_drivers_2020]. (2) We hypothesized environmental forcing can also
+#decrease biomass stability directly without going by community structure. First,
+#instability of habitat and environmental factors may in turn drive biomass
+#instability [@hansen_climate_2013]. Secondly, average environmental conditions
+#such as enrichment can increase directly CV by increasing species biomass
+#fluctuations [@tabi_warming_2019]. Increasing temperature was also hypothesized
+#to decrease stability through starvation resulting from high metabolic activity
+#[@tabi_warming_2019].
+#
+#---
+## Species richness to community attributes 
+#---
+#
+#To reveal the mechanisms behind the relationship between species richness and
+#biomass stability, causal links were set from species richness to other
+#community attributes. In particular, species richness decreased connectance
+#following results from @thebault_stability_2010; @winemiller_must_1989. But
+#theoretically, some ecological networks can show the inverse relationship
+#[@winemiller_must_1989]. (6) We hypothesized also that species richness will
+#modulate average weighted trophic level because of food web assembly processes.
+#A community with more fish species can support higher trophic level. Finally, we
+#set up causal relationships from community attributes to stability components. 
+#
+#---
+##  Community attributes to stability
+#---
+#We hypothesized that (7) species richness decreased synchrony between species
+#[@loreau_species_2008] and increased $\overline{CV_{sp}}$
+#[@tilman_biodiversity_2006]. (8a) We expected that average trophic level had a
+#positive or negative relationship with synchrony, bottom-up effects should
+#result in positive whereas top-down in negative relationships. We expected a (8b)
+#negative relationship between average trophic level and $\overline{CV_{sp}}$ if
+#predators stabilised prey fluctuations or if the increasing part of
+#biomass in the predators decreased $\overline{CV_{sp}}$ because of their higher
+#body mass (if mean increase faster than variance). (9a) Connectance was expected
+#to decrease or increase $\overline{CV_{sp}}$ and (9b) synchrony because of top
+#down effects or bottom up effects.
 ---
-
-To reveal the mechanisms behind the relationship between species richness and
-biomass stability, causal links were set from species richness to other
-community attributes. In particular, species richness decreased connectance
-following results from @thebault_stability_2010; @winemiller_must_1989. But
-theoretically, some ecological networks can show the inverse relationship
-[@winemiller_must_1989]. (6) We hypothesized also that species richness will
-modulate average weighted trophic level because of food web assembly processes.
-A community with more fish species can support higher trophic level. Finally, we
-set up causal relationships from community attributes to stability components. 
-
----
-#  Community attributes to stability
----
-We hypothesized that (7) species richness decreased synchrony between species
-[@loreau_species_2008] and increased $\overline{CV_{sp}}$
-[@tilman_biodiversity_2006]. (8a) We expected that average trophic level had a
-positive or negative relationship with synchrony, bottom-up effects should
-result in positive whereas top-down in negative relationships. We expected a (8b)
-negative relationship between average trophic level and $\overline{CV_{sp}}$ if
-predators stabilised prey fluctuations or if the increasing part of
-biomass in the predators decreased $\overline{CV_{sp}}$ because of their higher
-body mass (if mean increase faster than variance). (9a) Connectance was expected
-to decrease or increase $\overline{CV_{sp}}$ and (9b) synchrony because of top
-down effects or bottom up effects.
 
 
 
@@ -970,7 +972,7 @@ kable(formated_random_effects,
 kable_styling(latex_options = c("striped"))
 ```
 
-```{r sensitivity, message = FALSE, fig.dim = c(10, 7), fig.cap = "Sensivity analysis with different dataset"}
+```{r sensitivity, cache = TRUE, message = FALSE, fig.dim = c(10, 7), fig.cap = "Sensivity analysis with different dataset"}
 library(furrr)
 
 myload(op_analysis, op_analysis_wo_holes, op_analysis_ov, dir = mypath("data"))
