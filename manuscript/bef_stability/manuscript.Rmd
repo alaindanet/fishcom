@@ -92,7 +92,7 @@ knitr::opts_chunk$set(
 
 - Number of words:
   - Abstract: 151
-  - Main text: 5535
+  - Main text: 4980 
 
 - Number of references: 92
 - Number of figures: 2
@@ -242,13 +242,11 @@ constitute a good model to study the effects of network structure on total
 biomass and its temporal stability. Despite that fish trophic interactions are
 difficult to measure in natural conditions, a substantial body of literature
 supports that they can be inferred through body size and diet informations
-[@jennings_weak_2001; @gravel_inferring_2013; @brose_predator_2019]. Especially
-in stream communities, including fishes, @brose_predator_2019 found that the
-prediction of predator-prey trophic interactions based on body size ratio was
-far better in stream ecosystems than in other aquatic and terrestrial
-ecosystems. Lastly, most of the diversity-biomass and diversity-stability
-relationships, have been assessed in terrestrial ecosystems while there is a
-evident need to test such relationships in a variety of ecosystem types.
+[@jennings_weak_2001; @gravel_inferring_2013], especially
+in stream communities including fishes [@brose_predator_2019]. Lastly, most of
+the diversity-biomass and diversity-stability relationships, have been assessed
+in terrestrial ecosystems while there is a evident need to test such
+relationships in a variety of ecosystem types.
 
 Our aim is to document the relationships among species richness, foodweb
 structure, total biomass and its temporal stability in natural communities. To
@@ -256,12 +254,11 @@ do so, we used the ONEMA dataset consisting in a standardized sampling of fish
 communities in French streams [@edeline_ecological_2013]. We selected 99 sites
 that have been sampled for more than 10 years spanning on the 1995-2018 period. We
 inferred 1496 interaction networks, based on body size and diet. We question
-whether species richness, connectance and average trophic level increase,
-decrease or are unrelated to total biomass and its temporal stability. We
-further question whether the species richness, connectance, and average trophic
-level have antagonistic or mutual effect on total biomass and its temporal
-stability. Finally, we question if ecosystem size and average temperature
-increase total biomass and its temporal stability.
+whether species richness, connectance and average trophic level are related or
+not to total biomass and its temporal stability. We further question whether
+species richnes and foodweb structure have antagonistic or mutual effect on
+total biomass and its temporal stability. Finally, we question how ecosystem size
+and average temperature are related to total biomass and its temporal stability.
 
 # Methods
 
@@ -422,10 +419,7 @@ interactions was shown to be more accurate when considering body size classes,
 i.e. trophic species, than species [@jennings_weak_2001].
 
 The feeding interactions of a fish node, i.e. a trophic species, were determined
-by both its species identity and its body size. Species identity allowed to
-differentiate between piscivorous and non piscivorous species, to know which
-resources the trophic species are feeding on and to know the minimum size at
-which a piscivorous species begin to feed on fishes. The ontogenic fish diet
+by both its species identity and its body size. The ontogenic fish diet
 database was filled according to fishbase and literature (appendix A, Table S2). Each
 fish species had two or three life stages which are delimited by a body size
 range (Fig. S2). The life stage of a fish trophic species was determined with
@@ -580,7 +574,7 @@ The structural equation models were based on Gaussian linear models. All variabl
 except the connectance and average trophic level
 were logged to fulfill model assumptions (see residual plots and data
 transformation in Fig. S5 and S6, Table S5). We set the seven
-hydrographic basins as a random effect on the intercept of the linear models to
+hydrographic basins as a random effect on the intercept to
 account for their heterogeneity. We checked for the absence of multicollinearity 
 with Variance Inflation Factor (VIF, Table S6). The slopes reported
 in the main text were standardized in order to compare their magnitude ($r_\delta
@@ -588,13 +582,13 @@ in the main text were standardized in order to compare their magnitude ($r_\delt
 $\sigma_x$ and $\sigma_y$ being respectively the standard deviation of the
 predictive variable $x$ and of the response variable $y$). The paths whose
 slope had a $P$ value inferior to $0.05$ were reported in the main text, all the
-path values are presented in Table S7 and S8).
+path values are presented in Table S7 and S8.
 
 Indirect effects on total biomass and its temporal stability
 were computed by multiplying slopes along the path. As an example, if we consider
 $A \to B \to C$, the indirect effect of A on C is equal to $r_{AB} \times
-r_{BC}$.  Only significant direct slopes were entered in the calculation of
-indirect effects. Finally total effects were computed as the sum
+r_{BC}$. Only significant direct slopes were entered in the calculation of
+indirect effects. Total effects were computed as the sum
 of direct and indirect effects.
 
 Environmental variables were interpolated with the `openStars` and `SSN`
@@ -799,11 +793,11 @@ The structural equation models explained a large part of the variation
 of species richness, connectance, synchrony, $\overline{CV_{sp}}$ and total
 biomass (resp. $R^2 = .43$, $.38$, $.46$, $.47$ and $.32$) but less so for mean
 trophic level ($R^2 =
-.11$, Fig. \@ref(fig:sem-plot) B and D). We found that species richness had a
+.11$, Fig. \@ref(fig:sem-plot) B and D). Species richness had a
 significant negative effect on mean trophic level ($r_\delta = 
 `r rich_on_tlvl`$) and connectance ($r_\delta = `r rich_on_ct`$, Fig.
-\@ref(fig:sem-plot) B and D), meaning that a part of the effects of species richness went 
-through network structure.
+\@ref(fig:sem-plot) B and D), meaning that a part of the effects of species
+richness went through network structure.
 
 ## Species richness and average trophic level are positively correlated with total biomass
 
