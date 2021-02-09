@@ -1,0 +1,314 @@
+---
+title: "New first figure"
+---
+
+```{r}
+library(tidyverse)
+library(magrittr)
+library(cowplot)
+
+mypath <- rprojroot::find_package_root_file
+data_common <- mypath("data")
+dest_dir <- mypath("data", "species")
+
+source(mypath("R", "misc.R"))
+source(mypath("R", "plot_methods.R"))
+source(mypath("R", "geo_methods.R"))
+source(mypath("R", "press_methods.R"))
+source(mypath("R", "synchrony.R"))
+source(mypath("R", "community_methods.R"))
+source(mypath("R", "community_analysis.R"))
+source(mypath("R", "statistical_analysis.R"))
+source(mypath("R", "local_network_build.R"))
+theme_set(theme_cowplot())
+```
+
+
+```{r}
+myload(community_metrics, op_analysis, sem_data, dir = mypath("data"))
+community_metrics %<>%
+    left_join(select(op_analysis, station, opcod, year))
+
+```
+
+```{r}
+get_bm_dyn_year <- function (com = NULL, station = NULL) {
+
+  test <- com %>%
+    filter(station == 1755)
+
+  test %<>%
+    mutate(sp_tibble = map(sp_vector, ~tibble(species = names(.x), biomass_sp = .x))) %>%
+    unnest(sp_tibble) %>%
+    mutate(bm_std_sp = biomass_sp / surface) %>%
+    select(station, year, species, bm_std_sp)
+
+  test %<>% 
+    pivot_wider(names_from = species, values_from = "bm_std_sp")%>%
+    mutate_at(vars(matches("[A-Z]{3}", ignore.case = FALSE)), ~ifelse(is.na(.), 0, .)) %>%
+    pivot_longer(cols = matches("[A-Z]{3}", ignore.case = FALSE), names_to = "species", values_to = "bm_std_sp")
+
+  return(test)
+}
+get_network_summary <- function (com = NULL, station = NULL) {
+
+  st <- station
+  tmp <- com %>%
+    filter(station == st) %>%
+    mutate_if(is.double, ~round(., 2))
+
+  label <- paste(
+    "S =", tmp$bm_std_stab, ", ",
+    "sync =", tmp$sync, ", ",
+    "CVsp =", tmp$cv_sp, ", ",
+    "\n",
+    "R =", tmp$rich_tot_std, ", ",
+    "C =", tmp$ct, ", ",
+    "Tlvl= ", tmp$t_lvl
+  )
+
+  return(label)
+
+}
+
+plot_dyn_web  <- function (com = NULL, sem_df = NULL, station = NULL, stacked =
+  FALSE, .log = FALSE) {
+
+  # get bm dynamic 
+  com <- get_bm_dyn_year(com = com, station = station)
+
+  # get total biomass 
+    total_bm <- com %>%
+	  group_by(year) %>%
+	  summarise(bm_std_sp = sum(bm_std_sp)) %>%
+	  mutate(species = "Total")
+
+  p <- com %>%
+    ggplot(aes(x = year, y = bm_std_sp, color = species))
+
+  if (stacked) {
+    p <- p + 
+      geom_area(aes(fill = species))
+  } else {
+    p <- p + 
+      geom_line() +
+      geom_line(data = total_bm, color = "black")
+  }
+
+  # Make it professional:
+  p <- p +
+    labs(y = "Biomass density (g by square meter)", x = "Year")
+
+  if (!is.null(sem_df)) {
+
+    label <- get_network_summary(com = sem_df, station = station) 
+    p <- p +
+    annotate("text", x = median(total_bm$year),
+      y = max(total_bm$bm_std_sp) + max(total_bm$bm_std_sp) * 5/100, label = label)
+  }
+
+  if (.log) {
+    p <- p + scale_y_log10()
+  }
+
+  return(p)
+
+
+}
+```
+
+
+```{r}
+plot_dyn_web(com = community_metrics, station = 1755, stacked = TRUE, sem_df = sem_data)
+plot_dyn_web(com = community_metrics, sem_df = sem_data, station = 1755)
+```
+
+# Network
+
+```{r}
+source(mypath("R", "codeWeb.R"))
+myload(toy_metaweb, dir = mypath("data"))
+
+TL <- NetIndices::TrophInd(toy_metaweb$metaweb)$TL
+PlotWeb(
+  TL = TL,
+  webTL = toy_metaweb$metaweb,
+  colnode = rep("red", length(TL)),
+  abund = rnorm(length(TL), 100, 10),
+  collink="grey70",
+  scale_abun = .2
+) 
+```
+
+
+```{r}
+get_adj_net_station <- function (net = NULL, station = NULL) {
+
+  st <- station
+
+  net <- net %>%
+    filter(station %in% st) %>%
+    dplyr::select(station, year, network) %>%
+    unnest(cols = c(network))
+
+  ## Compute metrics:
+  net %>%
+    dplyr::select(year, from, to) %>%
+    arrange(year) %>%
+    group_by(year) %>%
+    nest(network = c(from, to)) %>%
+    mutate(
+      igraph_obj = map(network, igraph::graph_from_data_frame,
+	directed = TRUE),
+      adj_mat = map(igraph_obj, igraph::as_adjacency_matrix,
+	sparse = FALSE),
+      troph = map(adj_mat, ~NetIndices::TrophInd(.x)),
+      obs_troph_level_vector = map(troph, function (x) {
+	TL <- x$TL
+	names(TL) <- rownames(x) 
+	return(TL)
+	})
+    )
+}
+
+get_net_biomass <- function (net = NULL, station = NULL) {
+
+  st <- station
+
+  # Get bm
+  net <- net %>%
+    filter(station %in% st) %>%
+    dplyr::select(year, composition) %>%
+    unnest(cols = c(composition))  %>%
+    select(year, sp_class, bm_std)
+    
+   # Make list
+    net %<>%
+      arrange(year) %>%
+      group_by(year) %>%
+      nest(bm = c(sp_class, bm_std)) %>%
+      mutate(bm = map(bm, deframe))
+  net
+} 
+
+
+set_color_nodes <- function (
+  node_list = NULL,
+  color_species_resources = NULL
+  ) {
+
+  node_list_sp <- stringr::str_replace_all(node_list, "_\\d", "") 
+
+  colour <- color_species_resources[node_list_sp]
+  names(colour) <- node_list
+  return(colour)
+}
+
+set_node_resources_abun <- function (
+  node_list = NULL,
+  node_abun = NULL, resource_abun = NULL) {
+
+  abun <- vector("numeric", length(node_list))  
+  names(abun) <- node_list 
+
+  if (is.null(resource_abun)) {
+    resource_abun <- mean(node_abun)
+  }
+
+  abun[names(node_abun)] <- node_abun 
+  abun[abun == 0] <- resource_abun 
+  return(abun)
+
+}
+```
+
+
+```{r}
+myload(network_analysis, dir = mypath("data", "classes"))
+network_analysis %<>%
+  left_join(dplyr::select(op_analysis, opcod, station, year)) 
+
+
+
+net <- get_adj_net_station(net = network_analysis, station = 1755)
+net$obs_troph_level_vector[[1]]
+net$adj_mat[[1]]
+bm <- get_net_biomass(net = network_analysis, station = 1755)
+bm$bm[[1]]
+
+meta_node_color <- set_color_species(node_list = unique(names(unlist(net$obs_troph_level_vector))), species_list = NULL, resource_list = NULL, col_resource = NULL)
+
+PlotWeb(
+  TL = net$obs_troph_level_vector[[1]],
+  webTL = net$adj_mat[[1]],
+  colnode = set_color_nodes(
+    node_list = names(net$obs_troph_level_vector[[1]]),
+    color_species_resources = meta_node_color),
+  abund = set_node_resources_abun(node_list = names(net$obs_troph_level_vector[[1]]), node_abun = bm$bm[[1]]),
+  collink="grey70",
+  scale_abun = .2
+) 
+```
+
+## Temporal network
+
+```{r, warning = FALSE, fig.height = 14, fig.width = 14}
+par(mfrow = c(2,2))
+for (i in seq_along(net$adj_mat)) {
+PlotWeb(
+  TL = net$obs_troph_level_vector[[i]],
+  webTL = net$adj_mat[[i]],
+  colnode = set_color_nodes(
+    node_list = names(net$obs_troph_level_vector[[i]]),
+    color_species_resources = meta_node_color),
+  abund = set_node_resources_abun(node_list = names(net$obs_troph_level_vector[[i]]), node_abun = bm$bm[[i]]),
+  collink="grey70",
+  scale_abun = .2
+) 
+title(paste0(net$year[[i]]))
+}
+
+```
+
+# Test fig plot 
+
+```{r, warning = FALSE}
+list_p <- list()
+
+nb <- seq.int(from = 1, to = length(net$adj_mat), length.out = 4)
+
+p <- ~{ 
+par(
+  mfrow = c(2,2),
+  mar = c(0, 0, 1, 0), 
+  mgp = c(2, 1, 0)
+)
+for (i in nb) {
+PlotWeb(
+  TL = net$obs_troph_level_vector[[i]],
+  webTL = net$adj_mat[[i]],
+  colnode = set_color_nodes(
+    node_list = names(net$obs_troph_level_vector[[i]]),
+    color_species_resources = meta_node_color),
+  abund = set_node_resources_abun(node_list = names(net$obs_troph_level_vector[[i]]), node_abun = bm$bm[[i]]),
+  collink="grey70",
+  scale_abun = .6
+)
+title(paste0(net$year[[i]]))
+p <- recordPlot()
+list_p <- c(list_p, p)
+
+}
+}
+
+```
+
+```{r, fig.width = 10, warning = FALSE}
+plot_grid(
+  plot_dyn_web(com = community_metrics, sem_df = sem_data, station = 1755) +
+    theme(legend.position = "bottom"),
+  ggdraw(p)
+)
+```
+
+
