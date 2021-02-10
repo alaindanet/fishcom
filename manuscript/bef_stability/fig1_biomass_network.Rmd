@@ -21,6 +21,7 @@ source(mypath("R", "community_analysis.R"))
 source(mypath("R", "statistical_analysis.R"))
 source(mypath("R", "local_network_build.R"))
 theme_set(theme_cowplot())
+.pardefault <- par()
 ```
 
 
@@ -34,8 +35,9 @@ community_metrics %<>%
 ```{r}
 get_bm_dyn_year <- function (com = NULL, station = NULL) {
 
+  st <- station
   test <- com %>%
-    filter(station == 1755)
+    filter(station == st)
 
   test %<>%
     mutate(sp_tibble = map(sp_vector, ~tibble(species = names(.x), biomass_sp = .x))) %>%
@@ -72,7 +74,7 @@ get_network_summary <- function (com = NULL, station = NULL) {
 }
 
 plot_dyn_web  <- function (com = NULL, sem_df = NULL, station = NULL, stacked =
-  FALSE, .log = FALSE) {
+  FALSE, .log = FALSE, color_species = NULL) {
 
   # get bm dynamic 
   com <- get_bm_dyn_year(com = com, station = station)
@@ -109,6 +111,12 @@ plot_dyn_web  <- function (com = NULL, sem_df = NULL, station = NULL, stacked =
 
   if (.log) {
     p <- p + scale_y_log10()
+  }
+
+  if (!is.null(color_species)) {
+    p %<>%
+      scale_fill_manual(values = meta_node_color) +
+      scale_color_manual(values = meta_node_color)
   }
 
   return(p)
@@ -191,7 +199,6 @@ get_net_biomass <- function (net = NULL, station = NULL) {
   net
 } 
 
-
 set_color_nodes <- function (
   node_list = NULL,
   color_species_resources = NULL
@@ -220,21 +227,81 @@ set_node_resources_abun <- function (
   return(abun)
 
 }
+
+get_network_temporal_plot <- function (
+  net_list = NULL,
+  station = NULL,
+  selected_years = NULL,
+  node_color = NULL,
+  scale_node_size = 0.01,
+  par_options = par(mar = c(0,0,4,0)),
+  add_title = FALSE
+  ) {
+
+  net <- get_adj_net_station(net = net_list, station = station)
+  bm <- get_net_biomass(net = net_list, station = station)
+
+  if (!is.null(selected_years)) {
+    net %<>% filter(year %in% selected_years) 
+    bm %<>% filter(year %in% selected_years) 
+  }
+
+  if (is.null(node_color)) {
+    node_color <- set_color_species(
+      node_list = unique(names(unlist(net$obs_troph_level_vector))),
+      species_list = NULL, resource_list = NULL, col_resource = NULL)
+  }
+
+  list_p <- list()
+  index <- seq_along(net$year)
+
+
+  for (i in index) {
+    if(!is.null(par_options)) {
+      par_options
+    }
+    plot.new()
+    PlotWeb(
+      TL = net$obs_troph_level_vector[[index[i]]],
+      webTL = net$adj_mat[[index[i]]],
+      colnode = set_color_nodes(
+	node_list = names(net$obs_troph_level_vector[[index[i]]]),
+	color_species_resources = node_color),
+      abund = set_node_resources_abun(
+	node_list = names(net$obs_troph_level_vector[[index[i]]]),
+	node_abun = bm$bm[[index[i]]],
+	resource_abun = 1
+	),
+      collink="grey70",
+      scale_abun = scale_node_size,
+      rel_abun = FALSE
+
+    )
+    if (add_title) {
+     title(main = paste0(net$year[[index[i]]]))
+    }
+
+    p <- recordPlot()
+
+    list_p[[i]] <- p 
+  }
+
+  gg <- map(list_p, ggdraw)
+  gg
+}
 ```
 
 
 ```{r}
 myload(network_analysis, dir = mypath("data", "classes"))
 network_analysis %<>%
-  left_join(dplyr::select(op_analysis, opcod, station, year)) 
-
+  left_join(dplyr::select(op_analysis, opcod, station, year)) %>%
+  filter(!is.na(opcod))
 
 
 net <- get_adj_net_station(net = network_analysis, station = 1755)
-net$obs_troph_level_vector[[1]]
-net$adj_mat[[1]]
 bm <- get_net_biomass(net = network_analysis, station = 1755)
-bm$bm[[1]]
+
 
 meta_node_color <- set_color_species(node_list = unique(names(unlist(net$obs_troph_level_vector))), species_list = NULL, resource_list = NULL, col_resource = NULL)
 
@@ -250,65 +317,120 @@ PlotWeb(
 ) 
 ```
 
-## Temporal network
-
-```{r, warning = FALSE, fig.height = 14, fig.width = 14}
-par(mfrow = c(2,2))
-for (i in seq_along(net$adj_mat)) {
-PlotWeb(
-  TL = net$obs_troph_level_vector[[i]],
-  webTL = net$adj_mat[[i]],
-  colnode = set_color_nodes(
-    node_list = names(net$obs_troph_level_vector[[i]]),
-    color_species_resources = meta_node_color),
-  abund = set_node_resources_abun(node_list = names(net$obs_troph_level_vector[[i]]), node_abun = bm$bm[[i]]),
-  collink="grey70",
-  scale_abun = .2
-) 
-title(paste0(net$year[[i]]))
-}
-
-```
-
 # Test fig plot 
 
+
 ```{r, warning = FALSE}
-list_p <- list()
-
 nb <- seq.int(from = 1, to = length(net$adj_mat), length.out = 4)
+```
 
-p <- ~{ 
-par(
-  mfrow = c(2,2),
-  mar = c(0, 0, 1, 0), 
-  mgp = c(2, 1, 0)
-)
-for (i in nb) {
-PlotWeb(
-  TL = net$obs_troph_level_vector[[i]],
-  webTL = net$adj_mat[[i]],
-  colnode = set_color_nodes(
-    node_list = names(net$obs_troph_level_vector[[i]]),
-    color_species_resources = meta_node_color),
-  abund = set_node_resources_abun(node_list = names(net$obs_troph_level_vector[[i]]), node_abun = bm$bm[[i]]),
-  collink="grey70",
-  scale_abun = .6
-)
-title(paste0(net$year[[i]]))
-p <- recordPlot()
-list_p <- c(list_p, p)
+```{r, fig.width = 10}
+list_p <- list()
+for (i in seq_along(nb)) {
+#  par(mar = c(0,0,0,0))
+  plot.new()
+  PlotWeb(
+    TL = net$obs_troph_level_vector[[nb[i]]],
+    webTL = net$adj_mat[[nb[i]]],
+    colnode = set_color_nodes(
+      node_list = names(net$obs_troph_level_vector[[nb[i]]]),
+      color_species_resources = meta_node_color),
+    abund = set_node_resources_abun(
+      node_list = names(net$obs_troph_level_vector[[nb[i]]]),
+      node_abun = bm$bm[[nb[i]]],
+      resource_abun = 1
+      ),
+    collink="grey70",
+    scale_abun = .01,
+    rel_abun = FALSE
+    
+  )
+#  title(paste0(net$year[[nb[i]]]))
 
+  p <- recordPlot()
+
+  list_p[[i]] <- p 
 }
-}
+
+gg <- map(list_p, ggdraw)
+plot_grid(plotlist = gg, nrow = 2)
+```
+
+```{r}
+meta_node_color <- set_color_species(node_list = unique(names(unlist(net$obs_troph_level_vector))), species_list = NULL, resource_list = NULL, col_resource = NULL)
+
+p <- get_network_temporal_plot(net_list = network_analysis, station = 1755,
+  selected_years = c(1997, 2010, 2018),
+  node_color = meta_node_color, scale_node_size = 0.05, par_options = par(mar = c(1,0,1,0)))
+```
+
+```{r, fig.width = 10, fig.height = 12, warning = FALSE}
+#par(.pardefault)
+#par(.pardefault)
+test_p <- plot_grid(
+  nrow = 2,
+  plot_dyn_web(com = community_metrics, sem_df = sem_data, stacked = TRUE, station = 1755) +
+    scale_fill_manual(values = meta_node_color) +
+    scale_color_manual(values = meta_node_color)
+    ,
+  plot_grid(plotlist = p, nrow = 1),
+  rel_heights = c(1, 1),
+  align = "v"
+)
+
+test_p
+save_plot(
+  "figs/test_temporal_plot.png", test_p,
+  nrow = 2, 
+  ncol = 1,
+  base_height = 4,
+  base_width = 8)
+```
+
+```{r, eval = FALSE}
+test2 <- ggdraw(
+  plot_dyn_web(com = community_metrics, sem_df = sem_data, stacked = TRUE, station = 1755)) +
+   draw_plot(gg[[1]], .45, .45, .5, .5)
+
+save_plot("figs/test_temporal_plot.png", test2)
+```
+
+
+```{r}
+sem_data %>%
+  arrange(richness_med, desc(biomass_stab)) %>%
+  filter(richness_med >= 3)
 
 ```
 
-```{r, fig.width = 10, warning = FALSE}
-plot_grid(
-  plot_dyn_web(com = community_metrics, sem_df = sem_data, station = 1755) +
-    theme(legend.position = "bottom"),
-  ggdraw(p)
-)
+```{r}
+st <- 21604
+te <- plot_dyn_web(com = community_metrics, sem_df = sem_data, station = st, stacked = TRUE)
+ti <- get_adj_net_station(net = network_analysis, station = st)
+
+meta_node_color <- set_color_species(
+  node_list = unique(names(unlist(ti$obs_troph_level_vector))), 
+  species_list = NULL,
+  resource_list = NULL,
+  col_resource = NULL)
+
+p <- get_network_temporal_plot(net_list = network_analysis, station = st,
+  selected_years = c(2007, 2010, 2016),
+  node_color = meta_node_color, scale_node_size = 0.02, par_options = par(mar = c(0,0,0,0)))
+plot_grid(plotlist = p)
+
+for (i in seq_along(p)) {
+  save_plot(paste0("figs/test_net", i, ".png"), p[[i]], base_height = 4, base_width = 4)
+}
 ```
+
+```{r}
+test_inc <- ggdraw(te + theme(plot.margin = margin(0, 0, 3, 0, "cm"))) +
+  draw_plot(p[[1]], .15, -.01, .2, .2)
+
+  save_plot(paste0("figs/test_net_inc", ".png"), test_inc, base_height = 4)
+```
+
+
 
 
