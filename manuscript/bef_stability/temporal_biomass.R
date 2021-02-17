@@ -1,5 +1,3 @@
-
-
 library(tidyverse)
 library(magrittr)
 library(ggpmisc)
@@ -133,3 +131,32 @@ plot_stab <- purrr::map(station_high_low_stab, function (x) {
   p + theme(legend.position="none") 
 })
 plot_grid(plotlist = plot_stab, ncol = 2)
+
+
+
+myload(community_metrics, op_analysis, dir = mypath("data"))
+
+
+test <- community_metrics %>%
+  left_join(select(op_analysis, station, opcod, year)) %>%
+  filter(station == 1755)
+
+test %<>%
+  mutate(sp_tibble = map(sp_vector, ~tibble(species = names(.x), biomass_sp = .x))) %>%
+  unnest(sp_tibble) %>%
+  mutate(bm_std_sp = biomass_sp / surface) %>%
+  select(station, year, species, bm_std_sp)
+
+test %<>% 
+  pivot_wider(names_from = species, values_from = "bm_std_sp")%>%
+  mutate_at(vars(matches("[A-Z]{3}", ignore.case = FALSE)), ~ifelse(is.na(.), 0, .)) %>%
+  pivot_longer(cols = matches("[A-Z]{3}", ignore.case = FALSE), names_to = "species", values_to = "bm_std_sp")
+
+test %>%
+  ggplot(aes(x = year, y = bm_std_sp, color = species)) +
+  geom_line() +
+  geom_line(data = test %>% group_by(year) %>% summarise(bm_std_sp = sum(bm_std_sp)) %>% mutate(species = "Total"))
+
+test %>%
+  ggplot(aes(x = year, y = bm_std_sp, color = species, fill = species)) +
+  geom_area()

@@ -3,10 +3,10 @@
 #################
 
 
+library(raster)
 library(tidyverse)
 library(magrittr)
 library(sf)
-library(raster)
 mypath <- rprojroot::find_package_root_file
 source(mypath("R", "plot_methods.R"))
 source(mypath("R", "misc.R"))
@@ -106,7 +106,7 @@ country_points[country_points$name == "Spain", c("X", "Y")] <- c(300000, 6150000
 country_points[country_points$name == "Italy", c("X", "Y")] <- c(1300000, 6450000) 
 
 ocean <- data.frame(X = 200000, Y = 6500000, name = "atlantic \n ocean")
-sea <- data.frame(X = c(450000, 900000), Y = c(7025000, 6180000), name = c("Manche \n sea", "Mediterranean \n sea"))
+sea <- data.frame(X = c(450000, 900000), Y = c(7025000, 6180000), name = c("English \n sea", "Mediterranean \n sea"))
 
 basin_inner <- basin %>% 
         rmapshaper::ms_innerlines() %>% 
@@ -114,37 +114,36 @@ basin_inner <- basin %>%
         st_as_sf()
   #
 # Font size
-font_size <- 10 
-    
+font_size <- 10
+size_label <- 3.5
+   
 p <- ggplot() +
   geom_sf(data = st_geometry(world)) +
   # Coutry
   geom_text(data= country_points,aes(x=X, y=Y, label=toupper(name)),
-    color = "black", fontface = "bold", size = 2, check_overlap = FALSE) +
+    color = "black", fontface = "bold", size = size_label, check_overlap = FALSE) +
   # Ocean + sea
   geom_text(data= ocean,aes(x=X, y=Y, label=toupper(name)),
-    color = "darkblue", fontface = "bold", check_overlap = FALSE, size = 2) +
+    color = "darkblue", fontface = "bold", check_overlap = FALSE, size = size_label) +
   geom_text(data= sea,aes(x=X, y=Y, label=name),
-    color = "darkblue", fontface = "bold", check_overlap = FALSE, size = 2) +
+    color = "darkblue", fontface = "bold", check_overlap = FALSE, size = size_label) +
   #theme_map() +
-    # Plot basin
-    geom_sf(data = basin_inner) +
-    # raster comes as the first layer, municipalities on top
-    #geom_raster(data = hillshade,
-      #aes(x = x, y = y, alpha = value)) +
-    ## use the "alpha hack"
-    #scale_alpha(name = "", range = c(0.6, 0), guide = F) +
-    # Add station
-    geom_sf(data = filter(station, type == "stable"), aes(color = st_temporal)) + 
-    scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black")) +
-    coord_sf(
-      xlim = c(60000, 1100000),
-      ylim = c(6100000, 7122216),
-      datum = sf::st_crs(2154),
-      crs = 2154,
-      expand = FALSE
-    )
+  # Plot basin
+  geom_sf(data = basin_inner) +
+  coord_sf(
+    xlim = c(60000, 1100000),
+    ylim = c(6100000, 7122216),
+    datum = sf::st_crs(2154),
+    crs = 2154,
+    expand = FALSE
+  )
+# raster comes as the first layer, municipalities on top
+#geom_raster(data = hillshade,
+#aes(x = x, y = y, alpha = value)) +
+## use the "alpha hack"
+#scale_alpha(name = "", range = c(0.6, 0), guide = F) +
 
+# Add station
 p_st <- p +
   annotation_scale(location = "bl", width_hint = 0.25) +
   theme(

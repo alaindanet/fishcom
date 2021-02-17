@@ -19,6 +19,7 @@ header-includes:
    - \linenumbers
 geometry: margin=2cm
 bibliography: references.bib
+number_sections: true
 ---
 
 ```{r, echo = FALSE, message = FALSE, collapse = FALSE}
@@ -223,7 +224,7 @@ morphotype species into one species. There was
 
 #### Ontogenic diet
 
-Diet information were obtained from fishbase.org and literature (Appendix a, Table S2). The
+Diet information were obtained from fishbase.org and literature (Appendix A, Table S2). The
 diet information contained from two to three life stages by species, the life
 stages being defined by the body size of the fishes. Over the 57 fish species,
 only seven had a piscivorous life stage and only three had a strict piscivorous
@@ -288,6 +289,20 @@ removed_ind_metaweb <- length_sem_analysis %>%
   filter(!species %in% species_in_metaweb)
 removed_sp_metaweb <- unique(removed_ind_metaweb$species)
 ```
+
+```{r}
+metaweb_caption <- paste0(
+  "The metaweb which describes the interarctions between all the 412 trophic species, each is
+  represented by a node and each color represents a species (S = 45). The seven
+  resource nodes (7) are drawn in grey. The species names corresponding to the
+  three digit codes are found in Table S1."
+)
+```
+
+```{r metaweb, fig.cap=metaweb_caption}
+knitr::include_graphics(mypath("manuscript", "bef_stability", "figs", "metaweb.png"))
+```
+
 
 
 The metaweb described the potential trophic interactions between the

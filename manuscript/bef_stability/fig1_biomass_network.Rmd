@@ -12,14 +12,7 @@ data_common <- mypath("data")
 dest_dir <- mypath("data", "species")
 
 source(mypath("R", "misc.R"))
-source(mypath("R", "plot_methods.R"))
-source(mypath("R", "geo_methods.R"))
-source(mypath("R", "press_methods.R"))
-source(mypath("R", "synchrony.R"))
-source(mypath("R", "community_methods.R"))
-source(mypath("R", "community_analysis.R"))
-source(mypath("R", "statistical_analysis.R"))
-source(mypath("R", "local_network_build.R"))
+source_dir(mypath("R"))
 theme_set(theme_cowplot())
 .pardefault <- par()
 ```
@@ -28,8 +21,7 @@ theme_set(theme_cowplot())
 ```{r}
 myload(community_metrics, op_analysis, sem_data, dir = mypath("data"))
 community_metrics %<>%
-    left_join(select(op_analysis, station, opcod, year))
-
+    left_join(dplyr::select(op_analysis, station, opcod, year))
 ```
 
 ```{r}
@@ -43,7 +35,7 @@ get_bm_dyn_year <- function (com = NULL, station = NULL) {
     mutate(sp_tibble = map(sp_vector, ~tibble(species = names(.x), biomass_sp = .x))) %>%
     unnest(sp_tibble) %>%
     mutate(bm_std_sp = biomass_sp / surface) %>%
-    select(station, year, species, bm_std_sp)
+    dplyr::select(station, year, species, bm_std_sp)
 
   test %<>% 
     pivot_wider(names_from = species, values_from = "bm_std_sp")%>%
@@ -52,29 +44,45 @@ get_bm_dyn_year <- function (com = NULL, station = NULL) {
 
   return(test)
 }
-get_network_summary <- function (com = NULL, station = NULL) {
+get_network_summary <- function (com = NULL, station = NULL, stab = TRUE, com_avg = TRUE) {
 
   st <- station
   tmp <- com %>%
     filter(station == st) %>%
     mutate_if(is.double, ~round(., 2))
 
-  label <- paste(
-    "S =", tmp$bm_std_stab, ", ",
-    "sync =", tmp$sync, ", ",
-    "CVsp =", tmp$cv_sp, ", ",
-    "\n",
-    "R =", tmp$rich_tot_std, ", ",
-    "C =", tmp$ct, ", ",
-    "Tlvl= ", tmp$t_lvl
+  label_stab <- c(
+    "Stability" = tmp$bm_std_stab,
+    "Synchrony" = tmp$sync, 
+    "CVsp" = tmp$cv_sp,
+    "Median total biomass" = tmp$prod_std #"' * (g/m^2) * '"
+    )
+  label_com <- c(
+    "Median species richness" = tmp$richness_med,
+    "Median connectance" = tmp$ct,
+    "Median avg trophic level" = tmp$t_lvl
   )
+  label <- NULL 
+
+  if (stab) {
+    label <- c(label, label_stab)
+  
+  }
+
+  if (com_avg) {
+
+    label <- c(label, label_com)
+  
+  }
 
   return(label)
 
 }
 
-plot_dyn_web  <- function (com = NULL, sem_df = NULL, station = NULL, stacked =
-  FALSE, .log = FALSE, color_species = NULL) {
+plot_dyn_web  <- function (
+  com = NULL, sem_df = NULL, station = NULL,
+  stacked = FALSE, .log = FALSE, color_species = NULL, label = NULL,
+  label_parsed = FALSE, label_size = 4.5, y_label = NULL, my_ylim = NULL) {
 
   # get bm dynamic 
   com <- get_bm_dyn_year(com = com, station = station)
@@ -97,16 +105,31 @@ plot_dyn_web  <- function (com = NULL, sem_df = NULL, station = NULL, stacked =
       geom_line(data = total_bm, color = "black")
   }
 
+  if ( !is.null(my_ylim) ) 
+  {
+    p <- p +
+      ylim(my_ylim)
+  }
+
   # Make it professional:
   p <- p +
-    labs(y = "Biomass density (g by square meter)", x = "Year")
+    labs(y = expression(Biomass~density~(g/m^2)), x = "Year")
 
   if (!is.null(sem_df)) {
 
     label <- get_network_summary(com = sem_df, station = station) 
+  }
+
+  if (!is.null(label)) {
+
+    if (is.null(y_label)) {
+      y_label <- max(total_bm$bm_std_sp) + max(total_bm$bm_std_sp) * 5/100
+    }
+  
     p <- p +
     annotate("text", x = median(total_bm$year),
-      y = max(total_bm$bm_std_sp) + max(total_bm$bm_std_sp) * 5/100, label = label)
+      y = y_label,
+      label = label, parse = label_parsed, size = label_size)
   }
 
   if (.log) {
@@ -114,21 +137,28 @@ plot_dyn_web  <- function (com = NULL, sem_df = NULL, station = NULL, stacked =
   }
 
   if (!is.null(color_species)) {
-    p %<>%
-      scale_fill_manual(values = meta_node_color) +
-      scale_color_manual(values = meta_node_color)
+    p <- p + 
+      scale_fill_manual(values = color_species) +
+      scale_color_manual(values = color_species)
   }
 
   return(p)
 
 
 }
+
+get_label_from_named_vector <- function ( label = NULL, collapse = "\n") {
+  paste0(names(label), " = ", label, collapse = collapse)
+} 
 ```
 
 
 ```{r}
-plot_dyn_web(com = community_metrics, station = 1755, stacked = TRUE, sem_df = sem_data)
-plot_dyn_web(com = community_metrics, sem_df = sem_data, station = 1755)
+label <- get_network_summary(com = sem_data, station = 1755)
+lab <- get_label_from_named_vector(label = label[1:4])
+plot_dyn_web(com = community_metrics, station = 1755, stacked = TRUE, label =
+ lab, label_size = 4.5 )
+plot_dyn_web(com = community_metrics, station = 1755, label = lab)
 ```
 
 # Network
@@ -188,7 +218,7 @@ get_net_biomass <- function (net = NULL, station = NULL) {
     filter(station %in% st) %>%
     dplyr::select(year, composition) %>%
     unnest(cols = c(composition))  %>%
-    select(year, sp_class, bm_std)
+    dplyr::select(year, sp_class, bm_std)
     
    # Make list
     net %<>%
@@ -235,7 +265,9 @@ get_network_temporal_plot <- function (
   node_color = NULL,
   scale_node_size = 0.01,
   par_options = par(mar = c(0,0,4,0)),
-  add_title = FALSE
+  add_title = FALSE,
+  rel_abun = FALSE,
+  log_abun = FALSE
   ) {
 
   net <- get_adj_net_station(net = net_list, station = station)
@@ -274,8 +306,8 @@ get_network_temporal_plot <- function (
 	),
       collink="grey70",
       scale_abun = scale_node_size,
-      rel_abun = FALSE
-
+      rel_abun = rel_abun,
+      log_abun = log_abun
     )
     if (add_title) {
      title(main = paste0(net$year[[index[i]]]))
@@ -357,80 +389,361 @@ plot_grid(plotlist = gg, nrow = 2)
 ```
 
 ```{r}
+```
+
+```{r, fig.width = 10, fig.height = 5, warning = FALSE}
+#par(.pardefault)
+#par(.pardefault)
+
 meta_node_color <- set_color_species(node_list = unique(names(unlist(net$obs_troph_level_vector))), species_list = NULL, resource_list = NULL, col_resource = NULL)
 
 p <- get_network_temporal_plot(net_list = network_analysis, station = 1755,
   selected_years = c(1997, 2010, 2018),
-  node_color = meta_node_color, scale_node_size = 0.05, par_options = par(mar = c(1,0,1,0)))
-```
-
-```{r, fig.width = 10, fig.height = 12, warning = FALSE}
-#par(.pardefault)
-#par(.pardefault)
+  node_color = meta_node_color, scale_node_size = 0.04, par_options = par(mar = c(0,0,0,0)))
+#low <- plot_grid(plot_grid(plotlist = gg, nrow = 1), NULL, rel_width= c(1, .1))
+low <- plot_grid(plotlist = p, nrow = 1)
 test_p <- plot_grid(
   nrow = 2,
   plot_dyn_web(com = community_metrics, sem_df = sem_data, stacked = TRUE, station = 1755) +
     scale_fill_manual(values = meta_node_color) +
     scale_color_manual(values = meta_node_color)
     ,
-  plot_grid(plotlist = p, nrow = 1),
-  rel_heights = c(1, 1),
-  align = "v"
+  low,
+  rel_heights = c(1, .6),
+  align = "h"
 )
-
 test_p
 save_plot(
   "figs/test_temporal_plot.png", test_p,
   nrow = 2, 
   ncol = 1,
   base_height = 4,
-  base_width = 8)
-```
-
-```{r, eval = FALSE}
-test2 <- ggdraw(
-  plot_dyn_web(com = community_metrics, sem_df = sem_data, stacked = TRUE, station = 1755)) +
-   draw_plot(gg[[1]], .45, .45, .5, .5)
-
-save_plot("figs/test_temporal_plot.png", test2)
-```
-
-
-```{r}
-sem_data %>%
-  arrange(richness_med, desc(biomass_stab)) %>%
-  filter(richness_med >= 3)
-
+  base_width = 7)
 ```
 
 ```{r}
-st <- 21604
-te <- plot_dyn_web(com = community_metrics, sem_df = sem_data, station = st, stacked = TRUE)
+first_st <- sem_data %>%
+  arrange(richness_tot, desc(biomass_stab)) %>%
+  filter(richness_tot >= 2)
+
+tes <- map(first_st$station[1:12], ~plot_dyn_web(
+    com = community_metrics,
+    sem_df = sem_data,
+    station = .x,
+    stacked = TRUE))
+plot_grid(plotlist = tes)
+```
+
+```{r}
+first_st$station[5]
+#11432 my choice
+```
+
+```{r}
+last_st <- sem_data %>%
+  arrange(desc(prod), biomass_stab ) %>%
+  filter(richness_tot < 15)
+
+tes <- map(last_st$station[1:12], ~plot_dyn_web(
+    com = community_metrics,
+    sem_df = sem_data,
+    station = .x,
+    stacked = TRUE))
+plot_grid(plotlist = tes)
+```
+```{r}
+last_st$station[5]
+#6268 my choice
+```
+
+```{r pca}
+myload(habitat_press, dir = mypath("data"))
+library(sf)
+library(ggspatial)
+# map
+myload(p_st, dir = mypath("manuscript", "bef_stability", "figs"))
+# Station
+myload(biomass_ts_sax, op_analysis, dir = mypath("data"))
+op_analysis_bbb <- filter(op_analysis, station %in%
+  biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
+station <- get_basin_station(sf_obj = TRUE)
+station %<>%
+  filter(station %in% unique(op_analysis$station))
+## Get bbb
+station %<>%
+  mutate(type = ifelse(
+      station %in% unique(op_analysis_bbb$station),
+      "stable", "unstable"),
+    st_temporal = ifelse(station %in% qt_station$station, TRUE, FALSE)
+  )
+
+habitat_press %<>% na.omit()
+mask <- names(habitat_press) %in% names(get_pca_var_name_replacement())
+
+qt_station <- sem_data %>%
+  filter(station %in% c(first_st$station[5], last_st$station[5])) %>%
+  dplyr::select(station, bm_std_stab)
+mysave(qt_station, dir = mypath("data"), overwrite = TRUE)
+
+p_st <- p_st + 
+  theme_void() +
+  theme(plot.margin = theme_get()$plot.margin, legend.position = "none")
+
+p_st2 <- p_st +
+  geom_sf(data = filter(station, type == "stable"), color = "black") +
+  geom_sf(data = filter(station, station %in% qt_station$station),
+    color = "red", size = 3) +
+  geom_sf_text(data = filter(
+      station, station %in% qt_station$station
+      ), 
+    aes(label = c("C", "D")),
+    #color = "red",
+    fontface = 2,
+    size = 5,
+    nudge_x = c(-30000, 30000),
+    nudge_y = c(30000, -30000)
+    ) +
+  coord_sf(
+    xlim = c(60000, 1100000),
+    ylim = c(6100000, 7122216),
+    datum = sf::st_crs(2154),
+    crs = 2154,
+    expand = FALSE
+  )
+
+pca_rotated <- compute_rotated_pca(
+  .data = habitat_press[, mask],
+  naxis = 2
+)
+p1 <- my_pca_plot(.data = pca_rotated$rotated,
+  xaxis = "RC1", yaxis = "RC2", ctb_thld = .4, 
+  label_size = 4, force_pull = 0.01, force = 10,
+  seed = 1
+)
+
+cow_p1 <- plot_grid(NULL, p1, NULL, ncol = 1, rel_heights = c(.02, 1, .02))
+fig1ab <- plot_grid(p_st2, cow_p1, ncol = 2, 
+  labels = c("A", "B")
+)
+save_plot(mypath("manuscript", "bef_stability", "figs/fig1ab.png"), fig1ab,
+  nrow = 1, 
+  ncol = 2,
+  base_height = 4,
+  base_width = 4
+)
+``` 
+```{r set-up}
+st <- c(first_st$station[5], last_st$station[5]) 
+library(viridis)
+library(ggsci)
+library(RColorBrewer)
+display.brewer.pal(n = 8, name = 'Dark2')
+display.brewer.pal(n = 8, name = 'Set2')
+
+brew_col <- c(brewer.pal(n = 8, name = "Dark2"), brewer.pal(n = 8, name = "Set2"))
+
 ti <- get_adj_net_station(net = network_analysis, station = st)
+node_list <- unique(names(unlist(ti$obs_troph_level_vector)))
 
+# Color
 meta_node_color <- set_color_species(
-  node_list = unique(names(unlist(ti$obs_troph_level_vector))), 
+  node_list = node_list, 
   species_list = NULL,
   resource_list = NULL,
   col_resource = NULL)
+fish_node_mask <- str_detect(names(meta_node_color), "[A-Z]{3}")
+meta_node_color[fish_node_mask] <- brew_col[1:sum(fish_node_mask)]
+meta_node_color <- c(meta_node_color, PHX = brew_col[length(brew_col)])
 
-p <- get_network_temporal_plot(net_list = network_analysis, station = st,
-  selected_years = c(2007, 2010, 2016),
-  node_color = meta_node_color, scale_node_size = 0.02, par_options = par(mar = c(0,0,0,0)))
-plot_grid(plotlist = p)
+#y max:
+ymax <- community_metrics %>%
+  filter(station %in% st) %>%
+  summarise(bm = max(bm_std)) %>%
+  deframe 
+ymax <- round(ymax * .1) * 10
+my_y_label <- ymax - 7 
+my_label_size <- 4 
 
-for (i in seq_along(p)) {
-  save_plot(paste0("figs/test_net", i, ".png"), p[[i]], base_height = 4, base_width = 4)
-}
+```
+```{r low-rich-high-stab}
+
+# Label
+label <- get_network_summary(com = sem_data, station = st[1])
+lab <- get_label_from_named_vector(label = label[1:5])
+
+te <- plot_dyn_web(
+  com = community_metrics,
+  label = lab,
+  y_label = my_y_label,
+  label_size = my_label_size,
+  my_ylim = c(0, ymax),
+  station = st[1],
+  stacked = TRUE,
+  color = meta_node_color)
+p <- get_network_temporal_plot(net_list = network_analysis, station = st[1],
+  selected_years = c(1997, 1999, 2002),
+  node_color = meta_node_color, scale_node_size = 0.06,
+  par_options = par(mar = c(0,0,0,0)),
+  log_abun = TRUE
+)
+#g <- map(p, ggdraw)
+#g <- plot_grid(g[[1]], NULL, g[[2]], NULL, g[[3]], nrow = 1, rel_width = c(1, -.2, 1, -.2, 1))
+g <- plot_grid(plotlist = map(p, ggdraw), nrow = 1)
+
+cow_te  <- te +
+  theme(legend.position = "none")
+fig1c <- plot_grid(
+  cow_te,
+  g,
+  nrow = 2,
+  align = "h",
+  rel_heights = c(1, .6)
+
+)
+fig1c
+save_plot("figs/fig1c_low_rich.png", fig1c,
+  nrow = 2, 
+  ncol = 1,
+  base_height = 4,
+  base_width = 7
+)
 ```
 
 ```{r}
-test_inc <- ggdraw(te + theme(plot.margin = margin(0, 0, 3, 0, "cm"))) +
-  draw_plot(p[[1]], .15, -.01, .2, .2)
+# Label
+label2 <- get_network_summary(com = sem_data, station = st[2])
+lab2 <- get_label_from_named_vector(label = label2[1:5])
 
-  save_plot(paste0("figs/test_net_inc", ".png"), test_inc, base_height = 4)
+te2 <- plot_dyn_web(
+  com = mutate(community_metrics, year = as.integer(year)),
+  label = lab2,
+  y_label = my_y_label,
+  label_size = my_label_size,
+  my_ylim = c(0, ymax),
+  station = st[2],
+  stacked = TRUE,
+  color = meta_node_color) +
+scale_x_continuous(breaks = c(1995, 1998, 2001, 2004))
+p2 <- get_network_temporal_plot(net_list = network_analysis, station = st[2],
+  selected_years = c(1997, 1999, 2002),
+  node_color = meta_node_color, scale_node_size = 0.05,
+  par_options = par(mar = c(0,0,0,0)),
+  log_abun = TRUE
+)
+#g <- map(p, ggdraw)
+#g <- plot_grid(g[[1]], NULL, g[[2]], NULL, g[[3]], nrow = 1, rel_width = c(1, -.2, 1, -.2, 1))
+g2 <- plot_grid(plotlist = map(p2, ggdraw), nrow = 1)
+
+# get legend
+cow_te2 <- te2 + theme(legend.position = "bottom") +
+  guides(
+    fill = guide_legend(nrow = 2, title = "Species"),
+    color = guide_legend(nrow = 3, title = "Species")
+  )
+leg_species <- get_legend(cow_te2)
+cow_te2 <- te2 + theme(legend.position = "none")
+
+fig1d <- plot_grid(
+  cow_te2,
+  g2,
+  nrow = 2,
+  align = "h",
+  rel_heights = c(1, .60)
+
+)
+save_plot("figs/fig1d_high_rich.png", fig1d,
+  nrow = 2, 
+  ncol = 1,
+  base_height = 4,
+  base_width = 7
+)
 ```
 
 
+```{r}
+cow_fig1ab <- plot_grid(
+  p_st2 + theme(panel.background = element_rect(fill = "white")),
+  p1, NULL,
+  rel_widths = c(.5, .5, .07),
+  ncol = 3,
+  labels = c("A", "B", ""))
+fig1cd <- plot_grid(fig1c, fig1d, ncol = 2, labels = c("C", "D"))
+cow_leg_species <- plot_grid(NULL, leg_species, NULL, nrow = 1, rel_widths = c(.25, .5, .25))
+fig1 <- plot_grid(cow_fig1ab, fig1cd, cow_leg_species,
+  nrow = 3,
+  rel_heights = c(.35, .60,.05),
+  align = "h"
+)
+# ele: single column (82 mm), two-thirds page width (110 mm) or full page width (173 mm)
+dev.new(width = 8.2, height = 11.0, units = "cm")
+# i3: mod + shift + space 
 
+# Draw connectance and average trophic level:
+lab_net <- get_label_from_named_vector(label = label[6:7])
+lab2_net <- get_label_from_named_vector(label = label2[6:7])
+fig1_draw <- ggdraw(fig1) +
+  draw_label(lab_net, x = .25, y = .075, size = 11) +
+  draw_line(
+    x = c(0.01, 0.01, 0.49, .49),
+    y = c(.11, 0.1, 0.1, .11),
+    color = "black", size = 1
+  ) + 
+  draw_label(lab2_net, x = .75, y = .075, size = 11) +
+  draw_line(
+    x = c(0.52, 0.52, 0.98, .98),
+    y = c(.11, 0.1, 0.1, .11),
+    color = "black", size = 1
+  )
+
+test <- ggdraw(fig1)
+for(i in seq(0,1, .02)) {
+  test <- test +
+  draw_line(x = c(0, 1), y = c(i , i), color = "black", size = .5) +
+  draw_line(x = c(i, i), y = c(0 , 1), color = "black", size = .5)
+}
+for(i in seq(0,1, .1)) {
+  test <- test +
+  draw_line(x = c(0, 1), y = c(i , i), color = "red", size = 1) +
+  draw_line(x = c(i, i), y = c(0 , 1), color = "red", size = 1)
+}
+
+fig1_draw_test <- fig1_draw +
+  draw_line(
+    x = c(0.1, 0.16),
+    y = c(0.26, 0.325),
+    color = "black", size = 1
+  ) +
+  draw_line(
+    x = c(0.26, 0.24),
+    y = c(0.26, 0.325),
+    color = "black", size = 1
+  ) +
+  draw_line(
+    x = c(0.43, 0.34),
+    y = c(0.26, 0.325),
+    color = "black", size = 1
+  ) +
+  draw_line(
+    x = c(0.59, 0.69),
+    y = c(0.26, 0.325),
+    color = "black", size = 1
+  ) +
+  draw_line(
+    x = c(0.76, 0.77),
+    y = c(0.26, 0.325),
+    color = "black", size = 1
+  ) +
+  draw_line(
+    x = c(0.93, 0.89),
+    y = c(0.26, 0.325),
+    color = "black", size = 1
+  )
+
+save_plot(mypath("manuscript", "bef_stability", "figs/fig1.png"), fig1_draw_test,
+nrow = 3, 
+  ncol = 1,
+  base_height = 4,
+  base_width = 10 
+)
+```
 
