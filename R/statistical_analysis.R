@@ -202,7 +202,7 @@ compute_prod_sem <- function(.data, random_effect = "~ 1 | basin") {
 
   return(output)
 }
-compute_prod_sem_rich <- function(.data, random_effect = "~ 1 | basin") {
+compute_prod_sem_rich <- function(.data, random_effect = "~ 1 | basin", get_sem = FALSE) {
   corsem <- piecewiseSEM::psem(
     nlme::lme(log_rich_tot_std ~ log_RC1 + log_RC2,  random = ~ 1 | basin, data = .data),
     nlme::lme(ct ~ log_RC1 + log_RC2 + log_rich_tot_std, random = ~ 1 | basin, data = .data),
@@ -210,6 +210,10 @@ compute_prod_sem_rich <- function(.data, random_effect = "~ 1 | basin") {
     nlme::lme(log_bm_std ~ log_rich_tot_std + ct + t_lvl + log_RC1 + log_RC2,
       random = ~ 1 | basin, data = .data)
   )
+
+  if (get_sem) {
+    return(corsem)
+  }
   output <- summary(corsem, .progressBar = F)
 
   return(output)

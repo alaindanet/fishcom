@@ -6,6 +6,8 @@
 *.xls*
 *.html
 *.png
+*.pdf
+*.zip
 *.doc*
 draft.R
 inst/doc

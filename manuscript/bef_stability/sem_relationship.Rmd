@@ -1,0 +1,171 @@
+---
+title: test
+---
+
+```{r}
+library(tidyverse)
+library(magrittr)
+library(cowplot)
+library(nlme)
+library(ggeffects)
+
+mypath <- rprojroot::find_package_root_file
+data_common <- mypath("data")
+dest_dir <- mypath("data", "species")
+
+source(mypath("R", "misc.R"))
+source(mypath("R", "plot_methods.R"))
+source(mypath("R", "geo_methods.R"))
+source(mypath("R", "press_methods.R"))
+source(mypath("R", "synchrony.R"))
+source(mypath("R", "community_methods.R"))
+source(mypath("R", "community_analysis.R"))
+source(mypath("R", "statistical_analysis.R"))
+source(mypath("R", "local_network_build.R"))
+theme_set(theme_cowplot())
+```
+
+# Prepare data
+
+```{r}
+myload(sem_data, community_metrics, op_analysis, dir = mypath("data"))
+community_metrics %<>%
+    left_join(select(op_analysis, station, opcod, year))
+
+stab_sem_rich <- compute_stab_sem_rich(.data = as.data.frame(sem_data),
+  random_effect = as.formula("~1|basin"), get_sem = TRUE)
+
+bm_sem_rich <- compute_prod_sem_rich(.data = as.data.frame(sem_data),
+  random_effect = as.formula("~1|basin"), get_sem = TRUE)
+```
+
+# Make function 
+
+```{r}
+get_y_x_comb_from_model <- function(mod = NULL) {
+
+  x_terms <- labels(terms(mod))
+  all_terms <- dimnames(attr(terms(mod), "factors"))[[1]]
+
+  y_term <- all_terms[! all_terms %in% x_terms] 
+
+  tibble(
+    y = y_term, 
+    x = x_terms 
+  )
+}
+
+get_predict_from_model_x <- function (mod = NULL, term = NULL) {
+  ggpredict(mod, terms = c(term)) %>%
+    as.tibble()
+}
+
+get_predict_plot_from_model_x <- function (mod = NULL, x = NULL) {
+
+  stopifnot(is.character(x))
+
+  pred <- get_predict_from_model_x(mod = mod, term = x)
+
+  y <- unique(get_y_x_comb_from_model(mod = mod)$y)
+
+  dataset <- mod$data
+
+  # In case of classic lm model:
+  if (is.null(dataset)) {
+    dataset <- mod$model
+  }
+
+  p <- dataset %>%
+    ggplot(aes_string(y = y, x = x)) +
+    geom_point()
+
+  p <- p +
+    geom_line(data = pred, aes(y = predicted, x = x))
+
+  # Axis label
+  label_tmp <- get_sem_var_name_replacement()
+  label <- str_replace_all(label_tmp, "\n", "") 
+  names(label) <- names(label_tmp)
+  p +
+    labs(
+      x = label[x],
+      y = label[y]
+    )
+}
+```
+
+## Test function 
+
+```{r}
+test <- get_y_x_comb_from_model(stab_sem_rich[[1]])
+
+map(test$x, ~get_predict_from_model_x(stab_sem_rich[[1]], .x))
+
+get_predict_plot_from_model_x(stab_sem_rich[[1]], x = "log_RC1")
+```
+
+# Produce plot
+
+```{r}
+class(stab_sem_rich) <- "list"
+# drop data element from the list
+stab_sem_rich[[length(stab_sem_rich)]] <- NULL
+
+ti <- tibble(model = stab_sem_rich,
+  comb_term = map(model, ~try(get_y_x_comb_from_model(.x)))) %>%
+  unnest(comb_term)
+stab_plot <- 
+  ti %>%
+  mutate(
+    gg = map2(x, model, ~try(get_predict_plot_from_model_x(mod = .y, x = .x)))
+  )
+plot_grid(plotlist = stab_plot$gg)
+
+# Write plots:
+map(stab_plot$gg,
+  ~save_plot(file = mypath(
+      "manuscript", "bef_stability", "result", 
+      paste0(
+	"stab_",
+	names(.x$labels$y),
+	"_",
+	names(.x$labels$x),
+	".png"
+      )
+      ), .x) 
+)
+
+mysave(stab_plot, mypath("manuscript", "bef_stability", "result"), overwrite = TRUE)
+```
+
+```{r}
+class(bm_sem_rich) <- "list"
+# drop data element from the list
+bm_sem_rich[[length(bm_sem_rich)]] <- NULL
+
+bm_mod <- tibble(model = bm_sem_rich,
+  comb_term = map(model, ~try(get_y_x_comb_from_model(.x)))) %>%
+  unnest(comb_term)
+bm_plot <- 
+  bm_mod %>%
+  mutate(
+    gg = map2(x, model, ~try(get_predict_plot_from_model_x(mod = .y, x = .x)))
+  )
+plot_grid(plotlist = bm_plot$gg)
+
+# Write plots:
+map(bm_plot$gg,
+  ~save_plot(file = mypath(
+      "manuscript", "bef_stability", "result", 
+      paste0(
+	"bm_",
+	names(.x$labels$y),
+	"_",
+	names(.x$labels$x),
+	".png"
+      )
+      ), .x) 
+)
+mysave(bm_plot, mypath("manuscript", "bef_stability", "result"), overwrite = TRUE)
+```
+
