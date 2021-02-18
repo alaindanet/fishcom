@@ -676,7 +676,23 @@ compute_bm_sem_indirect <- function (sem = NULL, p_val_thl = NULL) {
 #'
 build_dataset_get_sem_coefficient <- function (.op = NULL, sem_fun = compute_stab_sem_rich) {
 
-  # Compute stability, network metrics, etc with the new datasets
+  st_basin <- get_basin_station()
+
+  sem_data <- compute_sem_dataset_from_op(
+    .op = .op,
+    habitat_pressure = habitat_pressure,
+    st_basin = st_basin)
+
+  # Compute SEMs
+  sem <- sem_fun(.data = sem_data,
+    random_effect = as.formula("~1|basin"))
+
+  return(sem)
+
+}
+compute_sem_dataset_from_op <- function (.op = NULL, habitat_pressure = NULL,
+  st_basin = NULL) {
+
   com_data <- compute_community_temporal_analysis(.op = .op,
     type_network_metrics = "classes"
   )
@@ -686,16 +702,11 @@ build_dataset_get_sem_coefficient <- function (.op = NULL, sem_fun = compute_sta
     com = com_data[["tps_com"]],
     network = com_data[["tps_net"]], 
     hab_press = habitat_pressure, 
-    sync = com_data[["sync"]],
+    sync = com_data[["sync_std"]],
     nmds = NULL,
     basin = st_basin 
   )
-
-  # Compute SEMs
-  sem <- sem_fun(.data = sem_data,
-    random_effect = as.formula("~1|basin"))
-
-  return(sem)
+  return(sem_data)
 
 }
 

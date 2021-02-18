@@ -1,0 +1,401 @@
+---
+title: "Analyse from review"
+output: bookdown::html_document2
+---
+
+```{r, message = FALSE, results = FALSE, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  message = FALSE,
+  comment = "#>",
+  cache = TRUE,
+  echo = FALSE,
+  warning = FALSE,
+  warnings = FALSE
+)
+#knitr::opts_chunk$get()
+```
+
+
+```{r}
+mypath <- rprojroot::find_package_root_file
+
+library(tidyverse)
+library(cowplot)
+library(magrittr)
+
+source(mypath("R", "misc.R"))
+source_dir(mypath("R"))
+
+theme_set(theme_alain())
+
+myload(sem_data, synchrony, dir = mypath("data"))
+```
+
+# Response to the comment R1-5
+
+We check that $CV_{com, i} = \overline{CV_{sp, i}} \times \sqrt{\phi_i}$
+
+```{r}
+synchrony %>%
+  ggplot(aes(y = cv_sp * sqrt(synchrony), x = cv_classic)) +
+  geom_point() +
+  labs(y = "CVsp * sqrt(synchrony)", x = "CV of biomass")
+```
+
+
+# Response to the comment R3-1
+
+```{r}
+
+mod <- lm(log_stab_std ~ 0 + log_cv_sp + log_sync, data = sem_data)
+
+#summary(mod)
+coefs <- broom::tidy(mod) %>%
+  select(term,estimate)
+
+coefs %<>%
+  mutate(
+    sd = map_dbl(term, ~sd(sem_data[[.x]])),
+    coef_std = (estimate * sd) / sd(sem_data$log_stab_std)
+  )
+
+# SD de la variable de Olivier et al. (2020):  
+sd(log(1 / sem_data$sync))
+sd(log(1 / sem_data$cv_sp))
+```
+
+# Response to the comment R3-L231 
+
+```{r}
+myload(op_analysis, dir = mypath("data"))
+
+# station used in sem_data
+op <- op_analysis %>%
+  filter(station %in% sem_data$station)
+
+## Combien de station par année
+op %>%
+  group_by(year) %>%
+  summarise(n = n()) %>% 
+  ggplot(aes(x = year, y = n)) +
+  geom_bar(stat = "identity")
+```
+
+```{r, fig.cap=""}
+match_op_temp_data <- op %>%
+  group_by(station) %>%
+  summarise(
+    year_temp = length(which(year %in% seq(2006, 2018))),
+    year_temp_percent = length(which(year %in% seq(2006, 2018))) / n()
+  )
+
+match_op_temp_data %>%
+  ggplot(aes(x = year_temp)) +
+  geom_histogram() +
+  labs(y = "Frequency", x = "Nb year of overlap between sampling and temperature time series")
+
+match_op_temp_data %>%
+  ggplot(aes(x = year_temp_percent)) +
+  geom_histogram() +
+  labs(y = "Frequency", x = "Percent of sampling years which overlaps with temperature time series")
+```
+
+```{r}
+library(nlme)
+
+myload(biomass_ts_sax, habitat_pressure, dir = mypath("data"))
+myload(network_metrics, dir = mypath("data", "classes"))
+
+# Get op only from 2006: 
+op_analysis_bbb <- filter(op_analysis, station %in%
+  biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
+op_analysis_bbb_start_2006 <- op_analysis_bbb %>%
+  filter(year >= 2006) 
+# Select station followed 10 years or more
+op_analysis_bbb_start_2006 %<>%
+  group_by(station) %>%
+  filter(n() >= 10) %>%
+  ungroup()
+
+
+st_basin <- get_basin_station()
+
+
+sem_data_2006 <- compute_sem_dataset_from_op(
+  .op = op_analysis_bbb_start_2006,
+  habitat_pressure = habitat_pressure,
+  st_basin = st_basin
+)
+
+stab_sem_rich_2006 <- compute_stab_sem_rich(
+  .data = sem_data_2006,
+  random_effect = as.formula("~1|basin")
+)
+stab_sem_rich <- compute_stab_sem_rich(
+  .data = sem_data,
+  random_effect = as.formula("~1|basin")
+)
+data_sensivity_2006 <- list(
+  full = sem_data,
+  from_2006 = sem_data_2006 
+)
+
+nb_station <- map_int(data_sensivity_2006, ~length(unique(.x$station)))
+```
+
+```{r stab}
+stab_sensivity_2006 <- 
+  map(data_sensivity_2006,
+    ~compute_stab_sem_rich(
+      .data = .x,
+      random_effect = as.formula("~1|basin")
+    )
+  )
+
+sem_stab_results_2006 <- map(stab_sensivity_2006,
+  ~.x$coefficients[-ncol(.x$coefficients)]) %>%
+  enframe() %>%
+  rename(dataset = name) %>%
+  unnest(value)
+
+
+# Reformat
+colnames(sem_stab_results_2006) <- str_to_lower(colnames(sem_stab_results_2006))
+
+p_sens_stab <- plot_sensivity_analysis(
+  .data = sem_stab_results_2006,
+  inverse_label_order = TRUE, 
+  y_lim = c(-1.5, .75)
+  ) +
+scale_color_manual(
+  values = c("full" = "red", "from_2006" = "blue"),
+  labels = c("Full dataset", "Dataset from 2006"),
+  breaks = c("full", "from_2006") 
+  ) +
+  guides(color = guide_legend(direction = "horizontal", nrow = 1)) +
+  theme(legend.position = "bottom", plot.margin = unit(c(0, 0, 0, 25), units = "mm"))
+```
+
+
+```{r}
+bm_sensivity_2006 <- 
+  map(data_sensivity_2006,
+    ~compute_prod_sem_rich(
+      .data = .x,
+      random_effect = as.formula("~1|basin")
+    )
+  )
+sem_bm_results_2006 <- map(bm_sensivity_2006,
+  ~.x$coefficients[-ncol(.x$coefficients)]) %>%
+  enframe() %>%
+  rename(dataset = name) %>%
+  unnest(value)
+
+
+# Reformat
+colnames(sem_bm_results_2006) <- str_to_lower(colnames(sem_bm_results_2006))
+
+p_sens_bm <- plot_sensivity_analysis(
+  .data = sem_bm_results_2006,
+  inverse_label_order = TRUE,
+  y_lim = c(-1.5, .75)
+  ) +
+scale_color_manual(
+  values = c("full" = "red", "from_2006" = "blue")
+  ) +
+  guides(color = guide_legend(direction = "horizontal", nrow = 1)) +
+  theme(legend.position = "bottom", plot.margin = unit(c(0, 0, 0, 25), units = "mm"))
+```
+
+```{r start-sens, fig.dim = c(14, 10), fig.cap="Sensivity of standardized estimate to the station starting date."}
+legend_b <- get_legend(p_sens_stab)
+
+p <- plot_grid(
+  p_sens_bm %<>% + theme(legend.position = "none", plot.margin = unit(c(0,0,0,27), units = "mm")),
+  p_sens_stab %<>% + theme(legend.position = "none", plot.margin = unit(c(0,0,0,27), units = "mm")),
+  legend_b, nrow = 3,
+  rel_heights = c(1, 1, .1),
+  labels = c("Total biomass", "Biomass stability")
+)
+p
+```
+
+## L180-182
+
+```{r}
+library(nlme)
+
+compute_bm_sem_rich_var <- function(.data, rich_var = "log_rich_tot_std", random_effect = "~ 1 | basin", get_sem = FALSE) {
+
+  formula_list <- list(
+    rich = paste0(rich_var, " ~ log_RC1 + log_RC2"),
+    ct = paste0("ct ~ log_RC1 + log_RC2 + ", rich_var),
+    t_lvl = paste0("t_lvl ~ log_RC1 + log_RC2 + ", rich_var),
+    bm = paste0("log_bm_std ~ ", rich_var," + ct + t_lvl + log_RC1 + log_RC2")
+  )
+  model_list <- map(formula_list, function(x)  {
+    temp_model <- nlme::lme(as.formula(x), random = ~ 1 | basin, data = .data)
+    temp_model$call$fixed <- as.formula(x)
+    return(temp_model)
+  }
+    )
+
+  corsem <- piecewiseSEM::as.psem(model_list)
+
+  if (get_sem) {
+    return(corsem)
+  }
+  output <- summary(corsem, .progressBar = F)
+
+  return(output)
+}
+compute_stab_sem_rich_var <- function(.data, rich_var = "log_rich_tot_std", random_effect = "~ 1 | basin", get_sem = FALSE) {
+
+  formula_list <- list(
+    rich = paste0(rich_var, " ~ log_RC1 + log_RC2"),
+    ct = paste0("ct ~ log_RC1 + log_RC2 + ", rich_var),
+    t_lvl = paste0("t_lvl ~ log_RC1 + log_RC2 + ", rich_var),
+    sync = paste0("log_sync ~ ", rich_var, " + ct + t_lvl + log_RC1 + log_RC2"),
+    cvsp = paste0("log_cv_sp ~ ", rich_var," + ct + t_lvl + log_RC1 + log_RC2") 
+    )
+
+  model_list <- map(formula_list, function(x)  {
+    temp_model <- nlme::lme(as.formula(x), random = ~ 1 | basin, data = .data)
+    temp_model$call$fixed <- as.formula(x)
+    return(temp_model)
+  }
+    )
+
+  ## Add linear model
+  model_list <- c(
+    model_list,
+    stab = list(lm(log_stab_std ~ log_cv_sp + log_sync, data = .data))
+  )
+
+  corsem <- piecewiseSEM::as.psem(model_list)
+
+  if (get_sem) {
+    return(corsem)
+  }
+  output <- summary(corsem, .progressBar = F)
+
+  return(output)
+}
+sem_data %<>%
+  mutate(log_rich_std = log(rich_std_med))
+```
+
+```{r}
+rich <- names(sem_data)[str_detect(names(sem_data), "log_rich")]
+```
+
+
+```{r}
+bm_sens_rich <- map(rich, 
+  ~compute_bm_sem_rich_var(
+    .data = sem_data,
+    rich_var = .x, random_effect = "~ 1 | basin",
+    get_sem = FALSE)
+)
+names(bm_sens_rich) <- rich
+
+sem_bm_results_rich <- map(bm_sens_rich,
+  ~.x$coefficients[-ncol(.x$coefficients)]) %>%
+  enframe() %>%
+  rename(dataset = name) %>%
+  unnest(value) %>%
+  mutate_at(c("Response", "Predictor"), ~ifelse(str_detect(., "rich"), "richness", .))
+
+colnames(sem_bm_results_rich) <- str_to_lower(colnames(sem_bm_results_rich))
+
+cols_rich <- c(
+  "log_rich" = "red",
+  "log_rich_std" = "blue",
+  "log_rich_tot_std" = "darkgreen",
+  "log_rich_tot" = "orange"
+)
+label_rich <- c(
+  "log_rich" = "Log median richness",
+  "log_rich_std" = "Log median of standardized richness",
+  "log_rich_tot_std" = "Log standardized total richness",
+  "log_rich_tot" = "Log total richness"
+)
+
+p_sens_bm_rich <- plot_sensivity_analysis(
+  .data = sem_bm_results_rich,
+  inverse_label_order = TRUE, scale_color = FALSE,
+  y_lim = c(-1.5, .75)
+  ) +
+scale_color_manual(
+  values =  cols_rich,
+  labels = label_rich,
+  breaks = names(label_rich)) +
+  guides(color = guide_legend(direction = "horizontal", nrow = 1)) +
+  theme(legend.position = "bottom", plot.margin = unit(c(0, 0, 0, 25), units = "mm"))
+```
+
+```{r}
+stab_sens_rich <- map(rich, 
+  ~compute_stab_sem_rich_var(
+    .data = sem_data,
+    rich_var = .x, random_effect = "~ 1 | basin",
+    get_sem = FALSE)
+)
+names(stab_sens_rich) <- rich
+
+sem_stab_results_rich <- map(stab_sens_rich,
+  ~.x$coefficients[-ncol(.x$coefficients)]) %>%
+  enframe() %>%
+  rename(dataset = name) %>%
+  unnest(value) %>%
+  mutate_at(c("Response", "Predictor"), ~ifelse(str_detect(., "rich"), "richness", .))
+
+colnames(sem_stab_results_rich) <- str_to_lower(colnames(sem_stab_results_rich)) 
+
+cols_rich <- c(
+  "log_rich" = "red",
+  "log_rich_std" = "blue",
+  "log_rich_tot_std" = "darkgreen",
+  "log_rich_tot" = "orange"
+)
+label_rich <- c(
+  "log_rich" = "Log median richness",
+  "log_rich_std" = "Log median of species richness density",
+  "log_rich_tot_std" = "Log species richness density",
+  "log_rich_tot" = "Log total richness"
+)
+
+p_sens_stab_rich <- plot_sensivity_analysis(
+  .data = sem_stab_results_rich,
+  inverse_label_order = TRUE,
+  scale_color = FALSE, y_lim = c(-1.4, .75)) +
+scale_color_manual(
+  values =  cols_rich,
+  labels = label_rich,
+  breaks = names(label_rich)) +
+  guides(color = guide_legend(direction = "horizontal", nrow = 1)) +
+  theme(legend.position = "bottom", plot.margin = unit(c(0, 0, 0, 25), units = "mm"))
+```
+
+```{r rich-sens, fig.dim = c(14, 10), fig.cap="Sensivity of the standardized estimates to species richeness specification for the two structural equation model."}
+legend_b <- get_legend(p_sens_stab_rich)
+p <- plot_grid(
+  p_sens_bm_rich %<>% + theme(legend.position = "none", plot.margin = unit(c(0,0,0,27), units = "mm")),
+  p_sens_stab_rich %<>% + theme(legend.position = "none", plot.margin = unit(c(0,0,0,27), units = "mm")),
+  legend_b, nrow = 3,
+  rel_heights = c(1, 1, .1),
+  labels = c("Total biomass", "Biomass stability")
+)
+p
+```
+
+The choice of richness variable would 
+
+
+# Response to comment R3-Section 5.3
+
+```{r}
+
+```
+

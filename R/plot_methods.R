@@ -1359,7 +1359,7 @@ format_table <- function (x = tmp_stab_indir_table) {
   x
 }
 
-plot_sensivity_analysis <- function (.data = NULL, y_lim = c(-1.26, .75), inverse_label_order = FALSE) {
+plot_sensivity_analysis <- function (.data = NULL, y_lim = c(-1.26, .75), inverse_label_order = FALSE, scale_color = TRUE) {
   .data %<>%
     mutate(
       r_p = str_c(response, predictor, sep = " ~ "),
@@ -1380,14 +1380,21 @@ plot_sensivity_analysis <- function (.data = NULL, y_lim = c(-1.26, .75), invers
       ggplot(aes(x = r_p, y = std.estimate)) 
   }
 
-  p +
+  p <- p +
     labs(x = "Terms of the linear models",
       y = "Standardized estimate", color = "Dataset type") +
     ylim(y_lim) +
-    geom_point(aes(color = dataset)) +
+    geom_point(aes(color = dataset)) 
+  
+  if (scale_color) {
+    
+  p <- p +
     scale_color_hue(labels = c(
 	"Constant (N=99)", "Constant / Without holes (N=65)",
 	"Complete (N=403)", "Without holes (N=275)")
-      ) +
+      ) 
+  }
+  p <- p +
     theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  return(p)
 }

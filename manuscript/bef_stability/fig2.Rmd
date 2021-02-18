@@ -1,0 +1,42 @@
+---
+title: "Figure 2"
+---
+
+```{r}
+library(tidyverse)
+library(magrittr)
+library(cowplot)
+
+mypath <- rprojroot::find_package_root_file
+data_common <- mypath("data")
+dest_dir <- mypath("data", "species")
+
+source(mypath("R", "misc.R"))
+source_dir(mypath("R"))
+```
+
+
+```{r}
+load(mypath("manuscript", "bef_stability", "result", "workspace.rda"))
+ti <- stab_sem_rich$coefficients[,-9] %>%
+  filter(P.Value <= 0.05) %>%
+  mutate(
+    std_est = round(Std.Estimate, 2),
+    abs_std_est = abs(std_est)
+  )
+ti %>%
+  mutate(width_arrow = abs_std_est * 0.3 / min(abs_std_est)) %>%
+  select(Response, Predictor, Estimate, Std.Estimate:width_arrow)
+```
+```{r}
+ti <- bm_sem_rich$coefficients[,-9] %>%
+  filter(P.Value <= 0.05) %>%
+  mutate(
+    std_est = round(Std.Estimate, 2),
+    abs_std_est = abs(std_est)
+  )
+ti %>%
+  mutate(width_arrow = abs_std_est * 0.3 / min(abs_std_est)) %>%
+  select(Response, Predictor, Estimate, Std.Estimate:width_arrow)
+```
+

@@ -866,8 +866,8 @@ plot_grid(plotlist = p_resid_stab_sem, ncol = 2)
 ```{r}
 format_coef_table <- function (sem = NULL) {
 
-  params <- sem$coefficients
-  colnames(params)[length(colnames(params))] <- "Stars"
+  params <- sem$coefficients[, -length(colnames(sem$coefficients))]
+  #colnames(params)[length(colnames(params))] <- "Stars"
 
   replace_wo_n <- str_replace_all(get_sem_var_name_replacement(), "\n", "")
   names(replace_wo_n) <- names(get_sem_var_name_replacement()) 
@@ -887,13 +887,15 @@ est_stab_sem_caption <- paste0(
 
 )
 
-kable(format_coef_table(stab_sem_rich),
-  format = "latex",
-  booktabs = T,
-  caption = est_stab_sem_caption
-  ) %>%
-collapse_rows(columns = 1, valign = "top") %>%
-kable_styling(latex_options = c("striped", "scale_down"))
+format_coef_table(stab_sem_rich) %>%
+  mutate(Std.Estimate = cell_spec(Std.Estimate, bold = ifelse(P.Value <= 0.05, T, F))) %>%
+  kable(
+    format = "latex",
+    booktabs = T,
+    caption = est_stab_sem_caption
+    ) %>%
+  collapse_rows(columns = 1, valign = "top") %>%
+  kable_styling(latex_options = c("striped", "scale_down"))
 ```
 
 ```{r}
@@ -902,7 +904,9 @@ est_bm_sem_caption <- paste0(
   model of the median of annual total biomass."
 )
 
-kable(format_coef_table(bm_sem_rich),
+format_coef_table(bm_sem_rich) %>%
+  mutate(Std.Estimate = cell_spec(Std.Estimate, bold = ifelse(P.Value <= 0.05, T, F))) %>%
+kable(
   format = "latex",
   booktabs = T,
   caption = est_bm_sem_caption

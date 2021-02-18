@@ -57,7 +57,7 @@ get_y_x_comb_from_model <- function(mod = NULL) {
 
 get_predict_from_model_x <- function (mod = NULL, term = NULL) {
   ggpredict(mod, terms = c(term)) %>%
-    as.tibble()
+    as_tibble()
 }
 
 get_predict_plot_from_model_x <- function (mod = NULL, x = NULL) {
@@ -123,7 +123,8 @@ plot_grid(plotlist = stab_plot$gg)
 
 # Write plots:
 map(stab_plot$gg,
-  ~save_plot(file = mypath(
+  ~save_plot(
+    file = mypath(
       "manuscript", "bef_stability", "result", 
       paste0(
 	"stab_",
@@ -132,7 +133,10 @@ map(stab_plot$gg,
 	names(.x$labels$x),
 	".png"
       )
-      ), .x) 
+      ),
+    plot = .x,
+    base_height = 2.5, base_asp = 1.2#1.618 
+  ) 
 )
 
 mysave(stab_plot, mypath("manuscript", "bef_stability", "result"), overwrite = TRUE)
@@ -164,7 +168,10 @@ map(bm_plot$gg,
 	names(.x$labels$x),
 	".png"
       )
-      ), .x) 
+      ),
+    plot = .x,
+    base_height = 2.5, base_asp = 1.2#1.618 
+    ) 
 )
 mysave(bm_plot, mypath("manuscript", "bef_stability", "result"), overwrite = TRUE)
 ```
