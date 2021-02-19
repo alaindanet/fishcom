@@ -112,19 +112,20 @@ knitr::opts_chunk$set(
 # Abstract
 
 Biodiversity-ecosystem functioning (BEF) and food-web complexity-stability
-relationships are central to ecology. However, they remain largely untested in natural context. Here we study the links among
-environmental conditions, richness, food-web structure, annual biomass and its
-temporal stability using a standardized monitoring dataset of 99 stream fish communities
-spanning from 1995 to 2018. We first reveal that both richness and average
-trophic level are positively related to annual biomass, with effects of similar
-strength. Second, we show that food-web structure affects community stability,
-with a positive effect of mean trophic level, and contrary to
-expectation, a destabilizing effect of species richness. Finally, we
-find that environmental conditions affect both biomass and its stability via
-effects on richness and network structure. Strikingly, effects on stability are
-mediated by changes in population stability rather than synchrony, which contrasts
-with results from single-trophic communities and might be characteristic of
-multi-trophic communities.
+relationships are central to ecology. However, they remain largely untested in
+natural context. Here we study the links among environmental conditions,
+richness, food-web structure, annual biomass and its temporal stability using a
+standardized monitoring dataset of 99 stream fish communities spanning from 1995
+to 2018. We first reveal that both richness and average trophic level are
+positively related to annual biomass, with effects of similar strength. Second,
+we show that food-web structure affects community stability, with a positive
+effect of mean trophic level, and contrary to expectation, a destabilizing
+effect of species richness. Finally, we find that environmental conditions
+affect both biomass and its stability via effects on richness and network
+structure. Strikingly, effects on stability are mediated by changes in
+population stability rather than synchrony, which contrasts with results from
+single-trophic communities and might be characteristic of multi-trophic
+communities.
 
 # Introduction 
 
@@ -184,9 +185,10 @@ of the stabilizing effects of species richness on community biomass in food-webs
 [@thebault_trophic_2005]. Indeed, a low synchrony in population fluctuations,
 i.e. asynchrony, is synonymous of compensatory dynamics, where the decrease in
 abundance of a population is compensated by the increase of another. However,
-higher connectance can counterbalance the positive effects of species
-richness on temporal stability of community biomass, by leading to a negative
-relationship between species richness and population temporal variability
+higher food-web connectance can counterbalance the positive effects of species
+richness on temporal stability of community biomass, because it may increase
+competition between consumers and then leads to a positive relationship between
+species richness and population temporal variability
 [@thebault_trophic_2005]. In addition, the presence of species at higher trophic
 levels increases total primary production, through stronger top-down effects
 associated with higher nutrient uptake [@wang_biodiversity_2018]. The addition of predators has
@@ -203,12 +205,12 @@ with manipulating both species richness and food-web complexity in an
 experimental context [e.g. @sander_ecological_2017] and by the fact that
 describing trophic interactions between species is highly labour intensive.
 These challenges are even more acute for the study of the stability of ecosystem
-properties, which additionally requires longer-term
-perspectives. In this context, recent developments to predict species trophic
-interactions [@beckerman_foraging_2006; @gravel_inferring_2013; @portalier_foraging_2019], combined with observational long-term
-surveys of ecological communities, can offer the opportunity to investigate the
-links between diversity, food-web structure and the stability of total community
-biomass in natural settings.
+properties, which additionally requires longer-term perspectives. In this
+context, recent developments to predict species trophic interactions
+[@beckerman_foraging_2006; @gravel_inferring_2013; @portalier_foraging_2019],
+combined with observational long-term surveys of ecological communities, can
+offer the opportunity to investigate the links between diversity, food-web
+structure and the stability of total community biomass in natural settings.
 
 Such approach based on data from natural communities can, in addition, give
 insights on the effects of environmental variables on ecosystem properties and

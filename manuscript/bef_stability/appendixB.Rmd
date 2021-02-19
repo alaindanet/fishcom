@@ -724,6 +724,19 @@ kable_styling(latex_options = c("striped", "scale_down"))
 sem_variable_table
 ```
 
+```{=latex}
+\begin{table}
+
+\caption{\label{tab:hyp-sem} Presentation of the hypothesis supporting the links
+of the Structural Equation Models with the references supporting the links.}
+
+\begin{center}
+\input(~/Documents/post-these/mnhn/fishcom/manuscript/bef_stability/table/hypothesis_sem.tex)
+\end{center}
+\end{table}
+```
+
+
 ---
 #### SEM hypothesis
 #

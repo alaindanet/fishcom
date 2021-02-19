@@ -1,0 +1,89 @@
+---
+title: "Make a table for hypothesis"
+output: 
+  bookdown::pdf_document2:
+    citation_package: natbib
+biliography: references.bib
+---
+
+```{r, message = FALSE, results = FALSE, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  message = FALSE,
+  comment = "#>",
+  cache = TRUE,
+  echo = FALSE,
+  warning = FALSE,
+  warnings = FALSE
+)
+#knitr::opts_chunk$get()
+```
+
+
+```{r}
+mypath <- rprojroot::find_package_root_file
+
+library(tidyverse)
+library(cowplot)
+library(magrittr)
+library(kableExtra)
+
+source(mypath("R", "misc.R"))
+source_dir(mypath("R"))
+
+```
+
+```{r}
+sem_hyp <- tibble(
+  link = "Species richness \\to connectance",
+  pred = "Connectance is negatively linked to species richness",
+  ref = "\\citep{dunne_network_2006}"
+)
+sem_hyp <- tibble(
+  link = "Species richness \\to connectance",
+  pred = "Connectance is negatively linked to species richness",
+  ref = "@dunne_network_2006"
+)
+
+sem_hyp %>%
+  kable(format = "latex")
+
+```
+(ref:studies-table-ref1) Bogaert *et al.* (2011) [@dunne_network_2006]
+
+```{r}
+sem_hyp <- tibble(
+  link = "Species richness to connectance",
+  pred = "Connectance is negatively linked to species richness",
+  ref = ""
+)
+library(nlme)
+myload(sem_data, dir = mypath("data"))
+stab_sem_rich <- compute_stab_sem_rich(.data = sem_data,
+  random_effect = as.formula("~1|basin"))
+bm_sem_rich <- compute_prod_sem_rich(.data = sem_data,
+  random_effect = as.formula("~1|basin"))
+resp_pred <- map_dfr(list(stab_sem_rich, bm_sem_rich), ~.x$coefficients) %>% 
+  distinct(Predictor, Response) %>%
+  select(pred = Predictor, resp = Response)
+
+var_replacement <- str_replace_all(get_sem_var_name_replacement(),
+  c("\n" = "", "\\s{2}" = " "))
+names(var_replacement) <- names(get_sem_var_name_replacement()) 
+
+ta <- resp_pred %>%
+  mutate_all(~str_replace_all(., var_replacement)) %>%
+  unite(Link, pred:resp, sep = " xto ") %>%
+  mutate(hypothesis = NA, reference = NA)
+
+
+ti <- ta %>%
+  kable(format = "latex")
+
+test <- str_replace_all(ti, "xto", "$\to$")
+class(test) <- class(ti) 
+attr(test, "format") <- attr(ti, "format")
+
+write(ti, file = mypath("manuscript", "bef_stability", "hypothesis_sem_empty.tex"))
+```
+
