@@ -378,7 +378,7 @@ Temporal biomass stability was defined as the inverse of biomass variability.
 Variability was computed as Coefficient of Variation (CV) of the biomass over
 time ($CV_i = \sigma_i \mu_i^{-1}$, with $\sigma_i$ and $\mu_i$ being
 respectively the standard deviation and the temporal average of the annual total
-biomass of the station $i$). Then, temporal stability was equal to $CV^{-1} =
+biomass of the station $i$). Then, temporal stability ($S_i$) was equal to $CV^{-1} =
 \mu \sigma^{-1}$.
 
 We described the mechanisms driving the temporal stability of biomass,
@@ -386,9 +386,10 @@ decomposing the $CV$ of the community biomass ($CV_{com}$) into a
 synchrony ($\phi$) component and a weighted average species $CV$ ($\overline{CV_{sp}}$)
 component according to @thibaut_understanding_2013:
 
-$$
-CV_{com, i} = \overline{CV_{sp, i}} \times \sqrt{\phi_i}
-$$
+\begin{equation} 
+  CV_{com, i} = \overline{CV_{sp, i}} \times \sqrt{\phi_i}
+  (\#eq:cvcom)
+\end{equation} 
 
 with $CV_{com, i}$ being the CV of the community biomass in the
 station $i$, $\overline{CV_{sp, i}}$ the average CV at the species-level in the station $i$, weighted by the relative biomass of the species, $B_{k,i}$.
@@ -397,13 +398,30 @@ community biomass over time ($\sigma^2_{x_{T,i}}$) and the sum of the variance o
 population biomass over time ($\sigma_{x_{k,i}}$), $i$ being the station $i$ and $k$
 the species $k$ [@loreau_species_2008].
 
-$$
+\begin{equation} 
 \overline{CV_{sp, i}} = \sum_k{\frac{B_{k,i} {CV}_{k, i}}{\sum_k{B_{k,i}}}}
-$$
+(\#eq:cvsp)
+\end{equation} 
 
-$$
+\begin{equation} 
 \phi_i = \frac{\sigma^2_{x_{T,i}}}{(\sum_k{\sqrt{\sigma^2_{x_{k,i}}}})^2} = \frac{\sigma^2_{x_{T,i}}}{(\sum_k{\sigma_{x_{k,i}}})^2}
-$$
+(\#eq:phi)
+\end{equation} 
+
+In further analysis, we linearized the mathematical relationship linking
+temporal stability to $\overline{CV_{sp, i}}$ and $\phi$ by taking the log of
+temporal stability: 
+
+\begin{equation} 
+  \begin{aligned}
+    S_i &= (\overline{CV_{sp, i}} * \phi_i^\frac{1}{2})^{-1} \\
+    \log S_i &= - \log (\overline{CV_{sp, i}} * \phi_i^\frac{1}{2}) \\
+    \log S_i &= - \log (\overline{CV_{sp, i}} - \log \phi_i^\frac{1}{2} \\
+    \log S_i &= - \log \overline{CV_{sp, i}} - \frac{1}{2} \log \phi_i \\
+  \end{aligned}
+  (\#eq:stab)
+\end{equation} 
+
 
 ## Species richness and food-web structure
 
@@ -560,14 +578,20 @@ with Variance Inflation Factor (VIF, Table S6, appendix B). The slopes reported
 in the main text were standardized in order to compare their magnitude ($r_\delta
 = \beta \frac{\sigma_x}{\sigma_y}$, $\beta$ being the unstandardized slope,
 $\sigma_x$ and $\sigma_y$ being respectively the standard deviation of the
-predictive variable $x$ and of the response variable $y$). The paths whose
-slope had a $P$ value inferior or equal to $0.05$ were reported in the main text, all the
-path values are presented in Table S7 and S8.
+predictive variable $x$ and of the response variable $y$). Therefore, the
+standardized coefficients expressed the variation of $x$ and $y$ in standard
+deviation units. According to the equation (\@ref(eq:stab)), the unstandardized
+coefficients of synchrony and $\overline{CV_{sp}}$ determining temporal
+stability of biomass are respectively $-0.5$ and $1.0$. When standardized, a 
+comparaison of those coefficients comes down to a comparaison of the standard
+deviation of these two variables. The paths whose slope had a $P$ value inferior
+or equal to $0.05$ were reported in the main text, all the path values are
+presented in Table S7 and S8.
 
-Indirect effects on community biomass and its temporal stability
-were computed by multiplying slopes along the path. Only significant direct
-slopes were included in the calculation of indirect effects. Total effects were
-computed as the sum of direct and indirect effects.
+Indirect effects on community biomass and its temporal stability were computed
+by multiplying slopes along the path. Only significant direct slopes were
+included in the calculation of indirect effects. Total effects were computed as
+the sum of direct and indirect effects.
 
 Environmental variables were interpolated with the `openStars` and `SSN`
 R packages [@kattwinkel_openstars_2018; @hoef_ssn:_2014]. Linear models and SEMs
@@ -973,7 +997,8 @@ and its distribution [@mccann_reevaluating_1997; @thebault_trophic_2005;
 relationship between species richness and stability. Therefore, it is possible
 that our results are due to strong trophic interactions, leading to more
 fluctuations in population biomass, but this hypothese was not testable with the
-available dataset.
+available dataset.  Alternatively, our results might be explain by the effect of
+increasing species richness which can increase demographic stochasticity.
 
 ---
 #@thibaut_understanding_2013 proposed that a
@@ -1034,21 +1059,38 @@ of the information contained from already available long term datasets.
 
 ## Population stability was the main driver of community temporal stability
 
-In contrast with previous studies, we found that the average population
-variability ($\overline{CV_{sp}}$) had a stronger negative effect on community biomass
-stability than synchrony [@tilman_biodiversity_2006;
-@olivier_urbanization_2020]. It explains why we observe a negative effect of
-species richness on temporal stability of community biomass. The weaker effect of synchrony
-might be explained by the presence of generalist predators in stream
-communities, which can promote synchrony between prey species that share the
-same predator and thus reduces compensatory
-population dynamics [@raimondo_interspecific_2004]. Alternatively, it is
-possible that, in aquatic food-webs, the occurrence of large oscillatory dynamics
- leads to a higher contribution of population
-variability rather than synchrony to community stability
-[@mccann_reevaluating_1997]. How both strengths of interactions and the relative
-contribution of synchrony and population variability to overall stability vary
-between food-webs and single trophic communities is still an open question.
+The population variability and synchrony are mathematically linked to the
+stability of community biomass (see Methods), so the comparaison of their effect
+reflected that the the comparaison of their variability. In contrast with
+previous studies, we found that the average population variability
+($\overline{CV_{sp}}$) had a stronger negative effect on the stability of
+community biomass than synchrony [@olivier_urbanization_2020], meaning that the
+variability of synchrony was equivalent the one of population variability. It
+explains why we observe a negative effect of species richness on temporal
+stability of community biomass whereas species richness had a strong negative
+effect of synchrony. The lower variability of synchrony might be explained by
+the presence of generalist predators in stream communities, which can promote
+synchrony between prey species that share the same predator and thus reduces
+compensatory population dynamics [@raimondo_interspecific_2004]. Alternatively,
+it is possible that, in aquatic food-webs, the occurrence of large oscillatory
+dynamics leads to a higher variability of population variability rather than
+synchrony to community stability [@mccann_reevaluating_1997]. How both strengths
+of interactions and the relative contribution of synchrony and population
+variability to overall stability vary between food-webs and single trophic
+communities is still an open question.
+
+Our results raise the question of the fundamental differences between single and
+multi-trophic communities. Some mechanisms are transferable from the first to
+the second such higher connectance which might translate in higher competition
+between consumers and thus destabilise populations [@thebault_trophic_2005].
+However, the existence of top-down and bottom-up effects are obviously typical
+to multi-trophic communities. The population at the top of a food-web are
+limited by the growth of its prey (bottom-up effects) while the lower trophic
+levels are limited by both their predators (top-down effect) and their preys
+(bottom-up effects). We can conjecture that the stability of food-webs mainly
+controlled by bottom-up effects will display higher synchrony while  mainly
+controlled by the food-webs mainly controlled by top-down effects will display
+higher population variability. 
 
 ---
 #Rough average synchrony in Théophile study: exp(-0.75) = .47 or exp(-0.6) = .54

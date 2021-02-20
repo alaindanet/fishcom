@@ -462,8 +462,13 @@ library(sf)
 library(ggspatial)
 # map
 myload(p_st, dir = mypath("manuscript", "bef_stability", "figs"))
+qt_station <- sem_data %>%
+  filter(station %in% c(first_st$station[5], last_st$station[5])) %>%
+  dplyr::select(station, bm_std_stab)
+mysave(qt_station, dir = mypath("data"), overwrite = TRUE)
 # Station
 myload(biomass_ts_sax, op_analysis, dir = mypath("data"))
+
 op_analysis_bbb <- filter(op_analysis, station %in%
   biomass_ts_sax[biomass_ts_sax$sax == "bbb",]$station)
 station <- get_basin_station(sf_obj = TRUE)
@@ -480,14 +485,7 @@ station %<>%
 habitat_press %<>% na.omit()
 mask <- names(habitat_press) %in% names(get_pca_var_name_replacement())
 
-qt_station <- sem_data %>%
-  filter(station %in% c(first_st$station[5], last_st$station[5])) %>%
-  dplyr::select(station, bm_std_stab)
-mysave(qt_station, dir = mypath("data"), overwrite = TRUE)
 
-p_st <- p_st + 
-  theme_void() +
-  theme(plot.margin = theme_get()$plot.margin, legend.position = "none")
 
 p_st2 <- p_st +
   geom_sf(data = filter(station, type == "stable"), color = "black") +
@@ -509,7 +507,9 @@ p_st2 <- p_st +
     datum = sf::st_crs(2154),
     crs = 2154,
     expand = FALSE
-  )
+  ) +
+  theme_void() +
+  theme(plot.margin = theme_get()$plot.margin, legend.position = "none")
 
 pca_rotated <- compute_rotated_pca(
   .data = habitat_press[, mask],
@@ -601,7 +601,7 @@ fig1c <- plot_grid(
 
 )
 fig1c
-save_plot("figs/fig1c_low_rich.png", fig1c,
+save_plot("figs/fig1c_low_rich.pdf", fig1c,
   nrow = 2, 
   ncol = 1,
   base_height = 4,
@@ -651,7 +651,7 @@ fig1d <- plot_grid(
   rel_heights = c(1, .60)
 
 )
-save_plot("figs/fig1d_high_rich.png", fig1d,
+save_plot("figs/fig1d_high_rich.pdf", fig1d,
   nrow = 2, 
   ncol = 1,
   base_height = 4,
@@ -739,7 +739,7 @@ fig1_draw_test <- fig1_draw +
     color = "black", size = 1
   )
 
-save_plot(mypath("manuscript", "bef_stability", "figs/fig1.png"), fig1_draw_test,
+save_plot(mypath("manuscript", "bef_stability", "figs/fig1.pdf"), fig1_draw_test,
 nrow = 3, 
   ncol = 1,
   base_height = 4,

@@ -106,7 +106,7 @@ country_points[country_points$name == "Spain", c("X", "Y")] <- c(300000, 6150000
 country_points[country_points$name == "Italy", c("X", "Y")] <- c(1300000, 6450000) 
 
 ocean <- data.frame(X = 200000, Y = 6500000, name = "atlantic \n ocean")
-sea <- data.frame(X = c(450000, 900000), Y = c(7025000, 6180000), name = c("English \n sea", "Mediterranean \n sea"))
+sea <- data.frame(X = c(450000, 900000), Y = c(7025000, 6180000), name = c("English \n channel", "Mediterranean \n sea"))
 
 basin_inner <- basin %>% 
         rmapshaper::ms_innerlines() %>% 
@@ -168,3 +168,4 @@ save_plot(
   base_height = 7 / 2.54,
   base_width = 7 / 2.54
 )
+
