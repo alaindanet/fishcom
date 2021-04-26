@@ -27,7 +27,7 @@ library(magrittr)
 source(mypath("R", "misc.R"))
 source_dir(mypath("R"))
 
-theme_set(theme_alain())
+theme_set(theme_cowplot())
 
 myload(sem_data, synchrony, dir = mypath("data"))
 ```
@@ -37,22 +37,23 @@ myload(sem_data, synchrony, dir = mypath("data"))
 We check that $CV_{com, i} = \overline{CV_{sp, i}} \times \sqrt{\phi_i}$
 
 ```{r}
-synchrony %>%
+p_sync <- synchrony %>%
   ggplot(aes(y = cv_sp * sqrt(synchrony), x = cv_classic)) +
   geom_point() +
   labs(y = "CVsp * sqrt(synchrony)", x = "CV of biomass")
 ```
 
 
+
+
 # Response to the comment R3-1
 
-```{r}
-
+```{r, echo = TRUE}
 mod <- lm(log_stab_std ~ 0 + log_cv_sp + log_sync, data = sem_data)
 
 #summary(mod)
 coefs <- broom::tidy(mod) %>%
-  select(term,estimate)
+  select(term, estimate)
 
 coefs %<>%
   mutate(
@@ -68,7 +69,189 @@ broom::tidy(mod_olivier)
 
 ```
 
+# Response to the comment 
+
+```{r}
+source(mypath("R", "synchrony.R"))
+
+myload(community_analysis, op_analysis, synchrony, dir = mypath("data"))
+
+myload(network_metrics, network_analysis, dir = mypath("data", "classes"))
+```
+
+
+```{r}
+compute_pair_synchrony <- function (com_mat = NULL) {
+  sp_names <- colnames(com_mat)
+  ti <- combn(sp_names, 2,
+    FUN = function (x) {
+      covar <- cov(x = com_mat[, x[1:2]])
+      #  vars <- var(c(mat[, x[1]], mat[, x[2]])) 
+      sync <- compute_synchrony(covar)
+      names(sync) <- paste(x[1], x[2], sep = "-")
+      return(sync)
+    }, simplify = FALSE
+  )
+  unlist(ti)
+}
+```
+
+
+```{r}
+
+net <- left_join(network_metrics, op_analysis, by = "opcod") %>%
+  ungroup() %>%
+  filter(!is.na(station))
+
+prep_troph_sp_biomass <- net %>%
+  select(opcod, station, year, composition, surface) %>%
+  unnest(composition) %>%
+  mutate(bm_std = biomass/ surface)
+
+troph_sp_biomass <- prep_troph_sp_biomass %>%
+  select(station, year, sp_class, bm_std) %>%
+  group_by(station) %>%
+  nest() %>%
+  mutate(
+    com_mat = map(data, function(x) {
+      ti <- x %>%
+	pivot_wider(names_from = sp_class, values_from = bm_std) %>%
+	mutate_at(vars(matches("[A-Z]{3}", ignore.case = FALSE)),
+	  ~ifelse(is.na(.), 0, .))
+    return(as.matrix(select(ti, -year)))
+}
+    )
+  )
+  
+library(furrr)
+library(parallel)
+plan(multisession, workers = 3)
+
+sync_troph_sp <- troph_sp_biomass %>%
+  ungroup() %>% # For furrr to works
+  mutate(sync = future_map(com_mat, ~compute_pair_synchrony(.x)))
+
+```
+
+```{r}
+get_if_fish_pair_interact <- function (net = NULL) {
+
+  te <- net[
+    str_detect(colnames(net), "[A-Z]{3}"),
+    str_detect(colnames(net), "[A-Z]{3}")
+    ]
+
+  sp_names <- colnames(te)
+  ti <- combn(sp_names, 2,
+    FUN = function (x) {
+      int <- as.logical(te[x[2], x[1]])
+      names(int) <- paste(x[1], x[2], sep = "-")
+      return(int)
+    }, simplify = FALSE
+  )
+  unlist(ti)
+}
+```
+
+
+```{r}
+myload(metaweb_analysis, dir = mypath("data"))
+metaweb <- metaweb_analysis$metaweb
+
+```
+
+```{r}
+
+pair_int <- get_if_fish_pair_interact(metaweb)
+metaweb["ANG_2", "TRF_8"]
+
+
+```
+
+```{r}
+get_sync_int <- function(sync = NULL, pair_int = NULL) {
+
+  # compute inv prey-pred names to have symetric name combination   
+  pair_site <- names(sync)
+  inv_pair_site <- str_split(pair_site, "-") %>% map_chr(., ~paste0(.x[2], "-",.x[1]))
+
+  tmp <- pair_int[c(pair_site, inv_pair_site)]
+  pair_int_com <- tmp[!is.na(tmp)]
+
+  replace_pair_inv_pair <-  pair_site
+  names(replace_pair_inv_pair) <- inv_pair_site 
+  names(pair_int_com) <- str_replace_all(names(pair_int_com), replace_pair_inv_pair)
+
+  df_pair <- enframe(pair_int_com, name = "pair", value = "interact")
+  df_sync <- enframe(sync, name = "pair", value = "sync")
+
+  df_sync %<>%
+    left_join(df_pair, by = "pair")
+
+  return(df_sync)
+}
+```
+
+
+```{r}
+
+pair_site <- names(sync_troph_sp$sync[[1]])
+inv_pair_site <-str_split(pair_site, "-") %>% map_chr(., ~paste0(.x[2], "-",.x[1]))
+tmp <- pair_int[c(pair_site, inv_pair_site)]
+pair_int_com <- tmp[!is.na(tmp)]
+
+
+get_sync_int(sync_troph_sp$sync[[1]], pair_int = pair_int)
+
+```
+
+```{r, eval=FALSE}
+sync_troph_sp %<>%
+  mutate(sync_int = future_map(sync, get_sync_int, pair_int = pair_int))
+
+sync_pair_int <- sync_troph_sp %>%
+  select(station, sync_int) %>%
+  unnest(sync_int)
+
+mysave(sync_pair_int, dir = mypath("data"), overwrite = TRUE)
+```
+
+```{r}
+myload(sync_pair_int, dir = mypath("data"))
+sync_pair_int2 <- sync_pair_int %>%
+  separate(pair, c("sp1", "sp2"), "-") %>%
+  mutate_at(c("sp1", "sp2"), ~str_extract(., "[A-Z]{3}")) %>%
+  mutate(cannibalism = map2_lgl(sp1, sp2, ~ifelse(.x == .y, TRUE, FALSE)))
+```
+
+There is no cannibalism case! 
+
+```{r}
+sync_pred <- sync_pair_int2 %>%
+  ggplot(aes(y = sync, x = as.factor(interact)), fill = as.factor(cannibalism)) +
+  geom_boxplot() +
+  facet_grid(~cannibalism) +
+  labs(y = "Synchrony", x = "Species in interaction", fill = "Cannibalism")
+```
+
+```{r}
+sync_pred <- sync_pair_int2 %>%
+  ggplot(aes(y = sync, x = as.factor(interact))) +
+  geom_boxplot() +
+  labs(y = "Synchrony", x = "Species pairs in interaction", fill = "Cannibalism")
+```
+
+```{r}
+save_plot(file = mypath(
+      "manuscript", "bef_stability", "result", 
+      "synchrony_species_pairs.png"),
+    plot = sync_pred,
+    base_height = 2.5, base_asp = 1.2#1.618 
+    )
+```
+
 # Response to the comment R3-L231 
+
 
 ```{r}
 myload(op_analysis, dir = mypath("data"))
@@ -169,7 +352,7 @@ colnames(sem_stab_results_2006) <- str_to_lower(colnames(sem_stab_results_2006))
 p_sens_stab <- plot_sensivity_analysis(
   .data = sem_stab_results_2006,
   inverse_label_order = TRUE, 
-  y_lim = c(-1.5, .75)
+  y_lim = c(-1.5, .75), pval = TRUE
   ) +
 scale_color_manual(
   values = c("full" = "red", "from_2006" = "blue"),
@@ -177,7 +360,17 @@ scale_color_manual(
   breaks = c("full", "from_2006") 
   ) +
   guides(color = guide_legend(direction = "horizontal", nrow = 1)) +
-  theme(legend.position = "bottom", plot.margin = unit(c(0, 0, 0, 25), units = "mm"))
+  theme(legend.position = "bottom", plot.margin = unit(c(0, 0, 0, 25), units = "mm"))+
+  labs(shape = "P <= 0.05")
+```
+
+```{r}
+save_plot(file = mypath(
+      "manuscript", "bef_stability", "result", 
+      "sensivity_stab_2006.png"),
+    plot = p_sens_stab,
+    base_height = 9, base_asp = 1.2#1.618 
+    )
 ```
 
 
@@ -202,16 +395,26 @@ colnames(sem_bm_results_2006) <- str_to_lower(colnames(sem_bm_results_2006))
 p_sens_bm <- plot_sensivity_analysis(
   .data = sem_bm_results_2006,
   inverse_label_order = TRUE,
-  y_lim = c(-1.5, .75)
+  y_lim = c(-1.5, .75), pval = TRUE
   ) +
 scale_color_manual(
   values = c("full" = "red", "from_2006" = "blue")
   ) +
   guides(color = guide_legend(direction = "horizontal", nrow = 1)) +
-  theme(legend.position = "bottom", plot.margin = unit(c(0, 0, 0, 25), units = "mm"))
+  theme(legend.position = "bottom", plot.margin = unit(c(0, 0, 0, 25), units = "mm"))+
+  labs(shape = "P <= 0.05")
 ```
 
-```{r start-sens, fig.dim = c(14, 10), fig.cap="Sensivity of standardized estimate to the station starting date."}
+```{r}
+save_plot(file = mypath(
+      "manuscript", "bef_stability", "result", 
+      "sensivity_bm_2006.png"),
+    plot = p_sens_bm,
+    base_height = 9, base_asp = 1.2#1.618 
+    )
+```
+
+```{r start-sens, fig.dim = c(10, 14), fig.cap="Sensivity of standardized estimate to the station starting date."}
 legend_b <- get_legend(p_sens_stab)
 
 p <- plot_grid(
@@ -222,9 +425,205 @@ p <- plot_grid(
   labels = c("Total biomass", "Biomass stability")
 )
 p
+save_plot(
+  file = mypath( "manuscript", "bef_stability", "result", 
+      "sensivity_2006.png"),
+    plot = p,
+    nrow = 2,
+    base_height = 9, base_asp = 1.6#1.618 
+)
 ```
 
+# Second answer
+
+- get air temperature data 
+- match them with water temperature (raw or interpolated?) 
+
+```{r}
+#devtools::install_github("RetoSchmucki/climateExtract")
+library(climateExtract)
+library(ncdf4)
+
+fr_border <- sf::st_as_sf(raster::getData("GADM", country = "FRA", level = 0))
+debug(extract_nc_value)
+climate_data = extract_nc_value(first_year = 1995, 
+                                last_year = 2018,
+                                local_file = FALSE,
+                                file_path = NULL,
+                                sml_chunk = "2011-2020",
+                                spatial_extent = fr_border,
+                                clim_variable = "mean temp",
+                                statistic = "mean",
+                                grid_size = 0.25,
+                                ecad_v = NULL,
+                                write_raster = TRUE,
+                                out = "raster_mean_temp.grd",
+                                return_data = TRUE)
+# Get annual mean for each point 
+annual_avg_temp_pnts = temporal_aggregate(x = rbk,
+                                          y = sf_point,
+                                          agg_function = "mean",
+                                          variable_name = "average temp",
+                                          time_step = "annual")
+```
+
+```{r}
+library(reprex)
+library(climateExtract)
+climate_data = extract_nc_value(first_year = 2012, 
+                                last_year = 2015,
+                                local_file = FALSE,
+                                file_path = NULL,
+                                sml_chunk = "2011-2020",
+                                spatial_extent = fr_border,
+                                clim_variable = "mean temp",
+                                statistic = "mean",
+                                grid_size = 0.25,
+                                ecad_v = NULL,
+                                write_raster = TRUE,
+                                out = "raster_mean_temp.grd",
+                                return_data = TRUE)
+```
+
+```{r}
+library(climate)
+
+po <- nearest_stations_ogimet(country = "France",
+  date = Sys.Date(),
+  add_map = TRUE,
+  no_of_stations = 500 
+)
+
+o = meteo_ogimet(date = c("1995-01-01", "2018-12-31"), 
+                 interval = "daily",
+                 coords = FALSE, 
+                 station = "07005")
+```
+
+```{r}
+library(ncdf4)
+library(raster)
+library(sf)
+cru_file <- list.files(mypath("data-raw", "cru"))[!str_detect(list.files(mypath("data-raw", "cru")), "gz")]
+nc.pre <- nc_open(mypath("data-raw", "cru", "cru_ts4.03.2011.2018.tmp.dat.nc"))
+
+l <- map(cru_file, function (x) {
+  pre <- raster::brick(mypath("data-raw", "cru", x), varname="tmp")
+  extract(pre, st_wgs)
+		 }
+)
+
+tmean <- do.call(cbind, l)
+rownames(tmean) <- st_wgs$station
+colnames(tmean) <- paste0(rep(c(paste0(0, seq(1,9)), seq(10, 12)), 2018 - 1991), "_", rep(seq(1991, 2018), each = 12)) 
+
+
+# Correlation mean air temperature / water temperature
+air_mean_temp <-
+  rowMeans(tmean[, which(colnames(tmean) == "01_1995"):which(colnames(tmean) == "12_2018")]) 
+air_temp <- enframe(air_mean_temp, name = "station", value = "air_95_18") %>%
+  mutate(
+    station = as.integer(station),
+    air_06_18 = rowMeans(
+      tmean[, which(colnames(tmean) == "01_2006"):which(colnames(tmean) == "12_2018")]
+    )
+  )
+
+myload(habitat_press, sem_data, dir = mypath("data"))
+temp_avg_comp <- habitat_press %>%
+  dplyr::select(station, temperature_med) %>%
+  left_join(air_temp, by = "station") %>%
+  rename(water_06_2018 = temperature_med) %>%
+  filter(station %in% sem_data$station)
+
+
+dev.new(width = 6, height = 6, units = "cm")
+# i3: mod + shift + space 
+png(
+  file = mypath("manuscript", "bef_stability", "figs",
+    "pairs_temperature_plot.png")
+)
+pairs(
+  temp_avg_comp[, 2:4], pch = 19 
+)
+dev.off()
+
+mat <- round(cor(temp_avg_comp[, 2:4]), 3)
+write.table(mat,
+  file = mypath("manuscript", "bef_stability", "result", "cor_mat_temp.txt"),
+  sep = ",",
+  quote = FALSE,
+  row.names = T)
+
+# Test with monthly data
+myload(yearly_temp_press_interp_mv_avg, dir = mypath("data-raw", "temp"))
+temp <- yearly_temp_press_interp_mv_avg %>%
+  group_by(id, year) %>%
+  arrange(value.predSE) %>%
+  slice(1) %>%
+  select(station = id, year, temp = value_corrected) %>%
+  mutate(temp = ifelse(temp > 45, NA, temp)) %>%
+  ungroup()
+
+#plot(pre[[1]])
+#
+#uk.area <- extent(-12, 4, 48, 64)
+#uk <- crop(pre, uk.area)
+#plot(uk)
+#st <- get_basin_station(sf =TRUE)
+#st_wgs <- st_transform(st, crs = 4326)
+#
+#test <- extract(pre, st_wgs)
+```
+
+
+
 ## L180-182
+
+```{r}
+myload(community_metrics, community_analysis,
+  sem_data , dir = mypath("data"))
+ti <- get_sync_cv_mat(com_analysis = community_analysis,
+    op_analysis = op_analysis, presence_threshold = NA)
+
+test <- ti %>%
+  mutate(
+    richness_tot = map_dbl(com_mat, ~ncol(.x)),
+  ) %>%
+select(station, richness_tot)
+surf <- op_analysis %>%
+  filter(station %in% sem_data$station) %>%
+  group_by(station) %>%
+  summarise(tot_surface = sum(surface), avg_surface = mean(surface))
+
+surf_rich_tot <- surf %>%
+  left_join(test, by = "station")
+
+p_linear <- surf_rich_tot %>%
+  ggplot(aes(x = tot_surface, y = (richness_tot))) +
+  geom_point() +
+  labs(y = "Total species richness", x = "Total surface (m^2)") +
+  geom_smooth(method = "lm")
+```
+
+```{r}
+test <- glm(richness_tot ~ tot_surface + I(tot_surface^2), family=quasipoisson, surf_rich_tot)
+broom::tidy(test) %>%
+  knitr::kable(, format = "rst")
+
+```
+
+
+```{r}
+save_plot(file = mypath(
+      "manuscript", "bef_stability", "result", 
+      "richness_surface.png"),
+    plot = p_linear,
+    base_height = 9, base_asp = 1.2#1.618 
+)
+```
+
+
 
 ```{r}
 library(nlme)
@@ -330,6 +729,7 @@ p_sens_bm_rich <- plot_sensivity_analysis(
   inverse_label_order = TRUE, scale_color = FALSE,
   y_lim = c(-1.5, .75)
   ) +
+geom_point(aes(colour = "pink", size = 4)) +
 scale_color_manual(
   values =  cols_rich,
   labels = label_rich,
@@ -381,7 +781,7 @@ scale_color_manual(
   theme(legend.position = "bottom", plot.margin = unit(c(0, 0, 0, 25), units = "mm"))
 ```
 
-```{r rich-sens, fig.dim = c(14, 10), fig.cap="Sensivity of the standardized estimates to species richeness specification for the two structural equation model."}
+```{r rich-sens, fig.dim = c(10, 14), fig.cap="Sensivity of the standardized estimates to species richeness specification for the two structural equation model."}
 legend_b <- get_legend(p_sens_stab_rich)
 p <- plot_grid(
   p_sens_bm_rich %<>% + theme(legend.position = "none", plot.margin = unit(c(0,0,0,27), units = "mm")),
@@ -391,14 +791,5 @@ p <- plot_grid(
   labels = c("Total biomass", "Biomass stability")
 )
 p
-```
-
-The choice of richness variable would 
-
-
-# Response to comment R3-Section 5.3
-
-```{r}
-
 ```
 

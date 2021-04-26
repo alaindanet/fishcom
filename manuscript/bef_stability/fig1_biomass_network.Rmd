@@ -351,6 +351,30 @@ PlotWeb(
 
 # Test fig plot 
 
+```{r}
+sp_color <- set_color_species(
+  node_list = colnames(metaweb_analysis$metaweb),
+  resource_list = metaweb_analysis$resource
+)
+node_sp <- str_extract(colnames(metaweb_analysis$metaweb), "[A-Z|a-z]*")
+sp_color[node_sp]
+
+myload(metaweb_analysis,  dir = mypath("data"))
+TL <- NetIndices::TrophInd(metaweb_analysis$metaweb)$TL
+PlotWeb(
+  TL = TL,
+  webTL = metaweb_analysis$metaweb,
+  colnode = sp_color[node_sp],
+  abund = 1,
+  collink="grey70",
+  scale_abun = .005
+) 
+```
+
+```{r}
+```
+
+
 
 ```{r, warning = FALSE}
 nb <- seq.int(from = 1, to = length(net$adj_mat), length.out = 4)
@@ -388,8 +412,6 @@ gg <- map(list_p, ggdraw)
 plot_grid(plotlist = gg, nrow = 2)
 ```
 
-```{r}
-```
 
 ```{r, fig.width = 10, fig.height = 5, warning = FALSE}
 #par(.pardefault)
@@ -515,11 +537,17 @@ pca_rotated <- compute_rotated_pca(
   .data = habitat_press[, mask],
   naxis = 2
 )
+pca_rotated$rotated$loadings[, 2] <- pca_rotated$rotated$loadings[, 2] * (-1) 
 p1 <- my_pca_plot(.data = pca_rotated$rotated,
   xaxis = "RC1", yaxis = "RC2", ctb_thld = .4, 
   label_size = 4, force_pull = 0.01, force = 10,
   seed = 1
 )
+save_plot(file = mypath("manuscript", "bef_stability", "figs", 
+	"my_sweet_rotated_pca_reversed_axis2.pdf"),
+    plot = p1,
+    base_height = 4.5, base_asp = 1.2#1.618 
+    )
 
 cow_p1 <- plot_grid(NULL, p1, NULL, ncol = 1, rel_heights = c(.02, 1, .02))
 fig1ab <- plot_grid(p_st2, cow_p1, ncol = 2, 
@@ -531,6 +559,7 @@ save_plot(mypath("manuscript", "bef_stability", "figs/fig1ab.png"), fig1ab,
   base_height = 4,
   base_width = 4
 )
+
 ``` 
 ```{r set-up}
 st <- c(first_st$station[5], last_st$station[5]) 
@@ -677,6 +706,9 @@ fig1 <- plot_grid(cow_fig1ab, fig1cd, cow_leg_species,
 # ele: single column (82 mm), two-thirds page width (110 mm) or full page width (173 mm)
 dev.new(width = 8.2, height = 11.0, units = "cm")
 # i3: mod + shift + space 
+png(file = “C://R//SAVEHERE//myplot.jpeg”)
+plot(x,y)
+dev.off()
 
 # Draw connectance and average trophic level:
 lab_net <- get_label_from_named_vector(label = label[6:7])

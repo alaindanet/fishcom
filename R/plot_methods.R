@@ -1359,7 +1359,7 @@ format_table <- function (x = tmp_stab_indir_table) {
   x
 }
 
-plot_sensivity_analysis <- function (.data = NULL, y_lim = c(-1.26, .75), inverse_label_order = FALSE, scale_color = TRUE) {
+plot_sensivity_analysis <- function (.data = NULL, y_lim = c(-1.26, .75), inverse_label_order = FALSE, scale_color = TRUE, pval = FALSE, size_point = NULL) {
   .data %<>%
     mutate(
       r_p = str_c(response, predictor, sep = " ~ "),
@@ -1383,9 +1383,21 @@ plot_sensivity_analysis <- function (.data = NULL, y_lim = c(-1.26, .75), invers
   p <- p +
     labs(x = "Terms of the linear models",
       y = "Standardized estimate", color = "Dataset type") +
-    ylim(y_lim) +
-    geom_point(aes(color = dataset)) 
+    ylim(y_lim) 
   
+  if (is.null(size_point)) {
+    size_point <- 3 
+  }
+
+  if (pval) {
+    p <- p +
+      geom_point(aes(color = dataset, shape = ifelse(p.value <= 0.05, TRUE,
+	    FALSE)), size = size_point) 
+  } else {
+    p <- p +
+      geom_point(aes(color = dataset), size = size_point)
+  }
+
   if (scale_color) {
     
   p <- p +

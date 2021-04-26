@@ -201,7 +201,7 @@ png(
   width = 5,
   height = 5,
   pointsize = 12*96/72,
-  res = 96 
+  res = 200 
 )
 
 V(g)$label <- NA
@@ -211,8 +211,9 @@ org_par <- par(mar = c(5, 4, 0, 0) + 0.1)
 
 plot(g,
   layout = lay,
-  edge.arrow.size=.2,
+  edge.arrow.size=.4,
   edge.curved=0,
+  edge.color = rgb(160, 160, 160, alpha = 25, max = 255),
   #vertex.color = "orange",
   vertex.frame.color="#555555",
   vertex.label.color="black",

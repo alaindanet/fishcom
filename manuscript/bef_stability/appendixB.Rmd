@@ -1,18 +1,19 @@
 ---
-title: Appendix B of Species richness and network structure jointly drive total biomass and its temporal stability in fish communities
+title: Appendix B of Species richness and food-web structure jointly drive community biomass and its temporal stability in fish assemblages 
 author: Alain Danet, Maud Mouchet, Willem Bonnaffé, Elisa Thébault and Colin Fontaine
 date: \today 
 output:
-  pdf_document:
+  bookdown::pdf_document2:
     fig_caption: true 
     keep_tex: true
     toc: true
 fontsize: 12pt
 header-includes:
-   -  \newcommand{\beginsupplement}{\setcounter{table}{2}  \renewcommand{\thetable}{S\arabic{table}} \setcounter{figure}{0} \renewcommand{\thefigure}{S\arabic{figure}}} 
+   - \usepackage{natbib}
+   - \newcommand{\beginsupplement}{\setcounter{table}{2}  \renewcommand{\thetable}{S\arabic{table}} \setcounter{figure}{0} \renewcommand{\thefigure}{S\arabic{figure}}} 
+   - \usepackage{float}
    - \usepackage{booktabs}
    - \usepackage{makecell}
-   - \usepackage{float}
    - \usepackage{setspace}
    - \doublespacing
    - \usepackage{lineno}
@@ -20,6 +21,12 @@ header-includes:
 geometry: margin=2cm
 bibliography: references.bib
 number_sections: true
+nocite: |
+    @post_ecosystem_2000| @doi_resource_2009| @mchugh_dual_2010|
+    @ogorman_unexpected_2017| @gauzens_biodiversity_2020| @dunne_network_2006|
+    @mchugh_dual_2010| @doi_resource_2009| @allan_stream_2009|
+    @petchey_predicting_2010| @winemiller_must_1989
+csl: ecology-letters.csl
 ---
 
 ```{r, echo = FALSE, message = FALSE, collapse = FALSE}
@@ -82,51 +89,50 @@ package <- c("openSTARS", "SSN", "nlme", "piecewiseSEM")
 
 ### Protocol
 
-The fish community sampling took place in a variety of stream size, shape and
-depth. This diversity constraints the type of protocol that can take place.  For
-the small streams (depth < 0.7m across the entire width), the complete protocol
-is used. It consists in placing anodes across the width of the
-stream. The fishermen made from one to three row
-of fishing. We kept only the first row for analysis to homogenize the sampling
-effort. For deeper and wider streams, the sampling was partial over the bank and
-the channel and performed by boat and by foot (along the bank). We kept only
-sampling done over the bank because channel sampling was not always done. Two
-types of partial protocols takes place: partial over bank and partial by points.
-The former is continuous while the latter is discrete. Furthermore, in the "partial
-by point" protocol, the channel can be sampled as well. We kept only the "partial
-by point" sampling in which all the sampling points were done over the bank to
-homogenize the sampling. Then, we merged partial over bank and partial by 
-point protocols. Some sampled stations had mixed characteristics in which mix of
-partial and complete protocols were applied depending of the depth of the stream 
-at the time of sampling. In this case, we kept only the protocol that was the
-most used. 
+The monitoring of the fish communities occurs in a variety of stream size, shape
+and depth. The stream characteristics constrain the type of protocol that can be
+applied. Small streams (depth < 0.7m across the entire width) are sampled with
+the complete protocol. The protocol consists of placing anodes across the entire
+width of the stream. The fishermen made from one to three rows of electric
+fishing. We selected only the data from the first row to homogenize the sampling
+effort. In deeper and wider streams (depth >= 0.7m), the sampling was partial
+over the bank and the channel and performed by boat and by foot (along the
+bank). We selected only the sampling done over the bank because the channel was
+not systematically sampled. Two types of partial protocols takes place: partial
+over bank and partial by points, which are respectively continuous and discrete.
+Furthermore, in the "partial by point" protocol, the channel was sometimes
+sampled as well. We selected only the "partial by point" sampling in which all
+the sampling points were done over the bank to homogenize the sampling. Then, we
+merged partial over bank and partial by point protocols. Some sampled stations
+were located in stream with intermediate characteristics where both protocols
+were alternatively used depending on the state of the stream at the time of
+sampling. For these sites, we only kept the samples that had been carried out
+with the most used protocol.
 
-Heterogeneity in the sampling period may introduce variability that is not related
+Heterogeneity in the sampling date may introduce variability that is not related
 to ecological processes such as the presence of juveniles. In order to reduce
-heterogeneity in sampling time, only one sampling per year was retained if there
-was two in a given year, the one with the most species and then individual
-collected. Finally, most of the fish sampling occurred in September (Median:
-mid-August) and the median standard deviation of the sampling month was inferior
-to one (0.7) within stations. Additionally, we removed sampling events, in a
-given station, in which the sampled length along the stream was outside the median
-length sampled more or less 30%. Finally, we standardized the biomass record
-and species richness by the sampled surface to get rid of sampling effort
-effects. 
+heterogeneity in the sampling date, only one sampling per year was retained if
+there was more in a given year, the one with that had the most species and then
+the most individuals. Finally, most of the fish sampling occurred in September
+(Median: mid-August) and the median standard deviation of the sampling month was
+inferior to one (0.7) within stations, i.e. 3 weeks. To further reduce sampling
+heterogeneity, we only kept the sampling in which the length of stream sampled
+along the stream was inside the median length sampled more or less 30%.
 
 ### Batches definition and body size measurement 
 
-During the electric fishing, and before that fish body size are measured, the
-fishes are regrouped by batches. Each batch contains one species but there can
-be several batches by species. Body size assessment are different according to
-the batches. There are four types of batches: N, I, S/L and G. The batches N and
-I contains the biggest individuals which are normally less numerous. Then
-the body size of all the individuals in the N and I batches is recorded. The batches S/L
-contains fishes of intermediate sizes. Inside each S/L batches, the operator
-tries to make batches as homogeneous as possible in terms of body size. Then, the body
+Once the fishes have been caught, they are divided into different batches (Fig.
+\@ref(fig:p-body-size)). Each batch contains only one species but there may be
+several batches for one species. The body size of the fishes is measured
+differently for each type of batch.  There are four types of batches: N, I, S/L
+and G. The batches N and I contain the biggest individuals. In the N and I
+batches, the body size of all the individuals is recorded. The batches S/L
+contain fishes of intermediate sizes.  Inside each S/L batch, the operator tries
+to make batches as homogeneous as possible in terms of body size. Then, the body
 size of a subsample of at least 20 individuals is recorded. The G batches
 contain individuals of small body size, with care that body size is as
-homogeneous as possible in a given batches. Then body size of the shortest and the
-longest individuals are recorded.
+homogeneous as possible in a given batches.  Then body size of the shortest and
+the longest individuals are recorded.
 
 ## Body size inference
 
@@ -169,38 +175,33 @@ body_size_caption <- paste0(
 knitr::include_graphics(mypath("manuscript", "bef_stability", "figs", "length_inference.pdf"))
 ```
 
-With the information contained in the batch record, we inferred the body size of
-the fishes in the community. No inference were needed for the N and I batches
-because the body size of all individuals was recorded. The body size ($l$) of the
-fishes in the S/L and G was inferred under the assumption that its distribution
-followed a normal law ($l ~ N(\mu , \sigma)$).
-For a S/L batch, the mean $\mu$ and the standard deviation $\sigma$ were simply
-the average and the standard deviation of the body size of the subsample
-recorded. For a G batch, the average was approximated by 
-$\hat{\mu} = (l_{min} + l_{max}) 2^{-1}$ and the standard deviation by
-$\hat{\sigma} = (l_{min} + l_{max}) 4^{-1}$. Together with the estimations of
-the mean and the standard deviation, the number of individuals in a batch and
-assumption of a normal distribution, we simulated the body size distribution in
-S/L and G batches. To avoid simulation of unrealistic body size, we used a
-truncated normal distribution bounded at [0.05; .95] for the density of
-probability of the S/L batches, and bounded at [$l_{min}$; $l_{max}$] for the G
-batches. Body size distribution were generated using the R function
-`truncdist::rtrunc`.
+We inferred the body size of all the unmeasured individuals using the batch
+records. There was no need for inference for the N and I batches since the body
+size of all individuals was recorded (Fig. \@ref(fig:p-body-size)). The body
+size ($l$) of the fishes in the S/L and G was inferred under the assumption that
+body size distribution follows a normal law ($l ~ N(\mu, \sigma)$).  For an S/L
+batch, the mean $\mu$ and the standard deviation $\sigma$ were simply the
+average and the standard deviation of the body size of the subsample recorded.
+For a G batch, the average was approximated by $\hat{\mu} = (l_{min} + l_{max})
+2^{-1}$ and the standard deviation by $\hat{\sigma} = (l_{min} + l_{max})
+4^{-1}$. With the estimations of the mean and the standard deviation, the number
+of individuals in a batch and the assumption of normal distribution, we
+simulated the body size distribution in S/L and G batches. To avoid simulation
+of unrealistic body size, we used a truncated normal distribution bounded at
+[0.05; .95] for the density of probability of the S/L batches, and bounded at
+[$l_{min}$; $l_{max}$] for the G batches. Body size distribution were generated
+using the R function `truncdist::rtrunc`.
 
-We removed batches that did not satisfied the following conditions. First, we
-removed batches in which the total number of individuals was not recorded. In lot
-"G", we removed batches where $l_{min} \geq l_{max}$ or if at least one of the
-measurement was missing. Additionally, G batches were removed when number of
-individuals fell below five, as G batches normally contained more individuals.
-In the S/L lot, we removed batches in which the number of individuals in the
-recorded individuals fell below 10. In sum, those sanity check allowed to
-exclude potentially problematic batches. Finally, in the dataset used in the
-analysis, `r na_length` individuals had missing length over 
+Batches that did not meet certain conditions were excluded. First, we also
+excluded batches for which the total number of individuals was not recorded. We
+also excluded G batches for which $l_{min} \geq l_{max}$ or if
+at least one of the measurement was missing. Additionally, a given G batch was
+excluded when the number of individuals fell below five, as G batches normally
+contained more individuals. We finally excluded S/L batches for which the
+number of measured individuals was inferior to 10. Finally, in the dataset used
+in the analysis, `r na_length` individuals had missing length over 
 `r nrow_fish_length` individuals.
 
-```{=latex}
-\pagebreak
-```
 
 ## Community data
 
@@ -210,13 +211,13 @@ removed_ind <- filter(length_sem_analysis, species %in% sp_to_remove())
 removed_sp <- unique(removed_ind$species)
 ```
 
-We removed rare fish species, species from lake, crayfish species, and migratory
-species. In total, we removed `r nrow(removed_ind)` over 
+The rare fish species, species from lake, crayfish species, and migratory
+species were excluded. In total, we removed `r nrow(removed_ind)` over 
 `r nrow(length_sem_analysis)` individuals and `r length(removed_sp)` species.
 
-During fish sampling, some species are identified based on morphotype but they
-belong to the same species based on fecundation criteria.  We merged those
-morphotype species into one species. There was 
+Some species were identified based on their morphotype, but they
+belong to the same species based on fecundation criteria. We merged those
+morphotype species into one species. There was
 `r length(unique(names(sp_to_replace())))` species to merge which belonged to 
 `r length(unique(sp_to_replace()))` species.
 
@@ -263,15 +264,25 @@ kable_styling(latex_options =c("striped", "scale_down"))
 ```
 
 
-#### Define trophic interactions  
+#### Define trophic interactions
 
-```{r}
-trophic_building_caption <- paste0(
-  "Trophic species"
-) 
+```{r, cache = FALSE} 
+
+trophic_building_caption <- paste0( "Building of the metaweb. (1) Each
+  species are divided in nine body size classes. We gathered information about
+  the food diet of each fish species and how food diet varies according to
+  ontogeny. (2) The life stage of a trophic species was determined with the
+  median of the body size class. A trophic link was set between the trophic
+  species and the resources associated to this life stage. (3) For a piscivorous
+  trophic species, the trophic links between fishes were defined according to
+  the predators/prey body size ratio. The predation window of the trophic
+  species ranged from 3% to 45% of the median of the body size range. A trophic
+  link between the predator trophic species and every trophic species whose
+  midpoint of bodysize range was included in the predation window.") 
+
 ```
 
-```{r p-net-inf, fig.cap=trophic_building_caption}
+```{r p-net-inf, cache = FALSE, fig.cap=trophic_building_caption}
 knitr::include_graphics(mypath("manuscript", "bef_stability", "figs", "network_inference.pdf"))
 ```
 
@@ -290,88 +301,91 @@ removed_ind_metaweb <- length_sem_analysis %>%
 removed_sp_metaweb <- unique(removed_ind_metaweb$species)
 ```
 
-```{r}
+```{r, cache = FALSE}
 metaweb_caption <- paste0(
-  "The metaweb which describes the interarctions between all the 412 trophic species, each is
+  "The metaweb describes the trophic interactions between all the 412 trophic species, each is
   represented by a node and each color represents a species (S = 45). The seven
   resource nodes (7) are drawn in grey. The species names corresponding to the
   three digit codes are found in Table S1."
 )
 ```
 
-```{r metaweb, fig.cap=metaweb_caption}
+```{r metaweb, cache = FALSE, fig.cap=metaweb_caption}
 knitr::include_graphics(mypath("manuscript", "bef_stability", "figs", "metaweb.png"))
 ```
 
-
-
-The metaweb described the potential trophic interactions between the
+The metaweb describes the potential trophic interactions between the
 ($`r ncol(metaweb_analysis$metaweb) - length(metaweb_analysis$resource)`$) trophic species.
-We had seven resource nodes which were present in the diet of the trophic
+The metaweb also included seven resource nodes which were present in the diet of the trophic
 species namely detritus, biofilm, phytoplankton, zooplankton, macrophages,
-phytobenthos and zoobenthos.
+phytobenthos and zoobenthos (Fig. \@ref(fig:metaweb)).
 
-The metaweb building was based on trait matching, so it necessitates to have
-information about their diet. `r length(removed_sp_metaweb)` species were
-removed because information about their diet was missing. It represented  
-`r nrow(removed_ind_metaweb)` individuals over `r nrow(length_sem_analysis)` 
-individuals.
+Trophic interactions between the nodes of the metaweb were determined according to
+the diet and the body size of the trophic species. `r length(removed_sp_metaweb)` 
+species were removed because information about their diet was missing. It
+represented  `r nrow(removed_ind_metaweb)` individuals over
+`r nrow(length_sem_analysis)` individuals.
 
-A trophic species belonged to a life stage if the median of its body size range
-fell in the range of the life stage. In turn, this trophic species has feeding
-interactions with the resource nodes of its life stage. Interactions between
-trophic interactions between a predator and a prey were determined by body size
-ratio as in many studies [@brose_predator_2019; @poisot_structure_2016;
-@schneider_body_2012].  For a given trophic species, we first determined if its
-size class ends up in a life stage containing piscivorous diet, i.e. if there was
-an overlap between them. We were more liberal for piscivory determination to
-avoid 
-missing potential fish-fish trophic interactions which were the main interactions
-in our community. If the trophic species was piscivorous, we determined its prey
-size range from 3% to 45% of the median of its size range. A trophic interaction
-was set for each trophic species whose median of its size class fell into the
-prey range of the predator trophic species. To sum up, the metaweb was obtained
-with allometric feeding interactions (1) between trophic species, (2) between
-trophic species and resource nodes and (3) between resource nodes.
+The life stage to which a trophic species belongs was determined by the median of
+the body size range of the trophic species, each life stage being delimited by a body
+size range. In turn, this trophic species has trophic interactions with the
+resource nodes of its life stage. The trophic interactions between a
+predator and a prey were determined by predator-prey body size ratio
+[@brose_predator_2019; @poisot_structure_2016; @schneider_body_2012]. For a
+given trophic species, we first determined if its body size range overlap
+with a piscivorous life stage (Fig. \@ref(fig:p-net-inf)). We were then more
+liberal for piscivory determination than for fish-resource interactions, to
+avoid missing potential interactions which were the main interactions in our
+community. If the trophic species was piscivorous, we determined its prey size
+range from 3% to 45% of the median of its size range. A trophic interaction was
+set for each trophic species whose median of its size class fell into the prey
+range of the predator trophic species. To sum up, the metaweb contains feeding
+interactions (1) between trophic species, (2) between trophic species and
+resource nodes and (3) between resource nodes.
 
 #### Local trophic network 
 
-The local trophic network (i.e. one network for each fish community
-sampling) was obtained by determining the trophic species of each fish
-individual in the community and interactions were set according to the metaweb.
+The local trophic networks (i.e. one network by
+sampling) were obtained by determining the trophic species of each fish
+individual in the community. According to the trophic species present in a given
+community, we set the trophic interactions between them according to the metaweb. 
 All the resource nodes were assumed to be present in each local network.
 Finally, the structure of the local networks varied according the presence of
-the trophic species. The inferred interactions represent potential interactions
-(i.e. not measured interactions) and are binary (i.e. presence or absence of
-feeding interactions).
+the trophic species.
 
 ## Environmental variables
 
-The procedure to obtain altitude, slope, width depth of the streams are fully
+The procedure to obtain altitude, slope, width and depth of the streams are fully
 explained in main text. Because those measurements were collected during the
 fishing protocol, they were easier to manage in the analysis. Then, we detailed
-in the following sections how water temperature, flow and BOD were obtained. 
+in the following sections how water temperature, water flow and Biological
+Oxygen Demand (BOD) variables were obtained. The goal was to obtain an annual
+mean for each variable, to match the yearly resolution of the fish monitoring.
+Furthermore, those variables are measured at different locations than the fish
+monitoring. 
 
 ### Preparation
 
-Water temperature, flow and BOD (Biological Oxygen Demand) were obtained from the
-[naiades database](http://www.naiades.eaufrance.fr/).
-Water temperature, flow and BOD were respectively collected at a hourly, daily
-and monthly frequency. Water temperature and flow are recorded by automated
-sensors while BOD is collected manually because it necessitates analysis in a
-laboratory. BOD data collection is coordinated by the Agence de l'eau which
-realized the analysis itself or order it to a company.
-It is crucial to make clear that those variables are collected at different
-places than the fish samplings.
+Water temperature, water flow and BOD variables were obtained from the [naiades
+database](http://www.naiades.eaufrance.fr/) and were respectively collected at
+an
+hourly, daily and monthly frequency. Water temperature and flow are recorded by
+automated sensors while BOD is collected manually because its measurement
+requires laboratory analysis. BOD data collection is coordinated by the Agence
+de l'eau which realized the analysis itself or order it to a company.  
 
-```{r}
+```{r, cache = FALSE}
 pressure_cap <- paste0(
-  "Map of environmental variables obtained for the 99 sites used in the analysis."
-)
+  "Map of the environmental variables obtained for the 99 sites used in the
+  analysis. Slope is expressed in degree, altitude in meter, distance from
+  source in kilometer, Strahler order has no units, average stream width and
+  depth are expressed in meter, Biological Oxygen Demand (BOD) is expressed in
+  mg of dissolved oxygen, water flow is expressed in cube meter per second and
+  water temperature is expressed in Celsius degree.")
 ```
 
 
-```{r, fig.height = 20/2.54, fig.cap = pressure_cap}
+```{r, cache = FALSE, fig.height = 20/2.54, fig.cap = pressure_cap}
 pca_pressure <- habitat_press
 myload(fourier, dir = mypath("data-raw", "polluants"))
 myload(flow_temp_metrics, station_analysis, the_8_hydrologic_basin, dir = mypath("data"))
@@ -421,43 +435,47 @@ map_pressure <- map(var_to_plot,
 plot_grid(plotlist = map_pressure, ncol = 3)
 ```
 
-The time resolution was heterogeneous according to the variable considered
-(hourly, daily and monthly for temperature, flow and BOD resp.). For each
-recording station, we applied a moving window averaging to get rid of seasonal
-effects. For temperature, the moving was performed on daily average temperature.
-Then we took the annual average of each year and each variable (i.e. one value
-by year and by station).
+To get rid of seasonal effects of temperature, we applied a moving window
+averaging to each time series. The moving window was applied on daily average
+temperature. Then we took the annual mean of each year and each variable
+(i.e. one value by year and by station).
  
 Several characteristics of the streams make the interpolation more complicated
 than along terrestrial surface. Interpolations in terrestrial areas are roughly
-based on euclidean distance. Euclidean distance is more complicated to consider
-in streams because it had the follow the path of the streams. Furthermore, two
-streams can be close by but not connected and the value of their variables could
-be not related or a only a few. For those reason, we used stream spatial network
-methods to interpolate water temperature, flow and BOD.
+based on euclidean distance while euclidean distance is complicated to consider
+in streams because it had to follow the path of the streams. Furthermore, two
+streams can be close by but not connected and thus the value of their variables might 
+not be related or only a few. For those reason, we used stream spatial network
+methods to interpolate water temperature, water flow and BOD.
 
 We reconstructed the stream network and the connection between stations with the
 `openSTARS` R package [@kattwinkel_preparing_2020]. The reconstruction was done with a raster of digital
 elevation model at a resolution of 250 meters [(IGN)](https://wxs.ign.fr/jvam1hsjm11u8voorw81v2xb/telechargement/prepackage/BDALTI-75M_PACK_FXX_2018-01-24%24BDALTIV2_2-0_75M_ASC_LAMB93-IGN69_FRANCE_2018-01-15/file/BDALTIV2_2-0_75M_ASC_LAMB93-IGN69_FRANCE_2018-01-15.7z)
 and a theoretical hydrologic network [@pella_reseau_2012].
 
-The procedure was done by hydrographic basin because of convergence problem
-when the interpolation was done at the France scale. We had to make a trade-off
-between the number of data (to keep enough high to perform the interpolation)
-and the level of dataset splitting. We then merge some hydrographic basin to end
-up with four region of interpolation: West, East, South and North.
+The interpolations were carried out by hydrographic basin due to convergence
+issues when the interpolation was carried out at the scale of the whole
+France. We had to find a trade-off between the number of data (to keep enough
+high to perform the interpolation) and the level of dataset splitting. We then
+merged some hydrographic basin to end up with four regions of interpolation:
+West, East, South and North.
 
-Then we modeled each variable as dependant only on the covariation between sites
-and taking in account stream network. To model the autocovariance between sites,
-we used the linear-sill and mariah functions for taildown and tailup
-autocovariance, according to their prediction performance. The interpolations
-were done with the `SSN` R package 
-[@isaak_applications_2014; @hoef_ssn:_2014].
+Then we modelled each variable as dependant only on the covariation between
+sites and taking in account stream network. To model the autocovariance between
+sites, we used the linear-sill and mariah functions for taildown and tailup
+autocovariance, according to their predictive performance. The interpolations
+were done with the `SSN` R package [@isaak_applications_2014; @hoef_ssn:_2014].
 
 
 ### Performance and post check
 
-```{r eval = TRUE}
+```{r, cache = FALSE}
+cv_bias_caption <- paste0(
+  "Bias of the interpolation from Leave-One-Out Cross Validation (LOOCV). "
+)
+```
+
+```{r, eval = TRUE}
 myload(cv_press_interp_mv_avg,
   dir = mypath("data-raw", "polluants"))
 myload(cv_temp_press_interp_mv_avg,
@@ -480,6 +498,9 @@ cv_dbo_temp_flow <- map2_dfr(
       ungroup
   })
 
+```
+```{r, cache = FALSE}
+
 cv_dbo_temp_flow %>%
   mutate_if(is.double, ~signif(., 2)) %>%
   kable(
@@ -487,63 +508,58 @@ cv_dbo_temp_flow %>%
     format = "latex",
     booktabs = T,
     caption = paste0("Results of the cross-validation for the interpolation of
-      BOD, temperature and flow. Average over 4 interpolations are shown.") 
-      ) %>%
+      BOD, temperature and flow. Average over 4 interpolations are shown. The
+      cross-validation were performed with the SSN R package. bias: average
+      predicted error, std.biais: bias standardized, RMSPE: Root Mean-Squared
+      Prediction Error, std.MSPE: standardized Mean-Squared Prediction Error.") ) %>%
     collapse_rows(columns = c(1, 2), valign = "top") %>%
     kable_styling(latex_options =c("striped", "scale_down"))
 ```
 
-```{r}
-cv_bias_caption <- paste0(
-  "Bias of the interpolation from Leave-One-Out Cross Validation (LOOCV). "
-)
-```
 
-The performance of the interpolation was evaluated with leave one out
+
+The performance of the interpolations was evaluated with leave one out
 cross-validation (already implemented in the SSN package), i.e. the value of the
 interpolated variable of each station was predicted after removing it from the
-dataset.  
+dataset.
 
 When predicted values were below the minimum value or above the maximum value
 recorded in the dataset for flow, temperature and BOD, we replaced the
 predicted value by respectively the minimum and the maximum value found in the
-dataset. We ran the interpolation four times and we kept the predicted value
+dataset. We ran the interpolation four times, and we kept the predicted value
 which had the least standard deviation.
-
-```{=latex}
-\pagebreak
-```
 
 
 # Data analysis
 
 ## Temporal series classification
 
-The CV of biomass over time can cover multiple dynamics, including increases,
-stable, decreases and a mix of them. Theoretically, however, the CV computed to
-quantify stability is often represented with the assumption that the overall
-dynamic of the biomass varies around an equilibrium. In order to approach this
-condition, we kept only the stations that have met this criteria. To qualify the
-biomass trajectories over time, we used the symbolic aggregated approximation
-method (SAX) which is commonly used in time series analysis and implemented in
-the `jmotif` R package. This method classifies time series rather than
-quantifies trends and so is generic enough to encompass the diversity of time
-series shapes. The classification necessitates three steps. First, the time
+The CV of biomass over time can cover multiple temporal dynamics, including
+increases, stable, decreases and a mix of them. Theoretically, however, the CV
+computed to quantify stability is often represented with the assumption that the
+overall dynamic of the biomass varies around an equilibrium
+[@kefi_advancing_2019]. In order to approach the condition of equilibrium, we kept only the
+stations that have met this criteria. To characterise the biomass temporal
+dynamics, we used the symbolic aggregated approximation method (SAX), which is
+commonly used in time series analysis and implemented in the `jmotif` R package
+[@senin_grammarviz_2018].  This method classifies time series rather than
+quantifies trends and so is generic enough to encompass a diversity of temporal
+trajectories. The classification necessitates three steps. First, the time
 series are normalized (i.e. substituting the mean and divide by the standard
 deviation). The second step is to reduce the dimensionality of the time series
-by Piecewise Aggregation Approximation (PAA) method. Each time series is divided
-in $N$ frames of equal size that allows to the reduce the dimensionality of the
-time series. For each frame, we simply kept the mean value of the time series.
-The last step is to qualify each frame into string. Because values of
+by a Piecewise Aggregation Approximation (PAA) method. Each time series is
+divided in $N$ frames of equal size that allows to reduce the dimensionality
+of the time series. For each frame, we simply kept the mean value of the time
+series. The last step is to qualify each frame into string. Because values of
 normalized time series typically follows a normal distribution ($N(0,1)$), a
-breakpoints can be computed by dividing the area under the normal distribution
-in equal parts. The algorithm attributes a alphabetic letter to each part from
+breakpoint can be computed by dividing the area under the normal distribution
+in equal parts. The algorithm attributes an alphabetic letter to each part from
 the lowest to the highest ($a$, $b$, $c$, ...). We set three breakpoints, so
-$a$, $b$ and $c$. Finally, the trajectory of each time series is classified as
+$a$, $b$ and $c$.  Finally, the trajectory of each time series is classified as
 a combination of $a$, $b$, $c$ letters. $abc$ and $cba$ time series represent
-respectively monotonic increasing and decreasing trajectories. For data analysis,
-we kept only the $bbb$ which represent time series that showed no temporal
-tendencies, with respect to our methodology.
+respectively monotonic increasing and decreasing trajectories. For data
+analysis, we kept only the $bbb$ which represent time series that showed no
+temporal tendencies, with respect to our methodology.
 
 
 ## PCA over environmental variables
@@ -566,7 +582,7 @@ eigen_rotated_plot <-
     axis.ticks.x = element_blank())
 ```
 
-```{r contrib-pca}
+```{r contrib-pca, cache = FALSE}
 #https://stats.stackexchange.com/a/143949
 caption_contrib_pca <- paste0(
   "Loadings of variable to rotated components of the PCA.
@@ -597,7 +613,7 @@ kable(
 kable_styling(latex_options = c("striped"))
 ```
 
-```{r, eval=FALSE}
+```{r, eval=FALSE, cache = FALSE}
 corr_pca_caption <- paste0(
   "Spearman correlation between environmental variables used in the PCA.
   The variables have been scaled before to compute the correlation."
@@ -630,16 +646,7 @@ prop_var_expl_pca <- pca_rotated$rotated$Vaccounted["Proportion Var", ] %>%
 tot_var_expl_pca <- round(sum(pca_rotated$rotated$Vaccounted["Proportion Var", ]) * 100) 
 
 pca_caption <- paste0(
-  "Rotated axis of PCA on environmental variables. The five components
-  explained,", tot_var_expl_pca, "% of the variance (",
-  paste0(names(prop_var_expl_pca), ":", prop_var_expl_pca, "%"), ").",
-  "(A) Axis 1 was positively related to the stream size, axis 2 was related to
-  the stream slope and altitude and negatively related to average water temperature and
-  BOD. (B) Eigenvalues distribution, we kept the first two axis for the data analysis. ",
-  "Please note that we took the inverse of the second axis in the data analysis,
-  to make the axis more easily interpretable, i.e. positively related de average
-  water temperature."
-
+  "Eigenvalues distribution, we kept the first two axis for the data analysis." 
   )
 ```
 
@@ -648,7 +655,7 @@ p1 <- my_pca_plot(xaxis = "RC1", yaxis = "RC2", ctb_thld = .4)
 #p2 <- my_pca_plot(xaxis = "RC3", yaxis = "RC4", ctb_thld = .4)
 #p3 <- my_pca_plot(xaxis = "RC4", yaxis = "RC5", ctb_thld = .4)
 
-pca_plot <- plot_grid(p1, eigen_rotated_plot, nrow = 1)
+pca_plot <- plot_grid(eigen_rotated_plot, nrow = 1)
 save_plot(
   filename = mypath("manuscript", "bef_stability", "figs", "pca_plot.pdf"),
   pca_plot,
@@ -704,37 +711,88 @@ cor(two_axis$rotated$score[,c("RC1", "RC2")],
 # Statistical analysis 
 
 
-```{r}
+```{r, cache = FALSE}
 sem_variable_table <- tibble(
   variable = c(paste0("PCA axis", seq(1, 2)), "Species richness", "Connectance", "Average trophic level", "Synchrony", "CVsp", "Total biomass"),
   unit = c(rep("unitless", 2), "# by square meter", rep("unitless", 4), "gram by square meter"
     ),
   transformation = c("Log base 10", "Log base 10 and inversion", "Log base 10", rep("No", 2), rep("Log base 10", 3)),
-  interpretation = c("linked to stream size",
+  description = c("linked to stream size",
     "linked to average temperature and BOD",
     "Total species richness over the temporal series",
-    "Median of annual link density", "Median of annual average trophic level", "", "",
-    "Median of annual total biomass")) %>%
+    "Median of annual link density", "Median of annual average trophic level",
+    "Temporal synchrony in the dynamics of population biomass", "Average
+    variability of population biomass", "Median of annual total biomass")) %>%
 kable(
   format = "latex",
   booktabs = T,
-  caption = "Variable description and transformation"
+  caption = "The description of the variables used in the structural equation models."
   ) %>%
 kable_styling(latex_options = c("striped", "scale_down"))
 sem_variable_table
 ```
 
-```{=latex}
 \begin{table}
-
-\caption{\label{tab:hyp-sem} Presentation of the hypothesis supporting the links
-of the Structural Equation Models with the references supporting the links.}
-
+\caption{\label{tab:hyp-sem} Presentation of the links 
+of the Structural Equation Models associated with the references supporting the links.}
 \begin{center}
-\input(~/Documents/post-these/mnhn/fishcom/manuscript/bef_stability/table/hypothesis_sem.tex)
+\begin{tabular}{ m{7cm}| m{1cm}| m{6cm}}
+    \hline
+    Link & sign & reference\\
+    \hline
+    PCA1 Avg stream size $\to$ Species richness & (+) & Post et al. (2000); Doi et al. (2009); McHugh et al. (2010) \\
+    \hline
+    PCA2 Avg temperature $\to$ Species richness & (+/-) & O’Gorman et al. (2017); Gauzens et al. (2020) \\
+    \hline
+    PCA1 Avg stream size $\to$ Connectance & (?) & \\
+    \hline
+    PCA2 Avg temperature $\to$ Connectance & (+/-) & Petchey et al. (2010) \\
+    \hline
+    Species richness $\to$ Connectance & (-) & Winemiller (1989); Dunne (2006) \\
+    \hline
+    PCA1 Avg stream size $\to$ Avg trophic level & (+) & Post et al. (2000); Doi et al. (2009); McHugh et al. (2010) \\
+    \hline
+    PCA2 Avg temperature $\to$ Avg trophic level & (+/-) & O’Gorman et al. (2017)\\
+    \hline
+    Species richness $\to$ Avg trophic level & (+) & Schneider et al. (2016)\\
+    \hline
+    Species richness $\to$ Synchrony & (-) & Thébault and Loreau (2005); Loreau and de Mazancourt (2008); Thibaut and Connolly (2013) \\
+    \hline
+    Connectance $\to$ Synchrony & (+) & Teng and McCann (2004)\\
+    \hline
+    Avg trophic level $\to$ Synchrony & (+) & Raimondo et al. (2004)\\
+    \hline
+    PCA1 Avg stream size $\to$ Synchrony & (?) & \\
+    \hline
+    PCA2 Avg temperature $\to$ Synchrony & (+) & Loreau and de Mazancourt (2008)\\
+    \hline
+    Species richness $\to$ CVsp & (+) & Tilman (1996) \\
+    \hline
+    Connectance $\to$ CVsp & (+) & Thébault and Loreau (2005)\\
+    \hline
+    Avg trophic level $\to$ CVsp & (-) & McCann and Rooney (2009); Shanafelt and Loreau (2018)\\
+    \hline
+    PCA1 Avg stream size $\to$ CVsp & (?) & \\
+    \hline
+    PCA2 Avg temperature $\to$ CVsp & (+) & O’Gorman et al. (2017); Tabi et al. (2019)\\
+    \hline
+    CVsp $\to$ Biomass stability & (-) & Thibaut and Connolly (2013)\\
+    \hline
+    Synchrony $\to$ Biomass stability & (-) & Thibaut and Connolly (2013)\\
+    \hline
+    Species richness $\to$ Total biomass & (+) & Schneider et al. (2016)\\
+    \hline
+    Connectance $\to$ Total biomass & NA & Wang and Brose (2018)\\
+    \hline
+    Avg trophic level $\to$ Total biomass & (+) & Wang and Brose (2018)\\
+    \hline
+    PCA1 Avg stream size $\to$ Total biomass & (+) & Post et al. (2000); Allan and Ibanez Castillo (2009); Doi et al. (2009)\\
+    \hline
+    PCA2 Avg temperature $\to$ Total biomass & (+/-) & O’Gorman et al. (2017)\\
+    \hline
+    \end{tabular}
 \end{center}
 \end{table}
-```
 
 
 ---
@@ -786,15 +844,15 @@ of the Structural Equation Models with the references supporting the links.}
 
 
 
-```{r}
+```{r, cache = FALSE}
 hist_var_caption <- paste0(
-  "Distribution of the variables used in the Structural Equation Modeling. The
+  "Distribution of the variables included Structural Equation Models The
   biomass stability, the CV of species (CVsp), PCA1, PCA2, species richness,
   synchrony and total biomass were logged."
 )
 ```
 
-```{r hist-sem-data, fig.cap = hist_var_caption}
+```{r hist-sem-data, cache = FALSE, fig.cap = hist_var_caption}
 sem_data %>%
   select(log_bm_std, log_rich_tot_std, log_sync, log_stab_std, log_cv_sp, log_RC1, log_RC2, t_lvl, ct) %>%
   gather(variable, value) %>%
@@ -805,7 +863,7 @@ sem_data %>%
 ```
 
 
-```{r}
+```{r, cache = FALSE}
 colin_sem_cap <- paste0(
   "Variance Inflation Factor for each individual linear model of the structural
   equation models."
@@ -851,23 +909,28 @@ colin_stab_sem <- tibble(vif = tmp, mod = names(mod_stab_list)) %>%
     ) %>%
   spread(name, value)
 
+```
+
+```{r, cache = FALSE}
 kable(colin_stab_sem,
   format = "latex",
   booktabs = T,
-  caption = "Variance Inflation Factor for the linear models used in structural
-  equation modeling"
+  caption = "Variance Inflation Factor for the linear models used in the structural
+  equation models. NA values indicate that the term in column was not included
+  in the modeling of the response variable in row."
   ) %>%
 kable_styling(latex_options = c("striped", "scale_down"))
 ```
 
-```{r}
+
+```{r, cache = FALSE}
 caption_mod_res <- paste0(
-  "Residuals versus fitted values of the linear models used in the structural
+  "Residuals versus fitted values of the linear models included in the structural
   equation models."
 ) 
 ```
 
-```{r mod-res, fig.height = 8, fig.cap = caption_mod_res}
+```{r mod-res, fig.width = 7, fig.asp = 2, fig.cap = caption_mod_res, cache = FALSE}
 library(nlme)
 plot_residuals <- function (x, y = "Diagnostic") {
   plot.lme(x, main = y, xlab = "Fitted values", ylab = "Residuals")
@@ -901,11 +964,12 @@ est_stab_sem_caption <- paste0(
 )
 
 format_coef_table(stab_sem_rich) %>%
-  mutate(Std.Estimate = cell_spec(Std.Estimate, bold = ifelse(P.Value <= 0.05, T, F))) %>%
+  mutate(Std.Estimate = cell_spec(Std.Estimate, bold = ifelse(P.Value <= 0.05, T, F), format = "latex", escape = F)) %>%
   kable(
     format = "latex",
     booktabs = T,
-    caption = est_stab_sem_caption
+    caption = est_stab_sem_caption,
+    escape = F 
     ) %>%
   collapse_rows(columns = 1, valign = "top") %>%
   kable_styling(latex_options = c("striped", "scale_down"))
@@ -922,7 +986,8 @@ format_coef_table(bm_sem_rich) %>%
 kable(
   format = "latex",
   booktabs = T,
-  caption = est_bm_sem_caption
+  caption = est_bm_sem_caption,
+  escape = F 
   ) %>%
 collapse_rows(columns = 1, valign = "top") %>%
 kable_styling(latex_options = c("striped", "scale_down"))
@@ -1063,7 +1128,7 @@ sens_cap <- paste0(
   sites that had not a significant temporal trend in biomass; ", "Constant/
     without holes dataset kept only the constant sites plus the ones that had not
   holes in their sampling period; ", "Complete is the dataset containing all the
-  site that have been followed ten years or more, as the other dataset;", "Without holes dataset is
+  site that have been followed ten years or more, as the other dataset;", " Without holes dataset is
   the dataset containing only the sites that had no holes in the their sampling period."
 )
 ```

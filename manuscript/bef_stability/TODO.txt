@@ -5,27 +5,15 @@
 
 # Second category
 
-- [ ] Figure 1:Add ref to list of species in appendix
-- [ ] Species color temporal network: same as metaweb
-- [x] Correction Maud
+## Introduction
+
+- [ ] consistency between ecosystem functioning, and community biomass, etc...
 
 ## Results
+
 ## Discussion
 
 ## Appendix
-
-- [x] Remove map RC2
-- [x] Add legend for variable map
-- [ ] Table 2 and 3: cut on several pages
-- [x] Fig 3 (right panel): axis not clear
-- [x] Remove table 5?
-- [x] Check std dev for the basin random effect
-- [x] Reframe plan: statistics
-- [x] Magnify tables (8 and 9)
-- [x] Update table 6 (variable description)
-- [x] Put a left margin to sensibility plot 
-
-
 
 
 ## All
