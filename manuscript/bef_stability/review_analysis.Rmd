@@ -444,8 +444,11 @@ save_plot(
 library(climateExtract)
 library(ncdf4)
 
+
+
 fr_border <- sf::st_as_sf(raster::getData("GADM", country = "FRA", level = 0))
 debug(extract_nc_value)
+options(timeout=120)
 climate_data = extract_nc_value(first_year = 1995, 
                                 last_year = 2018,
                                 local_file = FALSE,

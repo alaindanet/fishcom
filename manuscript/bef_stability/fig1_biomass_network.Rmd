@@ -352,6 +352,7 @@ PlotWeb(
 # Test fig plot 
 
 ```{r}
+myload(metaweb_analysis,  dir = mypath("data"))
 sp_color <- set_color_species(
   node_list = colnames(metaweb_analysis$metaweb),
   resource_list = metaweb_analysis$resource
@@ -359,7 +360,6 @@ sp_color <- set_color_species(
 node_sp <- str_extract(colnames(metaweb_analysis$metaweb), "[A-Z|a-z]*")
 sp_color[node_sp]
 
-myload(metaweb_analysis,  dir = mypath("data"))
 TL <- NetIndices::TrophInd(metaweb_analysis$metaweb)$TL
 PlotWeb(
   TL = TL,
@@ -369,9 +369,6 @@ PlotWeb(
   collink="grey70",
   scale_abun = .005
 ) 
-```
-
-```{r}
 ```
 
 
@@ -508,6 +505,25 @@ habitat_press %<>% na.omit()
 mask <- names(habitat_press) %in% names(get_pca_var_name_replacement())
 
 
+map_alone <- p_st + 
+  geom_sf(data = filter(station, type == "stable"), color = "black") +
+  coord_sf(
+    xlim = c(60000, 1100000),
+    ylim = c(6100000, 7122216),
+    datum = sf::st_crs(2154),
+    crs = 2154,
+    expand = FALSE
+    ) +
+  theme_void() +
+  theme(plot.margin = theme_get()$plot.margin, legend.position = "none")
+save_plot(mypath("manuscript", "bef_stability", "figs/map_station.png"), map_alone,
+  nrow = 1,
+  ncol = 1,
+  base_height = 4,
+  base_width = 4,
+  bg = "transparent"
+)
+ggdraw(map_alone)
 
 p_st2 <- p_st +
   geom_sf(data = filter(station, type == "stable"), color = "black") +
@@ -552,7 +568,7 @@ save_plot(file = mypath("manuscript", "bef_stability", "figs",
 cow_p1 <- plot_grid(NULL, p1, NULL, ncol = 1, rel_heights = c(.02, 1, .02))
 fig1ab <- plot_grid(p_st2, cow_p1, ncol = 2, 
   labels = c("A", "B")
-)
+)                                       
 save_plot(mypath("manuscript", "bef_stability", "figs/fig1ab.png"), fig1ab,
   nrow = 1, 
   ncol = 2,
@@ -561,6 +577,7 @@ save_plot(mypath("manuscript", "bef_stability", "figs/fig1ab.png"), fig1ab,
 )
 
 ``` 
+
 ```{r set-up}
 st <- c(first_st$station[5], last_st$station[5]) 
 library(viridis)
@@ -778,4 +795,29 @@ nrow = 3,
   base_width = 10 
 )
 ```
+
+## Get a temporal network
+
+```{r}
+temporal_network_plot <- get_network_temporal_plot(net_list = network_analysis, station = st[2],
+  selected_years = NULL,
+  node_color = meta_node_color, scale_node_size = 0.05,
+  par_options = par(mar = c(0,0,0,0)),
+  log_abun = TRUE
+)
+temporal_network_plot <- map(temporal_network_plot,
+  ~.x + theme(rect = element_rect(fill = "transparent")))
+p_temporal_network <- plot_grid(plotlist = temporal_network_plot)
+
+save_plot(mypath("manuscript", "bef_stability", "figs/temporal_network.png"),
+  p_temporal_network,
+  nrow = 3, 
+  ncol = 4,
+  base_height = 4,
+  base_width = 4,
+  bg = "transparent"
+)
+```
+
+
 
