@@ -236,9 +236,11 @@ sync_pred <- sync_pair_int2 %>%
 
 ```{r}
 sync_pred <- sync_pair_int2 %>%
+  mutate(interact = ifelse(interact, "Trophically linked", "Non trophically
+      linked")) %>%
   ggplot(aes(y = sync, x = as.factor(interact))) +
   geom_boxplot() +
-  labs(y = "Synchrony", x = "Species pairs in interaction", fill = "Cannibalism")
+  labs(y = "Synchrony", x = " Trophic interactions betweem trophic species pairs", fill = "Cannibalism")
 ```
 
 ```{r}
@@ -246,7 +248,7 @@ save_plot(file = mypath(
       "manuscript", "bef_stability", "result", 
       "synchrony_species_pairs.png"),
     plot = sync_pred,
-    base_height = 2.5, base_asp = 1.2#1.618 
+    base_height = 4.2, base_asp = 1.2#1.618 
     )
 ```
 

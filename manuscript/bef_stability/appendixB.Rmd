@@ -742,7 +742,7 @@ of the Structural Equation Models associated with the references supporting the 
 \begin{center}
 \begin{tabular}{ m{7cm}| m{1cm}| m{6cm}}
     \hline
-    Link & sign & reference\\
+    Link & Sign & References\\
     \hline
     PCA1 Avg stream size $\to$ Species richness & (+) & Galiana et al. (2018) \\
     \hline
@@ -865,7 +865,7 @@ sem_data %>%
   gather(variable, value) %>%
   mutate(variable = str_replace_all(variable, get_sem_var_name_replacement())) %>%
   ggplot(aes(x = value)) +
-  labs(y = "Values", x = "Frequency") +
+  labs(y = "Frequency", x = "Values") +
   geom_histogram() +
   facet_wrap(~variable, scales = "free")
 ```
@@ -1106,7 +1106,7 @@ kable(formated_random_effects,
 kable_styling(latex_options = c("striped"))
 ```
 
-```{r sensitivity, cache = TRUE, message = FALSE, fig.dim = c(10, 7), fig.cap = "Sensivity analysis with different dataset"}
+```{r sensitivity, cache = TRUE, message = FALSE, fig.dim = c(10.5, 7), fig.cap = "Sensivity analysis with different dataset"}
 library(furrr)
 
 myload(op_analysis, op_analysis_wo_holes, op_analysis_ov, dir = mypath("data"))
@@ -1160,7 +1160,7 @@ mysave(sem_bm_results, dir = mypath("data"), overwrite = TRUE)
 
 ```{r}
 sens_cap <- paste0(
-  "Sensivity analysis of the Structural Equation models for total biomass
+  "Sensivity analysis of the structural equation models for total biomass
   and its temporal stability."," The Constant dataset is the one keeping only the
   sites that does not show a clear temporal trend of community biomass; ", "Constant/
     without holes dataset kept only the constant sites plus the ones that had no
@@ -1171,12 +1171,12 @@ sens_cap <- paste0(
 ```
 
 
-```{r, fig.height = 8, fig.cap = sens_cap}
+```{r, fig.height = 7, fig.cap = sens_cap}
 p_sens_bm <- plot_sensivity_analysis(
   .data = sem_bm_results,
   inverse_label_order = TRUE) +
   labs(x = "", title = "Median of annual community biomass") +
-  theme(legend.position = "none", plot.margin = unit(c(0, 0, 0, 25), units = "mm"))
+  theme(legend.position = "none", plot.margin = unit(c(0, 0, 0, 28), units = "mm"))
 
 p_sens_stab <- plot_sensivity_analysis(.data = sem_stab_results,
   inverse_label_order = TRUE) +
@@ -1192,6 +1192,21 @@ p <- plot_grid(
 )
 p
 ```
+
+```{r}
+sync_cap <- paste0(
+  "Synchrony between trophic species pairs that are trophically linked or not.
+  There is one point by trophic species pair and by site. The figure shows that
+  the trophic species pairs that are trophically linked are more synchronous
+  than the ones that are not trophically linked. Please see the definition of
+  synchrony in the methods of the main text.") 
+```
+
+```{r, fig.cap=sync_cap}
+knitr::include_graphics(mypath("manuscript", "bef_stability", "result", "synchrony_species_pairs.png"))
+```
+
+
 
 ```{=latex}
 \pagebreak
