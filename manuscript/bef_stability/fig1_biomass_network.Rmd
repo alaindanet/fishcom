@@ -359,7 +359,7 @@ sp_color <- set_color_species(
 )
 node_sp <- str_extract(colnames(metaweb_analysis$metaweb), "[A-Z|a-z]*")
 sp_color[node_sp]
-names(sp_color)[names(sp_color) %in% meta$resource] <- 
+names(sp_color)[names(sp_color) %in% metaweb_analysis$resource] <- 
   c("detritivore", "biofilm", "phytobenthos", "macrophage", "phytoplankton", "zooplankton", "zoobenthos")
 
 TL <- NetIndices::TrophInd(metaweb_analysis$metaweb)$TL

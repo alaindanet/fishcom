@@ -96,14 +96,14 @@ The monitoring of the fish communities occurs in streams varying in size, shape
 and depth. Stream characteristics constrain the type of protocol
 applied. Small streams (depth < 0.7m across the entire width) are sampled with
 the "complete" protocol. Anodes are distributed across the width of the river
-then one to three electric fidhing events are performed. We selected only the
+then one to three electric fishing events are performed. We selected only the
 data from the first event to homogenize the sampling effort. In deeper and wider
-streams (depth >= 0.7m), the sampling is
-partial over the bank and the channel and it is performed by boat and by foot
-(along the bank). We selected only the sampling done over the bank because the
-channel was not systematically sampled. Two types of partial protocols takes
+streams (depth >= 0.7m), this protocol is partial and is carried out along the
+banks and the channel and it is performed by boat and by foot (along the bank).
+We selected only the sampling done over the bank because the
+channel was not systematically sampled. Two types of partial protocols take
 place: "partial over bank" and "partial by points", which are respectively
-continuous and discrete samplings. We considered both types of partial protocols
+a continuous and discrete fishing events. We considered both types of partial protocols
 in our analysis. In the "partial by point" protocol, the channel was sometimes
 sampled as well, so we selected only the "partial by point" sampling in which
 all the sampling points were done over the bank to homogenize the sampling. Some
@@ -112,7 +112,7 @@ both "complete" and "partial" protocols were alternatively used depending on the
 state of the stream at the time of sampling. For these sites, we only kept the
 samples that had been carried out with the most frequently used protocol.
 
-Heterogeneity in the sampling date may introduce variability due to different
+Heterogeneity in the fishing date may introduce variability due to different
 climatic or environmental conditions but also to the life cycle of the species.
 For instance, early surveys may precede the egg hatching and youngs-of-the-year.
 In order to reduce heterogeneity in the sampling date, only one sampling per
@@ -364,9 +364,9 @@ The procedures to obtain altitude, slope, width and depth of the streams are ful
 explained in main text. Because those measurements were collected during the
 fishing protocol, they were easier to manage in the analyses. Then, we detail
 in the following sections how water temperature, water flow and Biological
-Oxygen Demand (BOD) variables were obtained. In the following section, we will
+Oxygen Demand (BOD) variables were obtained. In the following section, we 
 present how we averaged each variable to match the annual fish monitoring
-events. We also detailed how we interpolated these variables to match the
+events. We also detail how we interpolated these variables to match the
 spatial location of the fish samplings.
 
 ### Preparation
@@ -459,7 +459,7 @@ and a theoretical hydrologic network, which is more convenient to use than the o
 
 The interpolations were carried out by hydrographic basin due to convergence
 issues when the interpolation was carried out at the scale of the whole
-France. We had to find a trade-off between the number of data (to keep 
+country. We had to find a trade-off between the number of data (to keep 
 high enough to perform the interpolation) and the level of dataset splitting. We then
 merged some hydrographic basins to end up with four regions of interpolation:
 West, East, South and North.
@@ -531,7 +531,7 @@ When predicted values were below the minimum value or above the maximum value
 recorded in the dataset for flow, temperature and BOD, we replaced the
 predicted value by respectively the minimum and the maximum value found in the
 dataset. We ran the interpolation four times, and we kept the predicted value
-which had the smaller standard deviation.
+which had the smallest standard deviation.
 
 
 # Data analysis
@@ -539,7 +539,7 @@ which had the smaller standard deviation.
 ## Temporal series classification
 
 The CV of biomass over time can cover multiple temporal dynamics, including
-increases, stable, decreases and a mix of them. Theoretically, however, the CV
+increases, decreases, no trends or and a mixture of the above. Theoretically, however, the CV
 computed to quantify stability is often represented with the assumption that the
 overall dynamic of the biomass varies around an equilibrium
 [@kefi_advancing_2019]. In order to approach the condition of equilibrium, we
@@ -548,14 +548,14 @@ biomass temporal dynamics according to their trajectories, we used the symbolic
 aggregated approximation method (SAX), which is commonly used in time series
 analysis and implemented in the `jmotif` R package [@senin_grammarviz_2018].
 This method classifies time series rather than quantifies trends. Therefore, it
-is enough generic to encompass a diversity of temporal trajectories. The
+is generic enough to encompass a diversity of temporal trajectories. The
 classification necessitates three steps. The time series are first normalized.
-Then, we reduced the dimensionality of the time series by a Piecewise
+Then, the dimensionality of the time series is reduced by a Piecewise
 Aggregation Approximation (PAA) method. Each time series is divided into $N$
 frames of equal size that allows to reduce the dimensionality of the time
 series. For each frame, we simply kept the mean value of the time series.  The
 final stage is to qualify each frame into string. Because values of normalized
-time series typically follows a normal distribution ($N(0,1)$), a breakpoint can
+time series typically follow a normal distribution ($N(0,1)$), a breakpoint can
 be computed by dividing the area under the normal distribution in equal parts.
 The algorithm attributes an alphabetic letter to each part from the lowest to
 the highest ($a$, $b$, $c$, ...). We set three breakpoints, so $a$, $b$ and $c$.
@@ -933,7 +933,7 @@ kable_styling(latex_options = c("striped", "scale_down"))
 
 ```{r, cache = FALSE}
 caption_mod_res <- paste0(
-  "Residuals versus fitted values of the linear models included in the structural
+  "Residuals versus fitted values from the linear models included in the structural
   equation models."
 ) 
 ```
@@ -1171,7 +1171,7 @@ sens_cap <- paste0(
 ```
 
 
-```{r, fig.height = 7, fig.cap = sens_cap}
+```{r, fig.height = 7.5, fig.cap = sens_cap}
 p_sens_bm <- plot_sensivity_analysis(
   .data = sem_bm_results,
   inverse_label_order = TRUE) +
@@ -1186,7 +1186,7 @@ legend_b <- get_legend(p_sens_stab)
 p_sens_stab %<>% + theme(legend.position = "none", plot.margin = unit(c(0,0,0,27), units = "mm"))
 p <- plot_grid(
   p_sens_bm, p_sens_stab, legend_b, nrow = 3,
-  rel_heights = c(1, 1, .1)
+  rel_heights = c(1, 1, .12)
   #,
   #labels = c("Total biomass", "Biomass stability")
 )
