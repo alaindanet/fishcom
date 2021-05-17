@@ -368,6 +368,66 @@ dev.new(width = 5, height = 7, units = "in")
 # i3: mod + shift + space 
 
 png(
+  filename = mypath("manuscript", "bef_stability", "figs", "metaweb2.png"), 
+  units = "in",
+  width = 5,
+  height = 7,
+  pointsize = 12*96/72,
+  res = 200 
+)
+org_par <- par(
+  mar = c(4, 0, 0, 0) + 0,
+  oma = c(0, 0, 0, 0),
+  xpd = NA 
+)
+PlotWeb(
+  TL = TL,
+  webTL = metaweb_analysis$metaweb,
+  colnode = rgb(t(col2rgb(sp_color[node_sp]))/255,alpha=0.7),
+  abund = 6,
+  collink=rgb(t(col2rgb("grey50"))/255,alpha=0.05),
+  scale_abun = .01
+) 
+
+legend(
+#  x      = 0.031,
+#  y      = 4,
+  x      = "bottom",
+  inset = -.15,
+  legend = names(sp_color),
+  pch    = 21,
+  col    = "#777777",
+  pt.bg  = sp_color,
+  pt.cex = 0.7,
+  cex    = .5,
+  bty    = "n",
+  x.intersp = 1,
+  text.width = .1, 
+  ncol   = 6 
+
+)
+
+dev.off()
+par(org_par)
+```
+
+```{r}
+myload(metaweb_analysis,  dir = mypath("data"))
+sp_color <- set_color_species(
+  node_list = colnames(metaweb_analysis$metaweb),
+  resource_list = metaweb_analysis$resource
+)
+node_sp <- str_extract(colnames(metaweb_analysis$metaweb), "[A-Z|a-z]*")
+sp_color[node_sp]
+names(sp_color)[names(sp_color) %in% metaweb_analysis$resource] <- 
+  c("detritivore", "biofilm", "phytobenthos", "macrophage", "phytoplankton", "zooplankton", "zoobenthos")
+
+TL <- NetIndices::TrophInd(metaweb_analysis$metaweb)$TL
+
+dev.new(width = 5, height = 7, units = "in")
+# i3: mod + shift + space 
+
+png(
   filename = mypath("manuscript/bef_stability/figs",
     "metaweb2.png"), 
   units = "in",

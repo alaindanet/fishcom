@@ -38,7 +38,7 @@ PlotWeb <- function (TL, webTL,colnode,abund,collink="grey70", scale_abun = 0.01
   for (i in 1:Sweb){
     for (j in 1:Sweb){
       if (webTL[i,j]>0){
-         arrows(g[i,1],g[i,2],g[j,1],g[j,2],lwd=1, col=collink,length=0.1)
+         arrows(g[i,1],g[i,2],g[j,1],g[j,2],lwd=1, col=collink,length=0)
          }
     }
   }

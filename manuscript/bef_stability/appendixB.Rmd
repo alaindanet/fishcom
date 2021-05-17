@@ -45,6 +45,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   #fig.dim = c(7, 7),
+  fig.align = "center",
   fig.fullwidth = TRUE,
   fig.show = "hold",
   echo = FALSE,
@@ -120,7 +121,7 @@ year was retained if there were more in a given year, the one that had the most
 species and then the most individuals. Finally, most of the fish sampling
 occurred in September (Median: mid-August). There was low heterogeneity of the
 sampling month within stations, with the median sampling month being mid-August
-where the median standard deviation of the sampling month was  month, i.e. three
+where the median standard deviation of the sampling month was 0.7 month, i.e. three
 weeks. To further reduce sampling heterogeneity, we only kept the sampling in
 which the length of stream sampled along the stream was inside the median length
 sampled more or less 30%.
@@ -204,9 +205,9 @@ least one of the measurement was missing. Additionally, a given G batch was
 excluded when the number of individuals felt below 5, as G batches normally
 contained more individuals. We excluded S/L batches for which the number of
 measured individuals was inferior to 10, because it indicates a potential
-problem in the batch. Finally, in the dataset used in the analysis, `r
-na_length` individuals had missing length over `r nrow_fish_length` individuals,
-and body size was inferred for these individuals.
+problem in the batch. Finally, in the dataset used in the analysis, 
+`r na_length` individuals had missing length over `r nrow_fish_length`
+individuals, and body size was inferred for these individuals.
 
 
 ## Community data
@@ -232,7 +233,7 @@ subspecies into one species. We merged
 #### Ontogenic diet
 
 Diet information was obtained from fishbase.org and literature (Appendix A,
-Table S2). The diet information contained from two to three life stages by
+Table S2). The diet information described two to three life stages by
 species, the life stages being defined by the body size of the fishes. Over the
 57 fish species, only 7 had a piscivorous life stage and only three had a strict
 piscivorous life stage. Fish species were then largely omnivorous.
@@ -274,7 +275,7 @@ kable_styling(latex_options =c("striped", "scale_down"))
 
 ```{r, cache = FALSE} 
 
-trophic_building_caption <- paste0( "Define trophic species and trophic
+trophic_building_caption <- paste0( "Definition of trophic species and trophic
   interactions. (1) Each
   species is divided into 9 body size classes. We gathered data about
   the food diet of each fish species and how food diet varies according to
@@ -345,18 +346,17 @@ species was piscivorous, we determined its prey size range from 3% to 45% of the
 median of its size range. A trophic interaction was set for each trophic species
 whose corresponding size class median felt into the prey range of the predator
 trophic species (Fig. \@ref(fig:p-net-inf)). To sum up, the metaweb contains
-feeding interactions (1) between trophic species, (2) between trophic species
-and resource nodes and (3) between resource nodes.
+feeding interactions (1) among trophic species, (2) among trophic species
+and resource nodes and (3) among resource nodes.
 
 #### Local food-webs 
 
-The local food-webs (i.e. one network by
-sampling) were obtained by determining the trophic species of each fish
-individual in the community. According to the trophic species present in a given
-community, we set the trophic interactions between them as defined in the metaweb. 
-All the resource nodes were assumed to be present in each local network.
-Thus, the structure of the local food-webs varied according to the presence of
-the trophic species.
+The local food-webs (i.e. networks at each sampling event) were obtained by
+determining the trophic species of each fish individual in the community.
+According to the trophic species present in a given community, we set the
+trophic interactions between them as defined in the metaweb.  All the resource
+nodes were assumed to be present in each local network.  Thus, the structure of
+the local food-webs varied according to the presence of the trophic species.
 
 ## Environmental variables
 
@@ -446,7 +446,7 @@ the annual mean of each year and each variable (i.e. one value by year and by
 station).
  
 We used stream spatial network methods to interpolate water temperature, water
-flow and BOD. Indeed, stream characteristics make interpolation more
+flow and BOD at the sampling sites. Indeed, stream characteristics make interpolation more
 complicated than in terrestrial areas. Interpolations in terrestrial areas are
 often based on euclidean distance, which is not possible for streams as two
 streams can be close but disconnected. For those reason, we used stream spatial
@@ -520,12 +520,10 @@ cv_dbo_temp_flow %>%
     kable_styling(latex_options =c("striped", "scale_down"))
 ```
 
-
-
 The performance of the interpolations was evaluated with leave one out
 cross-validation (already implemented in the SSN package), i.e. the value of the
 interpolated variable of each station was predicted after removing it from the
-dataset.
+dataset (Table S3).
 
 When predicted values were below the minimum value or above the maximum value
 recorded in the dataset for flow, temperature and BOD, we replaced the
@@ -549,7 +547,8 @@ aggregated approximation method (SAX), which is commonly used in time series
 analysis and implemented in the `jmotif` R package [@senin_grammarviz_2018].
 This method classifies time series rather than quantifies trends. Therefore, it
 is generic enough to encompass a diversity of temporal trajectories. The
-classification necessitates three steps. The time series are first normalized.
+classification necessitates three steps. The time series are first centred such
+as the mean value is equal to 0.
 Then, the dimensionality of the time series is reduced by a Piecewise
 Aggregation Approximation (PAA) method. Each time series is divided into $N$
 frames of equal size that allows to reduce the dimensionality of the time
@@ -558,7 +557,8 @@ final stage is to qualify each frame into string. Because values of normalized
 time series typically follow a normal distribution ($N(0,1)$), a breakpoint can
 be computed by dividing the area under the normal distribution in equal parts.
 The algorithm attributes an alphabetic letter to each part from the lowest to
-the highest ($a$, $b$, $c$, ...). We set three breakpoints, so $a$, $b$ and $c$.
+the highest ($a$, $b$, $c$, ...). We set two breakpoints, thereby simplifying
+our time series into three periods.
 Finally, the trajectory of each time series is classified as a combination of
 $a$, $b$, $c$ letters. $abc$ and $cba$ time series represent respectively
 monotonic increasing and decreasing trajectories. For data analysis, we kept
@@ -737,8 +737,8 @@ sem_variable_table
 ```
 
 \begin{table}
-\caption{\label{tab:hyp-sem} Presentation of the links 
-of the Structural Equation Models associated with the references supporting the links.}
+\caption{\label{tab:hyp-sem} Presentation of the hypothesis underlying the
+effects included in the Structural Equation Models with supporting references.}
 \begin{center}
 \begin{tabular}{ m{7cm}| m{1cm}| m{6cm}}
     \hline
@@ -997,6 +997,7 @@ format_coef_table(stab_sem_rich) %>%
 kable(
   format = "latex",
   booktabs = T,
+  align = "c",
   caption = est_stab_sem_caption,
   escape = F,
   digits = 2
@@ -1021,6 +1022,7 @@ format_coef_table(bm_sem_rich) %>%
 kable(
   format = "latex",
   booktabs = T,
+  align = "c",
   caption = est_bm_sem_caption,
   escape = F, 
   digits = 2
@@ -1175,11 +1177,13 @@ sens_cap <- paste0(
 p_sens_bm <- plot_sensivity_analysis(
   .data = sem_bm_results,
   inverse_label_order = TRUE) +
+  geom_hline(yintercept = 0) +
   labs(x = "", title = "Median of annual community biomass") +
   theme(legend.position = "none", plot.margin = unit(c(0, 0, 0, 28), units = "mm"))
 
 p_sens_stab <- plot_sensivity_analysis(.data = sem_stab_results,
   inverse_label_order = TRUE) +
+  geom_hline(yintercept = 0) +
   labs(title = "Temporal stability of annual community biomass") +
   guides(color = guide_legend(direction = "horizontal", nrow = 2))
 legend_b <- get_legend(p_sens_stab)
