@@ -509,17 +509,20 @@ o = meteo_ogimet(date = c("1995-01-01", "2018-12-31"),
 library(ncdf4)
 library(raster)
 library(sf)
+myload(habitat_press, sem_data, dir = mypath("data"))
+st_wgs <- station_analysis %>%
+  filter(id %in% sem_data$station)
+
 cru_file <- list.files(mypath("data-raw", "cru"))[!str_detect(list.files(mypath("data-raw", "cru")), "gz")]
 nc.pre <- nc_open(mypath("data-raw", "cru", "cru_ts4.03.2011.2018.tmp.dat.nc"))
 
 l <- map(cru_file, function (x) {
   pre <- raster::brick(mypath("data-raw", "cru", x), varname="tmp")
   extract(pre, st_wgs)
-		 }
-)
+		 })
 
 tmean <- do.call(cbind, l)
-rownames(tmean) <- st_wgs$station
+rownames(tmean) <- st_wgs$id
 colnames(tmean) <- paste0(rep(c(paste0(0, seq(1,9)), seq(10, 12)), 2018 - 1991), "_", rep(seq(1991, 2018), each = 12)) 
 
 
@@ -531,10 +534,12 @@ air_temp <- enframe(air_mean_temp, name = "station", value = "air_95_18") %>%
     station = as.integer(station),
     air_06_18 = rowMeans(
       tmean[, which(colnames(tmean) == "01_2006"):which(colnames(tmean) == "12_2018")]
+    ),
+  air_95_05 = rowMeans(
+      tmean[, which(colnames(tmean) == "01_1995"):which(colnames(tmean) == "12_2005")]
     )
   )
 
-myload(habitat_press, sem_data, dir = mypath("data"))
 temp_avg_comp <- habitat_press %>%
   dplyr::select(station, temperature_med) %>%
   left_join(air_temp, by = "station") %>%
@@ -549,36 +554,16 @@ png(
     "pairs_temperature_plot.png")
 )
 pairs(
-  temp_avg_comp[, 2:4], pch = 19 
+  temp_avg_comp[, c(2, 4, 5)], pch = 19 
 )
 dev.off()
 
-mat <- round(cor(temp_avg_comp[, 2:4]), 3)
+mat <- round(cor(temp_avg_comp[, c(2, 4, 5)]), 3)
 write.table(mat,
   file = mypath("manuscript", "bef_stability", "result", "cor_mat_temp.txt"),
   sep = ",",
   quote = FALSE,
   row.names = T)
-
-# Test with monthly data
-myload(yearly_temp_press_interp_mv_avg, dir = mypath("data-raw", "temp"))
-temp <- yearly_temp_press_interp_mv_avg %>%
-  group_by(id, year) %>%
-  arrange(value.predSE) %>%
-  slice(1) %>%
-  select(station = id, year, temp = value_corrected) %>%
-  mutate(temp = ifelse(temp > 45, NA, temp)) %>%
-  ungroup()
-
-#plot(pre[[1]])
-#
-#uk.area <- extent(-12, 4, 48, 64)
-#uk <- crop(pre, uk.area)
-#plot(uk)
-#st <- get_basin_station(sf =TRUE)
-#st_wgs <- st_transform(st, crs = 4326)
-#
-#test <- extract(pre, st_wgs)
 ```
 
 
