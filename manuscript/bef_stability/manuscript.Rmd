@@ -963,18 +963,10 @@ from an increased demographic stochasticity with increasing species richness
 
 In our study system, the destabilising effect of species richness via increased
 population variability was stronger than the stabilising effect via decreased
-synchrony. The balance between both effects is governed by the balance in the
-variation in population variability and synchrony among communities, this
-because we used standardised coefficients (see methods). Such an effect of
-population variability on community stability twice as strong as the one of
-synchrony is expected from the mathematical relation between these three
-variables. This indicates that the variability of population variability and
-synchrony among the studied communities are equivalent (Eq. \@ref(eq:stab)).
-This result contrasts with previous findings on terrestrial animal communities
-showing a variability in population synchrony twice as strong as the one of
-population variability [@olivier_urbanization_2020]. Such difference in the
-relative variability of population stability and synchrony between studies might
-be related to the multitrophic structure of the dataset as theory predicts
+synchrony.  This contrasts with the previous study of Olivier et al. (2021) on
+animal communities in terrestrial ecosystems. The difference of the effect of
+species richness on population stability and synchrony between studies might be
+related to the multitrophic structure of the dataset as theory predicts
 potential synchronising effect of generalist predators, such as piscivorous
 fishes, on prey dynamics [@raimondo_interspecific_2004; @huber_role_2006].
 Trophic interactions might also raise synchrony between predators and preys and
@@ -988,13 +980,14 @@ population variability than terrestrial ecosystems [@rip_cross-ecosystem_2011],
 which could also translate in greater variation range of population variability
 among aquatic communities than among terrestrial ones. Another hypothesis
 relates to the evenness of the biomass distribution among species, with low
-evenness decreasing the range of variation in synchrony among communities and thereby
-the strength of the portfolio effect [@doak_statistical_1998;
+evenness decreasing the range of variation in synchrony among communities and
+thereby the strength of the portfolio effect [@doak_statistical_1998;
 @thibaut_understanding_2013]. Whether the biomass distribution in stream fish
 assemblages is particularly uneven when compared to the terrestrial communities
 studied by @olivier_urbanization_2020 remains however to be tested. In any case,
-more studies are needed to understand how the relative importance of synchrony
-and population variability for community stability varies among ecosystems.
+more studies are needed to understand how the relative importance of the effect
+of species richness on synchrony and population variability varies among
+ecosystems.
 
 ---
 #@thibaut_understanding_2013 proposed that a
