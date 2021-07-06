@@ -922,4 +922,39 @@ save_plot(mypath("manuscript", "bef_stability", "figs/temporal_network.png"),
 ```
 
 
+# For Loubna
+
+
+```{r}
+
+op_analysis
+first_st <- sem_data %>%
+  arrange(richness_tot, desc(biomass_stab)) %>%
+  filter(richness_tot >= 2)
+
+tes <- map(first_st$station[1:12], ~plot_dyn_web(
+    com = community_metrics,
+    sem_df = sem_data,
+    station = .x,
+    stacked = TRUE))
+plot_grid(plotlist = tes)
+```
+
+```{r}
+first_st$station[5]
+#11432 my choice
+```
+
+```{r}
+last_st <- sem_data %>%
+  arrange(desc(prod), biomass_stab ) %>%
+  filter(richness_tot < 15)
+
+tes <- map(last_st$station[1:12], ~plot_dyn_web(
+    com = community_metrics,
+    sem_df = sem_data,
+    station = .x,
+    stacked = TRUE))
+plot_grid(plotlist = tes)
+```
 

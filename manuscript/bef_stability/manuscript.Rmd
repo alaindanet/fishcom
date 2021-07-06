@@ -1,5 +1,5 @@
 ---
-title: Species richness and food-web structure jointly drive community biomass and its temporal stability in fish assemblages 
+title: Species richness and food-web structure jointly drive community biomass and its temporal stability in fish communities
 author: Alain Danet, Maud Mouchet, Willem Bonnaffé, Elisa Thébault, Colin Fontaine
 date: \today 
 output:
@@ -16,6 +16,8 @@ header-includes:
    - \linenumbers
 geometry: margin=2cm
 bibliography: references.bib
+nocite: |
+    @declerck_species_2006
 csl: ecology-letters.csl
 ---
 
@@ -97,10 +99,10 @@ knitr::opts_chunk$set(
 - Running title: food-web structure, biomass and stability
 
 - Number of words:
-  - Abstract: 149
-  - Main text: 4930 
+  - Abstract: 148
+  - Main text: 4917
 
-- Number of references: 92
+- Number of references: 102
 - Number of figures: 3
 - Number of tables: 1
 - Number of text boxes: 0 
@@ -115,19 +117,20 @@ knitr::opts_chunk$set(
 
 Biodiversity-ecosystem functioning (BEF) and food-web complexity-stability
 relationships are central to ecology. However, they remain largely untested in
-natural context. Here we quantify the links among environmental conditions,
+natural contexts. Here we estimated the links among environmental conditions,
 richness, food-web structure, annual biomass and its temporal stability using a
-standardized monitoring dataset of 99 stream fish communities spanning from 1995
-to 2018. We first reveal that both richness and average trophic level are
+standardised monitoring dataset of 99 stream fish communities spanning from 1995
+to 2018. We first revealed that both richness and average trophic level are
 positively related to annual biomass, with effects of similar strength. Second,
-we show that mean trophic level decrease population variability thereby
-increasing community stability, and contrary to expectation, a destabilizing
-effect of species richness. Finally, we find that environmental conditions
-affect both biomass and its stability via effects on richness and network
-structure. Strikingly, the variation of stability are mediated by population
-stability rather than synchrony, which contrasts with results from
-single-trophic communities and might be characteristic of multi-trophic
+we found that community stability is fostered by mean trophic level, while
+contrary to expectation, it is decreased by species richness. Finally, we found
+that environmental conditions affect both biomass and its stability mainly via
+effects on richness and network structure. Strikingly,
+community stability was mediated by the variation of population stability rather
+than synchrony, which contrasts with results from single-trophic communities. We
+discuss the hypothesis that it could be a characteristic of multi-trophic
 communities.
+
 
 # Introduction 
 
@@ -137,102 +140,102 @@ communities.
 
 Current biodiversity losses and further global change have the potential to
 affect ecosystems in complex ways [@loreau_biodiversity_2001;
-@tilman_biodiversity_2014]. Biodiversity has indeed a major effect on
-ecosystem functions and their stability in response to perturbations
-[@hector_plant_1999; @loreau_biodiversity_2001; @hooper_effects_2005;
-@dunne_network_2006; @duffy_why_2009]. Understanding the relationship
-between biodiversity and ecosystem properties is thus crucial to better
-anticipate the impacts of global change. 
+@tilman_biodiversity_2014].  Biodiversity has indeed a major effect on ecosystem
+functions and their stability in response to perturbations [@hector_plant_1999;
+@loreau_biodiversity_2001; @hooper_effects_2005; @dunne_network_2006;
+@duffy_why_2009]. Understanding the relationship between biodiversity and
+ecosystem properties is thus crucial to better anticipate the impacts of global
+change.
 
 ---
 #### Species richness increases total biomass
 ---
 
-
 Species richness has been found to increase primary productivity, community
-biomass and its temporal stability in a diversity of ecosystems and taxa both
-empirically and experimentally [@tilman_productivity_1996;
+biomass and its temporal stability in various ecosystems and taxa both
+experimentally and in natural settings [@tilman_productivity_1996;
 @cardinale_species_2002; @tilman_biodiversity_2006; @franssen_annual_2011;
 @grace_integrative_2016; @pennekamp_biodiversity_2018; @houlahan_negative_2018;
-@olivier_urbanization_2020].  However, these studies mainly focused on
-communities composed of a single trophic level, generally primary producers,
-thereby ignoring potential effects of food-web structure [but see
-@scherber_bottom-up_2010]. Conversely, theoretical works suggest that both
-species richness and food-web structure affect ecosystem properties such as
-productivity, total biomass and its stability. For example, the presence of
-species at higher trophic levels may increase total primary production, through
-the selection of primary producers which are larger and more complementary
-[@wang_biodiversity_2018]. In communities including producers and consumers, the
-connectance which measures the degree of consumer generalism is predicted to
+@olivier_urbanization_2020]. However, these studies mainly focused on communities
+composed of a single trophic level, generally primary producers, thereby
+ignoring potential effects of food-web structure [but see
+@scherber_bottom-up_2010].
+Conversely, theoretical works suggest that both species richness and food-web
+structure affect ecosystem properties such as productivity, total biomass and
+its temporal stability. For example, the presence of species at higher trophic
+levels may increase total primary production through top-down effects, which
+result in the selection of primary producers that are larger and more
+complementary in their use of resources [@wang_biodiversity_2018]. In communities
+including producers and consumers, the food-web connectance is predicted to
 modulate the diversity-productivity relationship [@thebault_food-web_2003;
 @thebault_cascading_2007]. Similarly, theoretical studies generally show strong
 links between food-web structure and stability [e.g.  @may_will_1972;
 @dunne_network_2006; @neutel_reconciling_2007; @duffy_why_2009;
-@stouffer_compartmentalization_2011].  Overall, the evidences from theoretical
-model suggests that both species richness and food-web structure should affect
-community biomass and stability, but empirical evidences of the effects of
-network structure on community biomass and stability are lacking.
+@stouffer_compartmentalization_2011]. Overall, theoretical
+models suggest that both species richness and food-web structure should affect
+community biomass and its stability, but empirical evidence of such effects are
+lacking.
 
-While community stability can be measured in many ways in theoretical studies,
-most empirical studies measure community stability as the inverse of the
-coefficient of variation of community productivity, biomass or abundance, also
-called temporal stability [@kefi_advancing_2019]. This stability metric is also
-well grounded in theory [e.g. @thebault_trophic_2005; @loreau_species_2008;
+While community stability is measured in many ways in theoretical studies, most
+empirical studies measure community stability as the inverse of the coefficient
+of variation of community productivity, biomass or abundance, also called
+temporal stability [@kefi_advancing_2019]. This stability metric is also well
+grounded in theory [e.g. @thebault_trophic_2005; @loreau_species_2008;
 @thibaut_understanding_2013] and can be decomposed into two components:
-population stability and synchrony [@thibaut_understanding_2013].  Studies
+population stability and synchrony [@thibaut_understanding_2013]. Studies
 considering a single trophic level [@yachi_biodiversity_1999;
 @tilman_biodiversity_2006; @loreau_species_2008; @olivier_urbanization_2020] as
 well as theoretical prediction for multitrophic communities
 [@thebault_trophic_2005] tend to highlight that asynchrony in population
-dynamics as key for the stabilizing effects of species richness on community
-biomass. Theory also predicts that higher food-web connectance can
-counterbalance the positive effect of species richness on the temporal stability
-of community biomass, because it may increase interaction strength and
-thereby increases population variability, leading to a negative relationship
-between species richness and the temporal stability of populations
-[@thebault_trophic_2005]. Predators can also have cascading effects on both
-population variability and synchrony at lower trophic levels
-[@teng_dynamics_2004; @shanafelt_stability_2018]. Overall, these theoretical
-studies show that the effects of species richness and food-web structure, such
-as connectance and average trophic level, are potentially conflicting or
-synergistic in such a way that they need to be addressed jointly.
+dynamics is key for the stabilising effects of species richness on community
+biomass. Theory predicts that higher food-web connectance may increase
+interaction strength and thereby increase population variability,
+counterbalancing the positive effect of species richness on the temporal
+stability of community biomass [@thebault_trophic_2005]. Predators can also have
+cascading effects on both population variability and synchrony at lower trophic
+levels [@teng_dynamics_2004; @shanafelt_stability_2018]. Overall, these
+theoretical studies show that the effects of species richness and food-web
+structure, such as connectance and average trophic level, are potentially
+conflicting or synergistic in such a way that they need to be simultaneously
+assessed.
 
-The joint study of the effects of species richness and food-web structure on total
-biomass and its stability is even more important in the context of environmental
-changes. Recent studies comparing natural communities have shown that
-environmental characteristics determine in part community biomass
-[@grace_integrative_2016; @woods_testing_2020] and its temporal stability
-[@franssen_annual_2011; @hansen_climate_2013; @bluthgen_land_2016;
-@de_boeck_patterns_2017; @friedpetersen_drivers_2020]. The environment can
-affect ecosystem function or stability directly. For example, larger freshwater ecosystems
-tend to have more available resources and thus community biomass
-[@post_ecosystem_2000; @doi_resource_2009] while agricultural intensification
-destabilizes bird communities by decreasing population stability
-[@olivier_urbanization_2020]. The effects of environment can also go through
-effects on species richness and food-web structure, as larger ecosystems host
-food-webs with higher diversity and trophic levels [@mchugh_dual_2010] whereas
-temperature can affect food-web diversity and structure in contrasted ways
-depending on the ecosystem studied [@ogorman_unexpected_2017;
-@gauzens_biodiversity_2020]. Environmental characteristics have thus to be
-accounted for if we are to tease apart the effects of species richness and
-foodweb structure on community biomass and its temporal stability.
+The joint study of the effects of species richness and food-web structure on
+community biomass and its stability is important in the context of environmental
+changes. Recent studies comparing natural communities showed that environmental
+characteristics determine in part community biomass [@grace_integrative_2016;
+@woods_testing_2020] and its temporal stability [@franssen_annual_2011;
+@hansen_climate_2013; @bluthgen_land_2016; @de_boeck_patterns_2018;
+@friedpetersen_drivers_2020]. The environment can affect ecosystem function or
+stability directly. For instance, larger freshwater ecosystems are expected to
+have more available resources and thus community biomass [@post_ecosystem_2000;
+@doi_resource_2009] while agricultural intensification destabilises bird
+communities by decreasing population stability [@olivier_urbanization_2020]. The
+effects of environment can also be mediated by changes in species richness and
+food-web structure. Larger ecosystems host food-webs with higher diversity and
+trophic levels [e.g., @mchugh_dual_2010] and temperature is also known to affect
+food-web diversity and structure  [e.g., @edeline_ecological_2013;
+@ogorman_unexpected_2017; @gauzens_biodiversity_2020; @bonnaffe_trophic_2021].
+Environmental characteristics have thus to be accounted for if we are to tease
+apart the effects of species richness and food-web structure on community
+biomass and its temporal stability.
 
+Environment can affect functioning and stability directly or through effects on
+resource availability, species richness or food-web
+structure. Agricultural intensification and temperature changes can also...
 
 ---
 #### Stream fish communities is a good model to study effects of horizontal & vertical diversity
 ---
-
 Stream fish communities constitute a good model to study the effects of network
-structure on total biomass and its temporal stability because their trophic
-interactions are well known,. A substantial body of literature supports that
-trophic interactions can be inferred through body size and diet informations
+structure on community biomass and its temporal stability because their trophic
+interactions are well-known. A substantial body of literature supports that
+trophic interactions can be inferred through body size and diet information
 [@jennings_weak_2001; @beckerman_foraging_2006; @gravel_inferring_2013;
-@brose_predator_2019; @portalier_mechanics_2019]. Using long-term monitoring of
-stream fish communities [@edeline_ecological_2013], we propose one of the first
-attempts to test empirically the theoretical expectations on the
-diversity-stability relationships according for community, trophic complexity
-and environmental characteristics.
-
+@brose_predator_2019; @portalier_mechanics_2019]. Using long-term monitoring of stream fish
+communities and inference of trophic interactions [@bonnaffe_trophic_2021], we
+provide one of the first empirical tests of the expected relationship between
+BEF and food-web complexity-stability accounting for environmental
+characteristics.
 
 # Methods
 
@@ -293,78 +296,76 @@ range_surface[2] <- ceiling(range_surface[2] / 100) * 100
 
 ## Data preparation and filtering
 
-Fish communities were monitored across stream sections in France on the period
-1995-2018 by the French Office of Water and Aquatic Ecosystems (ONEMA) using
-electrofishing. Two different standardized protocols were used for small and
-large streams (detailed in appendix B, part 1.1). In the case where a stream was
-sampled alternatively with one of the two sampling protocols, we only included
-data derived from the most frequently used sampling method. The sampling season
-spanned from late spring to autumn.  There was low heterogeneity of the sampling
-month within stations, with the median sampling month being mid-August where the
-median standard deviation of the sampling month was $0.7$ month, i.e. three weeks.
+Fish communities were monitored across stream sections in metropolitan France
+over the period 1995-2018 by the French Office of Water and Aquatic Ecosystems
+(ONEMA) using electrofishing. Two different standardised protocols were used for
+small and large streams (detailed in appendix B, part 1.1). In the case where a
+stream was sampled alternatively with one of the two sampling protocols, we only
+included data derived from the most frequently used sampling method. The
+sampling season spanned from late spring to autumn. There was low heterogeneity
+in the sampling month within stations, with the median sampling month being
+mid-August and the median standard deviation of the sampling month was $0.7$ month,
+i.e. three weeks.
 
 We selected the stations that had been sampled ten years or more. As the concept
-of community stability often refersred to the variability around an equilibrium
-point [@donohue_navigating_2016], which is rarely observed or difficult to
-characterize in natural communities. Then, we selected the stations that did not
-show temporal trends in community biomass (detailed in appendix B, part 2).
-However, the results were robust to the relaxation of this hypothesis (Fig. S7).
-We selected the stations that had been sampled ten years or more. As the concept
-of community stability referred to variability around an equilibrium, which is
-rarely observed or difficult to characterize in natural communities, only those
-stations that did not show temporal trends in community biomass were selected
-(detailed in appendix B, part 2). However, the results were robust to the
-relaxation of this hypothesis (Fig. S7). These selection steps resulted in 99
-stations distributed over seven hydrographic basins (Fig. \@ref(fig:matmet)A).
+of temporal stability often referred to the variability around an equilibrium
+point [@donohue_navigating_2016], we selected the stations that did not show temporal
+trends in community biomass (detailed in appendix B, part 2). However, the
+results were robust to the relaxation of this hypothesis (Fig. S7). These
+selection steps resulted in 99 stations distributed over seven hydrographic
+basins (Fig. \@ref(fig:matmet)A).
+
 
 ## Community biomass and its temporal stability
 
 ### Biomass estimation
 
-The body size of all fish individuals from a given species was not recorded when they were too
-numerous (Fig. S1, appendix B, part 1.1). The body size of the unmeasured
-individuals was inferred under the assumption that species body size followed a
-normal distribution (Fig. S1, appendix B, part 1.2). The body mass of each
-individual was then estimated following the results of two meta-analyses on
-fishes [@lleonart_removing_2000; @froese_cube_2006], using an allometric law
-$B_i = 0.01 \times l_i^{3.03}$, with $B$ the body mass in grams, $l$ the body
-size in millimeters and $i$ the individual. Population biomass and community biomass at
-each sampling event were then calculated by summing individual body masses. To
-account for the variation in sampling effort among sites, population biomass and
-community biomass were corrected by the surface sampled (range `r range_surface[1]` -
-`r range_surface[2]` square metres), and expressed in grams per square meter
-($gm^{-2}$). In the analysis, the community biomass of a site was defined as
-the median of the community biomass across sampling years.
-
+The fishes collected by electrofishing were grouped in batches according to
+their body size class and  species identity (Fig. S1, appendix B, part 1.1).
+When individuals were too numerous in a given batch, the body size of a
+subsample of the individuals was measured. The body size of the unmeasured
+individuals was inferred under the assumption that the  body size of the
+individuals in a batch follows a normal distribution (Fig. S1, appendix B,
+part 1.2). The body mass of each individual was then estimated following the
+results of two meta-analyses on fishes [@lleonart_removing_2000;
+@froese_cube_2006], using an allometric law $B_i = 0.01 \times l_i^{3.03}$, with
+$B$ the body mass in grams, $l$ the body size in millimetres and $i$ the
+individual. Population biomass and community biomass at each sampling event were
+then calculated by summing individual body masses. To account for the variation
+in sampling effort among sites, population biomass and community biomass were
+corrected by the surface sampled (range 
+`r range_surface[1]` - `r range_surface[2]` square metres), and expressed in
+grams per square metre ($gm^{-2}$). In the analysis, the community biomass of a
+site was defined as the median of the community biomass across sampled years.
 
 ### Stability measures
 
 Temporal biomass stability was defined as the inverse of biomass variability.
-Variability was computed as Coefficient of Variation (CV) of the community biomass over
-time ($CV_i = \sigma_i \mu_i^{-1}$, with $\sigma_i$ and $\mu_i$ being
-respectively the standard deviation and the temporal average of the annual
+Variability was computed as Coefficient of Variation (CV) of the community
+biomass over time ($CV_i = \sigma_i \mu_i^{-1}$, with $\sigma_i$ and $\mu_i$
+being respectively the standard deviation and the temporal average of the annual
 community biomass of the station $i$). Then, temporal stability ($S_i$) was
-equal to $CV_i^{-1} = \mu_i \sigma_i^{-1}$.
-
-The variability of community biomass ($CV_{com, i}$) can be decomposed 
-into a
-synchrony ($\phi$) component and a weighted average population variability
-($\overline{CV_{sp, i}}$) component according to @thibaut_understanding_2013:
+equal to $CV_i^{-1} = \mu_i \sigma_i^{-1}$. The variability of community
+biomass ($CV_{com, i}$) can be decomposed into a synchrony ($\phi$) component
+and a weighted average population variability ($\overline{CV_{sp, i}}$)
+component according to @thibaut_understanding_2013:
 
 \begin{equation} 
   CV_{com, i} = \overline{CV_{sp, i}} \times \sqrt{\phi_i}
   (\#eq:cvcom)
 \end{equation}
 
-To assess the mechanisms driving stability of community biomass, we thus in addition measure
+To assess the mechanisms driving stability of community biomass, we thus in addition measured
 the synchrony and the weighted average population variability $\overline{CV_{sp,
-i}}$, the average CV at the species-level in the station $i$, weighted by the
-relative biomass of the species, $B_{k,i}$.
+i}}$, the average CV at the population-level in the station $i$, weighted by the
+relative biomass of the species populations, $B_{k,i}$.
 
 Synchrony of the station $i$, $\phi_i$, is the ratio between the variance of
-community biomass over time ($\sigma^2_{x_{T,i}}$) and the sum of the variance of
-population biomass over time ($\sigma_{x_{k,i}}$), $i$ being the station $i$ and $k$
-the species $k$ [@loreau_species_2008].
+community biomass over time ($\sigma^2_{x_{T,i}}$) and the squared sum of the
+standard deviation of population biomass over time ($\sigma_{x_{k,i}}$), $i$
+being the station $i$ and $k$ the species $k$ [@loreau_species_2008]. Synchrony
+varies from 0 to 1; 0 indicating complete asynchrony and 1 perfect synchrony.
+Consequently, the lower is synchrony, the higher are the compensatory dynamics.
 
 \begin{equation} 
 \overline{CV_{sp, i}} = \sum_k{\frac{B_{k,i} {CV}_{k, i}}{\sum_k{B_{k,i}}}}
@@ -381,13 +382,14 @@ the species $k$ [@loreau_species_2008].
 
 ### Species richness
 
-Species richness in a given site was defined as the total number of species present across
-all the sampling events. We controlled species richness for sampling effort by
-dividing the total number of species by the total surface sampled in the given
-station. Species richness was then expressed in number of species per square
-meter sampled.
+Species richness in a given site was defined as the total number of species
+present across all the sampling events. We controlled species richness for
+sampling effort by dividing the total number of species by the total surface
+sampled in the given station. Species richness was then expressed in number of
+species per square metre sampled.
 
-### Network inference 
+
+### Food-web inference 
 
 ```{r}
 myload(metaweb_analysis, dir= mypath("data"))
@@ -397,57 +399,59 @@ meta <- metaweb_analysis
 #meta$metaweb[meta$resource, meta$resource]
 ```
 
-We determined the network structure in two steps: (1) build a metaweb describing the
-trophic interactions between fishes and the resources (Fig.
-SXX), then (2) determine network of a given community by
-extracting the metaweb according to the fishes present at a given
-site and sampling event (Fig. \@ref(fig:matmet)C and D).
+We determined the food-web structure in two steps [@bonnaffe_trophic_2021]: (1) we
+built a metaweb describing the trophic interactions among all possible fish size
+classes and species as well as with non-fish resource classes (Fig. S2), then
+(2) we determined the food-web corresponding to each sampling event by
+extracting from the metaweb the subset of fish species and size classes present
+at a given site and sampling event (Fig. \@ref(fig:matmet)C and D).
 
-The trophic interaction network was inferred from body size and ontogenic diet
-shift following previous studies [@edeline_ecological_2013;
-@gravel_inferring_2013; @poisot_structure_2016; @brose_predator_2019]. The diet
-of stream fishes, as for many organisms, shifts throughout an individual's life,
-and thereby with body size. For example, larvae and small juveniles feed on
-plankton while adults may feed on algae and fishes, with bigger individuals
-eating bigger fishes. Each fish species was divided in nine body size
-classes, each corresponding to a trophic species (appendix B, Fig. S2). A
-trophic species constitutes a group of individuals from the same species and
-size class, which are expected to share the same sets of prey and predators.
-Additionally to the trophic species, we added seven resource nodes present in
-the ontogenic food diet database: detritus, biofilm, phytoplankton, zooplankton,
-macrophages, phytobenthos and zoobenthos (grey nodes in Fig. \@ref(fig:matmet)C
-& D). The trophic species and the resources constituted the 412 nodes of the
-metaweb, i.e. 45 fish species divided into nine body size classes plus seven
-resource nodes. The inference of trophic interactions was shown to be more
-accurate when considering body size classes, i.e. trophic species, than species
-[@jennings_weak_2001].
+The food-web was inferred from body size and ontogenic diet shift following
+previous studies [@gravel_inferring_2013; @poisot_structure_2016;
+@brose_predator_2019; @bonnaffe_trophic_2021]. The diet of stream fishes, as for
+many organisms, shifts throughout an individual’s life, and thereby with body
+size. For example, larvae and small juveniles feed on plankton while adults may
+feed on algae and fishes, with bigger individuals eating bigger fishes. Each
+fish species was divided into nine body size classes, each corresponding to a
+trophic species (appendix B, Fig. S2). A trophic species constitutes a group of
+individuals from the same species and size class, which are expected to share
+the same sets of prey and predators. Additionally, we added seven resource nodes
+present in the ontogenic food diet database: detritus, biofilm, phytoplankton,
+zooplankton, macrophages, phytobenthos and zoobenthos (grey nodes in Fig.
+\@ref(fig:matmet)C & D). The trophic species and the resources constituted the
+412 nodes of the metaweb, i.e. 45 fish species divided into nine body size
+classes plus seven resource nodes. The inference of trophic interactions was
+shown to be more accurate when considering body size classes, i.e. trophic
+species, than species [@jennings_weak_2001].
 
-The feeding interactions of a fish node, i.e. a trophic species, were determined
-by both its species identity and its body size. The ontogenic fish diet
-database was filled according to fishbase and literature (appendix A, Table S2). Each
-fish species had two or three life stages which are delimited by its body size
-range (appendix B, Fig. S2). The life stage of a fish trophic species was determined by 
-the center of its body size range, hereafter midpoint (appendix B, Fig. S2).
+The feeding interactions of a trophic species were determined by both its
+species identity and its body size. The ontogenic fish diet database was filled
+according to fishbase [@froese_fishbase_2021] and literature (appendix A, Table
+S2). Each fish species had two or three life stages which are delimited by its
+body size range (appendix B, Fig. S2). The life stage of a fish trophic species
+was determined by the centre of its body size range, hereafter midpoint
+(appendix B, Fig. S2).
 
 For a piscivorous trophic species, the fish-fish trophic links were defined in
 two steps and based on the body size ratio between predators and prey. First of
 all, the predation window of a piscivorous trophic species was defined as 3% to
 45% of its midpoint [@mittelbach_ontogeny_1998; @claessen_impact_2002;
-@hart_handbook_2008]. Then, a trophic link was set between the piscivorous
-trophic species and every trophic species whose midpoint in bodysize range was
-included in the predation window (appendix B, Fig. S2). The fish-resource trophic links were
-set between the trophic species and the resources nodes according the food items
-of their size class.  Lastly, the trophic links among resource nodes were set
-according to the literature [@allan_stream_2007; @hart_handbook_2008].
+@hart_handbook_2008]. Then, a trophic link was set between the piscivorous trophic
+species and every trophic species whose midpoint in body size range was included
+in the predation window (appendix B, Fig. S2). The fish-resource trophic links
+were set between the trophic species and the resources nodes according to the
+food items of their size class. Lastly, the trophic links among resource nodes
+were set according to the literature [@allan_stream_2007; @hart_handbook_2008].
 
-### Network structure
+
+### Food-web structure
 
 For each food-web, corresponding to a particular site and year, we computed the
-connectance and mean trophic level. Connectance describes the level of
+connectance and mean trophic level. Food-web connectance describes the level of
 generalism in the network and is calculated as the actual number of interactions
 divided by the number of interactions if all species interact ($C = L / N^2$, L
-and N being resp. the number of links and of nodes).  The trophic level of the
-nodes was computed as one added to the average trophic level of its food item.
+and N being resp. the number of links and of nodes). The trophic level of the
+nodes was computed as one added to the average trophic level of its food items.
 The average trophic level $\overline{T}$ was computed as the average trophic
 level of the trophic species weighted by their biomass (excluding resource nodes
 for which we had no biomass information), so $\overline{T} = \sum_i^N{B_iT_i
@@ -455,7 +459,6 @@ for which we had no biomass information), so $\overline{T} = \sum_i^N{B_iT_i
 trophic level and the biomass of the node $i$. For each site, the median of
 connectance and average trophic level over time was used in subsequent analysis
 (Fig. \@ref(fig:matmet)C & D).
-
 
 ```{r, message = FALSE, results = FALSE}
 # Com
@@ -477,89 +480,95 @@ mysave(sem_data, dir = mypath("data"), overwrite = TRUE)
 
 ## Environmental variables
 
-We characterised the sites by their altitude, slope, distance from
-source, stream width, depth and strahler order, i.e. its position in the
-stream network hierarchy. We obtained data on water temperature, flow and Biological Oxygen
-Demand (BOD) from the naiades
-database
-[(www.naiades.eaufrance.fr)](http://www.naiades.eaufrance.fr/). As data from naiades are
-not collected on the same site as our fish sampling sites, we performed an
-interpolation of the water temperature and flow based on the spatial stream
-network models [@isaak_applications_2014; @hoef_ssn:_2014]. The interpolation procedure
-is detailed in appendix B (part 1.4).
+We characterised the sites by their altitude, slope, distance from source,
+stream width, depth and strahler order, i.e. its position in the stream network
+hierarchy. We obtained data on Biological Oxygen Demand (BOD), which is often
+related to enrichment and eutrophication in aquatic systems
+[@mallin_factors_2006], water temperature, flow and from the naiades database
+[(www.naiades.eaufrance.fr)](http://www.naiades.eaufrance.fr/). As data from naiades are not collected on the same
+site as our fish sampling sites, we performed an interpolation of the water
+temperature and flow based on the spatial stream network models
+[@isaak_applications_2014; @hoef_ssn:_2014]. The interpolation procedure is
+detailed in appendix B (part 1.4).
 
-We had one environmental variable value for each sampling event, except
-for water temperature for which the record began in 2006. Then, we computed the
-average and temporal CV values of water temperature, flow, BOD, river width and
-depth. As habitat and environmental variables are often collinear, a principal
+We had one environmental variable value for each sampling event, except for
+water temperature for which records began in 2006. Then, we computed the average
+and temporal CV values of water temperature, flow, BOD, river width and depth.
+As habitat and environmental variables are often collinear, a principal
 component analysis (PCA) was performed on the 14 scaled variables. We kept in
-the analysis the two first principal components based on the elbow method, on
-the eigenvalues distribution (appendix B, Fig. SXX). The two first principal components
-explained `r tot_var_expl_pca`% of the variance (Fig. \@ref(fig:matmet)B). A varimax axis rotation was
-performed to maximize the representation of the environmental variables by the principal
-components [@kaiser_varimax_1958; @revelle_psych_2019]. The first axis
-represented a gradient from small to big streams, characterized by their width
-and depth, but also a gradient from stream close to far from the source. We
-reversed the values of the second axis, such as it represented a gradient of
-increasing average water temperature, average BOD and decreasing altitude and slope.
-Further description of the variables are provided in appendix B (part 1.4).
+the analysis the two first principal components based on the elbow method on the
+eigenvalues distribution (appendix B, Fig. S5). The two first principal
+components explained `r tot_var_expl_pca`% of the variance (Fig.
+\@ref(fig:matmet)B). A varimax axis rotation was performed to maximise the
+representation of the environmental variables by the principal components
+[@kaiser_varimax_1958; @revelle_psych_2019]. The first axis represented a
+gradient from small to big streams, characterised by their width and depth, but
+also a gradient of distance from source. We reversed the values
+of the second axis, so that is represented a gradient of increasing average
+water temperature, average BOD and decreasing altitude and slope. Further
+description of the variables are provided in appendix B (part 1.4).
+
 
 ## Statistical analysis 
 
-We analyzed the relationships among environment, species richness, food-web
+We analysed the relationships among environment, species richness, food-web
 structure, community biomass and its temporal stability with structural equation
-models as they enable the assessment of potential indirect and direct causal
+models as they enable the assessment of potential direct and indirect
 relationships among multiple variables [@grace_structural_2008;
-@grace_causal_2014; @lefcheck_piecewisesem_2016; @grace_integrative_2016].  We
-defined a structural equation model explaining the median annual community
-biomass as a function of the two synthetic environmental variables, species
-richness and food-web structure [@maureaud_biodiversityecosystem_2019;
-@woods_testing_2020]. We assumed that both species richness and food-web
-structure directly affect community biomass (Fig. \@ref(fig:sem-bm)A) and that
-species richness affected food-web structure [@winemiller_must_1989;
-@dunne_network_2006; @thebault_stability_2010].  
+@grace_causal_2014; @lefcheck_piecewisesem_2016; @grace_integrative_2016]. The
+structural equation model explains the median annual community biomass as a
+function of the environment, species richness and food-web structure
+[@maureaud_biodiversityecosystem_2019; @woods_testing_2020]. We assumed that the
+environment, species richness and food-web structure directly affect community
+biomass (Fig. \@ref(fig:sem-bm)A), that species richness affects food-web
+structure [@winemiller_must_1989; @dunne_network_2006; @thebault_stability_2010]
+and that environment affects species richness and food-web structure.
 
-We used the same model structure to assess the drivers of temporal stability
-of community biomass (Fig.  \@ref(fig:sem-stab)A). Instead of the
-annual community biomass, we modelled the synchrony and $\overline{CV_{sp}}$ which
-in turn determined the temporal stability of community biomass. We linearized
-the mathematical relationship linking temporal stability to $\overline{CV_{sp,
-i}}$ and $\phi$ by taking the log of
-temporal stability such as 
+We used the same model structure to assess the drivers of temporal stability of
+community biomass (Fig. \@ref(fig:sem-stab)A). Instead of the annual community
+biomass, we modelled the synchrony and population variability which in turn
+fully determined the temporal stability of community biomass. We linearized the
+mathematical relationship linking temporal stability of community biomass $S_i$
+to $\overline{CV_{sp, i}}$ and $\phi$ by taking the log of temporal stability
+such as
 
 \begin{equation} 
     \log S_i = - \log \overline{CV_{sp, i}} - \frac{1}{2} \log \phi_i
   (\#eq:stab)
 \end{equation} 
 
-The structural equation models were based on Gaussian linear mixed-effects models. All variables
-except the connectance and average trophic level
-were log-transformed to fulfill model assumptions (see residual plots and data
+
+The structural equation models were based on Gaussian linear mixed-effects
+models. All variables except the connectance and average trophic level were
+log-transformed to fulfil model requirements (see residual plots and data
 transformation in Fig. S5 and S6, Table S5, appendix B). We set the seven
-hydrographic basins as a random effect on the intercept to
-account for their heterogeneity. We checked for the absence of multicollinearity 
-with Variance Inflation Factor (VIF, Table S6, appendix B). The slopes reported
-in the main text were standardized in order to compare their magnitude ($r_\delta
-= \beta \frac{\sigma_x}{\sigma_y}$, $\beta$ being the unstandardized slope,
-$\sigma_x$ and $\sigma_y$ being respectively the standard deviation of the
-predictive variable $x$ and of the response variable $y$). Therefore, the
-standardized coefficients expressed the variation of $x$ and $y$ in standard
-deviation units. According to the equation (\@ref(eq:stab)), the unstandardized
-coefficients of synchrony and $\overline{CV_{sp}}$ determining temporal
-stability of biomass are respectively $-0.5$ and $1.0$. When standardized, a 
-comparaison of those coefficients comes down to a comparaison of the standard
-deviation of these two variables. The paths whose slope had a $P$ value inferior
-or equal to $0.05$ were reported in the main text, all the path values are
-presented in Table S7 and S8.
+hydrographic basins as a random effect on the intercept to account for their
+heterogeneity. We checked for the absence of multicollinearity with Variance
+Inflation Factor (VIF, Table S6, appendix B). The slopes estimated by the
+structural equation models and reported in the main text were standardised in
+order to compare their magnitude ($r_\delta = \beta \frac{\sigma_x}{\sigma_y}$,
+$\beta$ being the unstandardised slope, $\sigma_x$ and $\sigma_y$ being
+respectively the standard deviation of the predictor variable $x$ and of the
+response variable $y$). Therefore, the standardised coefficients expressed the
+variation of $x$ and $y$ in standard deviation units. According to the equation
+\@ref(eq:stab), the unstandardised coefficients of synchrony and population
+variability determining
+temporal stability of community biomass are respectively -0.5 and -1.0. When
+standardised, the relative comparison of those coefficients comes down to a
+comparison of the standard deviation of these two variables. The deviation from
+unstandardised effect values (i.e. -0.5 and -1.0) indicates that one component of community stability
+displays more variations than the other, and that the determinants of
+the more variable component will be those affecting community
+stability the most. The paths whose slope had a $P$ value inferior or equal to $0.05$
+were reported in the main text, all the path values are presented in Table S7
+and S8. Indirect effects on community biomass and its temporal stability were
+computed by multiplying slopes along the path. Only significant direct slopes
+were included in the calculation of indirect effects. Total effects were
+computed as the sum of direct and indirect effects.
 
-Indirect effects on community biomass and its temporal stability were computed
-by multiplying slopes along the path. Only significant direct slopes were
-included in the calculation of indirect effects. Total effects were computed as
-the sum of direct and indirect effects.
-
-Environmental variables were interpolated with the `openStars` and `SSN`
-R packages [@kattwinkel_openstars_2018; @hoef_ssn:_2014]. Linear models and SEMs
-were computed with respectively the `nlme` and `piecewieseSEM` R packages
+Environmental variables were interpolated with the `openStars` and `SSN` R
+packages [@kattwinkel_openstars_2018; @hoef_ssn:_2014]. Linear models and SEMs
+were computed with respectively the nlme and piecewieseSEM R packages
 [@pinheiro_nlme_2020; @lefcheck_piecewisesem_2016]. The code used for the
 analysis and to generate the manuscript are accessible on github
 (alaindanet/fishcom). The analyses were performed with R version 3.6.3
@@ -659,21 +668,6 @@ coef_bm_sem <- coef(bm_sem_rich) %>%
 ```
 
 
-```{r, cache = FALSE}
-sem_caption <- paste0(
-  "Metamodel of the Structural Equation Models for the (A) median of annual
-  community biomass (in grams by square meter) and (C) its temporal stability.",
-  "Results of the Structural Equation Models for
-  (B) the median of annual community biomass and (D) its temporal stability. Red and black
-  arrows represent respectively negative and positive path coefficients. The
-  path coefficients are standardized. For convenience, only significant
-  paths (i.e. $P < 0.05$) are shown. Rsq: Adjusted $R^2$; Avg:
-  Average, CVsp: weighted temporal CV of the population; PCA1 and PCA2: respectively the first and
-  second axis of the PCA performed on environmental variables (see methods)."
-)
-```
-
-
 
 ```{r get-bm-sem-single-effect}
 bm_sem_coef <- filter(coef_bm_sem, P.Value <= 0.05)
@@ -756,15 +750,15 @@ env_on_richness <- get_env_on_rich(fit = stab_all_params,
 
 # Results
 
-The structural equation models explained a large part of the variation
-of species richness, connectance, synchrony, $\overline{CV_{sp}}$ and total
+The structural equation models explained a large part of the variation of
+species richness, connectance, synchrony, $\overline{CV_{sp}}$ and community
 biomass (resp. $R^2 = .43$, $.38$, $.46$, $.47$ and $.32$) but less so for mean
-trophic level ($R^2 = .11$, Fig. \@ref(fig:sem-bm)A and \@ref(fig:sem-stab)A). We found a
-negative relationship between species richness and mean trophic level ($r_\delta
-= `r rich_on_tlvl`$, $r_\delta$ meaning standardized slope) and connectance
-($r_\delta = `r rich_on_ct`$, Fig.  \@ref(fig:sem-bm)A and \@ref(fig:sem-stab)A), meaning that a
-part of the effects of species richness on community biomass and its temporal
-stability went through food-web structure.
+trophic level ($R^2 = .11$, Fig. \@ref(fig:sem-bm)A and \@ref(fig:sem-stab)A).
+We found a negative relationship between species richness and mean trophic level
+($r_\delta = `r rich_on_tlvl`$, $r_\delta$ meaning standardised slope) and
+connectance ($r_\delta = `r rich_on_ct`$, Fig. \@ref(fig:sem-bm)A and
+\@ref(fig:sem-stab)A), meaning that a part of the effects of species richness on
+community biomass and its temporal stability went through food-web structure.
 
 ## Species richness and average trophic level are positively correlated with community biomass
 
@@ -778,25 +772,27 @@ rich_on_cv_sp <- get_rich_on_stab_comp(fit = stab_all_params,
 ```
 
 Species richness and mean trophic level had a significant positive direct effect
-on community biomass ($r_\delta = `r rich_on_bm$direct`$ and 
-$r_\delta = `r tlvl_on_bm`$ resp., Fig. \@ref(fig:sem-bm)A, B, C, Table
-\@ref(tab:indir-sem)), while connectance had no direct effect.
-
-The two PCA axes synthesising environmental variables had no significant direct
-effects on community biomass, but indirect (Table \@ref(tab:indir-sem)). The first
-axis, related to the stream size, was positively linked to community biomass
-($r_\delta = `r env_on_bm$total["log_RC1"]`$, Table \@ref(tab:indir-sem)),
-through both species richness and mean trophic level ($r_\delta = 
-`r env_on_bm$via_richness["log_RC1"]`$ and $`r env_on_bm$via_tlvl["log_RC1"]`$
-resp., Fig. \@ref(fig:sem-bm) F, G, Table \@ref(tab:indir-sem)). The second axis, related to the average
-annual temperature was positively related
+on community biomass ($r_\delta = `r rich_on_bm$direct`$ and $r_\delta = 
+`r tlvl_on_bm`$ resp., Fig. \@ref(fig:sem-bm)A, B, C, Table
+\@ref(tab:indir-sem)),
+while connectance had no direct effect.  The two PCA axes synthesising
+environmental variables had no significant direct effects on community biomass,
+but indirect ones (Table \@ref(tab:indir-sem)).  The first axis, related to the
+stream size, was positively linked to community biomass ($r_\delta = 
+`r env_on_bm$total["log_RC1"]`$, Table \@ref(tab:indir-sem)), through both
+species
+richness and mean trophic level 
+($r_\delta = `r env_on_bm$via_richness["log_RC1"]`$ and 
+$`r env_on_bm$via_tlvl["log_RC1"]`$
+resp., Fig. \@ref(fig:sem-bm) F, G, Table \@ref(tab:indir-sem)). The second
+axis, related to the average annual temperature and BOD was positively related
 to community biomass ($r_\delta = `r env_on_bm$total["log_RC2"]`$, Table
-\@ref(tab:indir-sem)), mainly through species richness ($r_\delta = 
-`r env_on_bm$via_richness["log_RC2"]`$, Fig. \@ref(fig:sem-bm) G, Table \@ref(tab:indir-sem)). Streams
-with higher temperature and BOD contained more species, indirectly increasing
-community biomass. The total effect of PCA1, PCA2 and species richness on
-community biomass were of the same magnitude.
-
+\@ref(tab:indir-sem)) mainly through species richness ($r_\delta = 
+`r env_on_bm$via_richness["log_RC2"]`$, Fig. \@ref(fig:sem-bm) G, Table
+\@ref(tab:indir-sem)). Warmer and enriched, i.e.  with higher BOD, streams
+contained more species, and thus indirectly increased the biomass of the
+communities. The total effect of PCA1, PCA2 and species richness on community
+biomass were of the same magnitude.
 
 ## Temporal stability of annual community biomass
 
@@ -805,52 +801,51 @@ species richness had a negative total effect on biomass stability ($r_\delta =
 `r rich_on_stab$total`$, Table \@ref(tab:indir-sem)). This effect resulted from
 two opposite effects. On the one hand, species richness had a direct negative
 effect on synchrony ($r_\delta = `r rich_on_sync$direct`$, Fig.
-\@ref(fig:sem-stab) A, B), thereby increasing stability ($r_\delta = 
-`r rich_on_stab$via_sync`$). On the other hand, species richness had a positive
+\@ref(fig:sem-stab)A, B), thereby increasing stability ($r_\delta = 
+`r rich_on_stab$via_sync`$).  On the other hand, species richness had a positive
 direct effect on $\overline{CV_{sp}}$ ($r_\delta = `r rich_on_cv_sp$direct`$,
-Fig. \@ref(fig:sem-stab) A, C), thereby decreasing biomass stability ($r_\delta
-= `r rich_on_stab$via_cv_sp`$, Table \@ref(tab:indir-sem)), which outweighted
-the decreasing effect of species richness on synchrony. The negative effect of
-$\overline{CV_{sp}}$ on temporal stability was twice higher than the negative
-effect of synchrony (resp.  $r_\delta = `r cv_sp_on_stab`$ and $r_\delta = 
-`r sync_on_stab`$, Fig.  \@ref(fig:sem-stab)A). Population variability and
-synchrony constitute a mathematical decompositon of the stability, contributing
-respectively to 1 and 0.5 respectively (Eq. \@ref{eq:stab}), meaning that their
-$r_\delta$ difference to temporal stability is due to their standard deviation,
-and so that the standard deviation of $\overline{CV_{sp}}$ is of the same
-magnitude than the one of synchrony.
+Fig. \@ref(fig:sem-stab)A, C), thereby decreasing biomass stability ($r_\delta =
+`r rich_on_stab$via_cv_sp`$, Table \@ref(tab:indir-sem)), which outweighed the
+stabilising effect of species richness via decreased synchrony. The negative
+effect of $\overline{CV_{sp}}$ on temporal stability was twice higher than the negative effect of
+synchrony (resp.  $r_\delta = `r cv_sp_on_stab`$ and $r_\delta = 
+`r sync_on_stab`$, Fig.  \@ref(fig:sem-stab)A), which is as expected from the mathematical
+decomposition of the stability of community biomass. Population variability and
+synchrony indeed contribute respectively to -1 and -0.5 when the coefficients
+are not standardised (Eq. 4). Our result thus also means that the standard
+deviation of $\overline{CV_{sp}}$ is of roughly the same magnitude as the one of
+synchrony in this case.
 
 The total effect of mean trophic level and species richness on temporal
-stability of biomass were of the same magnitude (resp.  
-$`r tlvl_on_stab$total["t_lvl"]`$ and $`r rich_on_stab$total`$, Table
-\@ref(tab:indir-sem)).  The mean trophic level had only a direct negative effect
-on $\overline{CV_{sp}}$ ($r_\delta = `r tlvl_on_cv_sp`$, Fig.
-\@ref(fig:sem-stab)A, F) and thereby had a total positive effect on temporal
-stability ($r_\delta = `r tlvl_on_stab$via_cv_sp["t_lvl"]`$, Table
-\@ref(tab:indir-sem)). Food webs in which community biomass is located on
-average at higher trophic levels thus tend to have higher population and
-community stability. Connectance had no significant direct effect on either
-$\overline{CV_{sp}}$ nor synchrony and thus no effect on temporal stability
-(Fig. \@ref(fig:sem-stab)A, Table \@ref(tab:indir-sem)).
- 
+stability of community biomass were of the same magnitude (resp. $`r tlvl_on_stab$total["t_lvl"]`$ and $`r rich_on_stab$total`$, Table
+\@ref(tab:indir-sem)). The mean trophic level had only a direct negative effect
+on $\overline{CV_{sp}}$ ($r_\delta = `r tlvl_on_cv_sp`$, Fig.  \@ref(fig:sem-stab)A, F) and thereby
+had a total positive effect on temporal stability ($r_\delta = `r tlvl_on_stab$via_cv_sp["t_lvl"]`$, Table \@ref(tab:indir-sem)). Food-webs in
+which community biomass is located on average at higher trophic levels thus tend
+to have higher stability of population and community biomass. Connectance had
+no significant direct effect on either $\overline{CV_{sp}}$ nor synchrony and
+thus no effect on temporal stability of community biomass (Fig.
+\@ref(fig:sem-stab)A, Table \@ref(tab:indir-sem)).
+
 The total effect of PCA2, related to average annual temperature and BOD, on
 temporal stability was of higher magnitude than the effects of species richness
-and mean trophic level (Table \@ref(tab:indir-sem)).  The PCA2 had a total
-negative effect on temporal stability, meaning that higher temperature and BOD
-results in lower stability ($r_\delta = `r env_on_stab$total["log_RC2"]`$, Table
-\@ref(tab:indir-sem)).  PCA2 had an indirect positive effect on temporal
-stability through a direct positive effect on mean trophic level ($r_\delta = 
-`r env_on_stab$via_tlvl["log_RC2"]`$, Fig. \@ref(fig:sem-stab) I, Table
-\@ref(tab:indir-sem)). However, PCA2 had a negative effect on temporal stability
-through a direct positive effect on $\overline{CV_{sp}}$ and species richness
-(resp.  $r_\delta = `r env_on_cv_sp$direct["log_RC2"]`$ and $r_\delta = 
+and mean trophic level (Table \@ref(tab:indir-sem)). The PCA2 had a total
+negative effect on the temporal stability of communities, meaning that higher
+temperature and BOD results in lower stability ($r_\delta = 
+`r env_on_stab$total["log_RC2"]`$, Table \@ref(tab:indir-sem)). PCA2 had an
+indirect positive effect on temporal stability through a direct positive effect
+on mean trophic level ($r_\delta = `r env_on_stab$via_tlvl["log_RC2"]`$, Fig.
+\@ref(fig:sem-stab) I, Table \@ref(tab:indir-sem)). However, PCA2 had a negative
+effect on stability of community biomass through a direct positive effect on
+$\overline{CV_{sp}}$ and species richness (resp.  $r_\delta = 
+`r env_on_stab$via_cv_sp["log_RC2"]`$ and $r_\delta = 
 `r env_on_stab$via_richness["log_RC2"]`$, Fig. \@ref(fig:sem-stab)G, Fig.
-\@ref(fig:sem-bm)G, Table \@ref(tab:indir-sem)). This was
-also true for the PCA1, related to stream size, with a resulting very slight
-positive effect of PCA1 on temporal stability ($r_\delta = 
-`r env_on_stab$total["log_RC1"]`$, Table \@ref(tab:indir-sem)).  Warmer and
-larger streams thus tend to have more species and more variability in population
-biomass, then have a lower stability of community biomass.
+\@ref(fig:sem-bm)G, Table \@ref(tab:indir-sem)). PCA1, related to stream size,
+had in contrast a very slight positive effect on stability of community biomass
+($r_\delta = `r env_on_stab$total["log_RC1"]`$, Table \@ref(tab:indir-sem)).
+Warmer and larger streams tend to have more species, but the variability of
+their population biomass is respectively higher and lower, resulting in
+respectively lower and higher temporal stability of community biomass.
 
 ```{r, cache = FALSE}
 cap_sem <- paste0(
@@ -923,84 +918,83 @@ collapse_rows(columns = 1, valign = "top")
 ## Species richness increased community biomass but decreased its temporal stability 
 
 We found that species richness increased community biomass in line with the
-results on plants and tree communities [@hector_plant_1999;
+results in the plants and tree communities [@hector_plant_1999;
 @tilman_biodiversity_2014; @wu_relationship_2015; @li_relationship_2018] as well
 as those found for fish communities [@maureaud_biodiversityecosystem_2019;
 @woods_testing_2020] and for theoretical food-web models
 [@schneider_animal_2016]. Theory suggests that the positive effect of species
-richness on community biomass might be held by resource use complementarity
+richness on community biomass might be induced by resource use complementarity
 [@carey_determining_2011], which is driven by niche differentiation
-[@loreau_biodiversity_1998; @loreau_partitioning_2001] or by positive selection
-effect, which is driven by the dominance of the most productive species
-[@loreau_biodiversity_2001]. Recent findings suggest that dominance, a positive
-selection effect [@loreau_partitioning_2001], is the main driver of the observed
-positive relationship between biomass and species richnes in fish communities
+[@loreau_biodiversity_1998; @loreau_partitioning_2001] or driven by the
+dominance of a highly productive species [i.e. positive selection effect,
+@loreau_biodiversity_2001]. Recent findings suggest that such positive selection
+effect [@loreau_partitioning_2001] is the main driver of the observed positive
+relationship between biomass and species richness in fish communities
 [@maureaud_biodiversityecosystem_2019; @woods_testing_2020].
 
-We found that species richness decreases synchrony, threby increasing stability.
-This is in accordance with most studies on experimental grasslands
-[@isbell_biodiversity_2009; @roscher_identifying_2011] and natural communities
-of birds, grasslands, bats and butterflies [@bluthgen_land_2016;
-@olivier_urbanization_2020]. It is thought that it is the main effect by which
-species richness increases stability [but see @declerck_species_2006;
-@valencia_synchrony_2020].  Our result thus extend that species richness
-decreases synchrony also in multi-trophic communities.  However, theory does not
-clearly state what would be the effect of food-web structure on the relationship
-between species richness and synchrony [@raimondo_interspecific_2004;
-@korpimaki_predatorinduced_2005; @mccann_more_2009].   
+Contrary to most experimental and empirical results [@tilman_biodiversity_2006;
+@franssen_annual_2011; @pennekamp_biodiversity_2018; @olivier_urbanization_2020;
+@valencia_synchrony_2020, but see, Declerck *et al.* 2006], we found a negative
+relationship between species richness and stability of community biomass. This
+effect resulted from a combination of two effects, one on population synchrony
+and one on population variability, both of which contribute to the stability of
+community biomass. The negative effect of species richness on population
+synchrony we found, thereby increasing stability of community biomass, is in
+accordance with most studies on experimental grasslands
+[@isbell_biodiversity_2009; @roscher_identifying_2011] as well as natural
+communities such as birds, grasses, bats or butterflies [@bluthgen_land_2016;
+@olivier_urbanization_2020, but see, Declerck *et al.* 2006;
+@valencia_synchrony_2020]. Our result thus extend this relationship to
+multi-trophic communities.
 
-The positive effect of species richness on population variability, thereby
-decreasing stability, is more intriguing. A previous meta-analysis has indeed
-reported that species richness had often a negative effect on population
-variability in multi-trophic communities while a positive effect is often found
-in single-trophic communities [@jiang_different_2009]. In food-webs, theoretical
-models predict that the relationship between the temporal stability of populations
-and species richness depends on interaction strength and its distribution
-[@mccann_reevaluating_1997; @thebault_trophic_2005; @downing_temporal_2020],
-with stronger interactions promoting a negative relationship between species
-richness and stability. Therefore, it is possible that our results are due to
-strong trophic interactions, leading to more fluctuations in population biomass,
-but this hypothese was not testable with the available dataset. Alternatively,
-other authors suggest that this effect might be due to an increase of
-demographic stochasticity with an increase of species richness [@loreau_species_2008].
+The positive effect of species richness on population variability that we found,
+thereby destabilising communities, is more intriguing and does not fit the
+findings of a meta-analysis reporting more frequent negative effects of richness
+on population variability in multi-trophic communities [@jiang_different_2009].
+Food-web theory predicts that the relationship between the temporal stability of
+populations and species richness depends on the strength of interactions and its
+distribution [@mccann_reevaluating_1997; @thebault_trophic_2005;
+@downing_temporal_2020], with stronger interactions promoting a negative
+relationship between species richness and stability. This might be the case in
+our study system but this hypothesis remains to be directly tested.
+Alternatively, a positive richness-population variability relationship can come
+from an increased demographic stochasticity with increasing species richness
+[@loreau_species_2008].
 
-A major finding of the study is that we found a negative relationship between
-species richess and temporal stability, contrast with most experimental and
-empirical studies to date [@franssen_annual_2011; @tilman_biodiversity_2006;
-@valencia_synchrony_2020; @pennekamp_biodiversity_2018;
-@olivier_urbanization_2020], but coincide with a few empirical ones
-[@declerck_species_2006]. This finding means that the destabilising effect of
-species richness through population variability was superior its stabilising
-effect through synchrony. It can happen either because of the relative strength
-of the effect species richness on both population variability and synchrony or
-because of the overall variability of synchrony and population variability in
-the our study system.
-
-We found indeed that the population variability had a standardized effect
-on the stability of community biomass twice stronger than synchrony, meaning that the
-variability of synchrony was equivalent the one of population variability, in
-contrast with a previous study which found that the variability of synchrony was
-twice higher than the variability of population variability
-[@olivier_urbanization_2020]. Therefore, the low variability of synchrony in our
-system might be a cause for the observed negative effect of species richness on
-temporal stability of community biomass despite the strong negative effect of species
-richness on synchrony. Could the lower variability of synchrony be a
-characteristic of multitrophic communities? Theoretical models suggest that
-generalist predator can either synchronise or desynchronize the dynamics its
-prey, depending on the distribution of interaction strength and competition
-between preys [@raimondo_interspecific_2004; @korpimaki_predatorinduced_2005;
-@mccann_more_2009]. Alternatively, it is possible that, in aquatic food-webs,
-the occurrence of large oscillatory dynamics typical of predator-prey dynamics
-leads to a larger variability of population variability than the one of synchrony
-[@mccann_reevaluating_1997]. Another hypothese is that food-webs are
-characterized by highly uneveness biomass distribution, which can decrease the
-variability of synchrony, i.e. decrease the strength of the porfolio effect
-[@doak_statistical_1998; @thibaut_understanding_2013].
-
-All together, the destabilising effect of species richness on temporal stability
-raises more questions than it solves and then highlight the need for more
-investigations about the difference between single and multitrophic
-communities in natural communities.
+In our study system, the destabilising effect of species richness via increased
+population variability was stronger than the stabilising effect via decreased
+synchrony. The balance between both effects is governed by the balance in the
+variation in population variability and synchrony among communities, this
+because we used standardised coefficients (see methods). Such an effect of
+population variability on community stability twice as strong as the one of
+synchrony is expected from the mathematical relation between these three
+variables. This indicates that the variability of population variability and
+synchrony among the studied communities are equivalent (Eq. \@ref(eq:stab)).
+This result contrasts with previous findings on terrestrial animal communities
+showing a variability in population synchrony twice as strong as the one of
+population variability [@olivier_urbanization_2020]. Such difference in the
+relative variability of population stability and synchrony between studies might
+be related to the multitrophic structure of the dataset as theory predicts
+potential synchronising effect of generalist predators, such as piscivorous
+fishes, on prey dynamics [@raimondo_interspecific_2004; @huber_role_2006].
+Trophic interactions might also raise synchrony between predators and preys and
+thereby increase the overall synchrony of trophic communities [Fig. S9,
+@bulmer_phase_1975]. However, generalist predators can also generate
+asynchronous dynamics among preys depending on the distribution of interaction
+strengths [@huber_role_2006; @mccann_more_2009]. The difference between our
+results and those of @olivier_urbanization_2020 might also relate to the type of
+ecosystems considered. Aquatic ecosystems have been suggested to show greater
+population variability than terrestrial ecosystems [@rip_cross-ecosystem_2011],
+which could also translate in greater variation range of population variability
+among aquatic communities than among terrestrial ones. Another hypothesis
+relates to the evenness of the biomass distribution among species, with low
+evenness decreasing the range of variation in synchrony among communities and thereby
+the strength of the portfolio effect [@doak_statistical_1998;
+@thibaut_understanding_2013]. Whether the biomass distribution in stream fish
+assemblages is particularly uneven when compared to the terrestrial communities
+studied by @olivier_urbanization_2020 remains however to be tested. In any case,
+more studies are needed to understand how the relative importance of synchrony
+and population variability for community stability varies among ecosystems.
 
 ---
 #@thibaut_understanding_2013 proposed that a
@@ -1014,159 +1008,113 @@ communities in natural communities.
 ## Average trophic level increased community biomass and its temporal stability while connectance had no effect
 
 Our analysis further indicates that network structure, and in particular average
-trophic level was strongly related to community biomass, as higher total
-biomass was found in communities with an higher average trophic level. These results are
-in accordance with the predictions of theoretical models [@schneider_animal_2016;
-@wang_biodiversity_2018]. @wang_biodiversity_2018 proposed that this effect is driven
-by predators selecting primary producers with higher resource use efficiency and predators
-enhancing complementarity between primary producers, a mechanism which
-drive the positive effect of horizontal diversity on productivity
-[@loreau_biodiversity_2001].
+trophic level was strongly related to community biomass, as higher community
+biomass was found in communities with higher average trophic level. These
+results are in accordance with the theoretical predictions [@schneider_animal_2016;
+@wang_biodiversity_2018], proposing that predation selects for primary producers with
+higher resource use efficiency and enhance complementarity between primary
+producers [@wang_biodiversity_2018].
 
-In addition, our results show that communities with an higher average trophic
-level had a lower population variability, and thereby were more stable. This
-result is in accordance with theoretical models [@shanafelt_stability_2018;
-@barbier_pyramids_2019; @mccann_diversitystability_2000] and might result from a
-higher stability of populations of higher trophic levels
-[@shanafelt_stability_2018; @barbier_pyramids_2019] or a damping effect of
-higher trophic levels on the variability of lower trophic level populations
+Further, our results show that communities with higher average trophic level had
+a lower population variability, and were thereby more stable. This result is
+also in accordance with theoretical models predicting a higher stability of
+populations of higher trophic levels [@shanafelt_stability_2018;
+@barbier_pyramids_2019] or a damping effect of higher trophic levels on the
+variability of lower trophic level populations
 [@mccann_diversitystability_2000].
 
-In contrast, we found that connectance was not related to community biomass,
-which contradicts theoretical models which suggest that a greater connectance should
-decrease complementarity in resource use between species, which is expected to
-lower community biomass [@thebault_food-web_2003; @poisot_trophic_2013].
-However, the effect of connectance on productivity has been poorly investigated.
+In contrast, we found that food-web connectance was not related to community
+biomass, which contradicts theoretical models suggesting that higher connectance
+is expected to lower community biomass by decreasing complementarity in resource
+use among species [@thebault_food-web_2003; @poisot_trophic_2013]. However, the
+effect of connectance on productivity remains poorly investigated.
 
-One of the most surprising result is that we found no relationship between
-connectance and stability. It contrasts with the central role that connectance
-plays in the studies of the food-web complexity-stability relationship [e.g.,
+Unexpectedly, we found no relationship between food-web connectance and
+stability of community biomass which contrasts with many theoretical results
+highlighting a food-web complexity-stability relationships [e.g.,
 @angelis_stability_1975; @may_will_1972; @thebault_stability_2010; but see
-@neutel_reconciling_2007], although theoretical ecology generally considers
-different stability concepts and metrics [@arnoldi_resilience_2016]. The lack of
-effect of connectance on the temporal stability of community biomass might be
-related to the fact that our measure of connectance does not take into account
-the distribution of interaction strengths in the food-webs. Indeed, food-web
-connectance is expected to have different consequences on the temporal stability
-of community biomass depending on the strength of trophic interactions
-[@thebault_trophic_2005], which we could not test due to the scarcity of
-information on the lower compartments of the community, i.e. primary producers,
-decomposers and the benthic species.
+@neutel_reconciling_2007], although they generally consider different stability
+concepts and metrics [@arnoldi_resilience_2016]. The lack of connectance effect
+on the temporal stability of community biomass might be related to the
+connectance metric we used, in particular the fact that it did not account for
+interaction strengths. Indeed, connectance stability relationship is expected to
+vary depending on the strength of trophic interactions [@thebault_trophic_2005].
+Further, in our dataset, resource nodes, i.e. primary producers, decomposers and
+the benthic species, were highly aggregated which might blur potential
+connectance differences among communities.
 
 ## Environment had an strong effect on community biomass and its temporal stability 
 
-We found that the larger, warmer and more enriched streams had higher total biomass
-through higher average trophic level and species richness, in line with mounting
-body of work reporting important effects of temperature on the structure and
-biomass of aquatic systems [@allan_stream_2007; @edeline_ecological_2013;
-@emmrich_geographical_2014; @hattab_forecasting_2016; @woods_testing_2020].
-Larger ecosystem in freshwater systems might provide a higher diversity
-of resources through habitat heterogeneity and then result in higher species
-richness and community biomass by surface unit, through complementarity in
-resource use. Our result suggest that warming and enrichment might result in
-higher total biomass but previous studies find contradictory results
-[@yvondurocher_warming_2011; @dossena_warming_2012;
-@maureaud_biodiversityecosystem_2019; @tabi_warming_2019]. One of the reason
-might be that temperature has non monotonic effects on biological processes and
-that temperature and enrichment can have antagonistic effects 
-[@oconnor_warming_2009; @uszko_effects_2017; @tabi_warming_2019].
+We found that the larger as well as warmer and more enriched streams had higher
+community biomass, and that this was mediated by higher species richness and
+average trophic level. Regarding the effect of ecosystem size, our results thus
+support a classical theory of food-web ecology [@post_ecosystem_2000;
+@doi_resource_2009]. Larger freshwater ecosystems provide higher diversity of
+resources through habitat heterogeneity and then result in higher species
+richness and mean trophic level per surface unit, through complementarity in
+resource use [@post_ecosystem_2000; @doi_resource_2009; @mchugh_dual_2010].
+Regarding temperature and enrichment effect, our study joins the mounting body
+of works reporting effect on the structure and biomass of aquatic systems
+[@allan_stream_2007; @edeline_ecological_2013; @emmrich_geographical_2014;
+@hattab_forecasting_2016; @woods_testing_2020; @bonnaffe_trophic_2021]. However,
+current results do not show consensus [@yvondurocher_warming_2011;
+@dossena_warming_2012; @maureaud_biodiversityecosystem_2019;
+@tabi_warming_2019], with potential antagonistic effects of temperature and
+enrichment as well as non-monotonic effects [@oconnor_warming_2009;
+@uszko_effects_2017; @tabi_warming_2019]. Although we could not tease apart the
+respective effects of temperature and enrichment, our results indicates that in
+the range of observed covariation in temperature and enrichment, their joint
+effects result in a positive relationship with community biomass.
 
-Our analysis revealed that stream size had only a weak effect on the temporal
-stability of community biomass, while warmer and enriched streams had an higher
-average population variability, thereby a lower temporal stability. Our results
-are in line with previous experiments showing that warming decreases temporal
-stability, however enrichment is predicted to counter the destabilising effect
-of warming [@binzer_dynamics_2012; @tabi_warming_2019].  However, enrichment alone 
-is predicted to increase population variability while warmer 
-temperature is predicted to decrease stability through starvation resulting from high
-metabolic activity [@tabi_warming_2019] but again it depends on the species thermal
-niche and of the shape of the response of biological processes to warming
-[@uszko_effects_2017].
+Our analysis further revealed that stream size had only a weak effect on the
+temporal stability of community biomass, while warmer and enriched streams
+exhibit less stable community biomass mainly via an increase in population
+variability. These results are in line with previous experiments showing that
+warming or enrichment decrease the temporal stability of communities
+[@kratina_warming_2012; @tabi_warming_2019]. However, several studies have
+highlighted that the effects of temperature on stability can be complex, and
+interact with those of enrichment [@binzer_dynamics_2012; @uszko_effects_2017].
 
----
-#Interestingly, the two PCA axes related to environmental conditions had indirect
-#effects on stability through two conflicting pathways, either stabilising, via
-#network structure, or destabilising, via species richness. The first pathway
-#consists in a positive effect of temperature and stream size on mean
-#trophic level, in line with the idea that wider streams and warmer conditions
-#are favourable to mesotrophic predators [@allan_stream_2007;
-#@emmrich_geographical_2014], which in turn stabilises biomass fluctuations,
-#possibly due to increased top-down regulation. The second pathway consists in a
-#positive effect of temperature and stream size on species richness, which itself
-#has a destabilising effect. This result is interesting in that both
-#pathways had not been evidenced to jointly play, to the best of our knowledge.
-#Furthermore, it is unclear which pathway is dominating, and under which circumstances,
-#opening an interesting avenue for further investigations.
----
-
----
-## Final thoughts about empirical food-webs
-
-#It was unexpected that the average population $\overline{CV_{sp}}$
-#had a stronger negative effect on biomass stability than synchrony
-#[@bluthgen_land_2016; @olivier_urbanization_2020], and explain why we observe a
-#negative effect of species on temporal stability of biomass. The lower effect of
-#synchrony can be explained by the  presence of generalist predators in stream
-#communities, which can raise synchrony between prey species which shares the
-#same predator [@raimondo_interspecific_2004]. Uneven population biomass within
-#communities also raise synchrony between species [@thibaut_understanding_2013].
-
-#As found in other studies, we found that species richness was negatively related
-#to mean trophic level and connectance [@winemiller_must_1989;
-#@dunne_network_2006; @thebault_stability_2010]. Species richness had thus a
-#consistent destabilising effect on temporal stability of biomass directly and
-#through average trophic level, but it has a direct positive effect on total annual
-#biomass directly but a negative one through the decrease of average trophic
-#level. It highlights the importance to consider several aspects of
-#network structure to order to improve our understanding of the drivers of
-#community structure and stability.
----
 
 ## Network reconstruction: limits and perspectives 
 
 The lack of experimental or empirical studies considering the effects of both
 species richness and food-web structure on ecosystem functions can be explained
 by the challenges associated with manipulating both species richness and
-food-web structure  experimentally [e.g. @sander_ecological_2017] and by the
-fact that describing trophic interactions between species is highly labour
-intensive. These challenges are even more acute when studying the temporal
-stability of ecosystem properties, which requires time series. In this context,
-recent developments to predict trophic interactions among species
+food-web structure experimentally [e.g. @sander_ecological_2017] and by the fact
+that describing trophic interactions between species is highly labour-intensive.
+These challenges are even more acute when studying the temporal stability of
+ecosystem properties, which requires time series. In this context, recent
+developments to predict trophic interactions among species
 [@beckerman_foraging_2006; @gravel_inferring_2013; @portalier_mechanics_2019],
 combined with observational long-term monitoring of ecological communities,
-offer an promising opportunity. They thus offer a way to maximise the  amount of
-information that we can extract from already collected empirical data, but at
-the cost of their precision. Build on the ratio of body-size between predator
-and prey [@gravel_inferring_2013], those methods are however in general blind to
-the modulation of species interactions according to the realized niche of
-species such as temperature and prey preferences. Although, the development of
-more mechanistic methods incorporating predator behaviour
-[@portalier_mechanics_2019] or more statistically flexible framework such as
-machine learning [@pichler_machine_2020] will certainly increase the accuracy of
-species interaction predictions. With the increasing availability of long-term
-empirical data, we believe that methods of food-web reconstruction have a great
-potential to increase our understanding of the role of network structure on
-ecosystem functioning in natural settings.
- 
+offer a promising opportunity.  They offer a way to maximise the amount of
+information that can be extracted from already collected empirical data, but at
+the cost of their precision. Here, we built binary interaction networks based on
+the ratio of body-size between predator and prey ignoring modulation of
+interactions strength depending on preferences or environmental factors.
+Refining the construction of interaction networks by, for example, integrating
+predator behaviour [@portalier_mechanics_2019] or developing more statistically
+flexible framework such as machine learning [@pichler_machine_2020] will
+certainly increase the accuracy of species interaction predictions. Although
+challenging, methods of food-web reconstruction have a great potential to
+increase our understanding of network structure effects on ecosystem function
+and dynamic in natural settings using available long-term empirical data.
+
 
 # Conclusion
 
 Our work contributes to bridging the gap between theoretical, experimental and
 empirical findings on the functioning and stability of communities. Our study
 extends the assessment of the effect of species richness on community biomass
-and its temporal stability to the case of food-webs in natural settings,
-providing the evidence that species richness decreases synchrony also in
-multi-trophic communities. Our results highlight population variability as key
-in transmitting effects of species richness, network structure and environmental
-gradients on community stability. This contrast with previous results found in
-single trophic communities, mostly plants, that mainly focus on synchrony and,
-although further confirmation are needed, might be characteristic of animal
-and/or multi-trophic communities. Further, we found that the effects of
-environmental gradient related to temperature, enrichment and ecosystem size are
-largely mediated by their impact on richness and average trophic level. Finally,
-our study open stimulating questions about how the food-web structure and
-species richness drives synchrony and population variability. 
-
+and its temporal stability to the case of freshwater food-webs in natural
+settings. While our results are in accordance with numbers of studies showing a
+positive effect of richness on community biomass, they provide a contrasting
+example of negative relationship between richness and stability of community
+biomass. Our results highlight population variability as key in transmitting
+effects of species richness, network structure and environmental gradients on
+community stability, opening stimulating questions about how the food-web
+structure and species richness drive population synchrony and variability.
 
 
 ```{r}
@@ -1203,13 +1151,16 @@ pca_caption <- paste0(
 matmet_cap <- paste0( 
   "(A) Observation sites (black dots) were located across France and monitored
   on the period 1995-2018. The red dots show the location of (C) and (D) sites.
-  ", " Inner borders draw the limits of the hydrographic basins. ", pca_caption,
-  " (C) and (D) The temporal dynamic of population biomass with three networks
-  of years 1997, 1999 and 2002. Each trophic species is represented
-  by a node and each color represents a species. The node size are proportional to
-  the biomass of the trophic species. The seven resource nodes are drawn in grey. ",
-  "The species names corresponding to the three digit codes are found in Table
-  S1.")
+  Inner borders draw the limits of the hydrographic basins. (B) Principal
+  Component Analysis performed on environmental variables.  The first axis was
+  positively related to the stream size, the second axis was related to the
+  stream slope and altitude and negatively related to average water temperature
+  and Biological Oxygen Demand (BOD). (C) and (D) Temporal dynamic of
+  communities with examples of networks corresponding to the years 1997, 1999
+  and 2002. Each trophic species is represented by a node and each color
+  represents a species (see method). Node size is proportional to the biomass of
+  the trophic species. The seven resource nodes are coloured in grey. Species
+  names corresponding to the three digit codes are found in Table S1.")
 
 ```
 
@@ -1220,33 +1171,21 @@ include_graphics(path = mypath("manuscript", "bef_stability", "figs", "fig1_modi
 
 \clearpage
 
-```{r, cache = FALSE}
-sem_caption <- paste0(
-  "Structural Equation Models for the median of annual
-  community biomass (in grams by square meter) and (C) its temporal stability.",
-  " Results of the Structural Equation Models for
-  (B) the median of annual community biomass and (D) its temporal stability. Red and black
-  arrows represent respectively negative and positive path coefficients. The
-  path coefficients are standardized. For convenience, only significant
-  paths (i.e. $P < 0.05$) are shown. Rsq: Adjusted $R^2$; Avg:
-  Average, CVsp: weighted temporal CV of the population; PCA1 and PCA2: respectively the first and
-  second axis of the PCA performed on environmental variables (see methods)."
-)
-```
-
 ```{r}
 
-sem_bm_caption <- paste0( "Species richness and average trophic level are
-  positively linked to community biomass. (A) Structural Equation Model for the
-  median of annual community biomass (in grams by square meter). Dotted and
-  solid arrows represent respectively negative and positive path coefficients.
-  Non significant paths are shown in grey. The path coefficients are
-  standardized. The $R^2$ are the adjusted $R^2$; Avg: Average, CVsp: weighted
-  temporal CV of the population biomass; PCA1 and PCA2: respectively the first
-  and second axis of the PCA performed on environmental variables (see methods).
-  (B) to (G): significant bivariate relationships between variables of the
-  structural equation model. The solid lines show the predictions of the
-  statiscal model.")
+sem_bm_caption <- paste0( 
+  "Relationships among the predictors of community biomass. (A) Structural
+  Equation Model for the median of annual community biomass (in grams by square
+    metre). Dotted and solid arrows represent, respectively, negative and
+  positive path coefficients. Non significant paths are coloured in grey. The
+  path coefficients are standardised. $R^2$: adjusted $R^2$; Avg: Average, CVsp: weighted
+  temporal coefficient of variation of the population biomass; PCA1 and PCA2:
+  respectively the first and second axis of the principal component analysis
+  performed on environmental variables (see methods). (B) to (G): significant
+  bivariate relationships between variables of the structural equation model.
+  Solid lines depict the predictions of the statistical model. A sensibility
+  analysis is displayed in supplementary information (Fig.
+    S8).")
 
 ```
 
@@ -1296,17 +1235,22 @@ knitr::include_graphics(mypath("manuscript", "bef_stability", "figs", "fig2.pdf"
 
 ```{r}
 
-sem_stab_caption <- paste0("Relationships among environment, species richness,
-  food-web structure, stability decomposition and the temporal stability of community biomass. (A)
-    Structural Equation Model for the temporal stability of community biomass.
-  Dotted and solid arrows represent respectively
-  negative and positive path coefficients. Non significant paths are shown in
-  grey. The path coefficients are standardized. The $R^2$ are the adjusted
-  $R^2$; Avg: Average, CVsp: weighted temporal CV of the population biomass;
-  PCA1 and PCA2: respectively the first and second axis of the PCA performed on
-  environmental variables (see methods). (B) to (I): significant bivariate
-  relationships between variables of the structural equation model. The solid
-  lines show the predictions of the statistical model.")
+sem_stab_caption <- paste0(
+  "Relationships among the predictors of the temporal stability of community
+  biomass. (A) Structural Equation Model for the temporal stability of community
+  biomass. Dotted and solid arrows represent, respectively, negative and positive
+  path coefficients. Non significant paths are coloured in grey. The path
+  coefficients are standardised. $R^2$: adjusted $R^2$; Avg: Average, CVsp: weighted
+  temporal coefficient of variation of the population biomass; PCA1 and PCA2:
+  respectively the first and second axis of the principal component analysis
+  performed on environmental variables (see methods). The $R^2$ for the temporal
+  stability of community biomass is exactly one because the relation is
+  determistic (see Eq. 4). (B) to (I): significant
+  bivariate relationships between variables of the structural equation model.
+  Solid lines depict the predictions of the statistical model. A sensibility
+  analysis is displayed in supplementary information (Fig.
+    S8)."
+  )
 ```
 
 ```{r sem-stab, out.width="\\maxwidth", fig.cap = sem_stab_caption, results = "fig.show", cache = FALSE}
