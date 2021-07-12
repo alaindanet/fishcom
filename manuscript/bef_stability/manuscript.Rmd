@@ -126,13 +126,13 @@ we found that community stability is fostered by mean trophic level, while
 contrary to expectation, it is decreased by species richness. Finally, we found
 that environmental conditions affect both biomass and its stability mainly via
 effects on richness and network structure. Strikingly,
-community stability was mediated by the variation of population stability rather
+the effect of species richness on community stability was mediated by population stability rather
 than synchrony, which contrasts with results from single-trophic communities. We
 discuss the hypothesis that it could be a characteristic of multi-trophic
 communities.
 
 
-# Introduction 
+# Introduction
 
 ---
 #### Biodiversity and ecosystem properties 
@@ -218,10 +218,6 @@ food-web diversity and structure  [e.g., @edeline_ecological_2013;
 Environmental characteristics have thus to be accounted for if we are to tease
 apart the effects of species richness and food-web structure on community
 biomass and its temporal stability.
-
-Environment can affect functioning and stability directly or through effects on
-resource availability, species richness or food-web
-structure. Agricultural intensification and temperature changes can also...
 
 ---
 #### Stream fish communities is a good model to study effects of horizontal & vertical diversity
@@ -552,19 +548,18 @@ respectively the standard deviation of the predictor variable $x$ and of the
 response variable $y$). Therefore, the standardised coefficients expressed the
 variation of $x$ and $y$ in standard deviation units. According to the equation
 \@ref(eq:stab), the unstandardised coefficients of synchrony and population
-variability determining
-temporal stability of community biomass are respectively -0.5 and -1.0. When
-standardised, the relative comparison of those coefficients comes down to a
-comparison of the standard deviation of these two variables. The deviation from
-unstandardised effect values (i.e. -0.5 and -1.0) indicates that one component of community stability
-displays more variations than the other, and that the determinants of
-the more variable component will be those affecting community
-stability the most. The paths whose slope had a $P$ value inferior or equal to $0.05$
-were reported in the main text, all the path values are presented in Table S7
-and S8. Indirect effects on community biomass and its temporal stability were
-computed by multiplying slopes along the path. Only significant direct slopes
-were included in the calculation of indirect effects. Total effects were
-computed as the sum of direct and indirect effects.
+variability determining temporal stability of community biomass are respectively
+-0.5 and -1.0. When standardised, the relative comparison of those coefficients
+comes down to a comparison of the standard deviation of these two variables. The
+deviation from unstandardised effect values (i.e. -0.5 and -1.0) indicates that
+one component of community stability displays more variations than the other,
+and that the determinants of the more variable component will be those affecting
+community stability the most. The paths whose slope had a $P$ value inferior or
+equal to $0.05$ were reported in the main text, all the path values are
+presented in Table S7 and S8. Indirect effects on community biomass and its
+temporal stability were computed by multiplying slopes along the path. Only
+significant direct slopes were included in the calculation of indirect effects.
+Total effects were computed as the sum of direct and indirect effects.
 
 Environmental variables were interpolated with the `openStars` and `SSN` R
 packages [@kattwinkel_openstars_2018; @hoef_ssn:_2014]. Linear models and SEMs
@@ -759,6 +754,9 @@ We found a negative relationship between species richness and mean trophic level
 connectance ($r_\delta = `r rich_on_ct`$, Fig. \@ref(fig:sem-bm)A and
 \@ref(fig:sem-stab)A), meaning that a part of the effects of species richness on
 community biomass and its temporal stability went through food-web structure.
+The relationships resulting from the SEM are robust to different station
+selection criteria in the analysis, with different selections ranging in 65 to
+403 stations (see sensitivity analysis, Fig. S8).
 
 ## Species richness and average trophic level are positively correlated with community biomass
 
@@ -784,7 +782,7 @@ species
 richness and mean trophic level 
 ($r_\delta = `r env_on_bm$via_richness["log_RC1"]`$ and 
 $`r env_on_bm$via_tlvl["log_RC1"]`$
-resp., Fig. \@ref(fig:sem-bm) F, G, Table \@ref(tab:indir-sem)). The second
+resp., Fig. \@ref(fig:sem-bm)F, G, Table \@ref(tab:indir-sem)). The second
 axis, related to the average annual temperature and BOD was positively related
 to community biomass ($r_\delta = `r env_on_bm$total["log_RC2"]`$, Table
 \@ref(tab:indir-sem)) mainly through species richness ($r_\delta = 
@@ -963,31 +961,33 @@ from an increased demographic stochasticity with increasing species richness
 
 In our study system, the destabilising effect of species richness via increased
 population variability was stronger than the stabilising effect via decreased
-synchrony.  This contrasts with the previous study of Olivier et al. (2021) on
-animal communities in terrestrial ecosystems. The difference of the effect of
-species richness on population stability and synchrony between studies might be
-related to the multitrophic structure of the dataset as theory predicts
-potential synchronising effect of generalist predators, such as piscivorous
-fishes, on prey dynamics [@raimondo_interspecific_2004; @huber_role_2006].
-Trophic interactions might also raise synchrony between predators and preys and
-thereby increase the overall synchrony of trophic communities [Fig. S9,
-@bulmer_phase_1975]. However, generalist predators can also generate
-asynchronous dynamics among preys depending on the distribution of interaction
-strengths [@huber_role_2006; @mccann_more_2009]. The difference between our
-results and those of @olivier_urbanization_2020 might also relate to the type of
-ecosystems considered. Aquatic ecosystems have been suggested to show greater
-population variability than terrestrial ecosystems [@rip_cross-ecosystem_2011],
-which could also translate in greater variation range of population variability
-among aquatic communities than among terrestrial ones. Another hypothesis
-relates to the evenness of the biomass distribution among species, with low
-evenness decreasing the range of variation in synchrony among communities and
-thereby the strength of the portfolio effect [@doak_statistical_1998;
-@thibaut_understanding_2013]. Whether the biomass distribution in stream fish
-assemblages is particularly uneven when compared to the terrestrial communities
-studied by @olivier_urbanization_2020 remains however to be tested. In any case,
-more studies are needed to understand how the relative importance of the effect
-of species richness on synchrony and population variability varies among
-ecosystems.
+synchrony. Further, as the effects of species richness on population variability
+and synchrony we found here were of similar amplitude, the balance between both
+pathways is governed by the relative standard deviation of population
+variability and synchrony, this because we used standardized coefficients (see
+methods). The fish communities studied here therefor present similar level of
+variation in population variability and synchrony, again contrasting with
+results on terrestrial animal communities that exhibited twice as much variation
+in population synchrony than in population variability
+[@olivier_urbanization_2020]. This opens intriguing questions as to potential
+mechanisms constraining the variation range of population variability and
+synchrony among communities. Lower variation in population synchrony among the
+fish communities studied here might relates to their trophic structure as theory
+predicts potential synchronising effect of generalist predators, such as
+piscivorous fishes, on prey dynamics [@raimondo_interspecific_2004;
+@huber_role_2006]. Trophic interactions might also raise synchrony between
+predators and preys, [Fig. S9, @bulmer_phase_1975], although predictions can
+vary depending on the distribution of interaction strengths [@huber_role_2006;
+@mccann_more_2009]. Restricted variations in population synchrony among
+communities can also be fostered by low biomass evenness and thereby low
+portfolio effect [@doak_statistical_1998; @thibaut_understanding_2013], but
+whether biomass eveness of stream fish communities is particularly low remains
+to be tested. Alternatively, aquatic ecosystems have been suggested to show
+greater population variability than terrestrial ones
+[@rip_cross-ecosystem_2011], which could translate in greater variation range of
+population variability among aquatic communities than among terrestrial ones.
+In any case, more studies are needed to understand how the type of ecosystems
+and trophic interactions constrain synchrony and population variability.
 
 ---
 #@thibaut_understanding_2013 proposed that a
@@ -1176,9 +1176,9 @@ sem_bm_caption <- paste0(
   respectively the first and second axis of the principal component analysis
   performed on environmental variables (see methods). (B) to (G): significant
   bivariate relationships between variables of the structural equation model.
-  Solid lines depict the predictions of the statistical model. A sensibility
-  analysis is displayed in supplementary information (Fig.
-    S8).")
+  Solid lines depict the predictions of the statistical model. See Fig. S8
+  for a sensitivity analysis according to different station selection
+  criteria.")
 
 ```
 
@@ -1240,9 +1240,9 @@ sem_stab_caption <- paste0(
   stability of community biomass is exactly one because the relation is
   determistic (see Eq. 4). (B) to (I): significant
   bivariate relationships between variables of the structural equation model.
-  Solid lines depict the predictions of the statistical model. A sensibility
-  analysis is displayed in supplementary information (Fig.
-    S8)."
+  Solid lines depict the predictions of the statistical model. See Fig. S8
+  for a sensitivity analysis according to different station selection
+  criteria."
   )
 ```
 
